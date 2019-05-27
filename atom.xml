@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://www.x-sir.com/"/>
-  <updated>2019-05-23T09:19:19.353Z</updated>
+  <updated>2019-05-27T15:17:26.506Z</updated>
   <id>http://www.x-sir.com/</id>
   
   <author>
@@ -15,6 +15,36 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>RxJava2.x 变换操作符之 flatMap 和 concatMap</title>
+    <link href="http://www.x-sir.com/2019/05/27/RxJava2.x%20%E5%8F%98%E6%8D%A2%E6%93%8D%E4%BD%9C%E7%AC%A6%E4%B9%8B%20flatMap%E5%92%8CconcatMap/"/>
+    <id>http://www.x-sir.com/2019/05/27/RxJava2.x 变换操作符之 flatMap和concatMap/</id>
+    <published>2019-05-27T15:17:00.000Z</published>
+    <updated>2019-05-27T15:17:26.506Z</updated>
+    
+    <content type="html"><![CDATA[<p><img src="http://image.x-sir.com/Fu8NaLmujOyoQjtSrpLnPsxWWp3a" alt=""><br>题图：Pixabay License</p><p>哈喽，朋友们，<a href="https://mp.weixin.qq.com/s?__biz=MzU4MTIzNjg0Ng==&amp;mid=2247484144&amp;idx=1&amp;sn=28e8940cc3a692057a7a3634f04d52f7&amp;chksm=fd4be3f1ca3c6ae765a83e4d6b7d9668f2c212ea3258e7e3cf6cb5ab22c3973720ef5cc7d0a8&amp;token=759890379&amp;lang=zh_CN#rd" target="_blank" rel="noopener">上一篇文章</a>我们学习了 filter 操作符，今天我们来学习 RxJava 中比较重要的两个操作符 flatMap 和 concatMap。</p><h2 id="1-flatMap"><a href="#1-flatMap" class="headerlink" title="1.flatMap"></a>1.flatMap</h2><p>我们知道 flat 是平的意思，这个翻译还是有点生硬和抽象，我们还是不太理解，你就可以先理解成平铺的意思吧。</p><p>flatMap 是变换操作符的一种，它将一个发射数据的 Observable 变换为多个 Observable，然后将他们发射的数据合并后放入一个单独的 Observable。</p><p>举个简单的例子吧，假设上游有个数据源，数据源是学生对象的集合，学生有姓名和课程的属性，每个学生的课程可以有多个，需求是打印出所有学生的课程名称。</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">Student student1 = new Student();</span><br><span class="line"></span><br><span class="line">List&lt;Student.Course&gt; list1 = new ArrayList&lt;&gt;();</span><br><span class="line">list1.add(new Student.Course(&quot;语文1&quot;));</span><br><span class="line">list1.add(new Student.Course(&quot;数学1&quot;));</span><br><span class="line">list1.add(new Student.Course(&quot;英语1&quot;));</span><br><span class="line">list1.add(new Student.Course(&quot;物理1&quot;));</span><br><span class="line">list1.add(new Student.Course(&quot;化学1&quot;));</span><br><span class="line"></span><br><span class="line">student1.setName(&quot;张三&quot;);</span><br><span class="line">student1.setCourses(list1);</span><br><span class="line"></span><br><span class="line">Student student2 = new Student();</span><br><span class="line"></span><br><span class="line">List&lt;Student.Course&gt; list2 = new ArrayList&lt;&gt;();</span><br><span class="line">list2.add(new Student.Course(&quot;语文2&quot;));</span><br><span class="line">list2.add(new Student.Course(&quot;数学2&quot;));</span><br><span class="line">list2.add(new Student.Course(&quot;英语2&quot;));</span><br><span class="line"></span><br><span class="line">student2.setName(&quot;李四&quot;);</span><br><span class="line">student2.setCourses(list2);</span><br><span class="line"></span><br><span class="line">List&lt;Student&gt; studentList = new ArrayList&lt;&gt;();</span><br><span class="line">studentList.add(student1);</span><br><span class="line">studentList.add(student2);</span><br><span class="line"></span><br><span class="line">Observable.just(studentList)</span><br><span class="line">        .flatMap((Function&lt;List&lt;Student&gt;, ObservableSource&lt;Student&gt;&gt;) students -&gt; Observable.fromIterable(students))</span><br><span class="line">        .flatMap((Function&lt;Student, ObservableSource&lt;Student.Course&gt;&gt;) student -&gt; &#123;</span><br><span class="line">            LogUtil.i(TAG, &quot;student name===&quot; + student.getName());</span><br><span class="line">            return Observable.fromIterable(student.getCourses());</span><br><span class="line">        &#125;)</span><br><span class="line">        .subscribe(course -&gt; LogUtil.i(TAG, &quot;course===&quot; + course.getCourseName()));</span><br></pre></td></tr></table></figure><p>执行结果如下：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">I/RxJavaOperatorActivity: student name===张三</span><br><span class="line">I/RxJavaOperatorActivity: course===语文1</span><br><span class="line">I/RxJavaOperatorActivity: course===数学1</span><br><span class="line">I/RxJavaOperatorActivity: course===英语1</span><br><span class="line">I/RxJavaOperatorActivity: course===物理1</span><br><span class="line">I/RxJavaOperatorActivity: course===化学1</span><br><span class="line">I/RxJavaOperatorActivity: student name===李四</span><br><span class="line">I/RxJavaOperatorActivity: course===语文2</span><br><span class="line">I/RxJavaOperatorActivity: course===数学2</span><br><span class="line">I/RxJavaOperatorActivity: course===英语2</span><br></pre></td></tr></table></figure><p>我们看到上面的代码没有 for 循环，却遍历打印了集合中的数据，RxJava 就是为了简化或者是取消 for 循环种方式，使用操作符来解决遍历循环的问题，从而是代码更加扁平化，使代码更加清晰和便于理解。</p><p>注意：flatMap 对这些 Observables 发射的数据做的是合并(merge)操作，因此它们可能是交错的，即不能保证数据的发射顺序。</p><h2 id="2-concatMap"><a href="#2-concatMap" class="headerlink" title="2.concatMap"></a>2.concatMap</h2><p>我们将上面的 flatMap 操作符换成 concatMap 操作符再看看打印的结果，修改代码如下：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(studentList)</span><br><span class="line">            .concatMap((Function&lt;List&lt;Student&gt;, ObservableSource&lt;Student&gt;&gt;) students -&gt; Observable.fromIterable(students))</span><br><span class="line">            .concatMap((Function&lt;Student, ObservableSource&lt;Student.Course&gt;&gt;) student -&gt; &#123;</span><br><span class="line">                LogUtil.i(TAG, &quot;student name===&quot; + student.getName());</span><br><span class="line">                return Observable.fromIterable(student.getCourses());</span><br><span class="line">            &#125;)</span><br><span class="line">            .subscribe(course -&gt; LogUtil.i(TAG, &quot;course===&quot; + course.getCourseName()));</span><br></pre></td></tr></table></figure><p>执行结果如下：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">I/RxJavaOperatorActivity: student name===张三</span><br><span class="line">I/RxJavaOperatorActivity: course===语文1</span><br><span class="line">I/RxJavaOperatorActivity: course===数学1</span><br><span class="line">I/RxJavaOperatorActivity: course===英语1</span><br><span class="line">I/RxJavaOperatorActivity: course===物理1</span><br><span class="line">I/RxJavaOperatorActivity: course===化学1</span><br><span class="line">I/RxJavaOperatorActivity: student name===李四</span><br><span class="line">I/RxJavaOperatorActivity: course===语文2</span><br><span class="line">I/RxJavaOperatorActivity: course===数学2</span><br><span class="line">I/RxJavaOperatorActivity: course===英语2</span><br></pre></td></tr></table></figure><p>我们看到和 flatMap 的执行结果是一样的，我们发现打印的结果也是按照添加数据的顺序打印出来了，理论上 flatMap 执行的结果可能会有交错，原因是我们添加的数据过少，因此它们执行的时间也是差不多的，所以提现不出交错的情况。</p><p>好了，今天的学习内容就算完成了，感觉是不是非常简单？其实有时候你光看，理解起来是很慢的，但是你动手敲一遍立马就明白了，所以代码这个东西还是得多敲！</p><p>最后，我这边建了一个技术交流群，需要的朋友可以扫描下面的二维码加我微信并备注「加群」，拉你进入技术交流群！</p><p><img src="http://image.x-sir.com/FoiEznYF5eSQS8WMN62NzUQ4gk40 =337x448" alt=""></p><p>飞哥带你去装逼，一直装逼到天黑！</p><p>另外，我还建了一个免费的知识星球用于学习交流，感兴趣的可以使用微信扫码加入哦！</p><p><img src="https://img-blog.csdnimg.cn/2019052722451347.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;p&gt;&lt;img src=&quot;http://image.x-sir.com/Fu8NaLmujOyoQjtSrpLnPsxWWp3a&quot; alt=&quot;&quot;&gt;&lt;br&gt;题图：Pixabay License&lt;/p&gt;
+&lt;p&gt;哈喽，朋友们，&lt;a href=&quot;https://mp.weixin.qq.
+      
+    
+    </summary>
+    
+      <category term="Android" scheme="http://www.x-sir.com/categories/Android/"/>
+    
+    
+      <category term="RxJava" scheme="http://www.x-sir.com/tags/RxJava/"/>
+    
+      <category term="RxJava2.x" scheme="http://www.x-sir.com/tags/RxJava2-x/"/>
+    
+      <category term="操作符" scheme="http://www.x-sir.com/tags/%E6%93%8D%E4%BD%9C%E7%AC%A6/"/>
+    
+  </entry>
   
   <entry>
     <title>RxJava2.x 操作符之 filter</title>
@@ -546,48 +576,21 @@
   </entry>
   
   <entry>
-    <title>Android 产生随机数</title>
-    <link href="http://www.x-sir.com/2017/09/24/Android%E4%BA%A7%E7%94%9F%E9%9A%8F%E6%9C%BA%E6%95%B0/"/>
-    <id>http://www.x-sir.com/2017/09/24/Android产生随机数/</id>
+    <title>Android 冷启动白屏问题</title>
+    <link href="http://www.x-sir.com/2017/09/24/Android%E5%86%B7%E5%90%AF%E5%8A%A8%E7%99%BD%E5%B1%8F%E9%97%AE%E9%A2%98/"/>
+    <id>http://www.x-sir.com/2017/09/24/Android冷启动白屏问题/</id>
     <published>2017-09-24T15:47:57.000Z</published>
-    <updated>2018-12-08T15:18:16.407Z</updated>
+    <updated>2018-12-08T15:25:10.838Z</updated>
     
-    <content type="html"><![CDATA[<p>##1.产生指定位数的随机数</p><p>以产生6位数随机数为例</p><figure class="highlight plain"><figcaption><span>num </span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">产生其他位数随机数在最后面要乘的数即 *100000* 后加0即可</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">##2.产生指定范围的随机数</span><br><span class="line"></span><br><span class="line">以产生[10,99]范围内的随机数为例</span><br></pre></td></tr></table></figure><p>int min=10;<br>int max=99;<br>Random random = new Random();<br>int num = random.nextInt(max)%(max-min+1) + min;<br><code>`</code></p><p>end ~</p>]]></content>
+    <content type="html"><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center><br><center>置顶公众号（<strong>ID：ITBigFly</strong>）第一时间收到推送</center><blockquote><p>本篇文章来自「UartAnd7c」的投稿<br>原文地址：<a href="https://www.jianshu.com/p/9495ba92c138" target="_blank" rel="noopener">https://www.jianshu.com/p/9495ba92c138</a> 原作者简书主页：<a href="https://www.jianshu.com/u/621bfbc7c878" target="_blank" rel="noopener">https://www.jianshu.com/u/621bfbc7c878</a><br>UartAnd7c 是一个在简书坚持原创的 Android 开发者，欢迎大家关注！</p></blockquote><p><img src="http://pcobk8jbf.bkt.clouddn.com/FkvOcmPtN2KeiHXtyMSfpvZfIXF7" alt=""></p><blockquote><p>今天把玩公司App发现了一个有趣的现象。启动app白屏。之前没太留意过；在参照大厂App解决白屏的方案后。简单汇总一下。</p></blockquote><p>###前言<br>冷启动：App第一次启动的时候会加载一个Application进程，首先会创建和初始化Appliation类，然后在加载Activity。<br>热启动：利用后台已经拥有的进程，从而避免了Application的加载。直接去加载Activity。</p><p>解决白屏的方案大致有以下四种</p><ul><li>加入动画</li><li>使用占位图</li><li>使用图片</li><li>使用windowDisablePreview属性</li></ul><p>这里我就描述一下使用占位图和windowDisablePreview属性</p><p>####windowDisablePreview属性</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;style name=&quot;SplashTheme&quot; parent=&quot;AppTheme&quot;&gt;</span><br><span class="line">        &lt;item name=&quot;android:windowDisablePreview&quot;&gt;true&lt;/item&gt;</span><br><span class="line"> &lt;/style&gt;</span><br></pre></td></tr></table></figure><p>在AndroidManifest中設置主Activity的theme值，在主Activity中还原。</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">    protected void onCreate(@Nullable Bundle savedInstanceState) &#123;</span><br><span class="line">        setTheme(R.style.AppTheme);</span><br><span class="line">        getWindow().setBackgroundDrawableResource(R.drawable.main_splash_bg);</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure><p>运行后发现启动App延迟几秒后跳转到主Activity（有点类似掌上英雄联盟，会让用户误以为是自己手机的问题）。</p><p>####使用占位图</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;style name=&quot;SplashTheme&quot; parent=&quot;AppTheme&quot;&gt;</span><br><span class="line">      &lt;item name=&quot;android:windowBackground&quot;&gt;@drawable/shape_launch&lt;/item&gt;</span><br><span class="line">      &lt;item name=&quot;android:windowFullscreen&quot;&gt;true&lt;/item&gt;</span><br><span class="line">  &lt;/style&gt;</span><br></pre></td></tr></table></figure><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;layer-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    android:opacity=&quot;opaque&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;item android:drawable=&quot;@android:color/white&quot;/&gt;</span><br><span class="line">    &lt;item&gt;</span><br><span class="line">        &lt;bitmap</span><br><span class="line">            android:src=&quot;@mipmap/main_splash_bg&quot;</span><br><span class="line">            android:gravity=&quot;fill&quot; /&gt;</span><br><span class="line">    &lt;/item&gt;</span><br><span class="line"></span><br><span class="line">&lt;/layer-list&gt;</span><br></pre></td></tr></table></figure><p>使用windowBackground属性来完成其他操作同windowDisablePreview属性的设置。运行后发现明显白屏问题得到有效解决。</p><p>###参考文献</p><p>gitHub地址:<a href="https://github.com/saulmm/onboarding-examples-android#onboarding-with-a-placeholder" target="_blank" rel="noopener">https://github.com/saulmm/onboarding-examples-android#onboarding-with-a-placeholder</a><br>google论坛:<a href="https://plus.google.com/+AndroidDevelopers/posts/Z1Wwainpjhd" target="_blank" rel="noopener">https://plus.google.com/+AndroidDevelopers/posts/Z1Wwainpjhd</a></p><p>温馨提示：点击「阅读原文」可查看原作者简书原文。</p><p><strong>猜你喜欢：</strong><br><a href="https://mp.weixin.qq.com/s/jxBEg7dpFfTNLXNFdvJjrw" target="_blank" rel="noopener">深入浅出Retrofit2.x(一)</a><br><a href="https://mp.weixin.qq.com/s/c8mdMqjrLvHTgc8oxONiCw" target="_blank" rel="noopener">深入浅出Retrofit2.x(二)</a><br><a href="https://mp.weixin.qq.com/s/hVhhDdr3Bo4qLIdOkHsM_Q" target="_blank" rel="noopener">Android 最全 Intent 传递数据姿势</a> </p><p><img src="http://pcobk8jbf.bkt.clouddn.com/Fr_08YggSBgBwGhjjZsX8bH8JYNR" alt=""></p><center><span style="color:#bdbdbd;">欢迎扫码关注我的公众号</span></center>]]></content>
     
     <summary type="html">
     
       
       
-        &lt;p&gt;##1.产生指定位数的随机数&lt;/p&gt;
-&lt;p&gt;以产生6位数随机数为例&lt;/p&gt;
-&lt;figure class=&quot;highlight plain&quot;&gt;&lt;figcaption&gt;&lt;span&gt;num &lt;/span&gt;&lt;/figcaption&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gut
-      
-    
-    </summary>
-    
-      <category term="Java" scheme="http://www.x-sir.com/categories/Java/"/>
-    
-    
-      <category term="GitHub" scheme="http://www.x-sir.com/tags/GitHub/"/>
-    
-      <category term="随机数" scheme="http://www.x-sir.com/tags/%E9%9A%8F%E6%9C%BA%E6%95%B0/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Android 使用原生动画工具类实现平移动画</title>
-    <link href="http://www.x-sir.com/2017/09/24/Android%E4%BD%BF%E7%94%A8%E5%8E%9F%E7%94%9F%E5%8A%A8%E7%94%BB%E5%B7%A5%E5%85%B7%E7%B1%BB%E5%AE%9E%E7%8E%B0%E5%B9%B3%E7%A7%BB%E5%8A%A8%E7%94%BB/"/>
-    <id>http://www.x-sir.com/2017/09/24/Android使用原生动画工具类实现平移动画/</id>
-    <published>2017-09-24T15:47:57.000Z</published>
-    <updated>2018-12-08T15:30:45.634Z</updated>
-    
-    <content type="html"><![CDATA[<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 向右边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, true));</span><br><span class="line">// 向右边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, true));</span><br><span class="line"> </span><br><span class="line">llVideo.setVisibility(View.VISIBLE);</span><br><span class="line">llVideo.setVisibility(View.GONE);</span><br><span class="line">// 向左边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, false));</span><br><span class="line">// 向左边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, false));</span><br></pre></td></tr></table></figure>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class
+        &lt;center&gt;点击上面蓝色字体关注&lt;span style=&quot;color:#0000ff;&quot;&gt;“IT大飞说”&lt;/span&gt;&lt;/center&gt;&lt;br&gt;&lt;center&gt;置顶公众号（&lt;strong&gt;ID：ITBigFly&lt;/strong&gt;）第一时间收到推送&lt;/center&gt;
+
+&lt;blo
       
     
     </summary>
@@ -595,9 +598,9 @@
       <category term="Android" scheme="http://www.x-sir.com/categories/Android/"/>
     
     
-      <category term="Android" scheme="http://www.x-sir.com/tags/Android/"/>
+      <category term="GitHub" scheme="http://www.x-sir.com/tags/GitHub/"/>
     
-      <category term="动画" scheme="http://www.x-sir.com/tags/%E5%8A%A8%E7%94%BB/"/>
+      <category term="Android" scheme="http://www.x-sir.com/tags/Android/"/>
     
   </entry>
   

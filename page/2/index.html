@@ -291,10 +291,14 @@
 <h2 id="方式2"><a href="#方式2" class="headerlink" title="方式2"></a>方式2</h2><p>这种方式的思路是，先把 aar 包放入一个单独的文件夹中，然后我们再依赖这个文件夹就可以了，这个文件夹你也可以理解成一个特殊的 module。</p>
 <p>先在工程目录下新建一个文件夹（和app同级），然后将你的 aar 包放入 这个文件夹，然后再新建一个 build.gradle 文件，在这个文件中添加下面两句：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">configurations.maybeCreate(&quot;default&quot;)</span><br><span class="line">artifacts.add(&quot;default&quot;, file(&apos;aar包名.aar&apos;))</span><br></pre></td></tr></table></figure>
-<p>然后在你需要依赖的 library module 的 build.gradle 文件中添加依赖：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">implementation project(&apos;:存放aar包的文件夹&apos;)</span><br></pre></td></tr></table></figure>
-<p>最后，同步下工程就 OK 了~</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/05/30/Android library 依赖 aar 包的两种方式/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -391,19 +395,14 @@
 <p>执行结果如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">I/RxJavaOperatorActivity: student name===张三</span><br><span class="line">I/RxJavaOperatorActivity: course===语文1</span><br><span class="line">I/RxJavaOperatorActivity: course===数学1</span><br><span class="line">I/RxJavaOperatorActivity: course===英语1</span><br><span class="line">I/RxJavaOperatorActivity: course===物理1</span><br><span class="line">I/RxJavaOperatorActivity: course===化学1</span><br><span class="line">I/RxJavaOperatorActivity: student name===李四</span><br><span class="line">I/RxJavaOperatorActivity: course===语文2</span><br><span class="line">I/RxJavaOperatorActivity: course===数学2</span><br><span class="line">I/RxJavaOperatorActivity: course===英语2</span><br></pre></td></tr></table></figure>
 <p>我们看到上面的代码没有 for 循环，却遍历打印了集合中的数据，RxJava 就是为了简化或者是取消 for 循环种方式，使用操作符来解决遍历循环的问题，从而是代码更加扁平化，使代码更加清晰和便于理解。</p>
-<p>注意：flatMap 对这些 Observables 发射的数据做的是合并(merge)操作，因此它们可能是交错的，即不能保证数据的发射顺序。</p>
-<h2 id="2-concatMap"><a href="#2-concatMap" class="headerlink" title="2.concatMap"></a>2.concatMap</h2><p>我们将上面的 flatMap 操作符换成 concatMap 操作符再看看打印的结果，修改代码如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(studentList)</span><br><span class="line">            .concatMap((Function&lt;List&lt;Student&gt;, ObservableSource&lt;Student&gt;&gt;) students -&gt; Observable.fromIterable(students))</span><br><span class="line">            .concatMap((Function&lt;Student, ObservableSource&lt;Student.Course&gt;&gt;) student -&gt; &#123;</span><br><span class="line">                LogUtil.i(TAG, &quot;student name===&quot; + student.getName());</span><br><span class="line">                return Observable.fromIterable(student.getCourses());</span><br><span class="line">            &#125;)</span><br><span class="line">            .subscribe(course -&gt; LogUtil.i(TAG, &quot;course===&quot; + course.getCourseName()));</span><br></pre></td></tr></table></figure>
-<p>执行结果如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">I/RxJavaOperatorActivity: student name===张三</span><br><span class="line">I/RxJavaOperatorActivity: course===语文1</span><br><span class="line">I/RxJavaOperatorActivity: course===数学1</span><br><span class="line">I/RxJavaOperatorActivity: course===英语1</span><br><span class="line">I/RxJavaOperatorActivity: course===物理1</span><br><span class="line">I/RxJavaOperatorActivity: course===化学1</span><br><span class="line">I/RxJavaOperatorActivity: student name===李四</span><br><span class="line">I/RxJavaOperatorActivity: course===语文2</span><br><span class="line">I/RxJavaOperatorActivity: course===数学2</span><br><span class="line">I/RxJavaOperatorActivity: course===英语2</span><br></pre></td></tr></table></figure>
-<p>我们看到和 flatMap 的执行结果是一样的，我们发现打印的结果也是按照添加数据的顺序打印出来了，理论上 flatMap 执行的结果可能会有交错，原因是我们添加的数据过少，因此它们执行的时间也是差不多的，所以提现不出交错的情况。</p>
-<p>好了，今天的学习内容就算完成了，感觉是不是非常简单？其实有时候你光看，理解起来是很慢的，但是你动手敲一遍立马就明白了，所以代码这个东西还是得多敲！</p>
-<p>最后，我这边建了一个技术交流群，需要的朋友可以扫描下面的二维码加我微信并备注「加群」，拉你进入技术交流群！</p>
-<p><img src="http://image.x-sir.com/FoiEznYF5eSQS8WMN62NzUQ4gk40 =337x448" alt=""></p>
-<p>飞哥带你去装逼，一直装逼到天黑！</p>
-<p>另外，我还建了一个免费的知识星球用于学习交流，感兴趣的可以使用微信扫码加入哦！</p>
-<p><img src="https://img-blog.csdnimg.cn/2019052722451347.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/05/27/RxJava2.x 变换操作符之 flatMap和concatMap/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -501,12 +500,14 @@
 <p>结果打印出来的都是大于 5 的数字，当然你还可以设置其他的过滤条件，例如空值等！</p>
 <p>好了，今天的学习内容就算完成了，感觉是不是非常简单？如果你学会了就赶紧动手去实践一下吧，说不定你会有新的发现哦！</p>
 <p>最后，我和大家分享一下我学习的一些经验或者是见解吧。我们再学习的过程中，可能学的很多东西都是点状的，我们要把学习到的东西学会融会贯通，将他们连接成线即学会相互联系，再将线形成面，再形成体，这样我们学到的知识才能形成一个完整的知识体系，不要只见树叶，不见森林，希望大家在学习的过程中，多思考，多总结！</p>
-<p>Ps:扫描下面的二维码，关注「IT大飞说」，回复「加群」，拉你进入兄弟战斗群，最后告诉你们一个小秘密，公号对话框回复「装备01」 送你一件珍藏版的打怪装备，战斗力瞬间可增加 80！！！我使用过，效果杠杠滴！从此，我们就可以一起愉快的装逼了！</p>
-<p>飞哥带你去装逼，一直装逼到天黑！</p>
-<p>更多干货文章请关注我的微信公众号：<br><img src="https://img-blog.csdn.net/20180626144909992?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="扫一扫关注"></p>
-<p>另外，我还建了一个免费的知识星球，感兴趣的微信扫码即可加入！</p>
-<p><img src="http://image.x-sir.com/zsxq_qrcodezsxq_qrcode.jpg" alt="image"></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/05/23/RxJava2.x 操作符之 filter/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -608,21 +609,14 @@
 <p>很简单吧，这个就不用我多说了吧。需要注意的是，如果不指定重复的次数，则会无限地重复下去！</p>
 <h2 id="2-repeatWhen"><a href="#2-repeatWhen" class="headerlink" title="2.repeatWhen"></a>2.repeatWhen</h2><p>例如，我们想按顺序打印 0-3 的数字，当 2 秒后我们再重复打印一次，我们就可以这么写。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Observable.range(0, 4)</span><br><span class="line">            .repeatWhen(objectObservable -&gt; Observable.timer(2, TimeUnit.SECONDS))</span><br><span class="line">            .subscribe(integer -&gt; LogUtil.i(TAG, &quot;integer===&quot; + integer));</span><br></pre></td></tr></table></figure>
-<p>上面的代码也比较简单，首先我们使用了一个新的操作符 range，也就是范围的意思，我们可以用它来指定一个数字的范围，并按顺序发射出去，repeatWhen 中使用了一个新的操作符 timer，我们用他创建了一个定时器的被观察者对象，并指定了两秒的时长，当到达 2 秒时就会重复原始的 Observable 并重新订阅和发射。</p>
-<h2 id="3-repeatUntil"><a href="#3-repeatUntil" class="headerlink" title="3.repeatUntil"></a>3.repeatUntil</h2><p>例如，我想间隔 1 秒顺序打印数字 0-2，当从开始打印到第 5 秒的时候就停止打印，代码如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Observable.interval(1000, TimeUnit.MILLISECONDS)</span><br><span class="line">            .take(3)</span><br><span class="line">            .repeatUntil(() -&gt; System.currentTimeMillis() - currentTimeMillis &gt; 5000)</span><br><span class="line">            .subscribe(aLong -&gt; LogUtil.i(TAG, &quot;aLong===&quot; + aLong));</span><br></pre></td></tr></table></figure>
-<p>这里我们使用了一个新的操作符 interval，它可以指定时间单位的时长发送数字序列，还有一个操作符是 take，它表示只取前 3 个，注意：从 0 开始，不包含它自己，接下来我们在 repeatUntil 里加了个判断，当大于 5 秒就停止重复打印。</p>
-<p>执行结果如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">I/RxJavaOperatorActivity: aLong===0</span><br><span class="line">I/RxJavaOperatorActivity: aLong===1</span><br><span class="line">I/RxJavaOperatorActivity: aLong===2</span><br><span class="line">I/RxJavaOperatorActivity: aLong===0</span><br><span class="line">I/RxJavaOperatorActivity: aLong===1</span><br><span class="line">I/RxJavaOperatorActivity: aLong===2</span><br></pre></td></tr></table></figure>
-<p>怎么样？是不是立马就明白了。</p>
-<p>好了，今天的学习内容就算完成了，感觉是不是非常简单？如果你学会了就赶紧动手去实践一下吧，说不定你会有新的发现哦！</p>
-<p>最后，我和大家分享一下我学习的一些经验或者是见解吧。我们再学习的过程中，可能学的很多东西都是点状的，我们要把学习到的东西学会融会贯通，将他们连接成线即学会相互联系，再将线形成面，再形成体，这样我们学到的知识才能形成一个完整的知识体系，不要只见树叶，不见森林，希望大家在学习的过程中，多思考，多总结！</p>
-<p>Ps:扫描下面的二维码，关注「IT大飞说」，回复「加群」，拉你进入兄弟战斗群，最后告诉你们一个小秘密，公号对话框回复「装备01」 送你一件珍藏版的打怪装备，战斗力瞬间可增加 80！！！我使用过，效果杠杠滴！从此，我们就可以一起愉快的装逼了！</p>
-<p>飞哥带你去装逼，一直装逼到天黑！</p>
-<p>更多干货文章请关注我的微信公众号：<br><img src="https://img-blog.csdn.net/20180626144909992?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="扫一扫关注"></p>
-<p>另外，我还建了一个免费的知识星球，感兴趣的微信扫码即可加入！</p>
-<p><img src="http://image.x-sir.com/zsxq_qrcodezsxq_qrcode.jpg" alt="image"></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/05/21/RxJava2.x操作符之repeat/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -726,46 +720,14 @@
 <p>执行结果如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">I/RxJavaOperatorActivity: just():[0, 1, 2, 3, 4, 5]</span><br><span class="line">I/RxJavaOperatorActivity: fromIterable():0</span><br><span class="line">I/RxJavaOperatorActivity: fromIterable():1</span><br><span class="line">I/RxJavaOperatorActivity: fromIterable():2</span><br><span class="line">I/RxJavaOperatorActivity: fromIterable():3</span><br><span class="line">I/RxJavaOperatorActivity: fromIterable():4</span><br><span class="line">I/RxJavaOperatorActivity: fromIterable():5</span><br></pre></td></tr></table></figure>
 <p>从上面打印的日志我们可以看到，just 是将整个 list 数据传递下来了，而 fromIterable 是将 list 中的数据遍历并一个一个发射出去，数组也是一样的道理，数组使用 fromArray 操作符。</p>
-<p>这里需要注意一个点，just 是可以接收 1-10 参数的，如果传入 1-5 的数字作为参数，那么它也会按顺序去打印的，而不是作为一个数组发射出去。</p>
-<p>举个例子你就明白了：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Observable.just(1, 2, 3, 4, 5).subscribe(integer -&gt; LogUtil.i(TAG, &quot;just():&quot; + integer));</span><br></pre></td></tr></table></figure>
-<p>执行结果如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">I/RxJavaOperatorActivity: just():1</span><br><span class="line">I/RxJavaOperatorActivity: just():2</span><br><span class="line">I/RxJavaOperatorActivity: just():3</span><br><span class="line">I/RxJavaOperatorActivity: just():4</span><br><span class="line">I/RxJavaOperatorActivity: just():5</span><br></pre></td></tr></table></figure>
-<p>怎么样？是不是瞬间就懂了。</p>
-<p>另外，from 还有一个 fromFuture 操作符，Future 是什么东西？fromFuture 又是如何使用的呢？这个问题问的好，大飞这就给你细细道来。</p>
-<p>Future 是 java.util.concurrent 包下的一个接口，我们都知道，创建线程的 2 种方式，一种是直接继承 Thread，另外一种就是实现 Runnable接口，但是这 2 种方式都有一个缺点就是在执行完任务之后无法获取执行的结果。</p>
-<p>如果需要获取执行结果，就必须通过共享变量或者使用线程通信的方式来达到效果，这样使用起来就比较麻烦。而自从 JDK 1.5 开始，给我们提供了 Callable 和 Future 接口，通过这两个接口我们可以在任务执行完毕之后得到线程执行的结果。</p>
-<p>一般来说，Callable 需要和 ExecutorService 配合来使用的，举个非常简单的例子吧。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">static class MyCallable implements Callable&lt;Integer&gt; &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Integer call() throws Exception &#123;</span><br><span class="line">        LogUtil.i(TAG, &quot;call():在这里模拟一些耗时操作...&quot;);</span><br><span class="line">        Thread.sleep(3000);</span><br><span class="line">        int sum = 0;</span><br><span class="line">        for (int i = 0; i &lt;= 100; i++) &#123;</span><br><span class="line">            sum += i;</span><br><span class="line">        &#125;</span><br><span class="line">        return sum;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void calculate() &#123;</span><br><span class="line">    ExecutorService executorService = Executors.newCachedThreadPool();</span><br><span class="line">    Future&lt;Integer&gt; future = executorService.submit(new MyCallable());</span><br><span class="line"></span><br><span class="line">    try &#123;</span><br><span class="line">        LogUtil.i(TAG, &quot;任务运行的结果：&quot; + future.get());</span><br><span class="line">    &#125; catch (InterruptedException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125; catch (ExecutionException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面的代码也比较简单，我相信大家都能看得懂，我们的 MyCallable 类实现了 Callable 接口，在 call 方法中进行了一些耗时的操作，然后将结果返回出去，紧接着我们创建了一个线程池，创建了一个 MyCallable 的对象并将其提交到线程池中，最后将执行的结果打印出来。</p>
-<p>执行结果如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2019-05-19 16:22:36.932 I/RxJavaOperatorActivity: call():在这里模拟一些耗时操作...</span><br><span class="line">2019-05-19 16:22:40.933 I/RxJavaOperatorActivity: 任务运行的结果：5050</span><br></pre></td></tr></table></figure>
-<p>我们再来看看如何配合 RxJava 来使用，这里使用到了 fromFuture 操作符，其实使用起来非常简单，简单修改一下上面的代码，相信你立刻就秒懂了！</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Observable.fromFuture(future).subscribe(s -&gt; LogUtil.i(TAG, &quot;任务运行的结果：&quot; + s));</span><br></pre></td></tr></table></figure>
-<p>这里我们就不调用 future 的 get 方法来获取执行的结果了，而是将 future 对象使用 fromFuture 操作符将其作为参数传递进去，当任务执行完成后，我们的观察者就会收到执行完后的结果，说白了就是 RxJava 内部帮你执行了 get 的方法并把结果回调给你了。</p>
-<p>总结一下，对于 Future，它会发射 Future.get() 方法返回的单个数据。</p>
-<p>细心的你可能已经发现了，fromFuture 还有一个重载方法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fromFuture(Future&lt;? extends T&gt; future, long timeout, TimeUnit unit)；</span><br></pre></td></tr></table></figure>
-<p>那第二个参数和第三个参数是什么意思呢？先别急，我们先看下 Future 接口的定义：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public interface Future&lt;V&gt; &#123;</span><br><span class="line">    boolean cancel(boolean mayInterruptIfRunning);</span><br><span class="line">    boolean isCancelled();</span><br><span class="line">    boolean isDone();</span><br><span class="line">    V get() throws InterruptedException, ExecutionException;</span><br><span class="line">    V get(long timeout, TimeUnit unit)</span><br><span class="line">        throws InterruptedException, ExecutionException, TimeoutException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>看到没有，我们发现原来 get 方法也有一个重载方法，也就是说 fromFuture 3 个参数的方法中后两个参数对应的就是 get 重载方法中的这两个参数。</p>
-<p>那么问题来了，这两个参数有什么作用呢？这两参数的意思是，我们可以指定执行任务的时长和时间单位，如果过了指定的时长，Future 还没有返回一个结果，那么这个 Observable 就会发射异常通知并终止。</p>
-<p>我们可以测试一下是不是这样的。我们现在指定一个执行任务的时长，我在执行任务的方法中睡了 3 秒，那么这里我就给它设置成 2 秒，这样设置，任务肯定是没有执行完成的，我们看看这个时候会不会和我们猜测的一样会抛异常。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Observable.fromFuture(future, 2, TimeUnit.SECONDS).subscribe(s -&gt; Observable.fromFuture(future, 2, TimeUnit.SECONDS)</span><br><span class="line">                .subscribe(s -&gt; LogUtil.i(TAG, &quot;任务运行的结果：&quot; + s)</span><br><span class="line">                        , throwable -&gt; LogUtil.e(TAG, &quot;onError:&quot; + throwable.getMessage()));</span><br></pre></td></tr></table></figure>
-<p>执行结果如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">I/RxJavaOperatorActivity: call():在这里模拟一些耗时操作...</span><br><span class="line">E/RxJavaOperatorActivity: onError:null</span><br></pre></td></tr></table></figure>
-<p>看到没有，果不其然报错了，这样我们就可以在超时的时候做一些处理了。</p>
-<p>好了，我们今天的学习目标就算达成了，感觉是不是很简单，很轻松？我们来回顾下今天所学的东西，首先我们学习了 fromIterable 操作符，它与 just 操作符有相似之处，因此我将其与 just 操作符举例说明了他们的区别。</p>
-<p>紧接着我们回顾了 Java 中创建线程的相关知识，并学会了将其配合 fromFuture 操作符一起使用，真的是非常方便的。</p>
-<p>如果你学会了就赶紧动手去实践一下吧，有数据表明，学习后实践的吸收效果比不实践的效果高几十倍！</p>
-<p>今天的内容确实比较轻松和简单，后面我将继续带领大家一起学习新的内容，大家敬请期待吧！</p>
-<p>最后，我和大家分享一下我学习的一些经验或者是见解吧。我们再学习的过程中，可能学的很多东西都是点状的，我们要把学习到的东西学会融会贯通，将他们连接成线即学会相互联系，再将线形成面，再形成体，这样我们学到的知识才能形成一个完整的知识体系，不要只见树叶，不见森林，希望大家在学习的过程中，多思考，多总结！</p>
-<p>Ps:扫描下面的二维码，关注「IT大飞说」，回复「加群」，拉你进入兄弟战斗群，最后告诉你们一个小秘密，公号对话框回复「装备01」 送你一件珍藏版的打怪装备，战斗力瞬间可增加 80！！！我使用过，效果杠杠滴！从此，我们就可以一起愉快的装逼了！</p>
-<p>飞哥带你去装逼，一直装逼到天黑！</p>
-<p>更多干货文章请关注我的微信公众号：<br><img src="https://img-blog.csdn.net/20180626144909992?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="扫一扫关注"></p>
-<p>另外，我还建了一个免费的知识星球，感兴趣的微信扫码即可加入！</p>
-<p><img src="http://image.x-sir.com/zsxq_qrcodezsxq_qrcode.jpg" alt="image"></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/05/19/RxJava2.x创建操作符之from/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -869,35 +831,14 @@
 <p>今天，我们先来学习两个简单的创建操作符 create &amp; just。</p>
 <p>在学习之前，我们先来回顾下观察者模式，大多数同学应该都不陌生吧，例如 Android 的EventBus 等框架都使用了观察者模式，简单说这就是一种发布、订阅的模式，你可以简单理解为订阅报纸。</p>
 <p>这与 RxJava 又有什么关系呢？我们先来看下 Rx 的概念：Rx 是一个使用可观察数据流进行异步编程的编程接口，也就是说 RxJava 中使用了观察者模式的这种编程思想，另外还结合了迭代器模式和函数式编程，并把它运用发挥到了极致。</p>
-<p>我们都知道观察者模式中，有 3 个重要的概念，被观察者，观察者和订阅，类比到现实中订阅报纸的场景中就是，报纸是被观察者，阅读报纸的人是观察者，人订阅了报纸也就是说使用订阅将他们两者关联起来，这样就形成了一种发布、订阅的关系。</p>
-<p>举个例子吧，我们来看看 Android 中点击事件的处理，注意：观察者模式与点击回调模式有很多的相似处，简单对比就是：回调是一对一的关系，只监听一个事件；观察者模式则是一个主题，可以有多个监听者，当主题变化时，向部分或所有监听者发出变化的通知，观察者模式是一对多的关系。</p>
-<p><img src="http://image.x-sir.com/FqENsbJlDpDhhbFg7_fllxjBkAsu" alt=""></p>
-<p>上面的代码很简单吧，我相信大家都能看得懂，一般我们习惯上将监听器写成匿名的，这里我是为了给大家做类比，所以分开写了，然后我们再结合观察者模式看看上面的代码，第一步实例化一个 Button 就相当于是创建了一个被观察者，第二步初始化一个监听器就相当于是创建了一个观察者，第三步将监听器和 Button 绑定就相当于是把被观察者和观察者通过订阅将他们两者关联起来，是不是理解起来非常简单。</p>
-<p>我们再来看看 RxJava 如何来实现，我们就先从最简单的 Hello World 学习起来吧，同样的还是三步走！</p>
-<p>第一步，创建被观察者（Observable）<br>第二步，创建观察者（Observer）<br>第三步，将被观察者和观察者绑定（subscribe）</p>
-<p><img src="http://image.x-sir.com/FnIeZphHHxbniPktU0LPojPy-uLe" alt=""></p>
-<p>和上面的点击事件对比一下，是不是感觉有异曲同工之妙？但是我们习惯上一般不分开写，而是将方法的调用写成链式调用，将对对象写成匿名的对象，我们将上面的代码变换下，如下所示：</p>
-<p><img src="http://image.x-sir.com/FhRcbDj6_Pav2DBwUQRLpbMBRJJw" alt=""></p>
-<p>我们看到，在上面的创建被观察者的 subscribe 方法中，调用了 onNext 方法，将 “Hello World” 字符串传递下去，而在下面调用 subscribe 的时候，传递了一个 Consumer 对象（观察者），而这个 Consumer 的回调方法就会收到 onNext 的传递过来的值，接着，我们在下面打印了一下 onNext 传递过来的字符串。</p>
-<p>实际上，subscribe（订阅）是一个重载方法，它可以接收 0-4 个参数，当传递一个参数时，就代表接收处理成功时的回调（onNext），如传递多个参数则代表接收处理错误、完成、当订阅完成时的事件处理，我们这里为了演示，就只处理成功事件就行了。</p>
-<p>上面的代码看着还是不太完美，我们这里使用 just 操作符将它改造一下，just 是什么鬼？看着怎么一脸懵逼，好吧，那就让大飞哥来给你讲解下 just 操作符。</p>
-<p>just 操作符和 create 操作符一样，也是创建操作符的一种，just 操作符是将一个或多个对象转换成发射这个或这些对象的一个 Observable，看完概念还是一脸懵逼怎么办？确实，这些概念是比较抽象的，其实，用起来特别简单，当你会用了之后，你再回过头去理解起来会容易很多。</p>
-<p>来继续将我们的 Hello World 用 just 操作符改造一下：</p>
-<p><img src="http://image.x-sir.com/FqctUFNUoi_pT5I0QQX4Q1R99LdF" alt=""></p>
-<p>怎么样，是不是更简单了，我们点开 just 方法，我们看到它接收的是一个 T，也就是说它可以接收任意类型的参数，我们以后就可以使用 just 操作符来很方便的创建各种被观察者对象了，非常棒！我们又学会了一个操作符，欧耶！</p>
-<p>上面的代码看着还是有点长，我们可以用 Lambda 表达式改造一下看看：</p>
-<p><img src="http://image.x-sir.com/FlGPbco53npYjS-AkQ4jxKwoQfJx" alt=""></p>
-<p>哇哦！It’s beautiful! 一行代码就搞定了，有木有？</p>
-<p>至此，我们今天的学习目标就算达成了，感觉是不是很简单，很轻松？</p>
-<p>如果你学会了就赶紧动手去实践一下吧，实践是检验真理的唯一标准，眼过千遍不如手过一遍，代码是用来敲的不是用来看的，希望我们程序员都是实干家！</p>
-<p>今天的内容确实比较轻松和简单，后面还有更大的挑战呢，从今天开始，大飞哥将带你一起打怪升级练本领，一起去闯关，去战斗！大家敬请期待吧！</p>
-<p>最后，引用大飞哥的一句名言作为结尾吧：“是兄弟，就一起去战斗吧！”</p>
-<p>Ps:扫描下面的二维码，关注「IT大飞说」，回复「加群」，拉你进入兄弟战斗群，最后告诉你们一个小秘密，公号对话框回复「装备01」 送你一件珍藏版的打怪装备，战斗力瞬间可增加 80！！！我使用过，效果杠杠滴！从此，我们就可以一起愉快的装逼了！</p>
-<p>飞哥带你去装逼，一直装逼到天黑！</p>
-<p>更多干货文章请关注我的微信公众号：<br><img src="https://img-blog.csdn.net/20180626144909992?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="扫一扫关注"></p>
-<p>另外，我还建了一个免费的知识星球，感兴趣的微信扫码即可加入！</p>
-<p><img src="http://image.x-sir.com/zsxq_qrcodezsxq_qrcode.jpg" alt="image"></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/05/18/RxJava2.x创建操作符之create和just (打怪升级版)！！！/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -996,53 +937,14 @@
 <center><strong>curl</strong></center>
 
 <p>里面包含 32 位 &amp; 64 位的安装程序，还有安装教程的链接供大家参考，安装完成后需要配置环境变量，然后在 cmd 中输入</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl --version</span><br></pre></td></tr></table></figure>
-<p>如果显示 curl 的版本号说明安装成功了~</p>
-<h2 id="3"><a href="#3" class="headerlink" title="3."></a><em>3.</em></h2><p>有了 curl 命令，我们就可以执行 curl 命令来进行上传文件了，我们先看下蒲公英上传 apk 的接口文档，如下图：</p>
-<p><img src="https://img-blog.csdnimg.cn/20190130093717762.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=,size_16,color_FFFFFF,t_70" alt="image"></p>
-<p>其中，_api_key、uKey 和 file 字段是必须的，其他参数都是可选项，_api_key 和 uKey 蒲公英都会为每个 APP 自动分配一个，在你的蒲公英账号对应的 APP 的信息中可以找到，file 参数就是要上传的文件了，为了让我们上传的 APP 有每次更新的描述，我们还需要添加一个 buildUpdateDescription 字段，这样，每次上传 APP 之后就可以显示本次更新的描述信息了。</p>
-<p>文档看完之后，我们需要使用 curl 命令来发送一个上传文件的 POST 请求，url 的语法如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl(选项)(参数)</span><br></pre></td></tr></table></figure>
-<p><img src="https://img-blog.csdnimg.cn/20190130093812715.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=,size_16,color_FFFFFF,t_70" alt="image"></p>
-<p>curl 命令的选项有很多，上图只是截取了其中的一部分，根据蒲公英上传 APP 的接口文档，提交的是 multipart/form-data 类型的数据，因此我们使用 -F 选项，我们可以写出伪命令了：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -F 参数1 -F 参数2 -F 参数3 接口地址</span><br></pre></td></tr></table></figure>
-<p>因为我们上传 APP 需要 3 个参数，所以这里也需要三个参数，后面再加上我们请求的接口地址就可以了，这应该很好理解吧？</p>
-<p>我们再把参数部分替换成真实的的参数，完整的命令如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -F &quot;file=app/build/outputs/apk/release/release-v1.0.apk&quot; -F &quot;uKey=ce0e825125bfe666762b2a93feb7de00&quot; -F &quot;_api_key=534a49154990d8e9126918fbdbee600a&quot; -F &quot;buildUpdateDescription=bugs fix!&quot; https://www.pgyer.com/apiv2/app/upload</span><br></pre></td></tr></table></figure>
-<p>好了，一条完整的 curl 上传命令算是完成了，其中，-F 后面的参数是字段名和参数的值，中间用 “=” 号进行连接，然后我们打开 AS 的 Terminal，执行上面的命令即可进行上传 apk 到蒲公英，上传过程也有进度显示，如果显示 100%，说明上传成功了，注意上面的 uKey 和 _api_key 的值换成你自己的，另外也要注意你打完包的 apk 文件路径要真实存在，否则会出现异常！</p>
-<h2 id="4"><a href="#4" class="headerlink" title="4."></a><em>4.</em></h2><p>上面我们已经学会了使用 curl 命令上传我们的 apk 了，但是你们有没有发现，我们每次上传 apk 需要好几步：</p>
-<ul>
-<li>打包 apk；</li>
-<li>修改上传命令中 apk 的文件名和描述信息；</li>
-<li>复制 curl 命令到 Terminal 中执行；</li>
-<li>…</li>
-</ul>
-<p>至少需要 3 步才能完成，这也是一件非常麻烦的事情，作为程序员，都是比较懒的，与其说懒不如说是机智，避免做浪费时间的事情，我再想，能不能一条命令一步到位呢？当然是可以的。</p>
-<p>我们先进行改造上传命令的第一步，先把 curl 命令中 file 的值，也就是 apk 路径动态进行获取，这样就不用每次都去修改了，我们知道 gradle 语法中的字符串有两种，一种是单引号，另一种是双引号，区别就是，双引号支持插值，这样我们就可以写一个方法，这个方法的作用就是获取打包好的 apk 的全路径，代码如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">def getApkFullPath() &#123;</span><br><span class="line">    return rootDir.getAbsolutePath() + &quot;/app/build/outputs/apk/release/&quot; + getApkName()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">def getApkName() &#123;</span><br><span class="line">    return &quot;update-app-example-v$&#123;android.defaultConfig.versionName&#125;-$&#123;releaseTime()&#125;.apk&quot;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static def releaseTime() &#123;</span><br><span class="line">    return new Date().format(&quot;yyyy-MM-dd&quot;, TimeZone.getTimeZone(&quot;UTC&quot;))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面总共有 3 个方法，也比较简单，大家应该都能看得懂，就不过多解释了，其中第一个方法中的 <code>rootDir.getAbsolutePath()</code> 说一下，它可以获取你当前项目在你本地电脑的全路径。</p>
-<p>方法写好了，我们还需要把打包脚本稍微修改下，具体如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">release &#123;</span><br><span class="line">            minifyEnabled false</span><br><span class="line">            proguardFiles getDefaultProguardFile(&apos;proguard-android.txt&apos;), &apos;proguard-rules.pro&apos;</span><br><span class="line">            signingConfig signingConfigs.release</span><br><span class="line">            android.applicationVariants.all &#123; variant -&gt;</span><br><span class="line">                variant.outputs.all &#123;</span><br><span class="line">                    outputFileName = getApkName()</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
-<p>注意看上面的 <code>outputFileName = getApkName()</code>，这样写每次生成的 apk 的名字就是我们要获取的 apk 的文件名，这样每次打包完后我们都能获取到打包完后的 apk 的文件名了！这样，我们 curl 上传命令中动态获取 apk 文件路径这个问题就算解决了，我们再看下我们的 curl 命令中还有 uKey 和 _api_key 两个参数，因为这两个值属于比较私密的东西我们一般都是配置到 <code>local.properties</code> 文件中，然后动态读取的，git 默认是忽略提交 <code>local.properties</code> 文件的，这样防止自己的私密信息被提交和泄露出去，因此，这里也写个方法动态读取一下吧：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">def readProperties(key) &#123;</span><br><span class="line">    File file = rootProject.file(&apos;local.properties&apos;)</span><br><span class="line">    if (file.exists()) &#123;</span><br><span class="line">        InputStream inputStream = rootProject.file(&apos;local.properties&apos;).newDataInputStream()</span><br><span class="line">        Properties properties = new Properties()</span><br><span class="line">        properties.load(inputStream)</span><br><span class="line"></span><br><span class="line">        if (properties.containsKey(key)) &#123;</span><br><span class="line">            return properties.getProperty(key)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这个方法也比较简单，相信大家都能看的明白！</p>
-<p>现在我们的上传命令中还有一个字段 <code>buildUpdateDescription</code>，更新描述信息，每次上传 apk 都需要修改一下更新的描述，直接在命令中修改，也不太好，因此我们也写个方法动态获取吧，如下所示：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">static def getUpdateDescription() &#123;</span><br><span class="line">    return &apos;1.修复一些bug；\n2.提升用户体验！&apos;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面的代码，非常简单，一目了然，只要是程序员都能看得懂，如果你看不懂，说明你是伪程序员！</p>
-<p>好了，终于完成了，我们最终上传的命令被改造成了这样：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -F &quot;file=@$&#123;getApkFullPath()&#125;&quot; -F &quot;uKey=$&#123;readProperties(&apos;pgyer.userKey&apos;)&#125;&quot; -F &quot;_api_key=$&#123;readProperties(&apos;pgyer.apiKey&apos;)&#125;&quot; -F &quot;buildUpdateDescription=$&#123;getUpdateDescription()&#125;&quot; https://www.pgyer.com/apiv2/app/upload</span><br></pre></td></tr></table></figure>
-<h2 id="5"><a href="#5" class="headerlink" title="5."></a><em>5.</em></h2><p>上面的命令算是改造完成了，不知道你们有没有发现，有个致命的问题就是，这条命令怎么执行啊？因为我么你的命令中动态调用了 Gradle 中我们写的方法，直接在 Terminal 中执行肯定是会报错的！这可就尴尬了。。我们想了想，要想让我们上传命令中的方法能够被成功调用，这个命令和被调用的方法肯定是在同一个 Gradle 文件中的，我们再想能不能写一个 Task，这这个 Task 中执行我们的上传命令，这样不就解决问题了吗？嗯，想了想是可以的，我发现在写的过程中 Task 好写，但是我们这个命令怎么才能够执行呢？肯定也需要一个东西才能执行我们的命令，搜了下，Gradle 中有个 <code>exec</code> 东西，它可以执行一条具体的 bash 命令，嗯，灰常不错，可以的，very good!真香！最终我们写的完整的 Task 如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">task(&quot;uploadApk&quot;) &#123;</span><br><span class="line">        def command = &quot;curl -F \&quot;file=@$&#123;getApkFullPath()&#125;\&quot; -F \&quot;uKey=$&#123;readProperties(&apos;pgyer.userKey&apos;)&#125;\&quot; -F \&quot;_api_key=$&#123;readProperties(&apos;pgyer.apiKey&apos;)&#125;\&quot; -F \&quot;buildUpdateDescription=$&#123;getUpdateDescription()&#125;\&quot; https://www.pgyer.com/apiv2/app/upload&quot;</span><br><span class="line">        println &quot;command:&quot; + command</span><br><span class="line">        try &#123;</span><br><span class="line">            exec &#123;</span><br><span class="line">                ExecSpec execSpec -&gt;</span><br><span class="line">                    executable &apos;bash&apos;</span><br><span class="line">                    args &apos;-c&apos;, command</span><br><span class="line">            &#125;</span><br><span class="line">            println &quot;uploadApk success~&quot;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace()</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面的代码相对也比较简单，其中 <code>ExecSpec</code> 大家可能看着比较陌生，executable ‘bash’ 为固定写法，其中 bash 代表 shell 的类型，Linux 下有很多种 shell 的类型，流行的 shell 有 ash、bash、ksh、csh、zsh 等，一般我们常用的都是 bash，其中的 command 就是一条具体的命令了。</p>
-<p>这样，我们只要执行这个 Task 就可以自动执行上传命令并动态获取我们所需要的参数了~</p>
-<h2 id="6"><a href="#6" class="headerlink" title="6."></a><em>6.</em></h2><p>上面的命令执行起来是非常方便的，但是在实际使用中，我们发现，需要先打完包之后才能执行上传的 Task，我们知道 Gradle 中的 Task 是可以依赖另一个 Task 的，打包命令实质上也是一个 Task，这样我们让我们自己写的 Task 依赖于打包的 Task 不就行了吗？我觉得没毛病，这样，当执行完打包后，自动执行上传命令，这样一条命令就可以解决问题，另外，我们自己的 Task 也需要稍微修改下，将上传的实现部分放到 <code>doLast</code> 闭包中，完成代码入下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">task(&quot;uploadApk&quot;) &#123;</span><br><span class="line">    doLast &#123;</span><br><span class="line">        def command = &quot;curl -F \&quot;file=@$&#123;getApkFullPath()&#125;\&quot; -F \&quot;uKey=$&#123;readProperties(&apos;pgyer.userKey&apos;)&#125;\&quot; -F \&quot;_api_key=$&#123;readProperties(&apos;pgyer.apiKey&apos;)&#125;\&quot; -F \&quot;buildUpdateDescription=$&#123;getUpdateDescription()&#125;\&quot; https://www.pgyer.com/apiv2/app/upload&quot;</span><br><span class="line">        println &quot;command:&quot; + command</span><br><span class="line">        try &#123;</span><br><span class="line">            exec &#123;</span><br><span class="line">                ExecSpec execSpec -&gt;</span><br><span class="line">                    executable &apos;bash&apos;</span><br><span class="line">                    args &apos;-c&apos;, command</span><br><span class="line">            &#125;</span><br><span class="line">            println &quot;uploadApk success~&quot;</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">uploadApk.dependsOn(&quot;assembleRelease&quot;)</span><br></pre></td></tr></table></figure>
-<p>从此，我们只要在 Terminal 中执行一条命令就可以实现打包上传了：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./gradlew uploadApk</span><br></pre></td></tr></table></figure>
-<p>温馨提示：Windows 用户执行命令不需要加 ./</p>
-<p>怎么样？是不是很爽！这个效率上的提升不是一点半点，后续我再想能不能把这个功能封装成一个 Gradle 插件的形式，提供给大家使用，这样也许是要添加一两行代码引用一下插件的就可以使用了，这样就更加方便了，敬请期待吧~</p>
-<p>如果我的文章对你有用，欢迎留言！</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/01/30/你不知道的 Gradle 技巧/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1145,6 +1047,14 @@
 <p>如果你觉得有帮助的话，请帮我点个 star，谢谢！另外，欢迎大家 fork 和 PR。</p>
 <p>温馨提示：<br>点击查看原文可以看到项目的主页。</p>
 
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/01/08/一行代码实现蒲公英市场APP检查更新/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1253,6 +1163,14 @@
 <p>开源库中文文档：<a href="https://www.jianshu.com/p/b343fcff51b0" target="_blank" rel="noopener">https://www.jianshu.com/p/b343fcff51b0</a></p>
 <p>官方网站：<a href="http://www.recyclerview.org/" target="_blank" rel="noopener">http://www.recyclerview.org/</a></p>
 
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/12/27/BaseRecyclerViewAdapterHelper/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1354,17 +1272,14 @@
 <p>我这里只定义了弧形的高度和背景颜色这两个自定义属性，其中还有渐变颜色的开始色值和结束色值，还有是否需要渐变等属性，都可以定义为自定义的属性，方便直接在布局文件中灵活进行配置，以适应不同的需求，也比较简单，我这里为了就不实现了。</p>
 <h2 id="2-自定义一个通用的-titlebar"><a href="#2-自定义一个通用的-titlebar" class="headerlink" title="2.自定义一个通用的 titlebar"></a>2.自定义一个通用的 titlebar</h2><p>这样做我们可以提高代码的复用性，可以将一些功能封装进去，也更好地体现了封装的思想，实现也比较简单，使用 LayoutInflater 加载了一个布局文件，然后将 文字，字体大小，字体颜色和 title 背景色等定义成了自定义的属性，方便在布局文件中进行设置，另外我们内部默认处理了点击返回按钮的事件，对于需要其他特殊情况下返回按钮的处理，我们也定义了一个接口，方便外部使用接口来自行进行处理，代码也非常简单，看下面：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by x-sir on 2018/9/2 :)</span><br><span class="line"> * Function:自定义通用 TitleBar</span><br><span class="line"> */</span><br><span class="line">public class TitleBarLayout extends LinearLayout &#123;</span><br><span class="line"></span><br><span class="line">    private ImageView ivBack;</span><br><span class="line">    private ImageView ivMenu;</span><br><span class="line">    private TextView tvTitleName;</span><br><span class="line">    private LinearLayout llTitleBg;</span><br><span class="line">    private CharSequence mText;</span><br><span class="line">    private int mTitleBgColor;</span><br><span class="line">    private boolean mMenuVisible;</span><br><span class="line">    private int mTextSize;</span><br><span class="line">    private int mTextColor;</span><br><span class="line">    private OnMenuClickListener mListener;</span><br><span class="line">    private OnBackClickListener mOnBackListener;</span><br><span class="line">    private static final String DEFAULT_TEXT = &quot;Title&quot;; // default text.</span><br><span class="line">    private static final int DEFAULT_TEXT_SIZE = 16; // default text size.</span><br><span class="line">    private static final String TAG = &quot;TitleBarLayout&quot;;</span><br><span class="line"></span><br><span class="line">    public TitleBarLayout(Context context) &#123;</span><br><span class="line">        this(context, null);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public TitleBarLayout(Context context, @Nullable AttributeSet attrs) &#123;</span><br><span class="line">        this(context, attrs, 0);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public TitleBarLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) &#123;</span><br><span class="line">        super(context, attrs, defStyleAttr);</span><br><span class="line"></span><br><span class="line">        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.TitleBarLayout);</span><br><span class="line">        mText = typedArray.getText(R.styleable.TitleBarLayout_text);</span><br><span class="line">        mTextSize = typedArray.getDimensionPixelSize(R.styleable.TitleBarLayout_textSize, DEFAULT_TEXT_SIZE);</span><br><span class="line">        mTextColor = typedArray.getColor(R.styleable.TitleBarLayout_textColor, Color.parseColor(&quot;#FFFFFF&quot;));</span><br><span class="line">        mTitleBgColor = typedArray.getColor(R.styleable.TitleBarLayout_titleBgColor, Color.parseColor(&quot;#1E90FF&quot;));</span><br><span class="line">        mMenuVisible = typedArray.getBoolean(R.styleable.TitleBarLayout_menuVisible, false);</span><br><span class="line">        typedArray.recycle();</span><br><span class="line"></span><br><span class="line">        initView(context);</span><br><span class="line">        initData();</span><br><span class="line">        initListener();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initView(Context context) &#123;</span><br><span class="line">        LayoutInflater.from(context).inflate(R.layout.common_titlebar, this);</span><br><span class="line">        ivBack = findViewById(R.id.ivBack);</span><br><span class="line">        ivMenu = findViewById(R.id.ivMenu);</span><br><span class="line">        tvTitleName = findViewById(R.id.tvTitleName);</span><br><span class="line">        llTitleBg = findViewById(R.id.llTitleBg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initData() &#123;</span><br><span class="line">        String text = (mText != null) ? mText.toString() : DEFAULT_TEXT;</span><br><span class="line">        tvTitleName.setText(text);</span><br><span class="line">        tvTitleName.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);</span><br><span class="line">        tvTitleName.setTextColor(mTextColor);</span><br><span class="line">        //llTitleBg.setBackgroundColor(mTitleBgColor);</span><br><span class="line">        ivMenu.setVisibility(mMenuVisible ? VISIBLE : INVISIBLE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initListener() &#123;</span><br><span class="line">        ivBack.setOnClickListener(v -&gt; &#123;</span><br><span class="line">            // 如果监听器不为空就让其自己处理，为空就默认处理（销毁页面）</span><br><span class="line">            if (mOnBackListener != null) &#123;</span><br><span class="line">                mOnBackListener.onClick();</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                ((Activity) getContext()).finish();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        ivMenu.setOnClickListener(v -&gt; &#123;</span><br><span class="line">            if (mListener != null) &#123;</span><br><span class="line">                mListener.onClick();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setTitleName(String title) &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(title)) &#123;</span><br><span class="line">            tvTitleName.setText(title);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            Log.e(TAG, &quot;set title name failed, because title is null!&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setOnMenuListener(OnMenuClickListener mListener) &#123;</span><br><span class="line">        this.mListener = mListener;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setOnBackListener(OnBackClickListener mOnBackListener) &#123;</span><br><span class="line">        this.mOnBackListener = mOnBackListener;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public interface OnMenuClickListener &#123;</span><br><span class="line">        void onClick();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public interface OnBackClickListener &#123;</span><br><span class="line">        void onClick();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>因为这里为了和绘制的弧形协调，我将 title 布局的背景设置了一个渐变的 shape 。</p>
-<h2 id="3-将布局延伸到系统状态栏"><a href="#3-将布局延伸到系统状态栏" class="headerlink" title="3.将布局延伸到系统状态栏"></a>3.将布局延伸到系统状态栏</h2><p>Android 5.0 之后我们可以设置 Activity 的布局延伸到系统状态栏中，这样我们页面看起来更美观和协调，设置也比较简单，直接贴代码了：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">    protected void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line">        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);</span><br><span class="line">        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>另外在布局文件中也可以设置，只需在你 App 引用的主题中添加一行代码即可：</p>
-<p><img src="http://pcobk8jbf.bkt.clouddn.com/FtLpSwRRbekR_PbI6n24DXvRqM8m" alt=""></p>
-<p>注意：因为这个属性是 5.0 之后才有的，在实际开发中需要做兼容处理，代码中设置时需要判断一下版本，布局文件中可以新建一个 values-v21 文件夹做兼容处理。</p>
-<p>如果你的 title 的文字跑到状态栏里了，那样会很丑，在 title 布局的根标签中添加下面一行代码就可以了：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">android:fitsSystemWindows=&quot;true&quot;</span><br></pre></td></tr></table></figure>
-<p>这行代码的意思就是不占用系统状态栏的空间。</p>
-<p>好了，所有绘制工作都已经完成了，是不是非常简单呢？如果觉得不错的话，欢迎点赞、评论和转发，你们的支持是我坚持不懈的动力！</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/11/06/绘制一个漂亮的弧形 View/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 

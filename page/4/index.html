@@ -214,6 +214,315 @@
   
   
   <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android 使用Glide实现圆形和圆角图片/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/24/Android 使用Glide实现圆形和圆角图片/" class="post-title-link" itemprop="url">Android 使用 Glide 实现圆形和圆角图片</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+08:00">2017-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-12-08 23:08:37" itemprop="dateModified" datetime="2018-12-08T23:08:37+08:00">2018-12-08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/09/24/Android 使用Glide实现圆形和圆角图片/" class="post-meta-item leancloud_visitors" data-flag-title="Android 使用 Glide 实现圆形和圆角图片" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/09/24/Android 使用Glide实现圆形和圆角图片/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android 使用Glide实现圆形和圆角图片/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="1-实现圆形图片"><a href="#1-实现圆形图片" class="headerlink" title="1.实现圆形图片"></a>1.实现圆形图片</h2><h3 id="1-1自定义圆形处理工具类"><a href="#1-1自定义圆形处理工具类" class="headerlink" title="1.1自定义圆形处理工具类"></a>1.1自定义圆形处理工具类</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line"></span><br><span class="line">import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;</span><br><span class="line">import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/6/17 :)</span><br><span class="line"> * Function:Glide Transformation 实现圆形图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class GlideCircleTransform extends BitmapTransformation &#123;</span><br><span class="line"></span><br><span class="line">    public GlideCircleTransform(Context context) &#123;</span><br><span class="line">        super(context);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected Bitmap transform(BitmapPool pool, Bitmap toTransform, int outWidth, int outHeight) &#123;</span><br><span class="line">        return circleCrop(pool, toTransform);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static Bitmap circleCrop(BitmapPool pool, Bitmap source) &#123;</span><br><span class="line">        if (source == null) return null;</span><br><span class="line"></span><br><span class="line">        int size = Math.min(source.getWidth(), source.getHeight());</span><br><span class="line">        int x = (source.getWidth() - size) / 2;</span><br><span class="line">        int y = (source.getHeight() - size) / 2;</span><br><span class="line"></span><br><span class="line">        // TODO this could be acquired from the pool too</span><br><span class="line">        Bitmap squared = Bitmap.createBitmap(source, x, y, size, size);</span><br><span class="line"></span><br><span class="line">        Bitmap result = pool.get(size, size, Bitmap.Config.ARGB_8888);</span><br><span class="line">        if (result == null) &#123;</span><br><span class="line">            result = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(result);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        paint.setShader(new BitmapShader(squared, BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP));</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line">        float r = size / 2f;</span><br><span class="line">        canvas.drawCircle(r, r, r, paint);</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String getId() &#123;</span><br><span class="line">        return getClass().getName();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="1-2用法"><a href="#1-2用法" class="headerlink" title="1.2用法"></a>1.2用法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Glide.with(mContext)</span><br><span class="line">                         .load(headpic)</span><br><span class="line">                         .diskCacheStrategy(DiskCacheStrategy.NONE)</span><br><span class="line">                         .transform(new GlideCircleTransform(mContext))</span><br><span class="line">                         .crossFade()</span><br><span class="line">                         .into(ivIcon);</span><br></pre></td></tr></table></figure>
+<h2 id="2-实现加载圆角图片"><a href="#2-实现加载圆角图片" class="headerlink" title="2.实现加载圆角图片"></a>2.实现加载圆角图片</h2><h3 id="2-1自定义圆角处理工具类"><a href="#2-1自定义圆角处理工具类" class="headerlink" title="2.1自定义圆角处理工具类"></a>2.1自定义圆角处理工具类</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.content.res.Resources;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line">import android.graphics.RectF;</span><br><span class="line"></span><br><span class="line">import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;</span><br><span class="line">import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/6/17 :)</span><br><span class="line"> * Function:Glide Transformation 实现圆角图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class GlideRoundTransform extends BitmapTransformation &#123;</span><br><span class="line"></span><br><span class="line">    private static float radius = 0f;</span><br><span class="line"></span><br><span class="line">    public GlideRoundTransform(Context context) &#123;</span><br><span class="line">        this(context, 4);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public GlideRoundTransform(Context context, int dp) &#123;</span><br><span class="line">        super(context);</span><br><span class="line">        this.radius = Resources.getSystem().getDisplayMetrics().density * dp;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override protected Bitmap transform(BitmapPool pool, Bitmap toTransform, int outWidth, int outHeight) &#123;</span><br><span class="line">        return roundCrop(pool, toTransform);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static Bitmap roundCrop(BitmapPool pool, Bitmap source) &#123;</span><br><span class="line">        if (source == null) return null;</span><br><span class="line"></span><br><span class="line">        Bitmap result = pool.get(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);</span><br><span class="line">        if (result == null) &#123;</span><br><span class="line">            result = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(result);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        paint.setShader(new BitmapShader(source, BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP));</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line">        RectF rectF = new RectF(0f, 0f, source.getWidth(), source.getHeight());</span><br><span class="line">        canvas.drawRoundRect(rectF, radius, radius, paint);</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override public String getId() &#123;</span><br><span class="line">        return getClass().getName() + Math.round(radius);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-1用法示例"><a href="#2-1用法示例" class="headerlink" title="2.1用法示例"></a>2.1用法示例</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Glide.with(mContext)</span><br><span class="line">                     .load(image_url)</span><br><span class="line">                     .transform(new GlideRoundTransform(mContext))</span><br><span class="line">                     .crossFade()</span><br><span class="line">                     .into(ivCard);</span><br></pre></td></tr></table></figure>
+<p>当然圆角的radius可以自己定义，使用重载带radius的构造传入即可</p>
+<p>好了，今天就到这里吧~</p>
+<p>夜深了，晚安咯(￣o￣) . z Z</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android实现帧动画/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/24/Android实现帧动画/" class="post-title-link" itemprop="url">Android 实现帧动画</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+08:00">2017-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-12-08 23:29:33" itemprop="dateModified" datetime="2018-12-08T23:29:33+08:00">2018-12-08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/09/24/Android实现帧动画/" class="post-meta-item leancloud_visitors" data-flag-title="Android 实现帧动画" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/09/24/Android实现帧动画/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android实现帧动画/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="1-在res的drawable下新建一个布局animation-xml-文件"><a href="#1-在res的drawable下新建一个布局animation-xml-文件" class="headerlink" title="1.在res的drawable下新建一个布局animation.xml*文件"></a>1.在res的drawable下新建一个布局<strong>animation.xml*</strong>文件</h2><figure class="highlight plain"><figcaption><span>version</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br></pre></td><td class="code"><pre><span class="line">&lt;animation-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    android:oneshot=&quot;true&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image1&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image2&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image3&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image4&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image5&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image6&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image7&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image8&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image9&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image10&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image11&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image12&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image13&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image14&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image15&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image16&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image17&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image18&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image19&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image20&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image21&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image22&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image23&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image24&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image25&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image26&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image27&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image28&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image29&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image30&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image31&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image32&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image33&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image34&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image35&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image36&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image37&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image38&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image39&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image40&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image41&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image42&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image43&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image44&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image45&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image46&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image47&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image48&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image49&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image50&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image51&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image52&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image53&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image54&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image55&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image56&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image57&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image58&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image59&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image60&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line"></span><br><span class="line">&lt;/animation-list&gt;</span><br></pre></td></tr></table></figure>
+<p><strong>android:oneshot=”true”</strong>当为true时表示只播放一次，为false时表示循环播放；</p>
+<h2 id="2-给ImageView设置帧动画的src"><a href="#2-给ImageView设置帧动画的src" class="headerlink" title="2.给ImageView设置帧动画的src"></a>2.给ImageView设置帧动画的src</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;ImageView</span><br><span class="line">       android:id=&quot;@+id/ivLoading&quot;</span><br><span class="line">       android:layout_width=&quot;300dp&quot;</span><br><span class="line">       android:layout_height=&quot;300dp&quot;</span><br><span class="line">       android:layout_centerInParent=&quot;true&quot;</span><br><span class="line">       android:src=&quot;@drawable/animation&quot;</span><br><span class="line">       android:visibility=&quot;gone&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="3-播放帧动画"><a href="#3-播放帧动画" class="headerlink" title="3.播放帧动画"></a>3.播放帧动画</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ivLoading.setImageResource(R.drawable.animation);</span><br><span class="line">drawable = (AnimationDrawable) ivLoading.getDrawable();</span><br><span class="line">drawable.start();</span><br></pre></td></tr></table></figure>
+<h2 id="4-以上播放默认是没有监听的，所以我们这里提供一种自定义View，可以监听帧动画播完的监听"><a href="#4-以上播放默认是没有监听的，所以我们这里提供一种自定义View，可以监听帧动画播完的监听" class="headerlink" title="4.以上播放默认是没有监听的，所以我们这里提供一种自定义View，可以监听帧动画播完的监听"></a>4.以上播放默认是没有监听的，所以我们这里提供一种自定义View，可以监听帧动画播完的监听</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 自定义可以播放动态图片的ImageView</span><br><span class="line"> */</span><br><span class="line">public class AnimationImageView extends ImageView &#123;</span><br><span class="line"></span><br><span class="line">	public AnimationImageView(Context context) &#123;</span><br><span class="line">		super(context);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	public AnimationImageView(Context context, AttributeSet attrs) &#123;</span><br><span class="line">		super(context, attrs);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	public AnimationImageView(Context context, AttributeSet attrs, int defStyle) &#123;</span><br><span class="line">		super(context, attrs, defStyle);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	</span><br><span class="line">	</span><br><span class="line">	public interface OnFrameAnimationListener&#123;</span><br><span class="line">		/**</span><br><span class="line">		 * 动画开始播放后调用</span><br><span class="line">		 */</span><br><span class="line">		void onStart();</span><br><span class="line">		/**</span><br><span class="line">		 * 动画结束播放后调用</span><br><span class="line">		 */</span><br><span class="line">		void onEnd();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	/**</span><br><span class="line">	 * 不带动画监听的播放</span><br><span class="line">	 * @param resId</span><br><span class="line">	 */</span><br><span class="line">	public void loadAnimation(int resId)&#123;</span><br><span class="line">		setImageResource(resId);</span><br><span class="line">		AnimationDrawable anim = (AnimationDrawable)getDrawable();</span><br><span class="line">		anim.start();</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	/**</span><br><span class="line">	 * 带动画监听的播放</span><br><span class="line">	 * @param resId</span><br><span class="line">	 * @param listener</span><br><span class="line">	 */</span><br><span class="line">	public void loadAnimation(int resId, final OnFrameAnimationListener listener) &#123;</span><br><span class="line">		setImageResource(resId);</span><br><span class="line">		AnimationDrawable anim = (AnimationDrawable)getDrawable();</span><br><span class="line">		anim.start();</span><br><span class="line">		if(listener != null)&#123;</span><br><span class="line">			// 调用回调函数onStart</span><br><span class="line">			listener.onStart();</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		// 计算动态图片所花费的事件</span><br><span class="line">		int durationTime = 0;</span><br><span class="line">        for (int i = 0; i &lt; anim.getNumberOfFrames(); i++) &#123;</span><br><span class="line">            durationTime += anim.getDuration(i);</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        // 动画结束后</span><br><span class="line">        new Handler().postDelayed(new Runnable() &#123;</span><br><span class="line">			</span><br><span class="line">			@Override</span><br><span class="line">			public void run() &#123;</span><br><span class="line">				if(listener != null)&#123;</span><br><span class="line">					// 调用回调函数onEnd</span><br><span class="line">					listener.onEnd();</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;, durationTime);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="5-代码中加载并设置监听"><a href="#5-代码中加载并设置监听" class="headerlink" title="5.代码中加载并设置监听"></a>5.代码中加载并设置监听</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">// 加载带监听的帧动画</span><br><span class="line">anim_view.loadAnimation(R.drawable.anim_defense,</span><br><span class="line">		new OnFrameAnimationListener() &#123;</span><br><span class="line"></span><br><span class="line">			@Override</span><br><span class="line">			public void onStart() &#123;</span><br><span class="line">				// 动画刚播放时</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			@Override</span><br><span class="line">			public void onEnd() &#123;</span><br><span class="line">				// 动画结束播放时</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;);</span><br></pre></td></tr></table></figure>
+<p>参考文章：</p>
+<p><a href="http://blog.csdn.net/zuozuoshenghen/article/details/50249569" target="_blank" rel="noopener">http://blog.csdn.net/zuozuoshenghen/article/details/50249569</a></p>
+<p><a href="http://blog.csdn.net/u012975705/article/details/48717391" target="_blank" rel="noopener">http://blog.csdn.net/u012975705/article/details/48717391</a></p>
+<p><a href="http://www.cnblogs.com/net168/p/4204797.html" target="_blank" rel="noopener">http://www.cnblogs.com/net168/p/4204797.html</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android打开系统拍照和相册获取头像/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/24/Android打开系统拍照和相册获取头像/" class="post-title-link" itemprop="url">Android 打开系统拍照和相册获取头像</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+08:00">2017-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-12-09 14:29:27" itemprop="dateModified" datetime="2018-12-09T14:29:27+08:00">2018-12-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/09/24/Android打开系统拍照和相册获取头像/" class="post-meta-item leancloud_visitors" data-flag-title="Android 打开系统拍照和相册获取头像" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/09/24/Android打开系统拍照和相册获取头像/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android打开系统拍照和相册获取头像/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>现在许多应用都有上传头像的功能，再次奉上代开系统相册或打开系统相机拍照的实现，有的同学在测试小米手机上打开选择相册有奔溃，此代码已完美解决此问题…</p>
+<p>楼主，做的头像需要经过裁剪之后和圆形处理…</p>
+<h2 id="1-设置点击打开相机-amp-打开系统图库"><a href="#1-设置点击打开相机-amp-打开系统图库" class="headerlink" title="1.设置点击打开相机&amp;打开系统图库"></a>1.设置点击打开相机&amp;打开系统图库</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">            public void onClick(View v) &#123;</span><br><span class="line">                // 打开系统拍照程</span><br><span class="line">                Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);</span><br><span class="line">                startActivityForResult(camera, CAMERA);</span><br><span class="line">            &#125;</span><br><span class="line">        </span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public void onClick(View v) &#123;</span><br><span class="line">                // 打开系统图库选择图片</span><br><span class="line">                Intent picture = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);</span><br><span class="line">                startActivityForResult(picture, PICTURE);</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="2-重写带结果启动的回调onActivityResult"><a href="#2-重写带结果启动的回调onActivityResult" class="headerlink" title="2.重写带结果启动的回调onActivityResult"></a>2.重写带结果启动的回调onActivityResult</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">    protected void onActivityResult(int requestCode, int resultCode, Intent data) &#123;</span><br><span class="line">        super.onActivityResult(requestCode, resultCode, data);</span><br><span class="line"></span><br><span class="line">        if (requestCode == CAMERA &amp;&amp; resultCode == RESULT_OK &amp;&amp; data != null) &#123;</span><br><span class="line"></span><br><span class="line">            // 拍照</span><br><span class="line">            Bundle bundle = data.getExtras();</span><br><span class="line">            // 获取相机返回的数据，并转换为图片格式</span><br><span class="line">            Bitmap bitmap = (Bitmap) bundle.get(&quot;data&quot;);</span><br><span class="line">            // bitmap圆形裁剪</span><br><span class="line">//            bitmap = BitmapUtils.zoom(bitmap, DensityUtil.dp2px(this, 62), DensityUtil.dp2px(this, 62));</span><br><span class="line">            bitmap = BitmapUtils.zoom(bitmap, DensityUtil.dp2px(this, 20), DensityUtil.dp2px(this, 20));</span><br><span class="line">            Bitmap circleBitmap = BitmapUtils.circleBitmap(bitmap);</span><br><span class="line"></span><br><span class="line">            //TODO 将图片上传到服务器</span><br><span class="line">//            ivIcon.setImageBitmap(circleBitmap);</span><br><span class="line">            uploadHeadpic(bitmap);</span><br><span class="line">            // 将图片保存在本地</span><br><span class="line">            try &#123;</span><br><span class="line">                saveImage(circleBitmap);</span><br><span class="line">            &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (requestCode == PICTURE &amp;&amp; resultCode == RESULT_OK &amp;&amp; data != null) &#123;</span><br><span class="line">            //图库</span><br><span class="line"></span><br><span class="line">            String pathResult = null;  // 获取图片路径的方法调用</span><br><span class="line">            try &#123;</span><br><span class="line">                Uri uri = data.getData();</span><br><span class="line">                pathResult = getPath(uri);</span><br><span class="line">                Log.e(&quot;TAG&quot;, &quot;图片路径===&quot; + pathResult);</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            //这里返回的uri情况就有点多了</span><br><span class="line">            //**:在4.4.2之前返回的uri是:content://media/external/images/media/3951或者file://....在4.4.2返回的是content://com.android.providers.media.documents/document/image:3951或者</span><br><span class="line">            //总结：uri的组成，eg:content://com.example.project:200/folder/subfolder/etc</span><br><span class="line">            //content:---&gt;&quot;scheme&quot;</span><br><span class="line">            //com.example.project:200--&gt;&quot;host&quot;:&quot;port&quot;---&gt;&quot;authority&quot;[主机地址+端口(省略) =authority]</span><br><span class="line">            //folder/subfolder/etc--&gt;&quot;path&quot; 路径部分</span><br><span class="line">            //android各个不同的系统版本,对于获取外部存储上的资源，返回的Uri对象都可能各不一样,所以要保证无论是哪个系统版本都能正确获取到图片资源的话</span><br><span class="line">            //就需要针对各种情况进行一个处理了</span><br><span class="line"></span><br><span class="line">            Bitmap decodeFile = BitmapFactory.decodeFile(pathResult);</span><br><span class="line">            Bitmap zoomBitmap = BitmapUtils.zoom(decodeFile, DensityUtil.dp2px(this, 20), DensityUtil.dp2px(this, 20));</span><br><span class="line">            // bitmap圆形裁剪p</span><br><span class="line">            Bitmap circleImage = BitmapUtils.circleBitmap(zoomBitmap);</span><br><span class="line">            // 真实项目当中，是需要上传到服务器的..这步我们就不做了。</span><br><span class="line">            uploadHeadpic(zoomBitmap);</span><br><span class="line">            try &#123;</span><br><span class="line">                // 保存图片到本地</span><br><span class="line">                saveImage(circleImage);</span><br><span class="line">            &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h2 id="3-获取图片路径"><a href="#3-获取图片路径" class="headerlink" title="3.获取图片路径"></a>3.获取图片路径</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line">// 根据系统相册选择的文件获取路径</span><br><span class="line">    @SuppressLint(&quot;NewApi&quot;)</span><br><span class="line">    private String getPath(Uri uri) &#123;</span><br><span class="line">//        int sdkVersion = Build.VERSION.SDK_INT;</span><br><span class="line">        final boolean isKitKat = Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.KITKAT;</span><br><span class="line">        // 高于4.4.2的版本</span><br><span class="line">//        if (sdkVersion &gt;= 19) &#123;</span><br><span class="line">        if (isKitKat &amp;&amp; DocumentsContract.isDocumentUri(mContext, uri)) &#123;</span><br><span class="line">            Log.e(&quot;TAG&quot;, &quot;uri auth: &quot; + uri.getAuthority());</span><br><span class="line">            if (isExternalStorageDocument(uri)) &#123;</span><br><span class="line">                String docId = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                String[] split = docId.split(&quot;:&quot;);</span><br><span class="line">                String type = split[0];</span><br><span class="line">                if (&quot;primary&quot;.equalsIgnoreCase(type)) &#123;</span><br><span class="line">                    return Environment.getExternalStorageDirectory() + &quot;/&quot; + split[1];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else if (isDownloadsDocument(uri)) &#123;</span><br><span class="line">                final String id = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                final Uri contentUri = ContentUris.withAppendedId(Uri.parse(&quot;content://downloads/public_downloads&quot;),</span><br><span class="line">                        Long.valueOf(id));</span><br><span class="line">                return getDataColumn(this, contentUri, null, null);</span><br><span class="line">            &#125; else if (isMediaDocument(uri)) &#123;</span><br><span class="line">                final String docId = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                final String[] split = docId.split(&quot;:&quot;);</span><br><span class="line">                final String type = split[0];</span><br><span class="line"></span><br><span class="line">                Uri contentUri = null;</span><br><span class="line">                if (&quot;image&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125; else if (&quot;video&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125; else if (&quot;audio&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125;</span><br><span class="line">                final String selection = &quot;_id=?&quot;;</span><br><span class="line">                final String[] selectionArgs = new String[]&#123;split[1]&#125;;</span><br><span class="line">                return getDataColumn(this, contentUri, selection, selectionArgs);</span><br><span class="line">            &#125; else if (isMedia(uri)) &#123;</span><br><span class="line">                String[] proj = &#123;MediaStore.Images.Media.DATA&#125;;</span><br><span class="line">                Cursor actualimagecursor = this.managedQuery(uri, proj, null, null, null);</span><br><span class="line">                int actual_image_column_index = actualimagecursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);</span><br><span class="line">                actualimagecursor.moveToFirst();</span><br><span class="line">                return actualimagecursor.getString(actual_image_column_index);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (&quot;content&quot;.equalsIgnoreCase(uri.getScheme())) &#123;</span><br><span class="line">            // Return the remote address</span><br><span class="line">            if (isGooglePhotosUri(uri))</span><br><span class="line">                return uri.getLastPathSegment();</span><br><span class="line">            return getDataColumn(this, uri, null, null);</span><br><span class="line"></span><br><span class="line">        &#125; else if (&quot;file&quot;.equalsIgnoreCase(uri.getScheme())) &#123; // File</span><br><span class="line">            return uri.getPath();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">private String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) &#123;</span><br><span class="line">        Cursor cursor = null;</span><br><span class="line">        final String column = &quot;_data&quot;;</span><br><span class="line">        final String[] projection = &#123;column&#125;;</span><br><span class="line">        try &#123;</span><br><span class="line">            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);</span><br><span class="line">            if (cursor != null &amp;&amp; cursor.moveToFirst()) &#123;</span><br><span class="line">                final int index = cursor.getColumnIndexOrThrow(column);</span><br><span class="line">                return cursor.getString(index);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (cursor != null)</span><br><span class="line">                cursor.close();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private boolean isExternalStorageDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.externalstorage.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isDownloadsDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.providers.downloads.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isMediaDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.providers.media.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isMedia(Uri uri) &#123;</span><br><span class="line">        return &quot;media&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @param uri The Uri to check.</span><br><span class="line">     * @return Whether the Uri authority is Google Photos.</span><br><span class="line">     */</span><br><span class="line">    public static boolean isGooglePhotosUri(Uri uri) &#123;</span><br><span class="line">        return &quot;com.google.android.apps.photos.content&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>以上就是比较完整的代码了…</p>
+<p>最后附上2篇参考文章：</p>
+<p><a href="http://blog.csdn.net/iamwutianbao/article/details/52459509" target="_blank" rel="noopener">http://blog.csdn.net/iamwutianbao/article/details/52459509</a></p>
+<p><a href="http://blog.csdn.net/coderinchina/article/details/50799501" target="_blank" rel="noopener">http://blog.csdn.net/coderinchina/article/details/50799501</a></p>
+<p>Thanks all.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android检测Activity或者Service是否运行/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -325,7 +634,7 @@
   
   
   <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android最新手机号正则判断/">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android使用原生动画工具类实现平移动画/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -339,7 +648,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2017/09/24/Android最新手机号正则判断/" class="post-title-link" itemprop="url">Android 最新手机号正则判断</a>
+            <a href="/2017/09/24/Android使用原生动画工具类实现平移动画/" class="post-title-link" itemprop="url">Android 使用原生动画工具类实现平移动画</a>
         </h2>
 
         <div class="post-meta">
@@ -356,7 +665,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2018-12-08 23:33:12" itemprop="dateModified" datetime="2018-12-08T23:33:12+08:00">2018-12-08</time>
+                <time title="修改时间：2018-12-08 23:30:45" itemprop="dateModified" datetime="2018-12-08T23:30:45+08:00">2018-12-08</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -369,7 +678,7 @@
             </span>
 
           
-            <span id="/2017/09/24/Android最新手机号正则判断/" class="post-meta-item leancloud_visitors" data-flag-title="Android 最新手机号正则判断" title="阅读次数">
+            <span id="/2017/09/24/Android使用原生动画工具类实现平移动画/" class="post-meta-item leancloud_visitors" data-flag-title="Android 使用原生动画工具类实现平移动画" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -384,8 +693,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2017/09/24/Android最新手机号正则判断/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android最新手机号正则判断/" itemprop="commentCount"></span>
+    <a title="valine" href="/2017/09/24/Android使用原生动画工具类实现平移动画/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android使用原生动画工具类实现平移动画/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -400,43 +709,109 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <pre><code>/**
- * 匹配手机号的规则：[3578]是手机号第二位可能出现的数字
- */
-public static final String REGEX_MOBILE = &quot;^[1][3578][0-9]{9}$&quot;;
+          <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 向右边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, true));</span><br><span class="line">// 向右边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, true));</span><br><span class="line"> </span><br><span class="line">llVideo.setVisibility(View.VISIBLE);</span><br><span class="line">llVideo.setVisibility(View.GONE);</span><br><span class="line">// 向左边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, false));</span><br><span class="line">// 向左边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, false));</span><br></pre></td></tr></table></figure>
 
-/**
- * 校验手机号
- * @param mobile
- * @return 校验通过返回true，否则返回false
- */
-public static boolean isMobile(String mobile) {
-    return Pattern.matches(REGEX_MOBILE, mobile);
-}
+      
+    </div>
 
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
 
-1、手机号开头集合
-176，177，178,  
-180，181，182,183,184,185，186，187,188。，189。  
-145，147   
-130，131，132，133，134,135,136,137, 138,139  
-150,151, 152,153，155，156，157,158,159,  
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android点击其他地方隐藏键盘/">
 
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
 
-2、正则表达式
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/24/Android点击其他地方隐藏键盘/" class="post-title-link" itemprop="url">Android 点击其他地方隐藏软键盘</a>
+        </h2>
 
-public static boolean isChinaPhoneLegal(String str)  
-            throws PatternSyntaxException {  
-        String regExp = &quot;^((13[0-9])|(15[^4])|(18[0-9])|(17[0-8])|(147,145))\\d{8}$&quot;;  
-        Pattern p = Pattern.compile(regExp);  
-        Matcher m = p.matcher(str);  
-        return m.matches();  
-    }  
-</code></pre><p>13开头的后面跟0-9的任意8位数；</p>
-<p>15开头的后面跟除了4以外的0-9的任意8位数；</p>
-<p>18开头的后面跟0-9的任意8位数；</p>
-<p>17开头的后面跟0-8的任意8位数，或者17[^9]；</p>
-<p>147，145开头后面跟任意8位数；</p>
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+08:00">2017-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-12-08 23:23:22" itemprop="dateModified" datetime="2018-12-08T23:23:22+08:00">2018-12-08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/09/24/Android点击其他地方隐藏键盘/" class="post-meta-item leancloud_visitors" data-flag-title="Android 点击其他地方隐藏软键盘" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/09/24/Android点击其他地方隐藏键盘/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android点击其他地方隐藏键盘/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>##1.第一种：隐藏页面一进来EditText获取焦点就弹出软键盘</p>
+<p>在<strong>oncreate()</strong>里调用如下方法即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 隐藏软键盘</span><br><span class="line">     */</span><br><span class="line">    private void hideSoftKeyBoard() &#123;</span><br><span class="line">        getWindow().setSoftInputMode(</span><br><span class="line">                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>##2.第二种：如果EditText获取焦点已经弹起软键盘，点击其他空白区域隐藏软键盘</p>
+<p>此方法可以写到<strong>BaseActivity</strong>中其他Activity就相应的也会继承</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public boolean dispatchTouchEvent(MotionEvent ev) &#123;</span><br><span class="line">        if (ev.getAction() == MotionEvent.ACTION_DOWN) &#123;</span><br><span class="line">            View v = getCurrentFocus();</span><br><span class="line">            if (isShouldHideKeyboard(v, ev)) &#123;</span><br><span class="line">                hideKeyboard(v.getWindowToken());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return super.dispatchTouchEvent(ev);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 根据EditText所在坐标和用户点击的坐标相对比，</span><br><span class="line">     * 来判断是否隐藏键盘，因为当用户点击EditText时则不能隐藏</span><br><span class="line">     */</span><br><span class="line">    private boolean isShouldHideKeyboard(View v, MotionEvent event) &#123;</span><br><span class="line">        if (v != null &amp;&amp; (v instanceof EditText)) &#123;</span><br><span class="line">            int[] l = &#123;0, 0&#125;;</span><br><span class="line">            v.getLocationInWindow(l);</span><br><span class="line">            int left = l[0],</span><br><span class="line">                    top = l[1],</span><br><span class="line">                    bottom = top + v.getHeight(),</span><br><span class="line">                    right = left + v.getWidth();</span><br><span class="line">            if (event.getX() &gt; left &amp;&amp; event.getX() &lt; right</span><br><span class="line">                    &amp;&amp; event.getY() &gt; top &amp;&amp; event.getY() &lt; bottom) &#123;</span><br><span class="line">                // 点击EditText的事件，忽略它。</span><br><span class="line">                return false;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        // 如果焦点不是EditText则忽略，这个发生在视图刚绘制完，第一个焦点不在EditText上，和用户用轨迹球选择其他的焦点</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取InputMethodManager，隐藏软键盘</span><br><span class="line">     */</span><br><span class="line">    private void hideKeyboard(IBinder token) &#123;</span><br><span class="line">        if (token != null) &#123;</span><br><span class="line">            InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);</span><br><span class="line">            im.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>Thanks all.</p>
+<p>2017.6.21 beijing 雨</p>
 
       
     </div>
@@ -561,203 +936,6 @@ public static boolean isChinaPhoneLegal(String str)
   
   
   <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android点击其他地方隐藏键盘/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/24/Android点击其他地方隐藏键盘/" class="post-title-link" itemprop="url">Android 点击其他地方隐藏软键盘</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+08:00">2017-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2018-12-08 23:23:22" itemprop="dateModified" datetime="2018-12-08T23:23:22+08:00">2018-12-08</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2017/09/24/Android点击其他地方隐藏键盘/" class="post-meta-item leancloud_visitors" data-flag-title="Android 点击其他地方隐藏软键盘" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2017/09/24/Android点击其他地方隐藏键盘/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android点击其他地方隐藏键盘/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>##1.第一种：隐藏页面一进来EditText获取焦点就弹出软键盘</p>
-<p>在<strong>oncreate()</strong>里调用如下方法即可</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 隐藏软键盘</span><br><span class="line">     */</span><br><span class="line">    private void hideSoftKeyBoard() &#123;</span><br><span class="line">        getWindow().setSoftInputMode(</span><br><span class="line">                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>##2.第二种：如果EditText获取焦点已经弹起软键盘，点击其他空白区域隐藏软键盘</p>
-<p>此方法可以写到<strong>BaseActivity</strong>中其他Activity就相应的也会继承</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">    public boolean dispatchTouchEvent(MotionEvent ev) &#123;</span><br><span class="line">        if (ev.getAction() == MotionEvent.ACTION_DOWN) &#123;</span><br><span class="line">            View v = getCurrentFocus();</span><br><span class="line">            if (isShouldHideKeyboard(v, ev)) &#123;</span><br><span class="line">                hideKeyboard(v.getWindowToken());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return super.dispatchTouchEvent(ev);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 根据EditText所在坐标和用户点击的坐标相对比，</span><br><span class="line">     * 来判断是否隐藏键盘，因为当用户点击EditText时则不能隐藏</span><br><span class="line">     */</span><br><span class="line">    private boolean isShouldHideKeyboard(View v, MotionEvent event) &#123;</span><br><span class="line">        if (v != null &amp;&amp; (v instanceof EditText)) &#123;</span><br><span class="line">            int[] l = &#123;0, 0&#125;;</span><br><span class="line">            v.getLocationInWindow(l);</span><br><span class="line">            int left = l[0],</span><br><span class="line">                    top = l[1],</span><br><span class="line">                    bottom = top + v.getHeight(),</span><br><span class="line">                    right = left + v.getWidth();</span><br><span class="line">            if (event.getX() &gt; left &amp;&amp; event.getX() &lt; right</span><br><span class="line">                    &amp;&amp; event.getY() &gt; top &amp;&amp; event.getY() &lt; bottom) &#123;</span><br><span class="line">                // 点击EditText的事件，忽略它。</span><br><span class="line">                return false;</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        // 如果焦点不是EditText则忽略，这个发生在视图刚绘制完，第一个焦点不在EditText上，和用户用轨迹球选择其他的焦点</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取InputMethodManager，隐藏软键盘</span><br><span class="line">     */</span><br><span class="line">    private void hideKeyboard(IBinder token) &#123;</span><br><span class="line">        if (token != null) &#123;</span><br><span class="line">            InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);</span><br><span class="line">            im.hideSoftInputFromWindow(token, InputMethodManager.HIDE_NOT_ALWAYS);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>Thanks all.</p>
-<p>2017.6.21 beijing 雨</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android MD5加密工具类/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/24/Android MD5加密工具类/" class="post-title-link" itemprop="url">Android MD5 加密工具类</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+08:00">2017-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2018-12-08 23:11:05" itemprop="dateModified" datetime="2018-12-08T23:11:05+08:00">2018-12-08</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2017/09/24/Android MD5加密工具类/" class="post-meta-item leancloud_visitors" data-flag-title="Android MD5 加密工具类" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2017/09/24/Android MD5加密工具类/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android MD5加密工具类/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>直接看代码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">public class MD5Utils &#123;</span><br><span class="line"></span><br><span class="line">    public static String MD5(String sourceStr) &#123;</span><br><span class="line">        String result = &quot;&quot;;</span><br><span class="line">        try &#123;</span><br><span class="line">            MessageDigest md = MessageDigest.getInstance(&quot;MD5&quot;);</span><br><span class="line">            md.update(sourceStr.getBytes());</span><br><span class="line">            byte b[] = md.digest();</span><br><span class="line">            int i;</span><br><span class="line">            StringBuffer buf = new StringBuffer(&quot;&quot;);</span><br><span class="line">            for (int offset = 0; offset &lt; b.length; offset++) &#123;</span><br><span class="line">                i = b[offset];</span><br><span class="line">                if (i &lt; 0)</span><br><span class="line">                    i += 256;</span><br><span class="line">                if (i &lt; 16)</span><br><span class="line">                    buf.append(&quot;0&quot;);</span><br><span class="line">                buf.append(Integer.toHexString(i));</span><br><span class="line">            &#125;</span><br><span class="line">            result = buf.toString();</span><br><span class="line">        &#125; catch (NoSuchAlgorithmException e) &#123;</span><br><span class="line">            System.out.println(e);</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android设置gif只播放一次/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -837,197 +1015,6 @@ public static boolean isChinaPhoneLegal(String str)
 <h2 id="另外一种写法"><a href="#另外一种写法" class="headerlink" title="另外一种写法"></a>另外一种写法</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">Glide.with(mContext).load(R.drawable.loading)</span><br><span class="line">                .diskCacheStrategy(DiskCacheStrategy.SOURCE)</span><br><span class="line">                .listener(new RequestListener&lt;Integer, GlideDrawable&gt;() &#123;</span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onException(Exception e, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFirstResource) &#123;</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onResourceReady(GlideDrawable resource, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFromMemoryCache, boolean isFirstResource) &#123;</span><br><span class="line">                        int duration = 0;</span><br><span class="line">                        // 计算动画时长</span><br><span class="line">                        GifDrawable drawable = (GifDrawable) resource;</span><br><span class="line">                        GifDecoder decoder = drawable.getDecoder();</span><br><span class="line">                        for (int i = 0; i &lt; drawable.getFrameCount(); i++) &#123;</span><br><span class="line">                            duration += decoder.getDelay(i);</span><br><span class="line">                        &#125;</span><br><span class="line">                        //发送延时消息，通知动画结束</span><br><span class="line">                        handler.sendEmptyMessageDelayed(3, duration);</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .into(ivLoading);</span><br></pre></td></tr></table></figure>
 <p>Thanks all.</p>
 
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android设置屏幕亮度及Alpha值/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/24/Android设置屏幕亮度及Alpha值/" class="post-title-link" itemprop="url">Android 设置屏幕亮度及 Alpha 值</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+08:00">2017-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2018-12-08 23:25:29" itemprop="dateModified" datetime="2018-12-08T23:25:29+08:00">2018-12-08</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2017/09/24/Android设置屏幕亮度及Alpha值/" class="post-meta-item leancloud_visitors" data-flag-title="Android 设置屏幕亮度及 Alpha 值" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2017/09/24/Android设置屏幕亮度及Alpha值/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android设置屏幕亮度及Alpha值/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>直接看代码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line">package com.xpf.someexamples;</span><br><span class="line"></span><br><span class="line">import android.app.Activity;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.view.Window;</span><br><span class="line">import android.view.WindowManager;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/5/14 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:设置屏幕亮度及Alpha值</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class BrightnessManager &#123;</span><br><span class="line">    /**</span><br><span class="line">     * 设置当前activity的屏幕亮度</span><br><span class="line">     *</span><br><span class="line">     * @param paramFloat 0-1.0f</span><br><span class="line">     * @param context    需要调整亮度的activity context</span><br><span class="line">     */</span><br><span class="line">    public static void setBrightness(float paramFloat, Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window localWindow = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams params = localWindow.getAttributes();</span><br><span class="line">        params.screenBrightness = paramFloat;</span><br><span class="line">        localWindow.setAttributes(params);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取当前activity的屏幕亮度</span><br><span class="line">     *</span><br><span class="line">     * @param context 当前activity context对象</span><br><span class="line">     * @return 亮度值范围为0-0.1f，如果为-1.0，则亮度与全局同步</span><br><span class="line">     */</span><br><span class="line">    public static float getBrightness(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window localWindow = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams params = localWindow.getAttributes();</span><br><span class="line">        return params.screenBrightness;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度0-1.0f</span><br><span class="line">     */</span><br><span class="line">    public static void setAlpha(float light, Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = light;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度变暗</span><br><span class="line">     */</span><br><span class="line">    public static void lightoff(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = 0.3f;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度显示正常</span><br><span class="line">     */</span><br><span class="line">    public static void lighton(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = 1.0f;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android跳转到其他APP/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/24/Android跳转到其他APP/" class="post-title-link" itemprop="url">Android 跳转到其他 APP</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+08:00">2017-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2018-12-08 23:32:46" itemprop="dateModified" datetime="2018-12-08T23:32:46+08:00">2018-12-08</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2017/09/24/Android跳转到其他APP/" class="post-meta-item leancloud_visitors" data-flag-title="Android 跳转到其他 APP" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2017/09/24/Android跳转到其他APP/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android跳转到其他APP/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>从APP A 中打开B APP ，注意 B APP的包名和MainActivity 的全类名</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Intent intent = new Intent(Intent.ACTION_MAIN);</span><br><span class="line">intent.addCategory(Intent.CATEGORY_LAUNCHER);</span><br><span class="line">ComponentName cn = new ComponentName(&quot;com.xpf.keyboardtest&quot;, &quot;com.xpf.keyboardtest.MainActivity&quot;);</span><br><span class="line">intent.setComponent(cn);</span><br><span class="line">startActivity(intent);</span><br></pre></td></tr></table></figure>
       
     </div>
 
@@ -1143,7 +1130,7 @@ public static boolean isChinaPhoneLegal(String str)
   
   
   <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android透明度换算/">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android设置屏幕亮度及Alpha值/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -1157,7 +1144,7 @@ public static boolean isChinaPhoneLegal(String str)
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2017/09/24/Android透明度换算/" class="post-title-link" itemprop="url">Android 透明度换算</a>
+            <a href="/2017/09/24/Android设置屏幕亮度及Alpha值/" class="post-title-link" itemprop="url">Android 设置屏幕亮度及 Alpha 值</a>
         </h2>
 
         <div class="post-meta">
@@ -1174,7 +1161,7 @@ public static boolean isChinaPhoneLegal(String str)
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2018-12-08 23:32:57" itemprop="dateModified" datetime="2018-12-08T23:32:57+08:00">2018-12-08</time>
+                <time title="修改时间：2018-12-08 23:25:29" itemprop="dateModified" datetime="2018-12-08T23:25:29+08:00">2018-12-08</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1187,7 +1174,7 @@ public static boolean isChinaPhoneLegal(String str)
             </span>
 
           
-            <span id="/2017/09/24/Android透明度换算/" class="post-meta-item leancloud_visitors" data-flag-title="Android 透明度换算" title="阅读次数">
+            <span id="/2017/09/24/Android设置屏幕亮度及Alpha值/" class="post-meta-item leancloud_visitors" data-flag-title="Android 设置屏幕亮度及 Alpha 值" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -1202,8 +1189,8 @@ public static boolean isChinaPhoneLegal(String str)
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2017/09/24/Android透明度换算/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android透明度换算/" itemprop="commentCount"></span>
+    <a title="valine" href="/2017/09/24/Android设置屏幕亮度及Alpha值/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android设置屏幕亮度及Alpha值/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -1218,104 +1205,8 @@ public static boolean isChinaPhoneLegal(String str)
     <div class="post-body" itemprop="articleBody">
 
       
-          <blockquote>
-<p>Android布局中颜色表示都是使用十六进制来表示的，使用RGB和ARGB,后者多了一个透明度，而UI设计师通常在标注图中标注的透明度通常为百分比，这就需要我们做一些转换才能使用，透明度从0（透明）到1（不透明）对应的透明度为0%–100%，对应的十六进制为00–FF,对应的十进制为0–255，所以转换公式为：255 x 透明百分比，再将其转换为16进制即可，下面列出了常用的透明度百分比对应的十六进制。</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>透明度</th>
-<th>透明度值</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>100%</td>
-<td>FF</td>
-</tr>
-<tr>
-<td>95%</td>
-<td>F2</td>
-</tr>
-<tr>
-<td>90%</td>
-<td>E6</td>
-</tr>
-<tr>
-<td>85%</td>
-<td>D9</td>
-</tr>
-<tr>
-<td>80%</td>
-<td>CC</td>
-</tr>
-<tr>
-<td>75%</td>
-<td>BF</td>
-</tr>
-<tr>
-<td>70%</td>
-<td>B3</td>
-</tr>
-<tr>
-<td>65%</td>
-<td>A6</td>
-</tr>
-<tr>
-<td>60%</td>
-<td>99</td>
-</tr>
-<tr>
-<td>55%</td>
-<td>8C</td>
-</tr>
-<tr>
-<td>50%</td>
-<td>80</td>
-</tr>
-<tr>
-<td>45%</td>
-<td>73</td>
-</tr>
-<tr>
-<td>40%</td>
-<td>66</td>
-</tr>
-<tr>
-<td>35%</td>
-<td>59</td>
-</tr>
-<tr>
-<td>30%</td>
-<td>4D</td>
-</tr>
-<tr>
-<td>25%</td>
-<td>40</td>
-</tr>
-<tr>
-<td>20%</td>
-<td>33</td>
-</tr>
-<tr>
-<td>15%</td>
-<td>26</td>
-</tr>
-<tr>
-<td>10%</td>
-<td>1A</td>
-</tr>
-<tr>
-<td>5%</td>
-<td>0D</td>
-</tr>
-<tr>
-<td>0%</td>
-<td>00</td>
-</tr>
-</tbody>
-</table>
-<p>###Thanks all.</p>
+          <p>直接看代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line">package com.xpf.someexamples;</span><br><span class="line"></span><br><span class="line">import android.app.Activity;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.view.Window;</span><br><span class="line">import android.view.WindowManager;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/5/14 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:设置屏幕亮度及Alpha值</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class BrightnessManager &#123;</span><br><span class="line">    /**</span><br><span class="line">     * 设置当前activity的屏幕亮度</span><br><span class="line">     *</span><br><span class="line">     * @param paramFloat 0-1.0f</span><br><span class="line">     * @param context    需要调整亮度的activity context</span><br><span class="line">     */</span><br><span class="line">    public static void setBrightness(float paramFloat, Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window localWindow = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams params = localWindow.getAttributes();</span><br><span class="line">        params.screenBrightness = paramFloat;</span><br><span class="line">        localWindow.setAttributes(params);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取当前activity的屏幕亮度</span><br><span class="line">     *</span><br><span class="line">     * @param context 当前activity context对象</span><br><span class="line">     * @return 亮度值范围为0-0.1f，如果为-1.0，则亮度与全局同步</span><br><span class="line">     */</span><br><span class="line">    public static float getBrightness(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window localWindow = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams params = localWindow.getAttributes();</span><br><span class="line">        return params.screenBrightness;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度0-1.0f</span><br><span class="line">     */</span><br><span class="line">    public static void setAlpha(float light, Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = light;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度变暗</span><br><span class="line">     */</span><br><span class="line">    public static void lightoff(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = 0.3f;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度显示正常</span><br><span class="line">     */</span><br><span class="line">    public static void lighton(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = 1.0f;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
       
     </div>

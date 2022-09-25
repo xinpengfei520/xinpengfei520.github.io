@@ -215,6 +215,116 @@
   
   
   <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2019/06/04/RxJava2.x 的并行编程/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/06/04/RxJava2.x 的并行编程/" class="post-title-link" itemprop="url">RxJava2.x 并行编程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-06-04 23:33:00" itemprop="dateCreated datePublished" datetime="2019-06-04T23:33:00+00:00">2019-06-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2019/06/04/RxJava2.x 的并行编程/" class="post-meta-item leancloud_visitors" data-flag-title="RxJava2.x 并行编程" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2019/06/04/RxJava2.x 的并行编程/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2019/06/04/RxJava2.x 的并行编程/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="http://image.vance.xin/FvMS1D4sOwIivgw3ayDP1bqfX4rI" alt=""><br>题图：来自飞哥的图片工厂</p>
+<p>音乐推荐：你的姑娘<br>文丨IT大飞说<br>预计阅读时间：1.2 分钟</p>
+<p>哈喽，朋友们，之前我们学习了一些 RxJava2.x 的常用操作符，今天我们来继续学习一下RxJava 的并行编程。</p>
+<p>随着手机 CPU 的高速发展，性能越来越强劲，核心数越来越多，我们要充分、高效地利用这些 CPU 资源，来提高程序运行的效率，解决复杂的业务问题，这将变得越来越重要。</p>
+<h2 id="1-什么是并行编程？"><a href="#1-什么是并行编程？" class="headerlink" title="1.什么是并行编程？"></a>1.什么是并行编程？</h2><p>对于并发我们可能比较清楚，那么并行是什么呢？它们的区别是什么？并发（concurrency）是指一个处理器同时处理多个任务，并行（parallelism）是多个处理器或者是多核处理器同时处理多个不同的任务，并行是同时发生的多个并发事件，具有并发的含义，而并发不一定是并行。</p>
+<p>在 Java 8 中有个并行流（parallelStream），有的同学可能用过，我们想使用并行流的方式打印出 1-100 之间的整数，来看下面的代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">private void parallelismWithJava8() &#123;</span><br><span class="line">        List&lt;Integer&gt; list = new ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">        for (int i = 1; i &lt;= 100; i++) &#123;</span><br><span class="line">            list.add(i);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        list.parallelStream()</span><br><span class="line">                .map(Object::toString)</span><br><span class="line">                .forEach(s -&gt; LogUtil.i(TAG, &quot;s=&quot; + s + &quot;,Current Thread Name=&quot; + Thread.currentThread().getName()));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>上面的结果会交错输出 1-100 之间的整数，因为并行的缘故所以每个输出执行的时间可能不一样，所以会交错输出，其实上面的代码是 Java 8 借助了 JDK 的 fork/join 框架来实现并行编程的。</p>
+<h2 id="2-使用-RxJava-的-flatMap-实现并行编程"><a href="#2-使用-RxJava-的-flatMap-实现并行编程" class="headerlink" title="2.使用 RxJava 的 flatMap 实现并行编程"></a>2.使用 RxJava 的 flatMap 实现并行编程</h2>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2019/06/04/RxJava2.x 的并行编程/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2019/05/30/Android library 依赖 aar 包的两种方式/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -246,7 +356,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -355,7 +465,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -465,7 +575,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -576,7 +686,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -685,7 +795,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -796,7 +906,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -907,7 +1017,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1019,7 +1129,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1129,7 +1239,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
+                <time title="修改时间：2022-09-25 15:10:58" itemprop="dateModified" datetime="2022-09-25T15:10:58+00:00">2022-09-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1197,115 +1307,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2018/12/27/BaseRecyclerViewAdapterHelper/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2018/11/06/绘制一个漂亮的弧形 View/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/11/06/绘制一个漂亮的弧形 View/" class="post-title-link" itemprop="url">绘制一个漂亮的弧形 View</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2018-11-06 11:28:01" itemprop="dateCreated datePublished" datetime="2018-11-06T11:28:01+00:00">2018-11-06</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-08-27 10:35:27" itemprop="dateModified" datetime="2022-08-27T10:35:27+00:00">2022-08-27</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2018/11/06/绘制一个漂亮的弧形 View/" class="post-meta-item leancloud_visitors" data-flag-title="绘制一个漂亮的弧形 View" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2018/11/06/绘制一个漂亮的弧形 View/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2018/11/06/绘制一个漂亮的弧形 View/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>来，先看下效果图：</p>
-<p><img src="http://pcobk8jbf.bkt.clouddn.com/FjVEV1HKnkl637u0Qs7im1YRfBjo" alt=""></p>
-<p>怎么样？漂亮吧，上面是一个标题栏，下面是一个弧形的 View，标题栏和弧形 View 从左到右都有一个线性的渐变色，类似于手机 QQ 顶部的渐变效果，关于弧形的这种效果，使用的场景还是比较普遍的，小面我们就一起来看看如何绘制吧。</p>
-<h2 id="1-先自定义一个-ArcView"><a href="#1-先自定义一个-ArcView" class="headerlink" title="1.先自定义一个 ArcView"></a>1.先自定义一个 ArcView</h2><p>创建一个类 ArcView 继承于 View，然后我们重写其三个构造方法，还有 onMeasure() 和 onDraw() 方法，这都是自定义 View 最基本的写法，比较简单这里就不详细说了， onMeasure() 用于测量 View 的宽高尺寸，onDraw() 就是具体的绘制过程了，具体的绘制思路是：我们在 onMeasure（）方法中拿到测量出来的宽和高，然后再 onDraw() 中初始化一个画笔，我们可以创建一个 LinearGradient 对象，然后调用设置画笔的 setShader() 方法就可以达到画笔渐变色的效果，然后再创建一个 Rect 对象，这里只是创建了一个矩形对象，要想绘制弧形，我们还需要设置绘制的路径，创建一个 Path 对象，分别调用 moveTo() 方法，和 quadTo() 方法，moveTo （）不会进行绘制，只用于移动移动画笔，一般和其他方法配合使用，这里和 quadTo() 方法配合使用，而 quadTo() 用于绘制圆滑的曲线，即贝塞尔曲线。mPath.quadTo(x1, y1, x2, y2) 其中x1、y1 为控制点，x2、y2 为结束点。有了路径之后我们就可以轻而易举地绘制出一个弧形了，完整的代码请看下面：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by x-sir on 2018/8/10 :)</span><br><span class="line"> * Function:自定义弧形 View</span><br><span class="line"> */</span><br><span class="line">public class ArcView extends View &#123;</span><br><span class="line"></span><br><span class="line">    private int mWidth;</span><br><span class="line">    private int mHeight;</span><br><span class="line">    private int mArcHeight; // 弧形高度</span><br><span class="line">    private int mBgColor; // 背景颜色</span><br><span class="line">    private Paint mPaint;</span><br><span class="line"></span><br><span class="line">    public ArcView(Context context) &#123;</span><br><span class="line">        this(context, null);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public ArcView(Context context, @Nullable AttributeSet attrs) &#123;</span><br><span class="line">        this(context, attrs, 0);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public ArcView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) &#123;</span><br><span class="line">        super(context, attrs, defStyleAttr);</span><br><span class="line">        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ArcView);</span><br><span class="line">        mArcHeight = typedArray.getDimensionPixelSize(R.styleable.ArcView_arcHeight, 0);</span><br><span class="line">        mBgColor = typedArray.getColor(R.styleable.ArcView_bgColor, Color.parseColor(&quot;#1E90FF&quot;));</span><br><span class="line">        typedArray.recycle();</span><br><span class="line">        mPaint = new Paint();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @SuppressLint(&quot;DrawAllocation&quot;)</span><br><span class="line">    @Override</span><br><span class="line">    protected void onDraw(Canvas canvas) &#123;</span><br><span class="line">        super.onDraw(canvas);</span><br><span class="line">        // 参数一为渐变起初点坐标 x 位置，参数二为 y 轴位置，参数三和四分辨对应渐变终点，最后参数为平铺方式，这里设置为镜像</span><br><span class="line">        LinearGradient lg = new LinearGradient(0, 0, mWidth, 0,</span><br><span class="line">                Color.parseColor(&quot;#4796FB&quot;), Color.parseColor(&quot;#5AB4F9&quot;),</span><br><span class="line">                Shader.TileMode.CLAMP);</span><br><span class="line">        // 刚才已经讲到 Gradient 是基于 Shader 类，所以我们通过 Paint 的 setShader 方法来设置这个渐变</span><br><span class="line">        mPaint.setShader(lg);</span><br><span class="line">        mPaint.setStyle(Paint.Style.FILL);</span><br><span class="line">        //mPaint.setColor(mBgColor);</span><br><span class="line">        mPaint.setAntiAlias(true);</span><br><span class="line">        Rect rect = new Rect(0, 0, mWidth, mHeight - mArcHeight);</span><br><span class="line">        canvas.drawRect(rect, mPaint);</span><br><span class="line">        Path path = new Path();</span><br><span class="line">        path.moveTo(0, mHeight - mArcHeight);</span><br><span class="line">        path.quadTo(mWidth / 2, mHeight, mWidth, mHeight - mArcHeight);</span><br><span class="line">        canvas.drawPath(path, mPaint);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) &#123;</span><br><span class="line">        super.onMeasure(widthMeasureSpec, heightMeasureSpec);</span><br><span class="line">        int widthSize = MeasureSpec.getSize(widthMeasureSpec);</span><br><span class="line">        int widthMode = MeasureSpec.getMode(widthMeasureSpec);</span><br><span class="line">        int heightSize = MeasureSpec.getSize(heightMeasureSpec);</span><br><span class="line">        int heightMode = MeasureSpec.getMode(heightMeasureSpec);</span><br><span class="line"></span><br><span class="line">        if (widthMode == MeasureSpec.EXACTLY) &#123;</span><br><span class="line">            mWidth = widthSize;</span><br><span class="line">        &#125;</span><br><span class="line">        if (heightMode == MeasureSpec.EXACTLY) &#123;</span><br><span class="line">            mHeight = heightSize;</span><br><span class="line">        &#125;</span><br><span class="line">        setMeasuredDimension(mWidth, mHeight);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我这里只定义了弧形的高度和背景颜色这两个自定义属性，其中还有渐变颜色的开始色值和结束色值，还有是否需要渐变等属性，都可以定义为自定义的属性，方便直接在布局文件中灵活进行配置，以适应不同的需求，也比较简单，我这里为了就不实现了。</p>
-<h2 id="2-自定义一个通用的-titlebar"><a href="#2-自定义一个通用的-titlebar" class="headerlink" title="2.自定义一个通用的 titlebar"></a>2.自定义一个通用的 titlebar</h2><p>这样做我们可以提高代码的复用性，可以将一些功能封装进去，也更好地体现了封装的思想，实现也比较简单，使用 LayoutInflater 加载了一个布局文件，然后将 文字，字体大小，字体颜色和 title 背景色等定义成了自定义的属性，方便在布局文件中进行设置，另外我们内部默认处理了点击返回按钮的事件，对于需要其他特殊情况下返回按钮的处理，我们也定义了一个接口，方便外部使用接口来自行进行处理，代码也非常简单，看下面：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by x-sir on 2018/9/2 :)</span><br><span class="line"> * Function:自定义通用 TitleBar</span><br><span class="line"> */</span><br><span class="line">public class TitleBarLayout extends LinearLayout &#123;</span><br><span class="line"></span><br><span class="line">    private ImageView ivBack;</span><br><span class="line">    private ImageView ivMenu;</span><br><span class="line">    private TextView tvTitleName;</span><br><span class="line">    private LinearLayout llTitleBg;</span><br><span class="line">    private CharSequence mText;</span><br><span class="line">    private int mTitleBgColor;</span><br><span class="line">    private boolean mMenuVisible;</span><br><span class="line">    private int mTextSize;</span><br><span class="line">    private int mTextColor;</span><br><span class="line">    private OnMenuClickListener mListener;</span><br><span class="line">    private OnBackClickListener mOnBackListener;</span><br><span class="line">    private static final String DEFAULT_TEXT = &quot;Title&quot;; // default text.</span><br><span class="line">    private static final int DEFAULT_TEXT_SIZE = 16; // default text size.</span><br><span class="line">    private static final String TAG = &quot;TitleBarLayout&quot;;</span><br><span class="line"></span><br><span class="line">    public TitleBarLayout(Context context) &#123;</span><br><span class="line">        this(context, null);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public TitleBarLayout(Context context, @Nullable AttributeSet attrs) &#123;</span><br><span class="line">        this(context, attrs, 0);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public TitleBarLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) &#123;</span><br><span class="line">        super(context, attrs, defStyleAttr);</span><br><span class="line"></span><br><span class="line">        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.TitleBarLayout);</span><br><span class="line">        mText = typedArray.getText(R.styleable.TitleBarLayout_text);</span><br><span class="line">        mTextSize = typedArray.getDimensionPixelSize(R.styleable.TitleBarLayout_textSize, DEFAULT_TEXT_SIZE);</span><br><span class="line">        mTextColor = typedArray.getColor(R.styleable.TitleBarLayout_textColor, Color.parseColor(&quot;#FFFFFF&quot;));</span><br><span class="line">        mTitleBgColor = typedArray.getColor(R.styleable.TitleBarLayout_titleBgColor, Color.parseColor(&quot;#1E90FF&quot;));</span><br><span class="line">        mMenuVisible = typedArray.getBoolean(R.styleable.TitleBarLayout_menuVisible, false);</span><br><span class="line">        typedArray.recycle();</span><br><span class="line"></span><br><span class="line">        initView(context);</span><br><span class="line">        initData();</span><br><span class="line">        initListener();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initView(Context context) &#123;</span><br><span class="line">        LayoutInflater.from(context).inflate(R.layout.common_titlebar, this);</span><br><span class="line">        ivBack = findViewById(R.id.ivBack);</span><br><span class="line">        ivMenu = findViewById(R.id.ivMenu);</span><br><span class="line">        tvTitleName = findViewById(R.id.tvTitleName);</span><br><span class="line">        llTitleBg = findViewById(R.id.llTitleBg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initData() &#123;</span><br><span class="line">        String text = (mText != null) ? mText.toString() : DEFAULT_TEXT;</span><br><span class="line">        tvTitleName.setText(text);</span><br><span class="line">        tvTitleName.setTextSize(TypedValue.COMPLEX_UNIT_PX, mTextSize);</span><br><span class="line">        tvTitleName.setTextColor(mTextColor);</span><br><span class="line">        //llTitleBg.setBackgroundColor(mTitleBgColor);</span><br><span class="line">        ivMenu.setVisibility(mMenuVisible ? VISIBLE : INVISIBLE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void initListener() &#123;</span><br><span class="line">        ivBack.setOnClickListener(v -&gt; &#123;</span><br><span class="line">            // 如果监听器不为空就让其自己处理，为空就默认处理（销毁页面）</span><br><span class="line">            if (mOnBackListener != null) &#123;</span><br><span class="line">                mOnBackListener.onClick();</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                ((Activity) getContext()).finish();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        ivMenu.setOnClickListener(v -&gt; &#123;</span><br><span class="line">            if (mListener != null) &#123;</span><br><span class="line">                mListener.onClick();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setTitleName(String title) &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(title)) &#123;</span><br><span class="line">            tvTitleName.setText(title);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            Log.e(TAG, &quot;set title name failed, because title is null!&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setOnMenuListener(OnMenuClickListener mListener) &#123;</span><br><span class="line">        this.mListener = mListener;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setOnBackListener(OnBackClickListener mOnBackListener) &#123;</span><br><span class="line">        this.mOnBackListener = mOnBackListener;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public interface OnMenuClickListener &#123;</span><br><span class="line">        void onClick();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public interface OnBackClickListener &#123;</span><br><span class="line">        void onClick();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2018/11/06/绘制一个漂亮的弧形 View/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1394,20 +1395,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">95</span>
+          <span class="site-state-item-count">96</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">129</span>
+        <span class="site-state-item-count">131</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

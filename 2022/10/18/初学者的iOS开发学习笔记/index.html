@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vance.xin","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="作为一个 iOS 开发的初学者，记录一下自己自学 iOS 过程中的一些坑和问题，仅供参考。 1、Main Bundle Id + Extension Bundle Id（小组件）规则：前半部分相同，后半部分 + .extension 12Main app bundle id: com.myapp.testappExtension app bundle id: com.myapp.testapp.m">
+<meta name="keywords" content="View,iOS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初学者的iOS开发学习笔记">
+<meta property="og:url" content="https://www.vance.xin/2022/10/18/初学者的iOS开发学习笔记/index.html">
+<meta property="og:site_name" content="程序员飞飞">
+<meta property="og:description" content="作为一个 iOS 开发的初学者，记录一下自己自学 iOS 过程中的一些坑和问题，仅供参考。 1、Main Bundle Id + Extension Bundle Id（小组件）规则：前半部分相同，后半部分 + .extension 12Main app bundle id: com.myapp.testappExtension app bundle id: com.myapp.testapp.m">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210182210481.jpg">
+<meta property="og:updated_time" content="2022-10-18T14:16:00.702Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="初学者的iOS开发学习笔记">
+<meta name="twitter:description" content="作为一个 iOS 开发的初学者，记录一下自己自学 iOS 过程中的一些坑和问题，仅供参考。 1、Main Bundle Id + Extension Bundle Id（小组件）规则：前半部分相同，后半部分 + .extension 12Main app bundle id: com.myapp.testappExtension app bundle id: com.myapp.testapp.m">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210182210481.jpg">
+
+<link rel="canonical" href="https://www.vance.xin/2022/10/18/初学者的iOS开发学习笔记/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>初学者的iOS开发学习笔记 | 程序员飞飞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+  <a href="https://github.com/xinpengfei520" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">程序员飞飞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">码农，产品思维实践者，终身学习者，微信公众号：「程序员飞飞」。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="calendar fa-fw"></i>日程表</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+        <li class="menu-item menu-item-baidusitemap">
+
+    <a href="/baidusitemap.xml" rel="section"><i class="sitemap fa-fw"></i>baidusitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="heartbeat fa-fw"></i>公益 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2022/10/18/初学者的iOS开发学习笔记/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          初学者的iOS开发学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-10-18 21:52:52 / 修改时间：14:16:00" itemprop="dateCreated datePublished" datetime="2022-10-18T21:52:52+00:00">2022-10-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/iOS/" itemprop="url" rel="index"><span itemprop="name">iOS</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/10/18/初学者的iOS开发学习笔记/" class="post-meta-item leancloud_visitors" data-flag-title="初学者的iOS开发学习笔记" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2022/10/18/初学者的iOS开发学习笔记/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2022/10/18/初学者的iOS开发学习笔记/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>作为一个 iOS 开发的初学者，记录一下自己自学 iOS 过程中的一些坑和问题，仅供参考。</p>
+<h2 id="1、Main-Bundle-Id-Extension-Bundle-Id（小组件）"><a href="#1、Main-Bundle-Id-Extension-Bundle-Id（小组件）" class="headerlink" title="1、Main Bundle Id + Extension Bundle Id（小组件）"></a>1、Main Bundle Id + Extension Bundle Id（小组件）</h2><p><strong>规则：前半部分相同，后半部分 + .extension</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Main app bundle id: com.myapp.testapp</span><br><span class="line">Extension app bundle id: com.myapp.testapp.myextension</span><br></pre></td></tr></table></figure>
+<h2 id="2、iOS-加异常断点"><a href="#2、iOS-加异常断点" class="headerlink" title="2、iOS 加异常断点"></a>2、iOS 加异常断点</h2><p><a href="https://blog.csdn.net/wu_shu_jun/article/details/9045911" target="_blank" rel="noopener">https://blog.csdn.net/wu_shu_jun/article/details/9045911</a></p>
+<p><a href="https://www.jianshu.com/p/3a0803406d04" target="_blank" rel="noopener">https://www.jianshu.com/p/3a0803406d04</a></p>
+<p><a href="https://www.jianshu.com/p/7c0352231eca" target="_blank" rel="noopener">https://www.jianshu.com/p/7c0352231eca</a></p>
+<h2 id="3、Incompatible-block-pointer-types-sending-‘void"><a href="#3、Incompatible-block-pointer-types-sending-‘void" class="headerlink" title="3、Incompatible block pointer types sending ‘void"></a>3、Incompatible block pointer types sending ‘void</h2><p>找到对应的报错库，添加：<code>-Xclang -fcompatibility-qualified-id-block-type-checking</code></p>
+<p>链接：<a href="https://www.jianshu.com/p/317bdbe86454" target="_blank" rel="noopener">https://www.jianshu.com/p/317bdbe86454</a></p>
+<p>这种是临时解决方案，最好的方式是升级对应的第三方库；</p>
+<h2 id="4、uncaught-exception-‘NSInvalidArgumentException’-reason-‘-LSDefaults-sharedInstance-unrecognized-selector-sent-to-class"><a href="#4、uncaught-exception-‘NSInvalidArgumentException’-reason-‘-LSDefaults-sharedInstance-unrecognized-selector-sent-to-class" class="headerlink" title="4、uncaught exception ‘NSInvalidArgumentException’, reason: ‘+[_LSDefaults sharedInstance]: unrecognized selector sent to class"></a>4、uncaught exception ‘NSInvalidArgumentException’, reason: ‘+[_LSDefaults sharedInstance]: unrecognized selector sent to class</h2><p><a href="https://blog.csdn.net/survivorsfyh/article/details/104942440" target="_blank" rel="noopener">https://blog.csdn.net/survivorsfyh/article/details/104942440</a></p>
+<h2 id="5、从-pod-删除第三方库："><a href="#5、从-pod-删除第三方库：" class="headerlink" title="5、从 pod 删除第三方库："></a>5、从 pod 删除第三方库：</h2><p>先在 podfile 文件中删除 pod ‘JSONKit’，然后在执行更新命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pod update  --no-repo-update</span><br></pre></td></tr></table></figure>
+<h2 id="6、‘sharedApplication’-is-unavailable-not-available-on-iOS-App-Extension-Use-view-controller-based"><a href="#6、‘sharedApplication’-is-unavailable-not-available-on-iOS-App-Extension-Use-view-controller-based" class="headerlink" title="6、‘sharedApplication’ is unavailable: not available on iOS (App Extension) - Use view controller based"></a>6、<strong>‘sharedApplication’ is unavailable: not available on iOS (App Extension) - Use view controller based</strong></h2><p><strong>小组件中不能使用</strong> <strong>sharedApplication 获取 UIApplication 对象；</strong></p>
+<p><a href="https://stackoverflow.com/questions/29288217/watchkit-sharedapplication-is-unavailable-not-available-on-ios-app-extensi" target="_blank" rel="noopener">https://stackoverflow.com/questions/29288217/watchkit-sharedapplication-is-unavailable-not-available-on-ios-app-extensi</a></p>
+<h2 id="7、设置APPLICATION-EXTENSION-API-ONLY"><a href="#7、设置APPLICATION-EXTENSION-API-ONLY" class="headerlink" title="7、设置APPLICATION_EXTENSION_API_ONLY"></a>7、设置APPLICATION_EXTENSION_API_ONLY</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">post_install do |installer_representation|</span><br><span class="line">installer_representation.pods_project.targets.each do |target|</span><br><span class="line">target.build_configurations.each do |config|</span><br><span class="line">config.build_settings[&apos;APPLICATION_EXTENSION_API_ONLY&apos;] = &apos;NO&apos;</span><br><span class="line">end</span><br><span class="line">end</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<h2 id="8、页面（ViewController）跳转"><a href="#8、页面（ViewController）跳转" class="headerlink" title="8、页面（ViewController）跳转"></a>8、页面（ViewController）跳转</h2><h3 id="8-1-Push"><a href="#8-1-Push" class="headerlink" title="8.1 Push"></a>8.1 Push</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">BadgeController *vc = [[BadgeController alloc] init];</span><br><span class="line">[self.navigationController pushViewController:vc animated:YES];</span><br></pre></td></tr></table></figure>
+<h3 id="8-2-Pop-关闭页面"><a href="#8-2-Pop-关闭页面" class="headerlink" title="8.2 Pop(关闭页面)"></a>8.2 Pop(关闭页面)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[self dismissViewControllerAnimated:YES completion:^&#123;</span><br><span class="line">&#125;];</span><br><span class="line"></span><br><span class="line">// 或者</span><br><span class="line">[self.navigationController dismissViewControllerAnimated:true completion:nil];</span><br><span class="line"></span><br><span class="line">// 或者</span><br><span class="line">[self.navigationController popViewControllerAnimated:YES];</span><br></pre></td></tr></table></figure>
+<h2 id="9、ViewController中用代码实现显示-UIImageView-UILabel-UIButton-UI-控件"><a href="#9、ViewController中用代码实现显示-UIImageView-UILabel-UIButton-UI-控件" class="headerlink" title="9、ViewController中用代码实现显示 UIImageView UILabel UIButton UI 控件"></a>9、ViewController中用代码实现显示 UIImageView UILabel UIButton UI 控件</h2><p>页面步骤如下：</p>
+<p>跟在Android中差不多：</p>
+<p>1、创建view对象；</p>
+<p>2、设置view的各种属性，如大小摆放位置等；</p>
+<p>3、添加到父视图中；</p>
+<h2 id="10、Programming-with-Objective-C-（Apple-Development）"><a href="#10、Programming-with-Objective-C-（Apple-Development）" class="headerlink" title="10、Programming with Objective-C （Apple Development）"></a>10、Programming with Objective-C （Apple Development）</h2><p><a href="https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/DefiningClasses/DefiningClasses.html#//apple_ref/doc/uid/TP40011210-CH3-SW1" target="_blank" rel="noopener">https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/DefiningClasses/DefiningClasses.html#//apple_ref/doc/uid/TP40011210-CH3-SW1</a></p>
+<h2 id="11、iOS-设置点击事件："><a href="#11、iOS-设置点击事件：" class="headerlink" title="11、iOS 设置点击事件："></a>11、iOS 设置点击事件：</h2><p>// 方式一</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[self.infoView addTapActionWithBlock:^(UIGestureRecognizer *gestureRecoginzer) &#123;</span><br><span class="line">@strongify(self)</span><br><span class="line">// todo</span><br><span class="line">&#125;];</span><br></pre></td></tr></table></figure>
+<p>// 方式二：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">UIImageView *iKnowIcon = [CYResource loadImageView:@&quot;free-question-once-more-i-know.png&quot;];</span><br><span class="line">iKnowIcon.top = questionIcon.top + scaleWidthWith320(200);</span><br><span class="line">iKnowIcon.centerX = self.width / 2;</span><br><span class="line">[self addSubview:iKnowIcon];</span><br><span class="line">UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismiss)];</span><br><span class="line">iKnowIcon.userInteractionEnabled = YES;</span><br><span class="line">[iKnowIcon addGestureRecognizer:tap];</span><br></pre></td></tr></table></figure>
+<p>方式三：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">// 步骤1：创建手势响应函数</span><br><span class="line">- (void)event:(UITapGestureRecognizer *)gesture</span><br><span class="line">&#123;</span><br><span class="line">   //处理事件</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 步骤2：创建手势</span><br><span class="line">UITapGestureRecognizer * tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(event:)];</span><br><span class="line"></span><br><span class="line">// 步骤3：给View添加手势</span><br><span class="line">//设置需要连续点击几次才响应，默认点击1次</span><br><span class="line">[tapGesture setNumberOfTapsRequired:1];</span><br><span class="line">[topView addGestureRecognizer:tapGesture];</span><br></pre></td></tr></table></figure>
+<h2 id="12、iOS-事件传递"><a href="#12、iOS-事件传递" class="headerlink" title="12、iOS 事件传递"></a>12、iOS 事件传递</h2><p>iOS 中只有继承了 <strong>UIResponse</strong> 的对象才能够接受处理事件。UIResponse是响应对象的基类，定义了处理上述各种事件的接口。常见的子类有：UIView，UIViewController，UIApplication和UIApplicationDelegate.</p>
+<p>链接：<a href="https://juejin.cn/post/6873761108662943757" target="_blank" rel="noopener">https://juejin.cn/post/6873761108662943757</a></p>
+<p>记账 app 中设置的点击事件</p>
+<p>因为 MineController 是 UIResponse 的子类，而 UIResponse 扩展了QFEventHandle，实现了<strong>routerEventWithName</strong> 方法，所以，在 MineController 中实现了 <strong>routerEventWithName</strong> 方法，子 <strong>View</strong> 在调用这个方法时，传递了点击事件类型，<strong>MineController</strong> 中会收到回调，而它里面绑定了各种点击事件类型的处理，所有可以处理点击事件。</p>
+<h2 id="13、屏幕底部显示如下样式的popup-window"><a href="#13、屏幕底部显示如下样式的popup-window" class="headerlink" title="13、屏幕底部显示如下样式的popup window"></a>13、屏幕底部显示如下样式的popup window</h2><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210182210481.jpg" alt="IMG_4466"></p>
+<p>// 更多登录方式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">- (IBAction)moreBtnClick:(UIButton *)sender &#123;</span><br><span class="line">  UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:nil delegate:nil cancelButtonTitle:@&quot;取消&quot; destructiveButtonTitle:nil otherButtonTitles:@&quot;注册&quot;, @&quot;手机登录&quot;, nil];</span><br><span class="line"></span><br><span class="line">  [sheet showInView:self.view];</span><br><span class="line">  [[sheet rac_buttonClickedSignal] subscribeNext:^(NSNumber *number) &#123;</span><br><span class="line">NSInteger index = [number integerValue];</span><br><span class="line"></span><br><span class="line">// 注册</span><br><span class="line">if (index == 0) &#123;</span><br><span class="line">	RE1Controller *vc = [[RE1Controller alloc] init];</span><br><span class="line">	[self.navigationController pushViewController:vc animated:YES];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 手机登录</span><br><span class="line">else if (index == 1) &#123;</span><br><span class="line">	PhoneController *vc = [[PhoneController alloc] init];</span><br><span class="line">	[self.navigationController pushViewController:vc animated:YES];</span><br><span class="line">&#125;</span><br><span class="line">&#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="14、NSNotificationCenter-使用（类似于EventBus）"><a href="#14、NSNotificationCenter-使用（类似于EventBus）" class="headerlink" title="14、NSNotificationCenter 使用（类似于EventBus）"></a>14、NSNotificationCenter 使用（类似于EventBus）</h2><p>// 前一个页面监听通知</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">- (void)rac_notification_register &#123;</span><br><span class="line">  @weakify(self)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  // 登录完成</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[[[[NSNotificationCenter defaultCenter] rac_addObserverForName:LOPGIN_LOGIN_COMPLETE object:nil] takeUntil:self.rac_willDeallocSignal] subscribeNext:^(id x) &#123;</span><br><span class="line">@strongify(self)</span><br><span class="line">// 回调</span><br><span class="line">if (self.complete) &#123;</span><br><span class="line">	self.complete();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 关闭</span><br><span class="line">[self.navigationController dismissViewControllerAnimated:true completion:nil];</span><br><span class="line">  &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>// 后一个页面发送通知</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[[NSNotificationCenter defaultCenter] postNotificationName:LOPGIN_LOGIN_COMPLETE object:nil];</span><br></pre></td></tr></table></figure>
+<h2 id="15、将View-跟-xib-文件绑定到一起"><a href="#15、将View-跟-xib-文件绑定到一起" class="headerlink" title="15、将View 跟 xib 文件绑定到一起"></a>15、将View 跟 xib 文件绑定到一起</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[_collection registerNib:[UINib nibWithNibName:@&quot;FindBookCell&quot; bundle:nil] forCellWithReuseIdentifier:@&quot;FindBookCell&quot;];</span><br></pre></td></tr></table></figure>
+<h2 id="16、控件不显示"><a href="#16、控件不显示" class="headerlink" title="16、控件不显示"></a>16、控件不显示</h2><p>如果不显示，可能是被其他控件遮挡住了，设置的约束有问题，可通过 Debug View Hierarchy 看 View 的层级；</p>
+<h2 id="17、UIButton-才可以设置点击事件，UIImageView-不可以；"><a href="#17、UIButton-才可以设置点击事件，UIImageView-不可以；" class="headerlink" title="17、UIButton 才可以设置点击事件，UIImageView 不可以；"></a>17、UIButton 才可以设置点击事件，UIImageView 不可以；</h2><p>如果需要给 <strong>UIImageView</strong> 设置点击事件，需要设置它可点击。</p>
+<h2 id="18、-OC-中-pragma-mark的意义和作用"><a href="#18、-OC-中-pragma-mark的意义和作用" class="headerlink" title="18、 OC 中 #pragma mark的意义和作用"></a>18、 OC 中 #pragma mark的意义和作用</h2><p>它们告诉<a href="https://so.csdn.net/so/search?q=Xcode&amp;spm=1001.2101.3001.7020" target="_blank" rel="noopener">Xcode</a>编译器，要在编辑器窗格顶部的方法和函数弹出菜单中将代码分隔开，一些类（尤其是一些控制器类）可能很长，方法和函数弹出菜单可以便于代码导航。此时加入 <code>#pragma</code> 指令对代码进行逻辑组织很有效果。</p>
+<h2 id="19、设置启动图"><a href="#19、设置启动图" class="headerlink" title="19、设置启动图"></a>19、设置启动图</h2><p>有两种方式，方式一：<strong>LaunchImage</strong>，已被废弃，官方推荐使用 <strong>LaunchScreen.storyboard</strong> 配置启动图，从 <strong>2020.4.30</strong> 开始提交 <strong>App Store</strong> 必须使用故事板来设置启动图。</p>
+<h2 id="20、判断相等"><a href="#20、判断相等" class="headerlink" title="20、判断相等"></a>20、判断相等</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">void f1() &#123;</span><br><span class="line">  NSNumber* num1 = [NSNumber numberWithInt:23];</span><br><span class="line">  NSNumber* num2 = [NSNumber numberWithFloat:23.0f];</span><br><span class="line">  BOOL b = [num1 isEqualToNumber:num2];</span><br><span class="line">  if (b) &#123;</span><br><span class="line">		NSLog(@&quot;相等&quot;);</span><br><span class="line">  &#125;else &#123;</span><br><span class="line">		NSLog(@&quot;不相等&quot;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/images/qrcode_wechat_public_account.jpg">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/View/" rel="tag"># View</a>
+              <a href="/tags/iOS/" rel="tag"># iOS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/10/18/只需7步大幅提升你的AS编译速度/" rel="prev" title="只需7步大幅提升你的AS编译速度">
+      <i class="fa fa-chevron-left"></i> 只需7步大幅提升你的AS编译速度
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1、Main-Bundle-Id-Extension-Bundle-Id（小组件）"><span class="nav-text">1、Main Bundle Id + Extension Bundle Id（小组件）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2、iOS-加异常断点"><span class="nav-text">2、iOS 加异常断点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3、Incompatible-block-pointer-types-sending-‘void"><span class="nav-text">3、Incompatible block pointer types sending ‘void</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4、uncaught-exception-‘NSInvalidArgumentException’-reason-‘-LSDefaults-sharedInstance-unrecognized-selector-sent-to-class"><span class="nav-text">4、uncaught exception ‘NSInvalidArgumentException’, reason: ‘+[_LSDefaults sharedInstance]: unrecognized selector sent to class</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5、从-pod-删除第三方库："><span class="nav-text">5、从 pod 删除第三方库：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6、‘sharedApplication’-is-unavailable-not-available-on-iOS-App-Extension-Use-view-controller-based"><span class="nav-text">6、‘sharedApplication’ is unavailable: not available on iOS (App Extension) - Use view controller based</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#7、设置APPLICATION-EXTENSION-API-ONLY"><span class="nav-text">7、设置APPLICATION_EXTENSION_API_ONLY</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#8、页面（ViewController）跳转"><span class="nav-text">8、页面（ViewController）跳转</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#8-1-Push"><span class="nav-text">8.1 Push</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-2-Pop-关闭页面"><span class="nav-text">8.2 Pop(关闭页面)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#9、ViewController中用代码实现显示-UIImageView-UILabel-UIButton-UI-控件"><span class="nav-text">9、ViewController中用代码实现显示 UIImageView UILabel UIButton UI 控件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#10、Programming-with-Objective-C-（Apple-Development）"><span class="nav-text">10、Programming with Objective-C （Apple Development）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#11、iOS-设置点击事件："><span class="nav-text">11、iOS 设置点击事件：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12、iOS-事件传递"><span class="nav-text">12、iOS 事件传递</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#13、屏幕底部显示如下样式的popup-window"><span class="nav-text">13、屏幕底部显示如下样式的popup window</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#14、NSNotificationCenter-使用（类似于EventBus）"><span class="nav-text">14、NSNotificationCenter 使用（类似于EventBus）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#15、将View-跟-xib-文件绑定到一起"><span class="nav-text">15、将View 跟 xib 文件绑定到一起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#16、控件不显示"><span class="nav-text">16、控件不显示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#17、UIButton-才可以设置点击事件，UIImageView-不可以；"><span class="nav-text">17、UIButton 才可以设置点击事件，UIImageView 不可以；</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#18、-OC-中-pragma-mark的意义和作用"><span class="nav-text">18、 OC 中 #pragma mark的意义和作用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#19、设置启动图"><span class="nav-text">19、设置启动图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#20、判断相等"><span class="nav-text">20、判断相等</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">程序员飞飞</p>
+  <div class="site-description" itemprop="description">Android、Java Developer.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">100</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">133</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https://github.com/xinpengfei520" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener" target="_blank"><i class="envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https://blog.csdn.net/xinpengfei521" rel="noopener" target="_blank"><i class="heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https://juejin.im/user/57c82d0779bc440063eac0f8/posts" rel="noopener" target="_blank"><i class="crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https://open.weixin.qq.com/qr/code?username=x-sir123" rel="noopener" target="_blank"><i class="weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https://www.zhihu.com/people/xin-peng-fei-9/activities" rel="noopener" target="_blank"><i class="tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" rel="noopener" target="_blank"><i class="weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https://www.jianshu.com/u/268aa8e1a12f" rel="noopener" target="_blank"><i class="desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">程序员飞飞</span>
+</div>
+
+
+
+<div style="width:580px;margin:0 auto; padding:20px 0;">
+	<a target="_blank" href="https://beian.miit.gov.cn/" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">沪ICP备2022014461号-1 </p></a>
+
+	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=61032202000124" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="images/beian_pic.png" style="float:left;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">陕公网安备 61032202000124号</p></a>
+</div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz","app_key":"Hm8TNHlKhiv0i2VwIXIE3oY9","server_url":"https://g3y7kugt.lc-cn-n1-shared.com","security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz',
+      appKey     : 'Hm8TNHlKhiv0i2VwIXIE3oY9',
+      placeholder: "既然来了，就留个脚印再走吧！",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/love.js"></script>

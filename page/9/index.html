@@ -215,6 +215,343 @@
   
   
   <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android截屏的几种实现/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/24/Android截屏的几种实现/" class="post-title-link" itemprop="url">Android 截屏的几种实现</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/09/24/Android截屏的几种实现/" class="post-meta-item leancloud_visitors" data-flag-title="Android 截屏的几种实现" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/09/24/Android截屏的几种实现/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android截屏的几种实现/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>##方式一</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public static Bitmap capture(Activity activity) &#123;</span><br><span class="line">       activity.getWindow().getDecorView().setDrawingCacheEnabled(true);</span><br><span class="line">       Bitmap bmp = activity.getWindow().getDecorView().getDrawingCache();</span><br><span class="line">       return bmp;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<p>此种方式比较简单只需传入当前要截取屏幕的Activity对象即可，不需要添加任何权限，后续可将截图的bitmap保存到本地即可；</p>
+<p>缺点：无法截取WebView页面，截屏后是白屏！</p>
+<p>##方式二</p>
+<p>使用adb Shell命令截屏</p>
+<p>例如：</p>
+<figure class="highlight plain"><figcaption><span>shell screencap -p</span><a href="/sdcard/sreenshot1.png```">link</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">命令格式：adb shell screencap -p + 文件路径 + 文件名</span><br><span class="line"></span><br><span class="line">##方式三</span><br><span class="line"></span><br><span class="line">从Android 5.0开始 Google开放了截屏的api</span><br><span class="line"></span><br><span class="line">截取方式如下：</span><br><span class="line"></span><br><span class="line">1.在Activity中开启截屏服务</span><br></pre></td></tr></table></figure>
+<pre><code>if (Build.VERSION.SDK_INT &gt;= 21) {
+        startActivityForResult(
+                ((MediaProjectionManager) getSystemService(&quot;media_projection&quot;)).createScreenCaptureIntent(),1);
+    } else {
+        Log.e(&quot;TAG&quot;, &quot;版本过低,无法截屏&quot;);
+    }
+</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">2.重写**onActivityResult**方法</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/24/Android截屏的几种实现/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android 最全 Intent 传递数据姿势/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/24/Android 最全 Intent 传递数据姿势/" class="post-title-link" itemprop="url">Android 最全 Intent 传递数据姿势</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/09/24/Android 最全 Intent 传递数据姿势/" class="post-meta-item leancloud_visitors" data-flag-title="Android 最全 Intent 传递数据姿势" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/09/24/Android 最全 Intent 传递数据姿势/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android 最全 Intent 传递数据姿势/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center><center>置顶公众号（<strong>ID：ITBigFly</strong>）第一时间收到推送</center>
+
+<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061527271.jpeg" alt=""></p>
+<blockquote>
+<p>作为一个 <strong>Android</strong> 开发人员，我们都是用过 <strong>Intent</strong>，用它来在组件之间传递数据，所以说 <strong>Intent</strong> 是组件之间通信的使者，一般情况下，我们传递的都是一些比较简单的数据，并且都是基本的数据类型，写法也比较简单，今天我在这里说的是如何使用 <strong>Intent</strong> 传递对象及集合，我们知道<strong>Intent</strong> 是不能直接传递没有序列化的对象的，说到序列化，我们都知道，序列化有两种方式，即实现 <strong>Sereriable</strong> 或者 <strong>Paracelable</strong> 接口。默认情况下，像 <strong>List、Bitmap</strong> 等默认帮我们已经实现了序列化，我们就可以直接进行传递，还有一些像 <strong>Map</strong> 集合，自定义的 <strong>class</strong>，默认是没有实现序列化的接口的，我们必须要先实现序列化才可以进行传递。</p>
+</blockquote>
+<h2 id="1-传递序列化对象"><a href="#1-传递序列化对象" class="headerlink" title="1.传递序列化对象"></a><span style="color:#00ff00;">1.传递序列化对象</span></h2><h3 id="1-1-方式一"><a href="#1-1-方式一" class="headerlink" title="1.1 方式一"></a><span style="color:#0000ff;">1.1 方式一</span></h3><p>这种方式比较简单，我们可以先将对象使用 <strong>Gson</strong> 先序列化成 <strong>Json</strong> 字符串，然后作为字符串来使用 <strong>Intent</strong>，这种方式的好处是不需要实现 <strong>Sereriable</strong> 或者 <strong>Paracelable</strong>，坏处就是需要额外的使用 <strong>Gson</strong> 来序列化和解析。</p>
+<p>代码示例：</p>
+<p><strong>ActivityA</strong> 中设置数据：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">User user = new User();</span><br><span class="line">user.setName(&quot;Jack&quot;);</span><br><span class="line">user.setAge(18);</span><br><span class="line">Intent intent=new Intent(ActivityA.this,ActivityB.class);</span><br><span class="line">intent.putExtra(&quot;user&quot;,new Gson().toJson(user));</span><br><span class="line">startActivity(intent);</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/24/Android 最全 Intent 传递数据姿势/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android实现多语言so easy/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/24/Android实现多语言so easy/" class="post-title-link" itemprop="url">Android 实现多语言 so easy</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/09/24/Android实现多语言so easy/" class="post-meta-item leancloud_visitors" data-flag-title="Android 实现多语言 so easy" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/09/24/Android实现多语言so easy/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android实现多语言so easy/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p>CSDN：<a href="https://blog.csdn.net/xinpengfei521" target="_blank" rel="noopener">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由作者原创，未经授权，不可随意转载！</p>
+</blockquote>
+<p>&#160; &#160;&#160; &#160;最近，我们公司的业务已经拓展到了香港，我们都知道香港使用的是繁体中文，因此，我们的 APP 要可以设置繁体语言，这不我们要紧跟国际的步伐，实现多语言，产品定给我们的需求主要以实现简体中文、繁体中文、英文三种语言切换即可，具体的业务逻辑是：当用户第一次进入 APP 时，App 的语言跟随当前系统语言，当用户设置了某种语言之后就切换为用户设置的语言，不管系统之后设置成哪种语言，都不会影响用户设置的语言，如果用户一直没有设置语言选项，只要系统语言改变时，APP 的语言也要跟随系统语言设置改变。</p>
+<p>&#160; &#160;&#160; &#160;说明：本文以实现简体中文、繁体中文和英语为例进行简要讲解。</p>
+<h2 id="1-实现思路"><a href="#1-实现思路" class="headerlink" title="1.实现思路"></a>1.实现思路</h2><p>&#160; &#160;&#160; &#160;我们可以预先使用SharedPreference 来保存一个语言类型的值，当用户第一次进入 APP 时，我们通过 Key 取出这个值，第一次肯定是取不到的，这时我们将 App 的语言设置为当前系统默认值即可；当用户通设置多语言时，我们将这个语言对应的值通过SharedPreference 保存到本地即可，然后此时重启 APP，设置为用户设置的语言即可，以后每次进入 App 时只需取出保存用户设置的语言设置即可，一般设置语言写在程序的入口 <strong>Application</strong> 的 <strong>onCreate()</strong> 方法里。</p>
+<h2 id="2-自定义SharedPreference工具类"><a href="#2-自定义SharedPreference工具类" class="headerlink" title="2.自定义SharedPreference工具类"></a>2.自定义SharedPreference工具类</h2><p>&#160; &#160;&#160; &#160;作用：用于保存当前设置语言的类型，此文以 SharedPreference 保存为例，当然使用数据库或者其他保存方式也是可以的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String APP_SP = &quot;app_sp&quot;;</span><br><span class="line">    private static final String TAG = SpUtil.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instance = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstance() &#123;</span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(APP_SP, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line">        if (value == null) &#123;</span><br><span class="line">            Log.e(TAG, &quot;value==null保存失败&quot;);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 读取String类型数据</span><br><span class="line">     *</span><br><span class="line">     * @param key</span><br><span class="line">     * @param defValue</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 读取boolean类型数据</span><br><span class="line">     *</span><br><span class="line">     * @param key</span><br><span class="line">     * @param defValue</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 读取boolean类型数据</span><br><span class="line">     *</span><br><span class="line">     * @param key</span><br><span class="line">     * @param defValue</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 清除所有保存的数据(xxx.xml仍然存在，但是内部没有数据)</span><br><span class="line">     */</span><br><span class="line">    public void clearAll() &#123;</span><br><span class="line">        mSp.edit().clear().commit();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="3-自定义LocaleUtil工具类"><a href="#3-自定义LocaleUtil工具类" class="headerlink" title="3.自定义LocaleUtil工具类"></a>3.自定义LocaleUtil工具类</h2><p>&#160; &#160;&#160; &#160;作用：用于设置保存语言及获取当前语言，重启 APP 等操作</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/24/Android实现多语言so easy/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android实现帧动画/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -246,7 +583,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -353,7 +690,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -430,348 +767,6 @@
   
   
   <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android实现密码隐藏显示/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/24/Android实现密码隐藏显示/" class="post-title-link" itemprop="url">Android 实现密码隐藏显示</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2017/09/24/Android实现密码隐藏显示/" class="post-meta-item leancloud_visitors" data-flag-title="Android 实现密码隐藏显示" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2017/09/24/Android实现密码隐藏显示/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android实现密码隐藏显示/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p>需求：当用户点击提现按钮的时候，弹出输入支付密码的popupwindow,输入密码框后面有显示和隐藏支付密码的切换按钮。</p>
-</blockquote>
-<p>老规矩先验货：</p>
-<p>##1.布局文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span><br><span class="line">&lt;RelativeLayout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    android:layout_width=&quot;match_parent&quot;</span><br><span class="line">    android:layout_height=&quot;match_parent&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;LinearLayout</span><br><span class="line">        android:layout_width=&quot;275dp&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_centerInParent=&quot;true&quot;</span><br><span class="line">        android:background=&quot;#FFFFFF&quot;</span><br><span class="line">        android:orientation=&quot;vertical&quot;&gt;</span><br><span class="line"></span><br><span class="line">        &lt;TextView</span><br><span class="line">            android:id=&quot;@+id/tvRecharge&quot;</span><br><span class="line">            android:layout_width=&quot;match_parent&quot;</span><br><span class="line">            android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">            android:layout_marginTop=&quot;16dp&quot;</span><br><span class="line">            android:gravity=&quot;center&quot;</span><br><span class="line">            android:text=&quot;支付密码验证&quot;</span><br><span class="line">            android:textSize=&quot;18sp&quot; /&gt;</span><br><span class="line"></span><br><span class="line">        &lt;LinearLayout</span><br><span class="line">            android:layout_width=&quot;match_parent&quot;</span><br><span class="line">            android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">            android:layout_margin=&quot;10dp&quot;</span><br><span class="line">            android:background=&quot;#11000000&quot;</span><br><span class="line">            android:gravity=&quot;center_vertical&quot;</span><br><span class="line">            android:orientation=&quot;horizontal&quot;&gt;</span><br><span class="line"></span><br><span class="line">            &lt;EditText</span><br><span class="line">                android:id=&quot;@+id/etPayPwd&quot;</span><br><span class="line">                android:layout_width=&quot;0dp&quot;</span><br><span class="line">                android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">                android:layout_weight=&quot;1&quot;</span><br><span class="line">                android:background=&quot;@null&quot;</span><br><span class="line">                android:hint=&quot;输入支付密码&quot;</span><br><span class="line">                android:inputType=&quot;textPassword&quot;</span><br><span class="line">                android:padding=&quot;10dp&quot;</span><br><span class="line">                android:paddingRight=&quot;10dp&quot; /&gt;</span><br><span class="line"></span><br><span class="line">            &lt;ToggleButton</span><br><span class="line">                android:id=&quot;@+id/togglePwd&quot;</span><br><span class="line">                android:layout_width=&quot;20dp&quot;</span><br><span class="line">                android:layout_height=&quot;20dp&quot;</span><br><span class="line">                android:layout_marginRight=&quot;10dp&quot;</span><br><span class="line">                android:background=&quot;@drawable/toggle_pwd_selector&quot;</span><br><span class="line">                android:padding=&quot;10dp&quot;</span><br><span class="line">                android:textOff=&quot;&quot;</span><br><span class="line">                android:textOn=&quot;&quot; /&gt;</span><br><span class="line">        &lt;/LinearLayout&gt;</span><br><span class="line"></span><br><span class="line">        &lt;LinearLayout</span><br><span class="line">            android:layout_width=&quot;match_parent&quot;</span><br><span class="line">            android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">            android:orientation=&quot;horizontal&quot;&gt;</span><br><span class="line"></span><br><span class="line">            &lt;TextView</span><br><span class="line">                android:id=&quot;@+id/tvCancel&quot;</span><br><span class="line">                android:layout_width=&quot;0dp&quot;</span><br><span class="line">                android:layout_height=&quot;48dp&quot;</span><br><span class="line">                android:layout_weight=&quot;1&quot;</span><br><span class="line">                android:gravity=&quot;center&quot;</span><br><span class="line">                android:text=&quot;取消&quot;</span><br><span class="line">                android:textSize=&quot;16sp&quot; /&gt;</span><br><span class="line"></span><br><span class="line">            &lt;TextView</span><br><span class="line">                android:id=&quot;@+id/tvConfirm&quot;</span><br><span class="line">                android:layout_width=&quot;0dp&quot;</span><br><span class="line">                android:layout_height=&quot;48dp&quot;</span><br><span class="line">                android:layout_weight=&quot;1&quot;</span><br><span class="line">                android:gravity=&quot;center&quot;</span><br><span class="line">                android:text=&quot;确定&quot;</span><br><span class="line">                android:textSize=&quot;16sp&quot; /&gt;</span><br><span class="line">        &lt;/LinearLayout&gt;</span><br><span class="line">    &lt;/LinearLayout&gt;</span><br><span class="line"></span><br><span class="line">&lt;/RelativeLayout&gt;</span><br></pre></td></tr></table></figure>
-<p>##2.代码实现</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line">public class MainActivity extends AppCompatActivity &#123;</span><br><span class="line"></span><br><span class="line">    private PopupWindow popupWindow;</span><br><span class="line">    private View popupView;</span><br><span class="line">    private EditText etPayPwd;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        setContentView(R.layout.activity_main);</span><br><span class="line">        Button btnWithdraw = (Button) findViewById(R.id.btnWithdraw);</span><br><span class="line">        btnWithdraw.setOnClickListener(new View.OnClickListener() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void onClick(View view) &#123;</span><br><span class="line">                showPayPwdDialog();</span><br><span class="line">                BrightnessManager.lightOff(MainActivity.this);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void showPayPwdDialog() &#123;</span><br><span class="line">        if (popupWindow == null) &#123;</span><br><span class="line">            popupView = View.inflate(MainActivity.this, R.layout.popupwindow_pay_pwd, null);</span><br><span class="line">            popupWindow = new PopupWindow(popupView, WindowManager.LayoutParams.MATCH_PARENT,</span><br><span class="line">                    WindowManager.LayoutParams.MATCH_PARENT);</span><br><span class="line">            popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() &#123;</span><br><span class="line">                @Override</span><br><span class="line">                public void onDismiss() &#123;</span><br><span class="line">                    BrightnessManager.lightOn(MainActivity.this);</span><br><span class="line">                    etPayPwd.setText(&quot;&quot;);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">            popupWindow.setBackgroundDrawable(new BitmapDrawable());</span><br><span class="line">            popupWindow.setFocusable(true);</span><br><span class="line">            popupWindow.setOutsideTouchable(true);</span><br><span class="line"></span><br><span class="line">            ToggleButton togglePwd = (ToggleButton) popupView.findViewById(R.id.togglePwd);</span><br><span class="line">            etPayPwd = (EditText) popupView.findViewById(R.id.etPayPwd);</span><br><span class="line">            togglePwd.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() &#123;</span><br><span class="line">                @Override</span><br><span class="line">                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) &#123;</span><br><span class="line">                    if (isChecked) &#123;</span><br><span class="line">                        //如果选中，显示密码</span><br><span class="line">                        etPayPwd.setTransformationMethod(HideReturnsTransformationMethod.getInstance());</span><br><span class="line">                    &#125; else &#123;</span><br><span class="line">                        //否则隐藏密码</span><br><span class="line">                        etPayPwd.setTransformationMethod(PasswordTransformationMethod.getInstance());</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line"></span><br><span class="line">            popupView.findViewById(R.id.tvCancel).setOnClickListener(new View.OnClickListener() &#123;</span><br><span class="line">                @Override</span><br><span class="line">                public void onClick(View v) &#123;</span><br><span class="line">                    popupWindow.dismiss();</span><br><span class="line">                    BrightnessManager.lightOn(MainActivity.this);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line"></span><br><span class="line">            popupView.findViewById(R.id.tvConfirm).setOnClickListener(new View.OnClickListener() &#123;</span><br><span class="line">                @Override</span><br><span class="line">                public void onClick(View v) &#123;</span><br><span class="line">                    String payPwd = etPayPwd.getText().toString();</span><br><span class="line">                    popupWindow.dismiss();</span><br><span class="line">                    BrightnessManager.lightOn(MainActivity.this);</span><br><span class="line">                    if (!TextUtils.isEmpty(payPwd)) &#123;</span><br><span class="line">                        Toast.makeText(MainActivity.this, &quot;提现请求提交成功！&quot;, Toast.LENGTH_SHORT).show();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        if (popupWindow.isShowing()) &#123;</span><br><span class="line">            popupWindow.dismiss();</span><br><span class="line">            BrightnessManager.lightOn(MainActivity.this);</span><br><span class="line">        &#125;</span><br><span class="line">        popupWindow.showAtLocation(MainActivity.this.findViewById(R.id.activity_main),</span><br><span class="line">                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>OK！今天双11，马云硬是将光棍节过成了购物狂欢节，你让我们这些光棍儿们怎么想？好吧，与我们没关系，咱们继续撸咱们的代码，为了早日迎娶白富美，走向人生巅峰，继续撸不要停！！！</p>
-
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/24/Android实现密码隐藏显示/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android截屏的几种实现/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/24/Android截屏的几种实现/" class="post-title-link" itemprop="url">Android 截屏的几种实现</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2017/09/24/Android截屏的几种实现/" class="post-meta-item leancloud_visitors" data-flag-title="Android 截屏的几种实现" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2017/09/24/Android截屏的几种实现/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/Android截屏的几种实现/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>##方式一</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public static Bitmap capture(Activity activity) &#123;</span><br><span class="line">       activity.getWindow().getDecorView().setDrawingCacheEnabled(true);</span><br><span class="line">       Bitmap bmp = activity.getWindow().getDecorView().getDrawingCache();</span><br><span class="line">       return bmp;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-<p>此种方式比较简单只需传入当前要截取屏幕的Activity对象即可，不需要添加任何权限，后续可将截图的bitmap保存到本地即可；</p>
-<p>缺点：无法截取WebView页面，截屏后是白屏！</p>
-<p>##方式二</p>
-<p>使用adb Shell命令截屏</p>
-<p>例如：</p>
-<figure class="highlight plain"><figcaption><span>shell screencap -p</span><a href="/sdcard/sreenshot1.png```">link</a></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">命令格式：adb shell screencap -p + 文件路径 + 文件名</span><br><span class="line"></span><br><span class="line">##方式三</span><br><span class="line"></span><br><span class="line">从Android 5.0开始 Google开放了截屏的api</span><br><span class="line"></span><br><span class="line">截取方式如下：</span><br><span class="line"></span><br><span class="line">1.在Activity中开启截屏服务</span><br></pre></td></tr></table></figure>
-<pre><code>if (Build.VERSION.SDK_INT &gt;= 21) {
-        startActivityForResult(
-                ((MediaProjectionManager) getSystemService(&quot;media_projection&quot;)).createScreenCaptureIntent(),1);
-    } else {
-        Log.e(&quot;TAG&quot;, &quot;版本过低,无法截屏&quot;);
-    }
-</code></pre><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">2.重写**onActivityResult**方法</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/24/Android截屏的几种实现/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/不可错过的几款GitHub开源项目/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/24/不可错过的几款GitHub开源项目/" class="post-title-link" itemprop="url">不可错过的几款GitHub开源项目</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2017/09/24/不可错过的几款GitHub开源项目/" class="post-meta-item leancloud_visitors" data-flag-title="不可错过的几款GitHub开源项目" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2017/09/24/不可错过的几款GitHub开源项目/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/不可错过的几款GitHub开源项目/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>工作之余或者周末感觉无聊？不知道干什么？想继续提高技术，但是不知道做什么的同学，看过来，不妨利用闲暇时间来撸几个 GitHub 上还不错的开源项目，本文推荐的开源项目比较适合新手、及对MVP设计模式不太熟练的同学练习之用，下面逐一进行简单介绍。</p>
-<h2 id="1-ZhiHuMVP"><a href="#1-ZhiHuMVP" class="headerlink" title="1.ZhiHuMVP"></a>1.ZhiHuMVP</h2><p>一款采用 MVP 模式的仿知乎客户端。</p>
-<p>本项目包含以下知识点：</p>
-<ul>
-<li>MVP架构思想</li>
-<li>Retrofit RESTful API 框架的配合</li>
-<li>RxJava 响应式编程</li>
-<li>Butter Knife：通过注解绑定 View</li>
-<li>夜间模式切换</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415212934402?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/fangx/ZhiHuMVP" target="_blank" rel="noopener">https://github.com/fangx/ZhiHuMVP</a></p>
-<h2 id="2-ColorfulNews"><a href="#2-ColorfulNews" class="headerlink" title="2.ColorfulNews"></a>2.ColorfulNews</h2><p>一个 Material Design 风格的新闻阅读 App，采用 MVP 模式，基于 Dagger2+RxJava+Retrofit2进行开发。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/24/不可错过的几款GitHub开源项目/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android手把手撸一个CustomProgressDialog/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -803,7 +798,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -909,7 +904,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -984,6 +979,121 @@
   
   
   <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/不可错过的几款GitHub开源项目/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="程序员飞飞">
+      <meta itemprop="description" content="Android、Java Developer.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="程序员飞飞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/24/不可错过的几款GitHub开源项目/" class="post-title-link" itemprop="url">不可错过的几款GitHub开源项目</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2017/09/24/不可错过的几款GitHub开源项目/" class="post-meta-item leancloud_visitors" data-flag-title="不可错过的几款GitHub开源项目" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2017/09/24/不可错过的几款GitHub开源项目/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/不可错过的几款GitHub开源项目/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>工作之余或者周末感觉无聊？不知道干什么？想继续提高技术，但是不知道做什么的同学，看过来，不妨利用闲暇时间来撸几个 GitHub 上还不错的开源项目，本文推荐的开源项目比较适合新手、及对MVP设计模式不太熟练的同学练习之用，下面逐一进行简单介绍。</p>
+<h2 id="1-ZhiHuMVP"><a href="#1-ZhiHuMVP" class="headerlink" title="1.ZhiHuMVP"></a>1.ZhiHuMVP</h2><p>一款采用 MVP 模式的仿知乎客户端。</p>
+<p>本项目包含以下知识点：</p>
+<ul>
+<li>MVP架构思想</li>
+<li>Retrofit RESTful API 框架的配合</li>
+<li>RxJava 响应式编程</li>
+<li>Butter Knife：通过注解绑定 View</li>
+<li>夜间模式切换</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415212934402?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/fangx/ZhiHuMVP" target="_blank" rel="noopener">https://github.com/fangx/ZhiHuMVP</a></p>
+<h2 id="2-ColorfulNews"><a href="#2-ColorfulNews" class="headerlink" title="2.ColorfulNews"></a>2.ColorfulNews</h2><p>一个 Material Design 风格的新闻阅读 App，采用 MVP 模式，基于 Dagger2+RxJava+Retrofit2进行开发。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/24/不可错过的几款GitHub开源项目/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/Android最新手机号正则判断/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1015,7 +1125,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1154,7 +1264,7 @@ public static boolean isChinaPhoneLegal(String str)
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
+                <time title="修改时间：2022-10-18 14:16:00" itemprop="dateModified" datetime="2022-10-18T14:16:00+00:00">2022-10-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1213,117 +1323,6 @@ public static boolean isChinaPhoneLegal(String str)
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2017/09/24/Android检测Activity或者Service是否运行/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/深入浅出Retrofit2.x(一)/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="程序员飞飞">
-      <meta itemprop="description" content="Android、Java Developer.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="程序员飞飞">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/24/深入浅出Retrofit2.x(一)/" class="post-title-link" itemprop="url">深入浅出 Retrofit2.x (一)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-10-06 08:53:14" itemprop="dateModified" datetime="2022-10-06T08:53:14+00:00">2022-10-06</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2017/09/24/深入浅出Retrofit2.x(一)/" class="post-meta-item leancloud_visitors" data-flag-title="深入浅出 Retrofit2.x (一)" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2017/09/24/深入浅出Retrofit2.x(一)/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2017/09/24/深入浅出Retrofit2.x(一)/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <center>点击上面蓝色字体关注“IT大飞说”</center>
-
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061548094.jpeg" alt=""></p>
-<blockquote>
-<p>在 Android 开发中，从最原生的 <strong>HttpClient</strong> 和后来的 <strong>HttpUrlConnection</strong>，再到<strong>Volley、AsyncHttpClient</strong> 等网络请求框架，最后到 Square 公司开源的 <strong>okhttp</strong>，一时间 <strong>okhttp</strong> 风靡整个开发圈，进而衍生了好多大牛对 <strong>okhttp</strong> 的封装开源库，像鸿洋大神封装的 <strong>okhttputils</strong>，还有 <strong>Okgo</strong> … 然后就是 <strong>Retrofit</strong> 了，其实它也是对 <strong>okhttp</strong> 的封装，<strong>Retrofit</strong> 使得网络请求更优雅，灵活性更高，支持各种适配器和转换器，可以搭配 <strong>RxJava</strong> 一起使用，一度后来基于 <strong>RxJava + Retrofit + MVP</strong> 这种架构设计非常流行，网上关于这种的文章也更是层出不穷，目前 <strong>retrofit</strong> 在 GitHub 上有将近 3w 的 Star，目前可以说是非常稳定了。</p>
-</blockquote>
-<h2 id="1-初识-Retrofit"><a href="#1-初识-Retrofit" class="headerlink" title="1.初识 Retrofit"></a>1.初识 Retrofit</h2><p>简单说，<strong>Retrofit</strong> 是一个支持 <strong>RESTful api</strong> 架构的 <strong>http</strong> 网络请求框架的封装库，<strong>Retrofit</strong> 封装了许多自定义的注解，大大方便和简化了使用，另外灵活性也更高，底层采用 <strong>okhttp</strong> 实现真正的网络请求，他们的关系可以说是分工协作吧，总结一成一句话就是：<strong>Retrofit</strong> 让 <strong>okhttp</strong> 网络请求更优雅！</p>
-<p>他们的关系可以看下图可能更容易理解：</p>
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061548783.png" alt=""></p>
-<h2 id="2-小牛试刀"><a href="#2-小牛试刀" class="headerlink" title="2.小牛试刀"></a>2.小牛试刀</h2><h3 id="2-1我们先来个简单的-GET-请求"><a href="#2-1我们先来个简单的-GET-请求" class="headerlink" title="2.1我们先来个简单的 GET 请求"></a>2.1我们先来个简单的 GET 请求</h3><p>首先在 Gradle 中添加 Retrofit 的依赖：</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/24/深入浅出Retrofit2.x(一)/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1412,20 +1411,20 @@ public static boolean isChinaPhoneLegal(String str)
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-count">100</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">13</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">131</span>
+        <span class="site-state-item-count">133</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

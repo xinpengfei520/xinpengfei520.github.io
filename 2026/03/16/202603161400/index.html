@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vance.xin","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="你正在用 Claude Code 做一个复杂的重构任务。改到一半，突然想问一个问题：”刚才那个函数的返回值是什么来着？” 怎么办？ 直接在对话里问？可以，但这个问题会被加到对话历史里，占用上下文，增加 Token 消耗。而且 Claude 可能因为你的”插嘴”偏离了当前任务的方向。 开一个新会话问？更不划算。新会话没有当前的上下文，Claude 什么都不知道，你得重新解释一遍。 这就是 /btw">
+<meta name="keywords" content="Claude Code,AI 编程,开发工具,效率提升">
+<meta property="og:type" content="article">
+<meta property="og:title" content="写给小白的 Claude Code 进阶指南 - &#x2F;btw 命令">
+<meta property="og:url" content="https://www.vance.xin/2026/03/16/202603161400/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你正在用 Claude Code 做一个复杂的重构任务。改到一半，突然想问一个问题：”刚才那个函数的返回值是什么来着？” 怎么办？ 直接在对话里问？可以，但这个问题会被加到对话历史里，占用上下文，增加 Token 消耗。而且 Claude 可能因为你的”插嘴”偏离了当前任务的方向。 开一个新会话问？更不划算。新会话没有当前的上下文，Claude 什么都不知道，你得重新解释一遍。 这就是 /btw">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2026-03-17T08:57:01.191Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="写给小白的 Claude Code 进阶指南 - &#x2F;btw 命令">
+<meta name="twitter:description" content="你正在用 Claude Code 做一个复杂的重构任务。改到一半，突然想问一个问题：”刚才那个函数的返回值是什么来着？” 怎么办？ 直接在对话里问？可以，但这个问题会被加到对话历史里，占用上下文，增加 Token 消耗。而且 Claude 可能因为你的”插嘴”偏离了当前任务的方向。 开一个新会话问？更不划算。新会话没有当前的上下文，Claude 什么都不知道，你得重新解释一遍。 这就是 /btw">
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/16/202603161400/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>写给小白的 Claude Code 进阶指南 - /btw 命令 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1060098061815513"
+     crossorigin="anonymous"></script>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+  <a href="https://github.com/xinpengfei520" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">飞飞的AI实验室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="calendar fa-fw"></i>日程表</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+        <li class="menu-item menu-item-baidusitemap">
+
+    <a href="/baidusitemap.xml" rel="section"><i class="sitemap fa-fw"></i>baidusitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="heartbeat fa-fw"></i>公益 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/16/202603161400/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          写给小白的 Claude Code 进阶指南 - /btw 命令
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2026-03-16 14:00:00" itemprop="dateCreated datePublished" datetime="2026-03-16T14:00:00+00:00">2026-03-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2026-03-17 08:57:01" itemprop="dateModified" datetime="2026-03-17T08:57:01+00:00">2026-03-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/阅读/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2026/03/16/202603161400/" class="post-meta-item leancloud_visitors" data-flag-title="写给小白的 Claude Code 进阶指南 - /btw 命令" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2026/03/16/202603161400/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2026/03/16/202603161400/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>你正在用 Claude Code 做一个复杂的重构任务。改到一半，突然想问一个问题：”刚才那个函数的返回值是什么来着？”</p>
+<p>怎么办？</p>
+<p>直接在对话里问？可以，但这个问题会被加到对话历史里，占用上下文，增加 Token 消耗。而且 Claude 可能因为你的”插嘴”偏离了当前任务的方向。</p>
+<p>开一个新会话问？更不划算。新会话没有当前的上下文，Claude 什么都不知道，你得重新解释一遍。</p>
+<p>这就是 <code>/btw</code> 命令要解决的问题。</p>
+<h2 id="btw-是什么？"><a href="#btw-是什么？" class="headerlink" title="/btw 是什么？"></a>/btw 是什么？</h2><p>一句话：<strong><code>/btw</code> 让你在不打断 Claude 工作的情况下，问一个”顺便问一下”的问题。</strong></p>
+<p>它的全称是 “By The Way”——顺便说一下。</p>
+<p>这个命令在 2026 年 3 月 10 日发布的 Claude Code 2.1.72 版本中上线。虽然是个小功能，但用过的人都说：真香。</p>
+<p>它的工作原理很简单：</p>
+<ol>
+<li>你输入 <code>/btw</code> 加上你的问题</li>
+<li>Claude 生成一个临时的”侧边对话”来回答</li>
+<li>回答完毕后，<strong>这段对话不会被保存到主对话历史中</strong></li>
+<li>你的主任务继续运行，不受任何影响</li>
+</ol>
+<p>你可以把它理解为”开了个小窗口悄悄问了一句，问完关掉，就像什么都没发生过”。</p>
+<h2 id="为什么需要-btw？"><a href="#为什么需要-btw？" class="headerlink" title="为什么需要 /btw？"></a>为什么需要 /btw？</h2><p>要理解 <code>/btw</code> 的价值，得先明白 Claude Code 的一个核心机制：<strong>对话历史决定了 Token 消耗。</strong></p>
+<p>每次你在对话里发一条消息，Claude 都需要重新读取整个对话历史来理解上下文。对话越长，每次请求消耗的 Token 就越多。</p>
+<p>想象一下这个场景：</p>
+<p>你正在做一个涉及 10 个文件的大重构。Claude 已经读取了大量代码，建立了完整的上下文。这时候你突然问了一句：”Python 的 dataclass 默认是可变的还是不可变的？”</p>
+<p>这个问题很简单，Claude 一秒就能回答。但它会被永久记录在对话历史中。之后的每一次请求，Claude 都要重新读取这个问答对。10 次请求下来，这个小问题可能消耗了上千个额外 Token。</p>
+<p><strong>积少成多，一个长会话中 20% 到 30% 的 Token 消耗，可能都来自这类”顺便问的小问题”。</strong></p>
+<p>有用户实测，持续使用 <code>/btw</code> 后，长会话的 Token 消耗降低了将近 50%。</p>
+<h2 id="怎么用-btw？"><a href="#怎么用-btw？" class="headerlink" title="怎么用 /btw？"></a>怎么用 /btw？</h2><p>用法非常简单，但有一个关键细节。</p>
+<h3 id="正确用法"><a href="#正确用法" class="headerlink" title="正确用法"></a>正确用法</h3><p>在输入框里直接输入 <code>/btw</code> 加上你的问题，<strong>一行写完，直接回车</strong>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/btw calculate_metrics 函数在这个上下文里返回什么？</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/btw 这个正则表达式是什么意思？</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/btw 刚才你为什么选择用 Redis 而不是 Memcached？</span><br></pre></td></tr></table></figure>
+<h3 id="错误用法"><a href="#错误用法" class="headerlink" title="错误用法"></a>错误用法</h3><p><strong>不要只输入 <code>/btw</code> 然后回车</strong>。它不是一个交互式命令，你必须在同一行写上问题。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 错误！这样不行</span><br><span class="line">/btw</span><br><span class="line">↵ (回车)</span><br></pre></td></tr></table></figure>
+<h3 id="一个重要特性：可以在-Claude-工作时使用"><a href="#一个重要特性：可以在-Claude-工作时使用" class="headerlink" title="一个重要特性：可以在 Claude 工作时使用"></a>一个重要特性：可以在 Claude 工作时使用</h3><p>这是 <code>/btw</code> 最酷的地方。<strong>即使 Claude 正在执行一个长任务（比如在后台跑测试、读取大量文件），你也可以用 <code>/btw</code> 插入一个问题。</strong></p>
+<p>Claude 会在后台启动一个临时的”幽灵 Agent”来回答你的问题，完全不影响主任务的进度。</p>
+<p>就像你的同事正在认真写代码，你拍拍他的肩膀问了一句，他头也不抬地回答了你，然后继续写代码。</p>
+<h2 id="btw-的三个限制"><a href="#btw-的三个限制" class="headerlink" title="/btw 的三个限制"></a>/btw 的三个限制</h2><p><code>/btw</code> 设计得很轻量，这意味着它有一些刻意的限制。理解这些限制，才能用好它。</p>
+<h3 id="1-只读模式，不能使用工具"><a href="#1-只读模式，不能使用工具" class="headerlink" title="1. 只读模式，不能使用工具"></a>1. 只读模式，不能使用工具</h3><p><code>/btw</code> 回答问题时，Claude <strong>不能</strong>读文件、跑命令、搜索代码。它只能基于当前对话中已有的信息来回答。</p>
+<p>这意味着：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 能回答 ✅</span><br><span class="line">/btw 刚才你读的那个 auth.ts 文件里，JWT 的过期时间设置了多少？</span><br><span class="line"></span><br><span class="line"># 不能回答 ❌</span><br><span class="line">/btw 帮我看看 package.json 里有没有安装 lodash</span><br></pre></td></tr></table></figure>
+<p>第一个问题能回答，因为 Claude 已经在主对话中读过了 <code>auth.ts</code>。第二个问题做不到，因为它需要去读取一个新文件。</p>
+<h3 id="2-答案不持久"><a href="#2-答案不持久" class="headerlink" title="2. 答案不持久"></a>2. 答案不持久</h3><p>关掉 <code>/btw</code> 的回答窗口后，内容就消失了。如果你觉得某个回答很重要，需要后续参考，就不应该用 <code>/btw</code>，而是直接在主对话里问。</p>
+<h3 id="3-只支持单轮对话"><a href="#3-只支持单轮对话" class="headerlink" title="3. 只支持单轮对话"></a>3. 只支持单轮对话</h3><p><code>/btw</code> 是一问一答，不能追问。如果你的问题需要多轮讨论，请用主对话。</p>
+<h2 id="btw-vs-其他方式：什么时候该用什么？"><a href="#btw-vs-其他方式：什么时候该用什么？" class="headerlink" title="/btw vs 其他方式：什么时候该用什么？"></a>/btw vs 其他方式：什么时候该用什么？</h2><p>Claude Code 有好几种方式来管理”插入性”的需求，别搞混了。</p>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>特点</th>
+<th>适合场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>直接在主对话里问</strong></td>
+<td>会保存到历史，增加上下文</td>
+<td>需要后续参考的重要问题</td>
+</tr>
+<tr>
+<td><strong>/btw</strong></td>
+<td>不保存历史，不使用工具</td>
+<td>快速确认、语法查询、简单解释</td>
+</tr>
+<tr>
+<td><strong>Subagent</strong></td>
+<td>独立上下文，可使用工具</td>
+<td>需要读取新文件或搜索的任务</td>
+</tr>
+<tr>
+<td><strong>/fork</strong></td>
+<td>分叉对话，可多轮讨论</td>
+<td>想探索一个方向但不确定要不要保留</td>
+</tr>
+</tbody>
+</table>
+<p>一个简单的判断标准：</p>
+<blockquote>
+<p><code>/btw</code> 是 Subagent 的反面。<strong><code>/btw</code> 能看到你的完整对话，但没有工具；Subagent 有完整的工具，但看不到你的对话。</strong></p>
+</blockquote>
+<p>需要基于已知信息快速确认？用 <code>/btw</code>。需要去获取新信息？用 Subagent。</p>
+<h2 id="五个实用场景"><a href="#五个实用场景" class="headerlink" title="五个实用场景"></a>五个实用场景</h2><h3 id="场景一：确认-Claude-之前的决策"><a href="#场景一：确认-Claude-之前的决策" class="headerlink" title="场景一：确认 Claude 之前的决策"></a>场景一：确认 Claude 之前的决策</h3><p>Claude 在重构过程中做了一个设计选择，你不太确定为什么。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/btw 你刚才为什么把 UserService 拆成了两个类？</span><br></pre></td></tr></table></figure>
+<p>不影响进度，快速了解思路。</p>
+<h3 id="场景二：查看函数签名"><a href="#场景二：查看函数签名" class="headerlink" title="场景二：查看函数签名"></a>场景二：查看函数签名</h3><p>你在写调用代码，想确认一个函数的参数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/btw getUser 函数接受哪些参数？返回类型是什么？</span><br></pre></td></tr></table></figure>
+<h3 id="场景三：理解某段代码的逻辑"><a href="#场景三：理解某段代码的逻辑" class="headerlink" title="场景三：理解某段代码的逻辑"></a>场景三：理解某段代码的逻辑</h3><p>Claude 读过的一段代码你没看懂。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/btw 刚才 middleware/auth.ts 里那段 token 刷新逻辑能帮我解释一下吗？</span><br></pre></td></tr></table></figure>
+<h3 id="场景四：确认技术细节"><a href="#场景四：确认技术细节" class="headerlink" title="场景四：确认技术细节"></a>场景四：确认技术细节</h3><p>编码过程中临时想不起来一个语法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/btw TypeScript 的 Record 类型和 Map 有什么区别？</span><br></pre></td></tr></table></figure>
+<h3 id="场景五：验证-Claude-的计划"><a href="#场景五：验证-Claude-的计划" class="headerlink" title="场景五：验证 Claude 的计划"></a>场景五：验证 Claude 的计划</h3><p>Claude 在 Plan Mode 里给出了一个方案，你想确认某个细节。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/btw 你计划里的第三步，修改数据库 migration，会不会影响到现有的数据？</span><br></pre></td></tr></table></figure>
+<h2 id="省钱小技巧：搭配-cost-使用"><a href="#省钱小技巧：搭配-cost-使用" class="headerlink" title="省钱小技巧：搭配 /cost 使用"></a>省钱小技巧：搭配 /cost 使用</h2><p>Claude Code 有一个 <code>/cost</code> 命令，可以查看当前会话的 Token 消耗情况。</p>
+<p>建议你在一个长会话中，定期跑一下 <code>/cost</code>，看看 Token 消耗。然后回顾一下自己的对话记录：有多少问题是”顺便问的”？这些问题用 <code>/btw</code> 来问，能省多少？</p>
+<p>MindStudio 的一篇分析文章给出了一个参考标准：<strong>如果你的对话中超过 20% 到 25% 的交互属于”附带性问题”，你就有很大的优化空间。</strong></p>
+<p>判断标准也很简单：</p>
+<ul>
+<li><strong>这个问题的答案我后面还需要引用吗？</strong> 需要 → 主对话。不需要 → <code>/btw</code>。</li>
+<li><strong>这个问题是在推进主任务，还是满足一个临时好奇？</strong> 推进任务 → 主对话。临时好奇 → <code>/btw</code>。</li>
+</ul>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p><code>/btw</code> 是一个很小的功能。它没有 Agent Teams 那么震撼，没有 Plan Mode 那么深刻。</p>
+<p>但它解决了一个每天都会遇到的真实问题：<strong>在不打断工作流的前提下，快速获取信息。</strong></p>
+<p>Anthropic 的工程师 Erik Schluntz 把它当作一个 side project 做出来的。有时候最好用的功能，就是这种”痒了就挠一下”的小工具。</p>
+<p><strong>好的工具不一定要复杂。它只需要在你需要的时候，恰好在那里。</strong></p>
+<p>你在使用 Claude Code 时有哪些省 Token 的小技巧？<code>/btw</code> 你用上了吗？欢迎在评论区聊聊你的体验。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/images/qrcode_wechat_public_account.jpg">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-编程/" rel="tag"># AI 编程</a>
+              <a href="/tags/开发工具/" rel="tag"># 开发工具</a>
+              <a href="/tags/效率提升/" rel="tag"># 效率提升</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/03/16/202603161355/" rel="prev" title="写给小白的 Claude Code 进阶指南 - Hooks">
+      <i class="fa fa-chevron-left"></i> 写给小白的 Claude Code 进阶指南 - Hooks
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2026/03/16/202603161430/" rel="next" title="写给小白的 Claude Code 进阶指南 - 巧用 /compact 命令">
+      写给小白的 Claude Code 进阶指南 - 巧用 /compact 命令 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#btw-是什么？"><span class="nav-text">/btw 是什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么需要-btw？"><span class="nav-text">为什么需要 /btw？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#怎么用-btw？"><span class="nav-text">怎么用 /btw？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#正确用法"><span class="nav-text">正确用法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#错误用法"><span class="nav-text">错误用法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一个重要特性：可以在-Claude-工作时使用"><span class="nav-text">一个重要特性：可以在 Claude 工作时使用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#btw-的三个限制"><span class="nav-text">/btw 的三个限制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-只读模式，不能使用工具"><span class="nav-text">1. 只读模式，不能使用工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-答案不持久"><span class="nav-text">2. 答案不持久</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-只支持单轮对话"><span class="nav-text">3. 只支持单轮对话</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#btw-vs-其他方式：什么时候该用什么？"><span class="nav-text">/btw vs 其他方式：什么时候该用什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五个实用场景"><span class="nav-text">五个实用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#场景一：确认-Claude-之前的决策"><span class="nav-text">场景一：确认 Claude 之前的决策</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景二：查看函数签名"><span class="nav-text">场景二：查看函数签名</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景三：理解某段代码的逻辑"><span class="nav-text">场景三：理解某段代码的逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景四：确认技术细节"><span class="nav-text">场景四：确认技术细节</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景五：验证-Claude-的计划"><span class="nav-text">场景五：验证 Claude 的计划</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#省钱小技巧：搭配-cost-使用"><span class="nav-text">省钱小技巧：搭配 /cost 使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#写在最后"><span class="nav-text">写在最后</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">242</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https://github.com/xinpengfei520" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener" target="_blank"><i class="envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https://blog.csdn.net/xinpengfei521" rel="noopener" target="_blank"><i class="heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https://juejin.im/user/57c82d0779bc440063eac0f8/posts" rel="noopener" target="_blank"><i class="crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https://open.weixin.qq.com/qr/code?username=x-sir123" rel="noopener" target="_blank"><i class="weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https://www.zhihu.com/people/xin-peng-fei-9/activities" rel="noopener" target="_blank"><i class="tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" rel="noopener" target="_blank"><i class="weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https://www.jianshu.com/u/268aa8e1a12f" rel="noopener" target="_blank"><i class="desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+</div>
+
+
+
+<div style="width:580px;margin:0 auto; padding:20px 0;">
+	<a target="_blank" href="https://beian.miit.gov.cn/" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">沪ICP备2022014461号-1 </p></a>
+
+	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=61032202000124" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="https://www.vance.xin/images/beian_pic.png" style="float:left;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">陕公网安备 61032202000124号</p></a>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz","app_key":"Hm8TNHlKhiv0i2VwIXIE3oY9","server_url":"https://g3y7kugt.lc-cn-n1-shared.com","security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz',
+      appKey     : 'Hm8TNHlKhiv0i2VwIXIE3oY9',
+      placeholder: "既然来了，就留个脚印再走吧！",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/love.js"></script>

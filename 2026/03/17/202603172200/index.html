@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vance.xin","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="3 月 5 日，OpenAI 发布了 GPT-5.4。 朋友圈和技术群立刻炸了：「最强模型」「碾压一切」「Claude 要凉了」。 你打开 Twitter，看到一条被转了几千次的帖子：「GPT-5.4 在 SWE-Bench Pro 上拿了 57.7%，Claude Opus 4.6 只有 45%。差距巨大。」 你心里一紧。上个月刚把团队的 AI 工作流切到了 Claude Code + Opus">
+<meta name="keywords" content="Anthropic,GPT-5.4,Claude Opus 4.6,AI 模型对比,OpenAI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GPT-5.4 碾压 Claude Opus 4.6？跑分说了不算，场景说了算">
+<meta property="og:url" content="https://www.vance.xin/2026/03/17/202603172200/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="3 月 5 日，OpenAI 发布了 GPT-5.4。 朋友圈和技术群立刻炸了：「最强模型」「碾压一切」「Claude 要凉了」。 你打开 Twitter，看到一条被转了几千次的帖子：「GPT-5.4 在 SWE-Bench Pro 上拿了 57.7%，Claude Opus 4.6 只有 45%。差距巨大。」 你心里一紧。上个月刚把团队的 AI 工作流切到了 Claude Code + Opus">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2026-03-17T08:57:01.193Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="GPT-5.4 碾压 Claude Opus 4.6？跑分说了不算，场景说了算">
+<meta name="twitter:description" content="3 月 5 日，OpenAI 发布了 GPT-5.4。 朋友圈和技术群立刻炸了：「最强模型」「碾压一切」「Claude 要凉了」。 你打开 Twitter，看到一条被转了几千次的帖子：「GPT-5.4 在 SWE-Bench Pro 上拿了 57.7%，Claude Opus 4.6 只有 45%。差距巨大。」 你心里一紧。上个月刚把团队的 AI 工作流切到了 Claude Code + Opus">
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/17/202603172200/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>GPT-5.4 碾压 Claude Opus 4.6？跑分说了不算，场景说了算 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1060098061815513"
+     crossorigin="anonymous"></script>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+  <a href="https://github.com/xinpengfei520" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">飞飞的AI实验室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="calendar fa-fw"></i>日程表</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+        <li class="menu-item menu-item-baidusitemap">
+
+    <a href="/baidusitemap.xml" rel="section"><i class="sitemap fa-fw"></i>baidusitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="heartbeat fa-fw"></i>公益 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/17/202603172200/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          GPT-5.4 碾压 Claude Opus 4.6？跑分说了不算，场景说了算
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2026-03-17 22:00:00 / 修改时间：08:57:01" itemprop="dateCreated datePublished" datetime="2026-03-17T22:00:00+00:00">2026-03-17</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/阅读/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2026/03/17/202603172200/" class="post-meta-item leancloud_visitors" data-flag-title="GPT-5.4 碾压 Claude Opus 4.6？跑分说了不算，场景说了算" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2026/03/17/202603172200/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2026/03/17/202603172200/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>3 月 5 日，OpenAI 发布了 GPT-5.4。</p>
+<p>朋友圈和技术群立刻炸了：「最强模型」「碾压一切」「Claude 要凉了」。</p>
+<p>你打开 Twitter，看到一条被转了几千次的帖子：「GPT-5.4 在 SWE-Bench Pro 上拿了 57.7%，Claude Opus 4.6 只有 45%。差距巨大。」</p>
+<p>你心里一紧。上个月刚把团队的 AI 工作流切到了 Claude Code + Opus 4.6，这就要推倒重来？</p>
+<p>别急。</p>
+<p>我花了一周时间，把两个模型的基准测试、定价、实际开发体验全部拉通对比了一遍。结论是：<strong>没有谁碾压谁。它们赢在不同的地方，输也输在不同的地方。</strong> 你该用哪个，取决于你在做什么——不是取决于哪个跑分更高。</p>
+<h2 id="先看事实：两个模型各自长什么样"><a href="#先看事实：两个模型各自长什么样" class="headerlink" title="先看事实：两个模型各自长什么样"></a>先看事实：两个模型各自长什么样</h2><p>GPT-5.4 是 OpenAI GPT-5 系列的第四次迭代，2026 年 3 月 5 日发布。主要亮点：</p>
+<ul>
+<li><strong>可调推理深度</strong>：5 档（none / low / medium / high / xhigh），每次请求可以独立设置</li>
+<li><strong>Computer Use API</strong>：原生桌面操控——看屏幕、移鼠标、点按钮、打字</li>
+<li><strong>100 万 token 上下文窗口</strong></li>
+<li><strong>GPT-5.4 Pro 变体</strong>：面向最难任务的高性能版本</li>
+<li><strong>定价</strong>：API 输入 $2.50/M tokens，输出 $15/M tokens</li>
+</ul>
+<p>Claude Opus 4.6 是 Anthropic 的旗舰模型，2026 年 2 月 5 日发布。主要亮点：</p>
+<ul>
+<li><strong>SWE-Bench Verified 最高分</strong>：80.8%，编程基准测试的标杆</li>
+<li><strong>Agent Teams</strong>：多个 Opus 实例并行协作，共享任务列表</li>
+<li><strong>100 万 token 上下文窗口</strong>（Beta）</li>
+<li><strong>自适应思考</strong>：4 档推理力度</li>
+<li><strong>Chatbot Arena ELO 全球第一</strong>：1503 分</li>
+<li><strong>定价</strong>：API 输入 $15/M tokens，输出 $75/M tokens</li>
+</ul>
+<p>两个模型发布时间只差一个月。定位几乎完全重叠：面向专业开发者的旗舰级大模型。</p>
+<p>正面交锋，不可避免。</p>
+<h2 id="跑分对比：谁赢了？"><a href="#跑分对比：谁赢了？" class="headerlink" title="跑分对比：谁赢了？"></a>跑分对比：谁赢了？</h2><p>答案是：<strong>看哪个跑分。</strong></p>
+<table>
+<thead>
+<tr>
+<th>基准测试</th>
+<th>GPT-5.4</th>
+<th>Claude Opus 4.6</th>
+<th>赢家</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SWE-Bench Verified（标准编程）</td>
+<td>~80.0%</td>
+<td><strong>80.8%</strong></td>
+<td>Opus 4.6</td>
+</tr>
+<tr>
+<td>SWE-Bench Pro（更难编程）</td>
+<td><strong>57.7%</strong></td>
+<td>~45%</td>
+<td>GPT-5.4</td>
+</tr>
+<tr>
+<td>Terminal-Bench 2.0（终端操作）</td>
+<td><strong>75.1%</strong></td>
+<td>65.4%</td>
+<td>GPT-5.4</td>
+</tr>
+<tr>
+<td>OSWorld（桌面操控）</td>
+<td><strong>75.0%</strong></td>
+<td>72.7%</td>
+<td>GPT-5.4</td>
+</tr>
+<tr>
+<td>GPQA Diamond（科学推理）</td>
+<td>92.8%</td>
+<td>91.3%</td>
+<td>GPT-5.4</td>
+</tr>
+<tr>
+<td>MMMU Pro（视觉理解）</td>
+<td>—</td>
+<td><strong>85.1%</strong></td>
+<td>Opus 4.6</td>
+</tr>
+<tr>
+<td>MRCR v2 1M（长上下文检索）</td>
+<td>—</td>
+<td><strong>76.0%</strong></td>
+<td>Opus 4.6</td>
+</tr>
+<tr>
+<td>GDPval（知识工作）</td>
+<td><strong>83.0%</strong></td>
+<td>—</td>
+<td>GPT-5.4</td>
+</tr>
+<tr>
+<td>Chatbot Arena ELO（用户偏好）</td>
+<td>—</td>
+<td><strong>1503</strong></td>
+<td>Opus 4.6</td>
+</tr>
+</tbody>
+</table>
+<p>看到了吗？不是一边倒。</p>
+<p>GPT-5.4 在 SWE-Bench Pro、Terminal-Bench、OSWorld、GDPval 上领先。Claude Opus 4.6 在 SWE-Bench Verified、MMMU Pro、长上下文检索、用户偏好上领先。</p>
+<p><strong>一个关键细节</strong>：SWE-Bench 有两个版本。Verified 是标准版，Opus 以 80.8% 领先。Pro 是更难、更不容易「刷分」的变体，GPT-5.4 以 57.7% 大幅领先。你信哪个？取决于你对基准测试本身的看法。</p>
+<p>Artificial Analysis 的综合智能指数显示，GPT-5.4 排名第一——但紧随其后的是 Gemini 3.1 Pro，Claude Opus 4.6 在多 Agent 编排维度上排名第一。</p>
+<p><strong>跑分告诉你的是「理论上限」，而不是「你的场景下谁更好」。</strong></p>
+<h2 id="定价对比：差距比跑分大得多"><a href="#定价对比：差距比跑分大得多" class="headerlink" title="定价对比：差距比跑分大得多"></a>定价对比：差距比跑分大得多</h2><p>如果说跑分是五五开，定价上 GPT-5.4 赢得很明显。</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>输入价格（/M tokens）</th>
+<th>输出价格（/M tokens）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-5.4</td>
+<td>$2.50</td>
+<td>$15</td>
+</tr>
+<tr>
+<td>GPT-5.4 Pro</td>
+<td>$30</td>
+<td>$180</td>
+</tr>
+<tr>
+<td>Claude Opus 4.6</td>
+<td>$15</td>
+<td>$75</td>
+</tr>
+<tr>
+<td>Claude Sonnet 4.6</td>
+<td>$3</td>
+<td>$15</td>
+</tr>
+</tbody>
+</table>
+<p>GPT-5.4 标准版的输入价格是 Opus 的 <strong>六分之一</strong>，输出价格是 Opus 的 <strong>五分之一</strong>。</p>
+<p>更关键的是，GPT-5.4 在复杂任务上消耗的 token 比前代少了 <strong>47%</strong>。价格更低 + 效率更高，叠加起来差距惊人。NxCode 的分析指出：一个用 Opus 花 $1 的任务，GPT-5.4 可能只要 $0.10-$0.15。</p>
+<p>但如果你用的是订阅制——ChatGPT Plus $20/月 vs Claude Pro $20/月——价格完全一样。差异只在 API 调用层面。对于高频 API 用户，这个价格差是选型时绕不过去的因素。</p>
+<h2 id="GPT-5-4-赢在哪"><a href="#GPT-5-4-赢在哪" class="headerlink" title="GPT-5.4 赢在哪"></a>GPT-5.4 赢在哪</h2><h3 id="1-桌面操控：第一个超越人类的模型"><a href="#1-桌面操控：第一个超越人类的模型" class="headerlink" title="1. 桌面操控：第一个超越人类的模型"></a>1. 桌面操控：第一个超越人类的模型</h3><p>GPT-5.4 在 OSWorld 基准测试中拿了 75%，超过了人类专家的 72.4%。这是<strong>第一个在桌面操作任务上超越人类表现的 AI 模型</strong>。</p>
+<p>它能看屏幕、移鼠标、点按钮、填表单、在多个应用之间切换完成工作流。如果你的工作涉及自动化测试、UI 操作、桌面流程自动化，GPT-5.4 是目前唯一的选择。</p>
+<h3 id="2-推理深度可调：一个参数控制成本和质量"><a href="#2-推理深度可调：一个参数控制成本和质量" class="headerlink" title="2. 推理深度可调：一个参数控制成本和质量"></a>2. 推理深度可调：一个参数控制成本和质量</h3><p>5 档推理深度（none / low / medium / high / xhigh）让你在每次 API 请求时灵活调整。回答 FAQ？用 none，最便宜最快。排查并发 Bug？用 xhigh，全力推理。</p>
+<p>这个设计对生产系统特别有价值——你可以根据每条请求的复杂度动态调整，不需要为简单任务付高价。</p>
+<h3 id="3-性价比：便宜就是硬道理"><a href="#3-性价比：便宜就是硬道理" class="headerlink" title="3. 性价比：便宜就是硬道理"></a>3. 性价比：便宜就是硬道理</h3><p>对于跑大量 API 调用的团队来说，GPT-5.4 的成本优势是决定性的。6 倍的价格差，在月调用量几十万次的场景下，意味着账单少一个零。</p>
+<h3 id="4-全能选手：一个模型覆盖所有场景"><a href="#4-全能选手：一个模型覆盖所有场景" class="headerlink" title="4. 全能选手：一个模型覆盖所有场景"></a>4. 全能选手：一个模型覆盖所有场景</h3><p>写代码、操控电脑、分析文档、处理图片、搜索网页——GPT-5.4 用一个端点覆盖了所有能力。不需要在不同模型之间切换，生产环境的复杂度更低。</p>
+<h2 id="Claude-Opus-4-6-赢在哪"><a href="#Claude-Opus-4-6-赢在哪" class="headerlink" title="Claude Opus 4.6 赢在哪"></a>Claude Opus 4.6 赢在哪</h2><h3 id="1-复杂多文件重构：编码的「最后一公里」"><a href="#1-复杂多文件重构：编码的「最后一公里」" class="headerlink" title="1. 复杂多文件重构：编码的「最后一公里」"></a>1. 复杂多文件重构：编码的「最后一公里」</h3><p>在 SWE-Bench Verified 上，Opus 4.6 以 80.8% 保持领先。但跑分之外，开发者的一致反馈是：<strong>Opus 在跨文件重构方面明显更强。</strong></p>
+<p>移动模块间的代码、修改类型系统、迁移框架——这种涉及多个文件之间复杂依赖关系的任务，Opus 的错误率更低。这很难在基准测试里量化，但在实际开发中体感非常明显。</p>
+<p>DataCamp 的对比评测也确认了这一点：「Claude Opus 4.6 在多 Agent 编排维度上排名第一。」</p>
+<h3 id="2-Agent-Teams：AI-调度-AI"><a href="#2-Agent-Teams：AI-调度-AI" class="headerlink" title="2. Agent Teams：AI 调度 AI"></a>2. Agent Teams：AI 调度 AI</h3><p>这是 Opus 4.6 独有的能力——多个 Opus 实例并行工作、直接通信、共享任务列表。</p>
+<p>想象一个场景：你让一个 Agent 写前端组件，另一个写后端 API，第三个写数据库迁移——三个同时跑，互相协调。OpenAI 目前没有对应的功能。</p>
+<p>对于大型项目的开发团队来说，这是一个实打实的效率倍增器。</p>
+<h3 id="3-长上下文理解：不只是「能装下」，还要「能找到」"><a href="#3-长上下文理解：不只是「能装下」，还要「能找到」" class="headerlink" title="3. 长上下文理解：不只是「能装下」，还要「能找到」"></a>3. 长上下文理解：不只是「能装下」，还要「能找到」</h3><p>Opus 在 MRCR v2 测试中拿了 76%，测的是在 100 万 token 的上下文中精准检索信息。GPT-5.4 虽然也支持百万级上下文，但在检索准确率上没有公开的对比数据。</p>
+<p>上下文窗口大不代表用得好。就像你把一整本书放桌上，关键是能不能快速翻到你要的那一页。Opus 在这方面验证更充分。</p>
+<h3 id="4-用户偏好：人觉得好用才是真的好用"><a href="#4-用户偏好：人觉得好用才是真的好用" class="headerlink" title="4. 用户偏好：人觉得好用才是真的好用"></a>4. 用户偏好：人觉得好用才是真的好用</h3><p>Chatbot Arena 的 ELO 排名中，Claude Opus 4.6 以 1503 分全球第一。这个排名来自真实用户的盲测投票——不知道模型名字的情况下，人们更喜欢 Opus 的回复。</p>
+<p>尤其在创意写作、多轮对话、风格适应方面，Opus 的用户满意度明显更高。</p>
+<h2 id="最聪明的做法：两个都用"><a href="#最聪明的做法：两个都用" class="headerlink" title="最聪明的做法：两个都用"></a>最聪明的做法：两个都用</h2><p>NxCode 和 DigitalApplied 的分析不约而同地指出：<strong>2026 年最高效的开发者不是选一个模型，而是两个都用。</strong></p>
+<p>常见的搭配方式：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐模型</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原型开发、快速迭代</td>
+<td>GPT-5.4</td>
+<td>便宜、快、一个端点搞定</td>
+</tr>
+<tr>
+<td>深度重构、代码审查</td>
+<td>Claude Opus 4.6</td>
+<td>多文件理解更可靠</td>
+</tr>
+<tr>
+<td>桌面自动化、UI 测试</td>
+<td>GPT-5.4</td>
+<td>Computer Use 超越人类水平</td>
+</tr>
+<tr>
+<td>大型代码库安全审计</td>
+<td>Claude Opus 4.6</td>
+<td>长上下文检索更准</td>
+</tr>
+<tr>
+<td>高频 API 调用</td>
+<td>GPT-5.4</td>
+<td>成本低 6 倍</td>
+</tr>
+<tr>
+<td>多 Agent 协作开发</td>
+<td>Claude Opus 4.6</td>
+<td>Agent Teams 独有</td>
+</tr>
+</tbody>
+</table>
+<p>Kommunicate 的企业级评测建议了一个分层路由架构：高频简单请求走 GPT-5.4 省钱，复杂或关键任务升级到 Opus 4.6 保质量。</p>
+<p><strong>不是选瑞士军刀还是手术刀的问题——而是什么时候用哪一把。</strong></p>
+<p>Cursor、Continue.dev 这些工具已经支持在模型之间自由切换。你的工作流可以灵活调度，不需要绑定任何一家。</p>
+<h2 id="别被标题党骗了"><a href="#别被标题党骗了" class="headerlink" title="别被标题党骗了"></a>别被标题党骗了</h2><p>回到开头的问题：GPT-5.4 发布后，Claude Opus 4.6 要被替代吗？</p>
+<p><strong>不会。</strong></p>
+<p>正如 Popular AI Tools 的评测结论所说：「2026 年的 AI 模型竞争，不是一个模型赢——而是为你的场景选对模型。」</p>
+<p>GPT-5.4 是一把瑞士军刀。便宜、全能、性价比极高。如果你只能选一个模型，它是最安全的选择。</p>
+<p>Claude Opus 4.6 是一把手术刀。在编码深度、多 Agent 协作、长上下文理解上，它仍然是行业最强。如果你的工作核心是复杂软件工程，它值得那个溢价。</p>
+<p>真正的问题不是「谁更好」，而是「你在做什么」。</p>
+<p>而对于整个行业来说，这种竞争本身就是好事。两个月前 Claude 4.6 发布，OpenAI 被逼加速迭代，两天之内从 5.3 跳到 5.4。反过来，Anthropic 也一定在准备下一步动作。</p>
+<p>竞争让每个模型都变得更好。最终受益的，是坐在终端前面的你。</p>
+<hr>
+<p>你现在主力用的是哪个模型？有没有尝试过两个模型搭配使用的工作流？或者你在选型时最看重什么指标？欢迎在评论区聊聊你的实际体验——跑分党和体感党的观点，我都想听。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/images/qrcode_wechat_public_account.jpg">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/GPT-5-4/" rel="tag"># GPT-5.4</a>
+              <a href="/tags/Claude-Opus-4-6/" rel="tag"># Claude Opus 4.6</a>
+              <a href="/tags/AI-模型对比/" rel="tag"># AI 模型对比</a>
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/03/17/202603172130/" rel="prev" title="OpenClaw 装完就吃灰？26 个 Tools + 53 个 Skills 的正确打开方式">
+      <i class="fa fa-chevron-left"></i> OpenClaw 装完就吃灰？26 个 Tools + 53 个 Skills 的正确打开方式
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2026/03/17/202603172230/" rel="next" title="15 分钟搭好 OpenClaw：从零开始拥有你的 24/7 AI 助理">
+      15 分钟搭好 OpenClaw：从零开始拥有你的 24/7 AI 助理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#先看事实：两个模型各自长什么样"><span class="nav-text">先看事实：两个模型各自长什么样</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#跑分对比：谁赢了？"><span class="nav-text">跑分对比：谁赢了？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#定价对比：差距比跑分大得多"><span class="nav-text">定价对比：差距比跑分大得多</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GPT-5-4-赢在哪"><span class="nav-text">GPT-5.4 赢在哪</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-桌面操控：第一个超越人类的模型"><span class="nav-text">1. 桌面操控：第一个超越人类的模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-推理深度可调：一个参数控制成本和质量"><span class="nav-text">2. 推理深度可调：一个参数控制成本和质量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-性价比：便宜就是硬道理"><span class="nav-text">3. 性价比：便宜就是硬道理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-全能选手：一个模型覆盖所有场景"><span class="nav-text">4. 全能选手：一个模型覆盖所有场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Claude-Opus-4-6-赢在哪"><span class="nav-text">Claude Opus 4.6 赢在哪</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-复杂多文件重构：编码的「最后一公里」"><span class="nav-text">1. 复杂多文件重构：编码的「最后一公里」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Agent-Teams：AI-调度-AI"><span class="nav-text">2. Agent Teams：AI 调度 AI</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-长上下文理解：不只是「能装下」，还要「能找到」"><span class="nav-text">3. 长上下文理解：不只是「能装下」，还要「能找到」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-用户偏好：人觉得好用才是真的好用"><span class="nav-text">4. 用户偏好：人觉得好用才是真的好用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#最聪明的做法：两个都用"><span class="nav-text">最聪明的做法：两个都用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#别被标题党骗了"><span class="nav-text">别被标题党骗了</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">242</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https://github.com/xinpengfei520" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener" target="_blank"><i class="envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https://blog.csdn.net/xinpengfei521" rel="noopener" target="_blank"><i class="heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https://juejin.im/user/57c82d0779bc440063eac0f8/posts" rel="noopener" target="_blank"><i class="crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https://open.weixin.qq.com/qr/code?username=x-sir123" rel="noopener" target="_blank"><i class="weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https://www.zhihu.com/people/xin-peng-fei-9/activities" rel="noopener" target="_blank"><i class="tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" rel="noopener" target="_blank"><i class="weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https://www.jianshu.com/u/268aa8e1a12f" rel="noopener" target="_blank"><i class="desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+</div>
+
+
+
+<div style="width:580px;margin:0 auto; padding:20px 0;">
+	<a target="_blank" href="https://beian.miit.gov.cn/" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">沪ICP备2022014461号-1 </p></a>
+
+	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=61032202000124" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="https://www.vance.xin/images/beian_pic.png" style="float:left;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">陕公网安备 61032202000124号</p></a>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz","app_key":"Hm8TNHlKhiv0i2VwIXIE3oY9","server_url":"https://g3y7kugt.lc-cn-n1-shared.com","security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz',
+      appKey     : 'Hm8TNHlKhiv0i2VwIXIE3oY9',
+      placeholder: "既然来了，就留个脚印再走吧！",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/love.js"></script>

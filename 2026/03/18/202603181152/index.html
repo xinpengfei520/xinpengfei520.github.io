@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vance.xin","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="用 Claude Code 写代码写到一半，AI 突然”失忆”了——你前面花了 20 分钟解释的架构设计、调试过程、文件依赖关系，全忘了。它开始重复问你同样的问题，甚至改出一堆之前已经修好的 Bug。 如果你有这个经历，说明你撞上了上下文窗口的天花板。 好消息是，这个天花板刚刚被拉高了 5 倍。Anthropic 在 3 月 13 日宣布：Claude Opus 4.6 和 Sonnet 4.6">
+<meta name="keywords" content="Claude Code,AI 编程,Opus 4.6,Anthropic,上下文窗口">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Code + Opus 4.6 的 1M 上下文到底能干什么？5 个真实场景告诉你">
+<meta property="og:url" content="https://www.vance.xin/2026/03/18/202603181152/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="用 Claude Code 写代码写到一半，AI 突然”失忆”了——你前面花了 20 分钟解释的架构设计、调试过程、文件依赖关系，全忘了。它开始重复问你同样的问题，甚至改出一堆之前已经修好的 Bug。 如果你有这个经历，说明你撞上了上下文窗口的天花板。 好消息是，这个天花板刚刚被拉高了 5 倍。Anthropic 在 3 月 13 日宣布：Claude Opus 4.6 和 Sonnet 4.6">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260318-claude-code-opus-1m-context.webp">
+<meta property="og:updated_time" content="2026-03-18T09:51:10.171Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Claude Code + Opus 4.6 的 1M 上下文到底能干什么？5 个真实场景告诉你">
+<meta name="twitter:description" content="用 Claude Code 写代码写到一半，AI 突然”失忆”了——你前面花了 20 分钟解释的架构设计、调试过程、文件依赖关系，全忘了。它开始重复问你同样的问题，甚至改出一堆之前已经修好的 Bug。 如果你有这个经历，说明你撞上了上下文窗口的天花板。 好消息是，这个天花板刚刚被拉高了 5 倍。Anthropic 在 3 月 13 日宣布：Claude Opus 4.6 和 Sonnet 4.6">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260318-claude-code-opus-1m-context.webp">
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/18/202603181152/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Claude Code + Opus 4.6 的 1M 上下文到底能干什么？5 个真实场景告诉你 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1060098061815513"
+     crossorigin="anonymous"></script>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+  <a href="https://github.com/xinpengfei520" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">飞飞的AI实验室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="calendar fa-fw"></i>日程表</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+        <li class="menu-item menu-item-baidusitemap">
+
+    <a href="/baidusitemap.xml" rel="section"><i class="sitemap fa-fw"></i>baidusitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="heartbeat fa-fw"></i>公益 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181152/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Claude Code + Opus 4.6 的 1M 上下文到底能干什么？5 个真实场景告诉你
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2026-03-18 11:52:00 / 修改时间：09:51:10" itemprop="dateCreated datePublished" datetime="2026-03-18T11:52:00+00:00">2026-03-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/阅读/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2026/03/18/202603181152/" class="post-meta-item leancloud_visitors" data-flag-title="Claude Code + Opus 4.6 的 1M 上下文到底能干什么？5 个真实场景告诉你" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2026/03/18/202603181152/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2026/03/18/202603181152/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://image.vance.xin/blog-cover/20260318-claude-code-opus-1m-context.webp" alt="cover"></p>
+<p>用 Claude Code 写代码写到一半，AI 突然”失忆”了——你前面花了 20 分钟解释的架构设计、调试过程、文件依赖关系，全忘了。它开始重复问你同样的问题，甚至改出一堆之前已经修好的 Bug。</p>
+<p>如果你有这个经历，说明你撞上了<strong>上下文窗口</strong>的天花板。</p>
+<p>好消息是，这个天花板刚刚被拉高了 5 倍。Anthropic 在 3 月 13 日宣布：<strong>Claude Opus 4.6 和 Sonnet 4.6 的 1M（100 万 token）上下文窗口正式 GA，而且不加价。</strong></p>
+<p>100 万 token 是什么概念？大约 75 万个英文单词，相当于 4-5 本小说的长度。换成代码，一个 50 万行的项目可以一次性全部塞进去。</p>
+<p>这不只是一个数字变大了。它改变了你和 AI 协作的方式。</p>
+<h2 id="为什么上下文窗口这么重要？"><a href="#为什么上下文窗口这么重要？" class="headerlink" title="为什么上下文窗口这么重要？"></a>为什么上下文窗口这么重要？</h2><p>先说一个概念：<strong>上下文窗口就是 AI 的”工作记忆”。</strong></p>
+<p>你跟 AI 对话的所有内容——你的提问、它的回答、它读过的文件、执行过的命令、搜索的结果——都占用上下文窗口的空间。窗口满了，就得”压缩”（compaction）：AI 会自动把前面的对话总结一下，扔掉细节，腾出空间。</p>
+<p>问题在于，<strong>压缩一定会丢信息。</strong> 就像你把一本书压缩成摘要，细节没了。你两小时前让它分析的那个 Bug，压缩后可能就剩一句”之前分析了一个 Bug”——具体是什么 Bug、涉及哪些文件、尝试了哪些方案，全没了。</p>
+<p>之前 Opus 4.5 的上下文窗口是 200K token。听起来不少，但在 Claude Code 里，一次搜索 Datadog 日志就能烧掉 100K token。两次搜索，窗口就满了，压缩开始，信息丢失，你开始”原地转圈”。</p>
+<p><strong>1M 上下文 = 5 倍的工作记忆。</strong> 这意味着 AI 可以在一次会话里记住更多东西，做更复杂的任务，不再频繁失忆。</p>
+<h2 id="1M-上下文的-5-个真实使用场景"><a href="#1M-上下文的-5-个真实使用场景" class="headerlink" title="1M 上下文的 5 个真实使用场景"></a>1M 上下文的 5 个真实使用场景</h2><p>说了这么多理论，到底能用来干什么？下面是 5 个真实场景。</p>
+<h3 id="场景一：整个代码库一次性分析"><a href="#场景一：整个代码库一次性分析" class="headerlink" title="场景一：整个代码库一次性分析"></a>场景一：整个代码库一次性分析</h3><p>以前你想让 AI 理解一个中大型项目，得一个文件一个文件地喂。它看完 A 文件，等看到 D 文件的时候，A 文件的细节可能已经被压缩掉了。跨文件的依赖关系？基本靠猜。</p>
+<p>现在不一样了。一个 50 万行的代码库，打包丢进去，AI 能同时看到所有文件。</p>
+<p>一位开发者的真实案例：他把一个遗留系统的全部代码输入 Claude，<strong>10 分钟内拿到了完整的架构文档和重构建议</strong>。传统方式？手动分析需要数周。</p>
+<p>这对遗留系统改造特别有价值。老代码没文档、命名混乱、逻辑缠绕。以前你得一点一点理清楚，现在直接让 AI 通读全局，画出调用关系，标出问题点。</p>
+<h3 id="场景二：跨文件-Bug-定位"><a href="#场景二：跨文件-Bug-定位" class="headerlink" title="场景二：跨文件 Bug 定位"></a>场景二：跨文件 Bug 定位</h3><p>分布式系统里最头疼的 Bug 是什么？竞态条件。涉及 5 个、8 个甚至更多文件的交互，人脑很难同时 hold 住所有状态。</p>
+<p>有开发者遇到一个跨 8 个文件的竞态条件 Bug，团队找了 3 周没找到。他把所有相关文件丢给 Claude Code，模型分析完整调用链后，<strong>5 分钟定位到缺少锁保护的关键代码段。</strong></p>
+<p>这就是大上下文的威力：<strong>AI 能同时看到所有相关代码，而不是分块看、拼凑猜。</strong></p>
+<h3 id="场景三：长时间-Agent-任务不中断"><a href="#场景三：长时间-Agent-任务不中断" class="headerlink" title="场景三：长时间 Agent 任务不中断"></a>场景三：长时间 Agent 任务不中断</h3><p>Claude Code 的 Agent 模式很强大——它能自己搜代码、读文件、执行命令、跑测试，一步一步解决问题。但每一步都在消耗上下文。</p>
+<p>200K 窗口下，一个复杂任务可能只跑了十几步就触发压缩。之前搜索的日志、读过的配置文件、尝试过的修复方案，压缩后都变成模糊的摘要。Agent 开始”转圈”——重复搜索同样的东西，忘记已经试过的方案。</p>
+<p>Ramp 的软件工程师 Anton Biryukov 说得很直白：</p>
+<blockquote>
+<p>“Claude Code 搜索 Datadog、Braintrust、数据库和源码可以轻松烧掉 100K+ token。然后压缩开始，细节消失，你在原地打转。有了 1M 上下文，我可以搜索、反复搜索、汇总边缘情况，然后在同一个窗口里提出修复方案。”</p>
+</blockquote>
+<p>1M 上下文让 Agent 能跑 <strong>5 倍以上的步骤</strong> 才触发压缩。多文件重构、复杂调试、自动化测试，都能一口气跑完。</p>
+<h3 id="场景四：大规模文档和合同审查"><a href="#场景四：大规模文档和合同审查" class="headerlink" title="场景四：大规模文档和合同审查"></a>场景四：大规模文档和合同审查</h3><p>法律科技公司 Eve 的 ML 工程师 Mauricio Wulfovich 分享了他们的用法：</p>
+<blockquote>
+<p>“Eve 默认使用 1M 上下文，因为原告律师最难的问题就是需要它。无论是交叉引用 400 页的证词记录，还是在整个案件档案中发现关键联系，扩展的上下文窗口让我们的回答质量有了质的提升。”</p>
+</blockquote>
+<p>不只是法律。任何需要处理长文档的场景都受益：</p>
+<ul>
+<li><strong>合规审计</strong>：一次性加载上千页合同，检查条款一致性</li>
+<li><strong>科研</strong>：同时分析数百篇论文、数学公式和模拟代码</li>
+<li><strong>财务分析</strong>：加载完整的财务报表和历史数据，跨年度对比</li>
+</ul>
+<p>600 张图片或 PDF 页面的媒体限制（从之前的 100 张提升 6 倍），让多模态工作流也成为可能。</p>
+<h3 id="场景五：多-Agent-编排"><a href="#场景五：多-Agent-编排" class="headerlink" title="场景五：多 Agent 编排"></a>场景五：多 Agent 编排</h3><p>这是最让我兴奋的场景。</p>
+<p>以前 200K 窗口下，主 Agent（编排者）调度几个子 Agent 就耗尽上下文了。子 Agent 的结果汇总回来，主 Agent 已经忘了自己为什么要发起这些子任务。</p>
+<p>1M 上下文彻底改变了游戏规则：<strong>主 Agent 有足够的空间同时管理多个子 Agent</strong>，记住每个子任务的背景、进度和结果。子 Agent 之间的状态交接也不再需要有损压缩。</p>
+<p>一位开发者的说法很形象：”1M 上下文对多 Agent 系统是完全不同级别的能力。”</p>
+<h2 id="关键数据：它真的能在-1M-长度下保持准确吗？"><a href="#关键数据：它真的能在-1M-长度下保持准确吗？" class="headerlink" title="关键数据：它真的能在 1M 长度下保持准确吗？"></a>关键数据：它真的能在 1M 长度下保持准确吗？</h2><p>大上下文如果不准确，就是摆设。那 Opus 4.6 的表现如何？</p>
+<p>Anthropic 公布了 <strong>MRCR v2</strong>（Multi-needle Retrieval with Contextual Reasoning）基准测试结果。这个测试在 100 万 token 文本中藏 8 个关键信息，要求模型全部找到：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>1M token 准确率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Claude Opus 4.6</strong></td>
+<td><strong>78.3%</strong></td>
+</tr>
+<tr>
+<td>Gemini 3.1 Pro</td>
+<td>~26%</td>
+</tr>
+<tr>
+<td>GPT-5.4</td>
+<td>50% 以下（256K 后急剧下降）</td>
+</tr>
+</tbody>
+</table>
+<p>Opus 4.6 的准确率是前代最佳 Claude 的 <strong>4 倍</strong>，是 Gemini 的 <strong>3 倍</strong>。</p>
+<p>实际体验也验证了这一点。一位开发者用 Opus 4.6 跑了几次 50 万 token 的 Claude Code 会话，反馈说”表现非常好，不需要比平时更多地重复自己，感觉就像一个正常的（短上下文）会话。”</p>
+<h2 id="价格：真的不加钱"><a href="#价格：真的不加钱" class="headerlink" title="价格：真的不加钱"></a>价格：真的不加钱</h2><p>这可能是最重要的变化。</p>
+<p>以前超过 200K token 的请求会触发”长上下文溢价”——Opus 的输入价格从 $5/MTok 涨到 $10/MTok，直接翻倍。</p>
+<p>现在呢？<strong>统一价格，全窗口适用。</strong></p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>输入价格</th>
+<th>输出价格</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Opus 4.6</td>
+<td>$5/MTok</td>
+<td>$25/MTok</td>
+</tr>
+<tr>
+<td>Sonnet 4.6</td>
+<td>$3/MTok</td>
+<td>$15/MTok</td>
+</tr>
+</tbody>
+</table>
+<p>一个 90 万 token 的请求，跟一个 9K token 的请求，每个 token 的价格一样。</p>
+<p>对于 Claude Code 用户更简单：<strong>Max、Team、Enterprise 订阅者直接包含 1M 上下文</strong>，无需额外付费。在 Claude Code 里选择 Opus 4.6 模型，1M 窗口自动启用。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 Claude Code 中切换到 1M 上下文模型</span></span><br><span class="line">/model opus[1m]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 或者直接使用完整模型名</span></span><br><span class="line">/model claude-opus-4-6[1m]</span><br></pre></td></tr></table></figure>
+<p>不过要注意：<strong>上下文越大，token 消耗越快。</strong> 一个 90 万 token 的会话，光输入就要 $4.5。日常使用没问题，但如果放在自动化循环里跑，费用会很快累积。</p>
+<h2 id="实用建议：怎么用好-1M-上下文？"><a href="#实用建议：怎么用好-1M-上下文？" class="headerlink" title="实用建议：怎么用好 1M 上下文？"></a>实用建议：怎么用好 1M 上下文？</h2><p>给你几个实操建议：</p>
+<p><strong>1. 不是所有任务都需要 1M。</strong> 简单的代码补全、单文件修改，200K 绰绰有余。把 1M 留给真正需要的场景：大型重构、复杂调试、长文档分析。</p>
+<p><strong>2. 善用 CLAUDE.md。</strong> 把项目架构、编码规范、技术栈信息写在 CLAUDE.md 里。这些信息会自动加载，不用每次重复说明，节省上下文空间。</p>
+<p><strong>3. 注意 token 消耗速度。</strong> Max 订阅用户虽然包含 1M 上下文，但 token 配额是固定的。大窗口意味着消耗更快。关注 <code>/status</code> 里的 token 用量。</p>
+<p><strong>4. 如果不需要，可以关掉。</strong> 设置环境变量 <code>CLAUDE_CODE_DISABLE_1M_CONTEXT=1</code> 即可禁用 1M 模型，回到 200K 窗口，节省配额。</p>
+<p><strong>5. 复杂任务用 Plan 模式。</strong> 先让 Claude 分析项目、制定方案（Shift+Tab 进入 Plan 模式），确认后再执行。大上下文 + 规划，效果最好。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>1M 上下文不是一个营销噱头。它解决的是 AI 辅助编程中最底层的问题——<strong>信息丢失</strong>。</p>
+<p>以前我们总在想办法绕过上下文限制：分块处理、手动总结、反复提醒。这些 workaround 有用，但本质上都是在弥补能力不足。</p>
+<p>现在这个限制被大幅放宽了。你可以把整个项目丢给 AI，让它从全局视角理解你的代码。你可以让 Agent 跑几个小时的复杂任务，不用担心它中途失忆。你可以在一个会话里完成过去需要拆成三四个会话才能做完的事情。</p>
+<p>这不是说 AI 变得无所不能了。它依然会犯错，依然需要你的引导和审查。但至少，<strong>它不会再因为”忘了”而犯错。</strong></p>
+<p><strong>你用过 1M 上下文了吗？在什么场景下感受最明显？或者你还在用 200K，觉得够用了？评论区聊聊你的真实体验。</strong></p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/images/qrcode_wechat_public_account.jpg">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-编程/" rel="tag"># AI 编程</a>
+              <a href="/tags/Opus-4-6/" rel="tag"># Opus 4.6</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/上下文窗口/" rel="tag"># 上下文窗口</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/03/18/202603181014/" rel="prev" title="全网爆火的 OpenClaw 保姆级教程：从安装到 Skills 全搞定">
+      <i class="fa fa-chevron-left"></i> 全网爆火的 OpenClaw 保姆级教程：从安装到 Skills 全搞定
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2026/03/18/202603181410/" rel="next" title="硬刚五角大楼丢了 2 亿合同，Anthropic 转手给用户撒钱：Claude Code 额度翻倍薅羊毛指南">
+      硬刚五角大楼丢了 2 亿合同，Anthropic 转手给用户撒钱：Claude Code 额度翻倍薅羊毛指南 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么上下文窗口这么重要？"><span class="nav-text">为什么上下文窗口这么重要？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1M-上下文的-5-个真实使用场景"><span class="nav-text">1M 上下文的 5 个真实使用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#场景一：整个代码库一次性分析"><span class="nav-text">场景一：整个代码库一次性分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景二：跨文件-Bug-定位"><span class="nav-text">场景二：跨文件 Bug 定位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景三：长时间-Agent-任务不中断"><span class="nav-text">场景三：长时间 Agent 任务不中断</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景四：大规模文档和合同审查"><span class="nav-text">场景四：大规模文档和合同审查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#场景五：多-Agent-编排"><span class="nav-text">场景五：多 Agent 编排</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#关键数据：它真的能在-1M-长度下保持准确吗？"><span class="nav-text">关键数据：它真的能在 1M 长度下保持准确吗？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#价格：真的不加钱"><span class="nav-text">价格：真的不加钱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实用建议：怎么用好-1M-上下文？"><span class="nav-text">实用建议：怎么用好 1M 上下文？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#写在最后"><span class="nav-text">写在最后</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">164</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">268</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https://github.com/xinpengfei520" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener" target="_blank"><i class="envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https://blog.csdn.net/xinpengfei521" rel="noopener" target="_blank"><i class="heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https://juejin.im/user/57c82d0779bc440063eac0f8/posts" rel="noopener" target="_blank"><i class="crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https://open.weixin.qq.com/qr/code?username=x-sir123" rel="noopener" target="_blank"><i class="weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https://www.zhihu.com/people/xin-peng-fei-9/activities" rel="noopener" target="_blank"><i class="tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" rel="noopener" target="_blank"><i class="weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https://www.jianshu.com/u/268aa8e1a12f" rel="noopener" target="_blank"><i class="desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+</div>
+
+
+
+<div style="width:580px;margin:0 auto; padding:20px 0;">
+	<a target="_blank" href="https://beian.miit.gov.cn/" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">沪ICP备2022014461号-1 </p></a>
+
+	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=61032202000124" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="https://www.vance.xin/images/beian_pic.png" style="float:left;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">陕公网安备 61032202000124号</p></a>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz","app_key":"Hm8TNHlKhiv0i2VwIXIE3oY9","server_url":"https://g3y7kugt.lc-cn-n1-shared.com","security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz',
+      appKey     : 'Hm8TNHlKhiv0i2VwIXIE3oY9',
+      placeholder: "既然来了，就留个脚印再走吧！",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/love.js"></script>

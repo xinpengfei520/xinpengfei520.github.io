@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vance.xin","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="两周。22 个安全漏洞。14 个高危。 这不是某个顶级安全团队的年度报告，而是 Claude Opus 4.6 一个 AI 模型在 Firefox 代码库里的成绩单。 2026 年 2 月，Anthropic 与 Mozilla 合作，把 Opus 4.6 指向了 Firefox 的代码库。这是全世界被审计最多的开源项目之一——几十年来无数安全研究员反复翻过，持续做模糊测试，由顶尖工程师维护。">
+<meta name="keywords" content="Claude Code,AI 编程,Opus 4.6,安全漏洞,Firefox">
+<meta property="og:type" content="article">
+<meta property="og:title" content="连查出 Firefox 22 个漏洞！初级开发如何用 Claude Opus 4.6 写出大神级代码？">
+<meta property="og:url" content="https://www.vance.xin/2026/03/18/202603181445/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="两周。22 个安全漏洞。14 个高危。 这不是某个顶级安全团队的年度报告，而是 Claude Opus 4.6 一个 AI 模型在 Firefox 代码库里的成绩单。 2026 年 2 月，Anthropic 与 Mozilla 合作，把 Opus 4.6 指向了 Firefox 的代码库。这是全世界被审计最多的开源项目之一——几十年来无数安全研究员反复翻过，持续做模糊测试，由顶尖工程师维护。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260318-claude-opus-firefox-vulnerabilities-coding.webp">
+<meta property="og:updated_time" content="2026-03-18T09:51:10.172Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="连查出 Firefox 22 个漏洞！初级开发如何用 Claude Opus 4.6 写出大神级代码？">
+<meta name="twitter:description" content="两周。22 个安全漏洞。14 个高危。 这不是某个顶级安全团队的年度报告，而是 Claude Opus 4.6 一个 AI 模型在 Firefox 代码库里的成绩单。 2026 年 2 月，Anthropic 与 Mozilla 合作，把 Opus 4.6 指向了 Firefox 的代码库。这是全世界被审计最多的开源项目之一——几十年来无数安全研究员反复翻过，持续做模糊测试，由顶尖工程师维护。">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260318-claude-opus-firefox-vulnerabilities-coding.webp">
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/18/202603181445/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>连查出 Firefox 22 个漏洞！初级开发如何用 Claude Opus 4.6 写出大神级代码？ | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1060098061815513"
+     crossorigin="anonymous"></script>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+  <a href="https://github.com/xinpengfei520" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">飞飞的AI实验室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="calendar fa-fw"></i>日程表</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+        <li class="menu-item menu-item-baidusitemap">
+
+    <a href="/baidusitemap.xml" rel="section"><i class="sitemap fa-fw"></i>baidusitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="heartbeat fa-fw"></i>公益 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181445/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          连查出 Firefox 22 个漏洞！初级开发如何用 Claude Opus 4.6 写出大神级代码？
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2026-03-18 14:45:00 / 修改时间：09:51:10" itemprop="dateCreated datePublished" datetime="2026-03-18T14:45:00+00:00">2026-03-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/阅读/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2026/03/18/202603181445/" class="post-meta-item leancloud_visitors" data-flag-title="连查出 Firefox 22 个漏洞！初级开发如何用 Claude Opus 4.6 写出大神级代码？" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2026/03/18/202603181445/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2026/03/18/202603181445/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://image.vance.xin/blog-cover/20260318-claude-opus-firefox-vulnerabilities-coding.webp" alt="cover"></p>
+<p>两周。22 个安全漏洞。14 个高危。</p>
+<p>这不是某个顶级安全团队的年度报告，而是 <strong>Claude Opus 4.6 一个 AI 模型在 Firefox 代码库里的成绩单</strong>。</p>
+<p>2026 年 2 月，Anthropic 与 Mozilla 合作，把 Opus 4.6 指向了 Firefox 的代码库。这是全世界被审计最多的开源项目之一——几十年来无数安全研究员反复翻过，持续做模糊测试，由顶尖工程师维护。</p>
+<p>结果？Opus 4.6 扫描了近 <strong>6,000 个 C++ 文件</strong>，向 Mozilla 提交了 <strong>112 份漏洞报告</strong>，其中 22 个被确认为安全漏洞（CVE）。14 个高危漏洞，占 2025 年 Firefox 全部高危漏洞的<strong>近五分之一</strong>。</p>
+<p>更夸张的是，它找到第一个漏洞只用了 <strong>20 分钟</strong>。</p>
+<p>这件事让我想了很久。如果一个 AI 模型能在最安全的浏览器里找到这么多漏洞，那它用来帮你写代码、审代码的时候，到底能做到什么程度？</p>
+<h2 id="它到底是怎么找到这些漏洞的？"><a href="#它到底是怎么找到这些漏洞的？" class="headerlink" title="它到底是怎么找到这些漏洞的？"></a>它到底是怎么找到这些漏洞的？</h2><p>Anthropic 的前沿红队负责人 Logan Graham 解释了他们为什么选 Firefox 做测试：</p>
+<blockquote>
+<p>“我们选 Firefox 是因为它是世界上被测试最充分、最安全的开源项目之一。如果 Claude 能在这里发现未知的高危 Bug，那说明了这项能力正在走向何方。”</p>
+</blockquote>
+<h3 id="第一步：复现历史漏洞"><a href="#第一步：复现历史漏洞" class="headerlink" title="第一步：复现历史漏洞"></a>第一步：复现历史漏洞</h3><p>研究团队先用 Opus 4.6 去找旧版 Firefox 中的<strong>已知漏洞</strong>（历史 CVE）。他们惊讶地发现，Opus 4.6 能复现其中很高比例的漏洞——而每一个漏洞都是人类安全研究员花了大量精力才发现的。</p>
+<p>这一步的意义是什么？<strong>验证模型确实具备安全审计的能力</strong>，而不是碰运气。</p>
+<h3 id="第二步：扫描当前代码库"><a href="#第二步：扫描当前代码库" class="headerlink" title="第二步：扫描当前代码库"></a>第二步：扫描当前代码库</h3><p>验证能力后，团队把 Opus 4.6 对准了 Firefox 的<strong>当前版本</strong>。从 JavaScript 引擎开始——这是最关键的攻击面，因为它负责处理来自互联网的不受信任的代码。</p>
+<p><strong>20 分钟后，Opus 4.6 报告了第一个发现：一个 Use-After-Free（释放后使用）漏洞。</strong></p>
+<p>这是一种内存损坏漏洞，攻击者可以利用它覆盖数据、注入恶意内容。这种漏洞在浏览器中特别危险，因为用户每天都在浏览器中接触不受信任的网页内容。</p>
+<p>Mozilla 确认后，邀请 Anthropic 继续批量提交发现。Mozilla 甚至为此动员了多个工程团队，以”事故响应”的规格来处理这批漏洞。</p>
+<p>Mozilla 的工程总监 Tom Grinstead 说：</p>
+<blockquote>
+<p>“这是一次大规模涌入。我们像处理安全事件一样动员起来，对 100 多个 Bug 进行了分类，并修复了其中大部分。”</p>
+</blockquote>
+<h3 id="第三步：尝试利用漏洞"><a href="#第三步：尝试利用漏洞" class="headerlink" title="第三步：尝试利用漏洞"></a>第三步：尝试利用漏洞</h3><p>找到漏洞是一回事，能不能利用又是另一回事。Anthropic 花了约 <strong>$4,000 的 API 费用</strong>，让 Opus 4.6 尝试把发现的漏洞转化为可用的攻击利用代码（exploit）。</p>
+<p>结果：数百次尝试中，<strong>只有 2 次成功</strong>——而且只在刻意去掉了沙箱保护的测试环境中才能工作。</p>
+<p>其中一个成功的利用针对的是 <strong>CVE-2026-2796</strong>，一个 CVSS 评分 <strong>9.8 分</strong>（满分 10 分）的关键漏洞，涉及 JavaScript WebAssembly 组件的 JIT 编译错误。</p>
+<p>Anthropic 的总结是：</p>
+<blockquote>
+<p>“Claude 在发现和修复漏洞方面远强于利用漏洞。发现漏洞的成本远低于创建利用代码的成本。”</p>
+</blockquote>
+<p><strong>这对防御者来说是好消息：AI 更擅长帮你堵洞，而不是帮攻击者破门。</strong></p>
+<h2 id="Opus-4-6-的代码能力到底有多强？"><a href="#Opus-4-6-的代码能力到底有多强？" class="headerlink" title="Opus 4.6 的代码能力到底有多强？"></a>Opus 4.6 的代码能力到底有多强？</h2><p>Firefox 漏洞事件不是孤立的。Opus 4.6 在发布之前就已经在开源项目中发现了 <strong>500 多个零日漏洞</strong>，包括 Linux 内核中的漏洞。</p>
+<p>这种能力背后，是 Opus 4.6 在编码基准测试上的全面突破：</p>
+<table>
+<thead>
+<tr>
+<th>基准测试</th>
+<th>Opus 4.6</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SWE-bench Verified</td>
+<td><strong>80.8%</strong></td>
+<td>解决真实 GitHub Issue 的能力</td>
+</tr>
+<tr>
+<td>ARC-AGI-2</td>
+<td><strong>68.8%</strong></td>
+<td>抽象推理，前代仅 37.6%，翻了近一倍</td>
+</tr>
+<tr>
+<td>GPQA Diamond</td>
+<td><strong>91.3%</strong></td>
+<td>研究生级别的推理能力</td>
+</tr>
+<tr>
+<td>1M 上下文窗口</td>
+<td><strong>支持</strong></td>
+<td>可同时分析整个大型代码库</td>
+</tr>
+</tbody>
+</table>
+<p>Anthropic 在发布说明中的描述很精准：</p>
+<blockquote>
+<p>“Opus 4.6 更仔细地规划，更长时间地维持 Agent 任务，在大型代码库中更可靠地运行，并且有更好的代码审查和调试能力来捕捉自己的错误。”</p>
+</blockquote>
+<p>关键词是”<strong>捕捉自己的错误</strong>“——这是以前的模型做不好的地方。</p>
+<h2 id="初级开发者怎么用-Opus-4-6？"><a href="#初级开发者怎么用-Opus-4-6？" class="headerlink" title="初级开发者怎么用 Opus 4.6？"></a>初级开发者怎么用 Opus 4.6？</h2><p>看到这里你可能会想：漏洞发现是安全专家的事，跟我一个写 CRUD 的初级开发者有什么关系？</p>
+<p><strong>关系大了。</strong> 同样的能力用在不同场景上，效果完全不同。</p>
+<h3 id="1-让-Opus-4-6-做你的代码审查员"><a href="#1-让-Opus-4-6-做你的代码审查员" class="headerlink" title="1. 让 Opus 4.6 做你的代码审查员"></a>1. 让 Opus 4.6 做你的代码审查员</h3><p>Opus 4.6 能在 Firefox 这种顶级代码库里找到高危漏洞，你觉得它审查你的代码会有什么效果？</p>
+<p>在 Claude Code 里，你可以随时让它审查你刚写的代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&quot;请审查我刚才写的这段认证逻辑。</span><br><span class="line">重点检查：</span><br><span class="line">1. 是否有 SQL 注入风险</span><br><span class="line">2. 是否有权限绕过的可能</span><br><span class="line">3. 错误处理是否完整</span><br><span class="line">4. 有没有竞态条件&quot;</span><br></pre></td></tr></table></figure>
+<p>Opus 4.6 不只是做语法检查——它会<strong>推理代码的执行路径</strong>，像人类安全研究员一样理解组件之间的交互。这是它和传统代码扫描工具（如 ESLint、SonarQube）的本质区别。</p>
+<p>传统工具匹配已知模式。Opus 4.6 理解代码逻辑。</p>
+<h3 id="2-用-Plan-模式做架构设计"><a href="#2-用-Plan-模式做架构设计" class="headerlink" title="2. 用 Plan 模式做架构设计"></a>2. 用 Plan 模式做架构设计</h3><p>Opus 4.6 最大的提升之一是<strong>规划能力</strong>。它能更仔细地分析问题，制定多步骤方案，然后系统性地执行。</p>
+<p>在 Claude Code 里按 <code>Shift+Tab</code> 进入 Plan 模式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&quot;我要做一个用户权限系统。</span><br><span class="line">需求：基于角色的访问控制（RBAC），</span><br><span class="line">支持多级权限继承，</span><br><span class="line">需要审计日志。</span><br><span class="line"></span><br><span class="line">请先分析方案，不要直接写代码。&quot;</span><br></pre></td></tr></table></figure>
+<p>Opus 4.6 会给你一个完整的方案——数据模型、API 设计、安全考虑、边界情况——然后你确认后再执行。</p>
+<p><strong>这种”先想后做”的工作方式，是高级工程师的习惯。</strong> 用 Opus 4.6 帮你建立这个习惯，你的成长速度会比同龄人快得多。</p>
+<h3 id="3-用-1M-上下文理解大型项目"><a href="#3-用-1M-上下文理解大型项目" class="headerlink" title="3. 用 1M 上下文理解大型项目"></a>3. 用 1M 上下文理解大型项目</h3><p>初级开发者面对一个新项目最头疼的事是什么？<strong>看不懂代码。</strong></p>
+<p>几十个文件，上千行逻辑，错综复杂的依赖关系。以前你只能一个文件一个文件地啃，花几天甚至几周才能理清全貌。</p>
+<p>Opus 4.6 的 1M 上下文窗口可以一次性吃进整个项目。你直接问：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&quot;请分析这个项目的整体架构。</span><br><span class="line">告诉我：</span><br><span class="line">1. 数据流是怎么走的</span><br><span class="line">2. 核心模块之间的依赖关系</span><br><span class="line">3. 哪些文件是改动最多的热点</span><br><span class="line">4. 有没有明显的技术债&quot;</span><br></pre></td></tr></table></figure>
+<p>这就像在 Firefox 的 6,000 个 C++ 文件里找漏洞一样——Opus 4.6 的全局理解能力，正好可以帮你快速建立对项目的整体认知。</p>
+<h3 id="4-让-Claude-Code-Security-帮你写更安全的代码"><a href="#4-让-Claude-Code-Security-帮你写更安全的代码" class="headerlink" title="4. 让 Claude Code Security 帮你写更安全的代码"></a>4. 让 Claude Code Security 帮你写更安全的代码</h3><p>Anthropic 刚发布了 <strong>Claude Code Security</strong>（限量预览），这是 Firefox 漏洞研究的直接产物。它的工作方式是：</p>
+<ol>
+<li>扫描你的代码库</li>
+<li>识别高危漏洞（内存损坏、注入漏洞、认证绕过等）</li>
+<li>自动生成修复补丁</li>
+</ol>
+<p>跟传统 SAST 工具不同，Claude Code Security 不是匹配已知模式，而是<strong>像人类安全研究员一样推理代码逻辑</strong>——理解组件交互、追踪数据流向、发现复杂的业务逻辑缺陷。</p>
+<p>目前仅对 Enterprise/Team 客户和开源项目维护者开放。但它代表了 AI 编程工具的下一个方向：<strong>不只是帮你写代码，还帮你写安全的代码。</strong></p>
+<h3 id="5-善用模型切换策略"><a href="#5-善用模型切换策略" class="headerlink" title="5. 善用模型切换策略"></a>5. 善用模型切换策略</h3><p>不是所有任务都需要 Opus。一个聪明的策略：</p>
+<table>
+<thead>
+<tr>
+<th>任务类型</th>
+<th>推荐模型</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>架构设计、复杂调试</td>
+<td>Opus 4.6</td>
+<td>最强推理能力</td>
+</tr>
+<tr>
+<td>日常编码、简单修改</td>
+<td>Sonnet 4.6</td>
+<td>性能接近，成本降 80%</td>
+</tr>
+<tr>
+<td>格式调整、快速问答</td>
+<td>Haiku</td>
+<td>最快最省</td>
+</tr>
+<tr>
+<td>安全审查</td>
+<td>Opus 4.6</td>
+<td>Firefox 级别的漏洞发现能力</td>
+</tr>
+</tbody>
+</table>
+<p>SWE-bench 上 Sonnet 4.6 得分 79.6%，跟 Opus 的 80.8% 只差 1.2 个百分点。大多数日常编码任务，Sonnet 就够了。<strong>把 Opus 的额度留给真正需要深度推理的场景。</strong></p>
+<h2 id="一个更大的启示"><a href="#一个更大的启示" class="headerlink" title="一个更大的启示"></a>一个更大的启示</h2><p>Firefox 事件给整个行业敲了一记警钟。</p>
+<p>PCMag 的标题说得很直接：<strong>“Anthropic 的 Claude 在 Firefox 中找到的 Bug 比人类团队还多。”</strong></p>
+<p>但更值得关注的是经济账。传统漏洞研究是高成本、高技能的工作，一个高危浏览器漏洞在 Bug Bounty 市场上的赏金是 $3,000 到 $20,000+。而 Opus 4.6 用 $4,000 的 API 费用，两周发现了 22 个。</p>
+<p><strong>发现漏洞的成本正在被 AI 急剧压低。</strong></p>
+<p>这对初级开发者意味着什么？<strong>安全不再是只有专家才能做的事情。</strong> 你现在就可以用 Opus 4.6 对自己的代码做安全审计，发现那些你肉眼看不到的漏洞。</p>
+<p>当然，AI 也不是万能的。Sonar 的分析很到位：</p>
+<blockquote>
+<p>“Claude Code Security 是对现有工具的补充，不是替代。最强的安全姿态是两者结合使用。”</p>
+</blockquote>
+<p>Opus 4.6 找到了人类找不到的漏洞，但人类仍然需要验证这些发现、判断其真实影响、制定修复优先级。<strong>AI 发现问题，人类做决策——这是最优分工。</strong></p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>Claude Opus 4.6 在 Firefox 上的表现，不只是一个安全新闻。它展示了 AI 编程工具正在到达的一个新高度：<strong>不只是写代码，而是理解代码。</strong></p>
+<p>理解到什么程度？理解到能在世界上最安全的浏览器里找到 22 个漏洞的程度。</p>
+<p>作为初级开发者，你不需要成为安全专家，也不需要花几年练就”大神”的直觉。<strong>你需要做的是学会使用这个工具</strong>——让它帮你审代码、做架构、理解项目、发现漏洞。</p>
+<p>这不是作弊。这是新时代的工作方式。</p>
+<p>就像 Firefox 事件告诉我们的：<strong>人类找了几十年没找到的漏洞，AI 用 20 分钟就找到了。</strong> 这种能力现在就在你的终端里。</p>
+<p>打开 Claude Code，输入 <code>/model opus</code>，把你最近写的代码丢给它审查一下。你可能会对结果感到惊讶。</p>
+<p><strong>你用 Opus 4.6 做过什么印象深刻的事？有没有发现过自己代码里隐藏的安全问题？欢迎评论区分享你的故事。</strong></p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/images/qrcode_wechat_public_account.jpg">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-编程/" rel="tag"># AI 编程</a>
+              <a href="/tags/Opus-4-6/" rel="tag"># Opus 4.6</a>
+              <a href="/tags/安全漏洞/" rel="tag"># 安全漏洞</a>
+              <a href="/tags/Firefox/" rel="tag"># Firefox</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/03/18/202603181442/" rel="prev" title="当 AI 学会了" 已读不回"：深扒="" claude="" code="" 满天飞的玄学报错与新手自救方案"="">
+      <i class="fa fa-chevron-left"></i> 当 AI 学会了"已读不回"：深扒 Claude Code 满天飞的玄学报错与新手自救方案
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2026/03/18/202603181458/" rel="next" title="别再被资深同事疯狂 Review 了！提交 PR 前让 Claude 帮你做一次深度'体检'">
+      别再被资深同事疯狂 Review 了！提交 PR 前让 Claude 帮你做一次深度'体检' <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#它到底是怎么找到这些漏洞的？"><span class="nav-text">它到底是怎么找到这些漏洞的？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一步：复现历史漏洞"><span class="nav-text">第一步：复现历史漏洞</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二步：扫描当前代码库"><span class="nav-text">第二步：扫描当前代码库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第三步：尝试利用漏洞"><span class="nav-text">第三步：尝试利用漏洞</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Opus-4-6-的代码能力到底有多强？"><span class="nav-text">Opus 4.6 的代码能力到底有多强？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初级开发者怎么用-Opus-4-6？"><span class="nav-text">初级开发者怎么用 Opus 4.6？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-让-Opus-4-6-做你的代码审查员"><span class="nav-text">1. 让 Opus 4.6 做你的代码审查员</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-用-Plan-模式做架构设计"><span class="nav-text">2. 用 Plan 模式做架构设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-用-1M-上下文理解大型项目"><span class="nav-text">3. 用 1M 上下文理解大型项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-让-Claude-Code-Security-帮你写更安全的代码"><span class="nav-text">4. 让 Claude Code Security 帮你写更安全的代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-善用模型切换策略"><span class="nav-text">5. 善用模型切换策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一个更大的启示"><span class="nav-text">一个更大的启示</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#写在最后"><span class="nav-text">写在最后</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">164</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">268</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https://github.com/xinpengfei520" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener" target="_blank"><i class="envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https://blog.csdn.net/xinpengfei521" rel="noopener" target="_blank"><i class="heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https://juejin.im/user/57c82d0779bc440063eac0f8/posts" rel="noopener" target="_blank"><i class="crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https://open.weixin.qq.com/qr/code?username=x-sir123" rel="noopener" target="_blank"><i class="weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https://www.zhihu.com/people/xin-peng-fei-9/activities" rel="noopener" target="_blank"><i class="tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" rel="noopener" target="_blank"><i class="weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https://www.jianshu.com/u/268aa8e1a12f" rel="noopener" target="_blank"><i class="desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+</div>
+
+
+
+<div style="width:580px;margin:0 auto; padding:20px 0;">
+	<a target="_blank" href="https://beian.miit.gov.cn/" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">沪ICP备2022014461号-1 </p></a>
+
+	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=61032202000124" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="https://www.vance.xin/images/beian_pic.png" style="float:left;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">陕公网安备 61032202000124号</p></a>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz","app_key":"Hm8TNHlKhiv0i2VwIXIE3oY9","server_url":"https://g3y7kugt.lc-cn-n1-shared.com","security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz',
+      appKey     : 'Hm8TNHlKhiv0i2VwIXIE3oY9',
+      placeholder: "既然来了，就留个脚印再走吧！",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/love.js"></script>

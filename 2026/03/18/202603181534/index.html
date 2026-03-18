@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vance.xin","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="你打开 Android Studio，看到一条升级提示：AGP 9.0 可用。 你手一抖点了升级。 然后你的项目爆了 47 个编译错误。BaseExtension 找不到了，applicationVariants 不能用了，Kotlin 插件冲突了，Hilt 不兼容了…… 你花了整整一天才把项目跑起来。 恭喜你，你刚刚体验了 Android 开发史上最大的一次构建系统重构。 Reddit 上有人">
+<meta name="keywords" content="Android Studio,Android,Gradle,AGP,Kotlin">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android Gradle Plugin 9.0 来了！Kotlin 内置、DSL 重构，这次迁移有多痛？">
+<meta property="og:url" content="https://www.vance.xin/2026/03/18/202603181534/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你打开 Android Studio，看到一条升级提示：AGP 9.0 可用。 你手一抖点了升级。 然后你的项目爆了 47 个编译错误。BaseExtension 找不到了，applicationVariants 不能用了，Kotlin 插件冲突了，Hilt 不兼容了…… 你花了整整一天才把项目跑起来。 恭喜你，你刚刚体验了 Android 开发史上最大的一次构建系统重构。 Reddit 上有人">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260318-android-gradle-plugin-9-agp.webp">
+<meta property="og:updated_time" content="2026-03-18T09:51:10.172Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android Gradle Plugin 9.0 来了！Kotlin 内置、DSL 重构，这次迁移有多痛？">
+<meta name="twitter:description" content="你打开 Android Studio，看到一条升级提示：AGP 9.0 可用。 你手一抖点了升级。 然后你的项目爆了 47 个编译错误。BaseExtension 找不到了，applicationVariants 不能用了，Kotlin 插件冲突了，Hilt 不兼容了…… 你花了整整一天才把项目跑起来。 恭喜你，你刚刚体验了 Android 开发史上最大的一次构建系统重构。 Reddit 上有人">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260318-android-gradle-plugin-9-agp.webp">
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/18/202603181534/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Android Gradle Plugin 9.0 来了！Kotlin 内置、DSL 重构，这次迁移有多痛？ | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1060098061815513"
+     crossorigin="anonymous"></script>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+  <a href="https://github.com/xinpengfei520" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">飞飞的AI实验室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="calendar fa-fw"></i>日程表</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+        <li class="menu-item menu-item-baidusitemap">
+
+    <a href="/baidusitemap.xml" rel="section"><i class="sitemap fa-fw"></i>baidusitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="heartbeat fa-fw"></i>公益 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181534/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android Gradle Plugin 9.0 来了！Kotlin 内置、DSL 重构，这次迁移有多痛？
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2026-03-18 15:34:00 / 修改时间：09:51:10" itemprop="dateCreated datePublished" datetime="2026-03-18T15:34:00+00:00">2026-03-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/阅读/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2026/03/18/202603181534/" class="post-meta-item leancloud_visitors" data-flag-title="Android Gradle Plugin 9.0 来了！Kotlin 内置、DSL 重构，这次迁移有多痛？" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2026/03/18/202603181534/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2026/03/18/202603181534/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://image.vance.xin/blog-cover/20260318-android-gradle-plugin-9-agp.webp" alt="cover"></p>
+<p>你打开 Android Studio，看到一条升级提示：<strong>AGP 9.0 可用</strong>。</p>
+<p>你手一抖点了升级。</p>
+<p>然后你的项目爆了 47 个编译错误。<code>BaseExtension</code> 找不到了，<code>applicationVariants</code> 不能用了，Kotlin 插件冲突了，Hilt 不兼容了……</p>
+<p>你花了整整一天才把项目跑起来。</p>
+<p>恭喜你，你刚刚体验了 Android 开发史上最大的一次构建系统重构。</p>
+<p>Reddit 上有人发帖说：<strong>“AGP 9.0 发布了，简直是灾难。这是我的完整迁移指南，希望你不用受这个罪。”</strong> 帖子下面一片惨叫。</p>
+<p>但冷静下来看，AGP 9.0 确实是 Google 这几年来做的最重要的一次底层升级。<strong>痛，但有意义。</strong></p>
+<h2 id="AGP-9-0-到底改了什么？"><a href="#AGP-9-0-到底改了什么？" class="headerlink" title="AGP 9.0 到底改了什么？"></a>AGP 9.0 到底改了什么？</h2><p>一句话总结：<strong>Google 把积攒了好几个大版本的”技术债”一次性清掉了。</strong></p>
+<h3 id="变更一：Kotlin-内置了"><a href="#变更一：Kotlin-内置了" class="headerlink" title="变更一：Kotlin 内置了"></a>变更一：Kotlin 内置了</h3><p>这是影响面最大的变化。</p>
+<p>以前你要在 Android 项目里写 Kotlin，必须手动添加 <code>org.jetbrains.kotlin.android</code> 插件。从 AGP 7.x 到 8.x，这套配置一直没变。</p>
+<p><strong>AGP 9.0 把 Kotlin 支持直接内置到了插件里。</strong> 你不再需要单独声明 Kotlin 插件——AGP 自带了。</p>
+<p>这意味着什么？</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 以前（AGP 8.x）</span></span><br><span class="line">plugins &#123;</span><br><span class="line">    id(<span class="string">"com.android.application"</span>)</span><br><span class="line">    id(<span class="string">"org.jetbrains.kotlin.android"</span>)  <span class="comment">// 必须手动加</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 现在（AGP 9.0）</span></span><br><span class="line">plugins &#123;</span><br><span class="line">    id(<span class="string">"com.android.application"</span>)</span><br><span class="line">    <span class="comment">// Kotlin 支持已内置，不需要了</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看起来只是少了一行？实际影响比你想的大：</p>
+<ul>
+<li>AGP 9.0 自带 <strong>KGP 2.2.10</strong>，会自动升级你项目里更低版本的 Kotlin 插件</li>
+<li>如果你还保留了 <code>kotlin-android</code> 插件声明，<strong>直接报错</strong>：<code>The &#39;org.jetbrains.kotlin.android&#39; plugin is no longer required</code></li>
+<li>KSP 版本也会被自动升级到 <strong>2.2.10-2.0.2</strong></li>
+</ul>
+<p>JetBrains 专门发了一篇博客提醒 Kotlin 开发者：<strong>所有 Android Kotlin 项目都需要立即调整构建配置。</strong></p>
+<h3 id="变更二：DSL-全面重构"><a href="#变更二：DSL-全面重构" class="headerlink" title="变更二：DSL 全面重构"></a>变更二：DSL 全面重构</h3><p>这是让很多老项目崩溃的根本原因。</p>
+<p>从 AGP 7.x 开始，Google 就在引入新的 DSL 接口，同时保留旧的 <code>BaseExtension</code> 等类型做兼容。到了 AGP 9.0，<strong>旧的 DSL 类型被彻底移除了。</strong></p>
+<p>如果你的 <code>build.gradle</code> 或者自定义 Gradle 插件里引用了这些东西，直接炸：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">java.lang.ClassCastException:</span><br><span class="line">class com.android.build.gradle.internal.dsl.ApplicationExtensionImpl</span><br><span class="line">cannot be cast to class com.android.build.gradle.BaseExtension</span><br></pre></td></tr></table></figure>
+<p>被移除的 API 清单很长，重点包括：</p>
+<table>
+<thead>
+<tr>
+<th>被移除的 API</th>
+<th>替代方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>applicationVariants</code> / <code>libraryVariants</code></td>
+<td><code>androidComponents.onVariants()</code></td>
+</tr>
+<tr>
+<td><code>variantFilter</code></td>
+<td><code>androidComponents.beforeVariants()</code></td>
+</tr>
+<tr>
+<td><code>dexOptions</code></td>
+<td>无需替代（dx 已被 d8 取代）</td>
+</tr>
+<tr>
+<td><code>sdkDirectory</code> / <code>ndkDirectory</code></td>
+<td><code>androidComponents.sdkComponents</code></td>
+</tr>
+<tr>
+<td><code>deviceProvider</code> / <code>testServer</code></td>
+<td>Gradle Managed Devices</td>
+</tr>
+</tbody>
+</table>
+<p><strong>一句话：如果你的项目还在用 AGP 7.x 时代的写法，这次升级会非常痛。</strong></p>
+<h3 id="变更三：一堆默认值变了"><a href="#变更三：一堆默认值变了" class="headerlink" title="变更三：一堆默认值变了"></a>变更三：一堆默认值变了</h3><p>AGP 9.0 不只是移除了旧 API，还改了很多默认行为。这些是”不看 Release Notes 就会踩坑”的隐藏地雷：</p>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>AGP 8.x 默认值</th>
+<th>AGP 9.0 默认值</th>
+<th>影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>android.newDsl</code></td>
+<td>false</td>
+<td><strong>true</strong></td>
+<td>强制使用新 DSL</td>
+</tr>
+<tr>
+<td><code>android.builtInKotlin</code></td>
+<td>false</td>
+<td><strong>true</strong></td>
+<td>Kotlin 内置</td>
+</tr>
+<tr>
+<td><code>android.uniquePackageNames</code></td>
+<td>false</td>
+<td><strong>true</strong></td>
+<td>每个库必须有唯一包名</td>
+</tr>
+<tr>
+<td><code>android.useAndroidx</code></td>
+<td>false</td>
+<td><strong>true</strong></td>
+<td>默认使用 AndroidX</td>
+</tr>
+<tr>
+<td><code>android.enableAppCompileTimeRClass</code></td>
+<td>false</td>
+<td><strong>true</strong></td>
+<td>R 类变为 non-final</td>
+</tr>
+</tbody>
+</table>
+<p>最后一个变化要特别注意：<strong>R 类变成 non-final 了。</strong> 如果你在代码里用 <code>switch-case</code> 判断资源 ID，会直接编译报错。你需要把 <code>switch</code> 改成 <code>if-else</code>。</p>
+<h3 id="变更四：Fused-Library-Plugin（预览）"><a href="#变更四：Fused-Library-Plugin（预览）" class="headerlink" title="变更四：Fused Library Plugin（预览）"></a>变更四：Fused Library Plugin（预览）</h3><p>这是一个新功能：<strong>允许你把多个库打包成一个 AAR 发布。</strong></p>
+<p>如果你维护的 SDK 有好几个模块（比如 <code>sdk-core</code>、<code>sdk-network</code>、<code>sdk-ui</code>），以前用户需要分别依赖每一个。现在你可以把它们”融合”成一个统一的 AAR，用户只需要一行依赖就搞定。</p>
+<p>这个功能目前还是预览状态，但对 SDK 开发者来说绝对是好消息。</p>
+<h2 id="迁移有多痛？"><a href="#迁移有多痛？" class="headerlink" title="迁移有多痛？"></a>迁移有多痛？</h2><h3 id="痛点一：第三方插件不兼容"><a href="#痛点一：第三方插件不兼容" class="headerlink" title="痛点一：第三方插件不兼容"></a>痛点一：第三方插件不兼容</h3><p>这是最大的痛点，没有之一。</p>
+<p><strong>Hilt、KSP、Firebase、Google Services、Crashlytics——这些常用插件在 AGP 9.0 发布时都不完全兼容。</strong></p>
+<p>Reddit 上那个”灾难”帖子的作者说得很直白：</p>
+<blockquote>
+<p>“如果你在项目里用了 Hilt 或 KSP，你现在还不能迁移，除非你愿意做一些’严重的 workaround’。”</p>
+</blockquote>
+<p>这个问题正在逐步解决。Google 已经在联系常用插件的作者推动适配。但如果你的项目依赖了很多第三方 Gradle 插件，建议先等它们出兼容版本再升级。</p>
+<h3 id="痛点二：自定义构建逻辑要改"><a href="#痛点二：自定义构建逻辑要改" class="headerlink" title="痛点二：自定义构建逻辑要改"></a>痛点二：自定义构建逻辑要改</h3><p>如果你的团队写了自定义的 Gradle 插件或者 Task，而且用了 <code>applicationVariants</code>、<code>BaseExtension</code> 这些旧 API——全部都要改。</p>
+<p>新的 <code>androidComponents</code> API 设计得更稳定、更规范，但迁移过程需要理解新的数据模型：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 旧写法（不再可用）</span></span><br><span class="line">android.applicationVariants.all &#123; variant -&gt;</span><br><span class="line">    variant.outputs.all &#123;</span><br><span class="line">        outputFileName = <span class="string">"my-app-<span class="subst">$&#123;variant.name&#125;</span>.apk"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 新写法</span></span><br><span class="line">androidComponents &#123;</span><br><span class="line">    onVariants &#123; variant -&gt;</span><br><span class="line">        variant.outputs.forEach &#123; output -&gt;</span><br><span class="line">            <span class="comment">// 使用新的 API 处理输出</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="痛点三：KMP-项目要拆模块"><a href="#痛点三：KMP-项目要拆模块" class="headerlink" title="痛点三：KMP 项目要拆模块"></a>痛点三：KMP 项目要拆模块</h3><p>如果你在做 Kotlin Multiplatform 项目，AGP 9.0 有一个重要限制：<strong>不能在同一个 Gradle 子项目里同时使用 KMP 插件和 Android Application 插件。</strong></p>
+<p>你需要把 Android 应用代码抽取到一个单独的模块里。Kotlin 官方文档有详细的迁移指南，但这个拆分工作量不小，特别是对大型 KMP 项目。</p>
+<h3 id="痛点四：Flutter-也受影响"><a href="#痛点四：Flutter-也受影响" class="headerlink" title="痛点四：Flutter 也受影响"></a>痛点四：Flutter 也受影响</h3><p>Flutter 开发者同样逃不掉。Flutter 团队正在迁移旧的 DSL 类型，但目前还没完成。如果你想在 Flutter 项目里用 AGP 9.0，需要在 <code>gradle.properties</code> 里加一行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">android.newDsl=false</span><br></pre></td></tr></table></figure>
+<p>等 Flutter 团队完成适配后再移除这个标志。</p>
+<h2 id="迁移指南：5-步搞定"><a href="#迁移指南：5-步搞定" class="headerlink" title="迁移指南：5 步搞定"></a>迁移指南：5 步搞定</h2><p>说了这么多痛点，也给你一条最靠谱的迁移路径。</p>
+<h3 id="第一步：检查第三方插件兼容性"><a href="#第一步：检查第三方插件兼容性" class="headerlink" title="第一步：检查第三方插件兼容性"></a>第一步：检查第三方插件兼容性</h3><p><strong>在改任何东西之前，先确认你用的所有 Gradle 插件都支持 AGP 9.0。</strong> Firebase、Hilt、Google Services、Crashlytics——这几个是最容易出问题的。</p>
+<p>如果某个插件还不兼容，等它更新。不要硬上。</p>
+<h3 id="第二步：用-AGP-Upgrade-Assistant"><a href="#第二步：用-AGP-Upgrade-Assistant" class="headerlink" title="第二步：用 AGP Upgrade Assistant"></a>第二步：用 AGP Upgrade Assistant</h3><p><strong>不要手动改版本号。</strong> Android Studio 自带的 AGP Upgrade Assistant（<code>Tools &gt; AGP Upgrade Assistant</code>）是 Google 专门为这次升级更新的工具。它会自动处理大部分配置变更。</p>
+<h3 id="第三步：移除-Kotlin-插件声明"><a href="#第三步：移除-Kotlin-插件声明" class="headerlink" title="第三步：移除 Kotlin 插件声明"></a>第三步：移除 Kotlin 插件声明</h3><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 删除这一行</span></span><br><span class="line">id(<span class="string">"org.jetbrains.kotlin.android"</span>)</span><br></pre></td></tr></table></figure>
+<p>如果你还没准备好，可以暂时加上 <code>android.builtInKotlin=false</code> 来延迟迁移。</p>
+<h3 id="第四步：迁移-Variant-API"><a href="#第四步：迁移-Variant-API" class="headerlink" title="第四步：迁移 Variant API"></a>第四步：迁移 Variant API</h3><p>把所有 <code>applicationVariants</code>、<code>libraryVariants</code> 的用法改成 <code>androidComponents.onVariants()</code> 或 <code>androidComponents.beforeVariants()</code>。</p>
+<p>Google 提供了一套 <a href="https://github.com/android/gradle-recipes/tree/agp-9.0" target="_blank" rel="noopener">Gradle Recipes</a> 示例代码，覆盖了大部分常见场景。</p>
+<h3 id="第五步：处理-R-类变更"><a href="#第五步：处理-R-类变更" class="headerlink" title="第五步：处理 R 类变更"></a>第五步：处理 R 类变更</h3><p>全局搜索你代码里的 <code>switch(R.id.xxx)</code> 和 <code>switch(R.layout.xxx)</code>，改成 <code>if-else</code>。很多项目这一步很快就能搞定。</p>
+<h2 id="为什么-Google-要做这么大的改动？"><a href="#为什么-Google-要做这么大的改动？" class="headerlink" title="为什么 Google 要做这么大的改动？"></a>为什么 Google 要做这么大的改动？</h2><p>你可能会想：好端端的为什么要改这么多？</p>
+<p>答案很简单：<strong>为了速度。</strong></p>
+<p>AGP 9.0 的这些变更，本质上都在为两件事铺路：</p>
+<p><strong>第一，Configuration Cache。</strong> Gradle 的 Configuration Cache 可以大幅减少构建的配置阶段时间。但旧的 DSL 和 Variant API 跟 Configuration Cache 不兼容。移除旧 API，才能让 Configuration Cache 真正发挥作用。</p>
+<p><strong>第二，Isolated Projects。</strong> 这是 Gradle 未来最重要的性能优化。Isolated Projects 可以让多模块项目的配置阶段并行化，大幅缩短大型项目的构建时间。但它对 API 的稳定性和隔离性要求极高——旧的 API 根本做不到。</p>
+<p>用一位开发者的话说：</p>
+<blockquote>
+<p>“AGP 9.0 看起来是 Google 的’大扫除’。他们移除了多年前就已经弃用的 API，把 Kotlin 集成到核心里，逼你迁移到更高效的构建模式。”</p>
+</blockquote>
+<p><strong>短期是痛苦的迁移。长期是更快的构建速度。</strong></p>
+<h2 id="时间窗口：你有多久？"><a href="#时间窗口：你有多久？" class="headerlink" title="时间窗口：你有多久？"></a>时间窗口：你有多久？</h2><p>Google 给了一个临时的”逃生口”：在 <code>gradle.properties</code> 里设置 <code>android.newDsl=false</code> 和 <code>android.builtInKotlin=false</code> 可以暂时回退到旧行为。</p>
+<p><strong>但这些 flag 会在 AGP 10.0（预计 2026 年中）彻底移除。</strong></p>
+<p>也就是说，你最多只有<strong>半年</strong>的迁移窗口。</p>
+<p>建议是：<strong>现在就开一个分支开始迁移。</strong> 不要等到 AGP 10.0 发布了再着急。一个模块一个模块地改，用 Upgrade Assistant 做基础工作，在 CI 里验证整个流程。</p>
+<h2 id="版本兼容速查表"><a href="#版本兼容速查表" class="headerlink" title="版本兼容速查表"></a>版本兼容速查表</h2><table>
+<thead>
+<tr>
+<th>依赖</th>
+<th>最低版本要求</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gradle</td>
+<td>9.1.0</td>
+</tr>
+<tr>
+<td>JDK</td>
+<td>17</td>
+</tr>
+<tr>
+<td>SDK Build Tools</td>
+<td>36.0.0</td>
+</tr>
+<tr>
+<td>Kotlin Gradle Plugin</td>
+<td>2.2.10（自动内置）</td>
+</tr>
+<tr>
+<td>KSP</td>
+<td>2.2.10-2.0.2（自动升级）</td>
+</tr>
+<tr>
+<td>NDK</td>
+<td>r28c（默认）</td>
+</tr>
+<tr>
+<td>Android Studio</td>
+<td>Otter 3 Feature Drop (2025.2.3)+</td>
+</tr>
+<tr>
+<td>Max API Level</td>
+<td>36.1</td>
+</tr>
+</tbody>
+</table>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>AGP 9.0 是 Google 对 Android 构建系统做的一次”重大手术”。</p>
+<p>它移除了从 AGP 7.x 就开始弃用的旧 API，把 Kotlin 从”外挂”变成了”内核”，统一了 DSL 接口，为未来的性能优化扫清了障碍。</p>
+<p><strong>迁移会痛吗？会。</strong> 特别是那些积累了大量自定义构建逻辑的老项目。但越早迁移，痛苦越小。等到 AGP 10.0 强制移除所有兼容选项的时候，你就没有退路了。</p>
+<p>好消息是，Google 这次提供了不错的迁移工具（Upgrade Assistant）、详细的文档、和临时的 opt-out 机制。不至于让你一夜之间全部改完。</p>
+<p>打开你的项目，跑一下 AGP Upgrade Assistant，看看有多少报错。如果数字不大——恭喜你，你可以很快完成迁移。如果数字很大——更要早点开始。</p>
+<p><strong>你的项目升级到 AGP 9.0 了吗？迁移过程中踩到了什么坑？哪个第三方插件最让你头疼？欢迎评论区分享你的迁移经验。</strong></p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/images/qrcode_wechat_public_account.jpg">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android-Studio/" rel="tag"># Android Studio</a>
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/Gradle/" rel="tag"># Gradle</a>
+              <a href="/tags/AGP/" rel="tag"># AGP</a>
+              <a href="/tags/Kotlin/" rel="tag"># Kotlin</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/03/18/202603181511/" rel="prev" title="OpenClaw 踩坑记：我劝你用最好的模型，笨模型相当于招了个笨助理">
+      <i class="fa fa-chevron-left"></i> OpenClaw 踩坑记：我劝你用最好的模型，笨模型相当于招了个笨助理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2026/03/18/202603181542/" rel="next" title="OpenClaw 进阶指南：ima-skills 来了，让 AI 帮你管笔记只需一句话">
+      OpenClaw 进阶指南：ima-skills 来了，让 AI 帮你管笔记只需一句话 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#AGP-9-0-到底改了什么？"><span class="nav-text">AGP 9.0 到底改了什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#变更一：Kotlin-内置了"><span class="nav-text">变更一：Kotlin 内置了</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#变更二：DSL-全面重构"><span class="nav-text">变更二：DSL 全面重构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#变更三：一堆默认值变了"><span class="nav-text">变更三：一堆默认值变了</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#变更四：Fused-Library-Plugin（预览）"><span class="nav-text">变更四：Fused Library Plugin（预览）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#迁移有多痛？"><span class="nav-text">迁移有多痛？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#痛点一：第三方插件不兼容"><span class="nav-text">痛点一：第三方插件不兼容</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#痛点二：自定义构建逻辑要改"><span class="nav-text">痛点二：自定义构建逻辑要改</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#痛点三：KMP-项目要拆模块"><span class="nav-text">痛点三：KMP 项目要拆模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#痛点四：Flutter-也受影响"><span class="nav-text">痛点四：Flutter 也受影响</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#迁移指南：5-步搞定"><span class="nav-text">迁移指南：5 步搞定</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第一步：检查第三方插件兼容性"><span class="nav-text">第一步：检查第三方插件兼容性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二步：用-AGP-Upgrade-Assistant"><span class="nav-text">第二步：用 AGP Upgrade Assistant</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第三步：移除-Kotlin-插件声明"><span class="nav-text">第三步：移除 Kotlin 插件声明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第四步：迁移-Variant-API"><span class="nav-text">第四步：迁移 Variant API</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第五步：处理-R-类变更"><span class="nav-text">第五步：处理 R 类变更</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么-Google-要做这么大的改动？"><span class="nav-text">为什么 Google 要做这么大的改动？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#时间窗口：你有多久？"><span class="nav-text">时间窗口：你有多久？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#版本兼容速查表"><span class="nav-text">版本兼容速查表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#写在最后"><span class="nav-text">写在最后</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">164</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">268</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https://github.com/xinpengfei520" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener" target="_blank"><i class="envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https://blog.csdn.net/xinpengfei521" rel="noopener" target="_blank"><i class="heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https://juejin.im/user/57c82d0779bc440063eac0f8/posts" rel="noopener" target="_blank"><i class="crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https://open.weixin.qq.com/qr/code?username=x-sir123" rel="noopener" target="_blank"><i class="weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https://www.zhihu.com/people/xin-peng-fei-9/activities" rel="noopener" target="_blank"><i class="tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" rel="noopener" target="_blank"><i class="weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https://www.jianshu.com/u/268aa8e1a12f" rel="noopener" target="_blank"><i class="desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+</div>
+
+
+
+<div style="width:580px;margin:0 auto; padding:20px 0;">
+	<a target="_blank" href="https://beian.miit.gov.cn/" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">沪ICP备2022014461号-1 </p></a>
+
+	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=61032202000124" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="https://www.vance.xin/images/beian_pic.png" style="float:left;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">陕公网安备 61032202000124号</p></a>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz","app_key":"Hm8TNHlKhiv0i2VwIXIE3oY9","server_url":"https://g3y7kugt.lc-cn-n1-shared.com","security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz',
+      appKey     : 'Hm8TNHlKhiv0i2VwIXIE3oY9',
+      placeholder: "既然来了，就留个脚印再走吧！",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/love.js"></script>

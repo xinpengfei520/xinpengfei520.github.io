@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.8.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.vance.xin","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="上周一个朋友跟我吐槽。 他看了我之前写的 OpenClaw 教程，兴冲冲地装了一套。配好了 WhatsApp，接上了 API Key，准备体验传说中的”AI 贾维斯”。 但他为了省钱，选了最便宜的模型——Haiku。 结果呢？让它帮忙写个 Python 脚本，写出来的代码跑不通。让它改 Bug，越改越多。让它分析一个文件，它幻觉出了三个不存在的函数。最后他花了两个小时”教”AI 做一件本来 20">
+<meta name="keywords" content="OpenClaw,Claude Code,AI 编程,模型选择,Opus">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenClaw 踩坑记：我劝你用最好的模型，笨模型相当于招了个笨助理">
+<meta property="og:url" content="https://www.vance.xin/2026/03/18/202603181511/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="上周一个朋友跟我吐槽。 他看了我之前写的 OpenClaw 教程，兴冲冲地装了一套。配好了 WhatsApp，接上了 API Key，准备体验传说中的”AI 贾维斯”。 但他为了省钱，选了最便宜的模型——Haiku。 结果呢？让它帮忙写个 Python 脚本，写出来的代码跑不通。让它改 Bug，越改越多。让它分析一个文件，它幻觉出了三个不存在的函数。最后他花了两个小时”教”AI 做一件本来 20">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260318-openclaw-model-quality-matters.webp">
+<meta property="og:updated_time" content="2026-03-18T09:51:10.172Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenClaw 踩坑记：我劝你用最好的模型，笨模型相当于招了个笨助理">
+<meta name="twitter:description" content="上周一个朋友跟我吐槽。 他看了我之前写的 OpenClaw 教程，兴冲冲地装了一套。配好了 WhatsApp，接上了 API Key，准备体验传说中的”AI 贾维斯”。 但他为了省钱，选了最便宜的模型——Haiku。 结果呢？让它帮忙写个 Python 脚本，写出来的代码跑不通。让它改 Bug，越改越多。让它分析一个文件，它幻觉出了三个不存在的函数。最后他花了两个小时”教”AI 做一件本来 20">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260318-openclaw-model-quality-matters.webp">
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/18/202603181511/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>OpenClaw 踩坑记：我劝你用最好的模型，笨模型相当于招了个笨助理 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1060098061815513"
+     crossorigin="anonymous"></script>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+  <a href="https://github.com/xinpengfei520" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">飞飞的AI实验室</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-schedule">
+
+    <a href="/schedule/" rel="section"><i class="calendar fa-fw"></i>日程表</a>
+
+  </li>
+        <li class="menu-item menu-item-sitemap">
+
+    <a href="/sitemap.xml" rel="section"><i class="sitemap fa-fw"></i>站点地图</a>
+
+  </li>
+        <li class="menu-item menu-item-baidusitemap">
+
+    <a href="/baidusitemap.xml" rel="section"><i class="sitemap fa-fw"></i>baidusitemap</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="heartbeat fa-fw"></i>公益 404</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" placeholder="搜索..." spellcheck="false" type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope="" itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181511/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OpenClaw 踩坑记：我劝你用最好的模型，笨模型相当于招了个笨助理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2026-03-18 15:11:00 / 修改时间：09:51:10" itemprop="dateCreated datePublished" datetime="2026-03-18T15:11:00+00:00">2026-03-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing">
+                  <a href="/categories/阅读/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2026/03/18/202603181511/" class="post-meta-item leancloud_visitors" data-flag-title="OpenClaw 踩坑记：我劝你用最好的模型，笨模型相当于招了个笨助理" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2026/03/18/202603181511/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2026/03/18/202603181511/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="https://image.vance.xin/blog-cover/20260318-openclaw-model-quality-matters.webp" alt="cover"></p>
+<p>上周一个朋友跟我吐槽。</p>
+<p>他看了我之前写的 OpenClaw 教程，兴冲冲地装了一套。配好了 WhatsApp，接上了 API Key，准备体验传说中的”AI 贾维斯”。</p>
+<p>但他为了省钱，选了最便宜的模型——Haiku。</p>
+<p>结果呢？让它帮忙写个 Python 脚本，写出来的代码跑不通。让它改 Bug，越改越多。让它分析一个文件，它幻觉出了三个不存在的函数。最后他花了两个小时”教”AI 做一件本来 20 分钟就能搞定的事。</p>
+<p>他跟我说：”这玩意儿就像我招了个实习生，还是那种上班第一天就敢重构你代码的实习生。”</p>
+<p>我说：<strong>不是工具的问题，是你给它装了个笨脑子。</strong></p>
+<h2 id="OpenClaw-是什么？30-秒搞清楚"><a href="#OpenClaw-是什么？30-秒搞清楚" class="headerlink" title="OpenClaw 是什么？30 秒搞清楚"></a>OpenClaw 是什么？30 秒搞清楚</h2><p>如果你还不了解 OpenClaw，先快速补课。</p>
+<p>OpenClaw 是 2026 年最火的开源 AI 项目——GitHub 上超过 <strong>25 万颗 Star</strong>，打破了 React 保持了十年的增长纪录。它的创始人是奥地利开发者 Peter Steinberger（PSPDFKit 的创始人），原名叫 “Clawdbot”，因为 Anthropic 的商标投诉改了两次名，最终定名 OpenClaw。</p>
+<p>它本质上是一个<strong>通用 AI 助手框架</strong>。你可以把它接到 WhatsApp、Telegram、Slack、Discord 等十几个平台上，让 AI 帮你管日程、回消息、控制智能家居、跑脚本、写代码——几乎什么都能做。</p>
+<p>关键是，OpenClaw 支持<strong>多种模型</strong>：Claude、GPT-4o、DeepSeek、Gemini，甚至本地的 Ollama 模型。你想用什么就用什么。</p>
+<p><strong>自由选择模型，这是 OpenClaw 最大的卖点，也是最大的坑。</strong></p>
+<p>因为很多人为了省钱，选了最便宜的模型。然后体验一落千丈，反过来骂工具不行。</p>
+<h2 id="模型之间的差距到底有多大？"><a href="#模型之间的差距到底有多大？" class="headerlink" title="模型之间的差距到底有多大？"></a>模型之间的差距到底有多大？</h2><p>你可能觉得，模型嘛，差不多的。都是大语言模型，能差到哪去？</p>
+<p><strong>差到天上地下。</strong></p>
+<p>以 Anthropic 的三个模型为例，SWE-bench Verified（业界最权威的 AI 编程能力基准测试）的得分：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>SWE-bench 得分</th>
+<th>每百万 token 价格（输入/输出）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Opus 4.6</td>
+<td><strong>80.8%</strong></td>
+<td>$5 / $25</td>
+</tr>
+<tr>
+<td>Sonnet 4.6</td>
+<td>79.6%</td>
+<td>$3 / $15</td>
+</tr>
+<tr>
+<td>Haiku 4.5</td>
+<td>73.3%</td>
+<td>$1 / $5</td>
+</tr>
+</tbody>
+</table>
+<p>看起来差距不大？Opus 和 Haiku 只差 7.5 个百分点？</p>
+<p><strong>别被数字骗了。</strong> 这 7.5 个百分点的差距，在真实使用中是质变，不是量变。</p>
+<h3 id="笨模型的三宗罪"><a href="#笨模型的三宗罪" class="headerlink" title="笨模型的三宗罪"></a>笨模型的三宗罪</h3><p>一位开发者在做 Flutter 项目时，对三个模型做了真实对比测试。他的总结很到位：</p>
+<p><strong>第一宗罪：幻觉。</strong> Haiku 写代码快是快，但它经常”幻觉”不存在的文件名和函数。你让它改 <code>auth_service.dart</code>，它可能会引用一个根本不存在的 <code>user_repository.dart</code>。Sonnet 和 Opus 在这方面明显更可靠。</p>
+<p><strong>第二宗罪：失忆。</strong> 在长会话中，Haiku 的上下文保持能力急剧下降。它可能在第 10 条消息之后就忘了你在第 3 条消息里说的约束条件。Haiku 甚至不支持 1M 上下文窗口——它的上下文只有 200K，是 Opus 和 Sonnet 的五分之一。</p>
+<p><strong>第三宗罪：漏洞。</strong> 当那位开发者用 Opus 做最后的代码审查时，Opus 找到了 rebuild 问题、缺失的 dispose、和异步 Bug——<strong>这些问题 Haiku 和 Sonnet 完全没发现。</strong></p>
+<p>Reddit 上有人的评价更直接：</p>
+<blockquote>
+<p>“Opus 是个怪物。上次用 Haiku 的感觉，就像在教一个 12 岁的小孩怎么集中注意力完成任务。”</p>
+</blockquote>
+<p>另一位用户的比喻也很形象：</p>
+<blockquote>
+<p>“Haiku 就像一个应届毕业生。如果你能信任一个应届生来写工具脚本，那它就够用了。”</p>
+</blockquote>
+<h2 id="“省钱”其实更贵"><a href="#“省钱”其实更贵" class="headerlink" title="“省钱”其实更贵"></a>“省钱”其实更贵</h2><p>很多人选弱模型的理由只有一个：省钱。</p>
+<p>但这里有一个反直觉的真相：<strong>用弱模型可能比用强模型更贵。</strong></p>
+<p>为什么？因为弱模型需要更多次的迭代。</p>
+<p>一个典型的场景：你让 Haiku 写一个 LRU Cache。它给你一个”能跑但很基础”的版本。你发现边界条件没处理，要求它改。改完发现内存效率很差，又要求优化。优化完发现跟项目里其他模块的接口不兼容，再改。</p>
+<p><strong>四轮对话下来，消耗的 token 总量可能比直接用 Opus 一次搞定还多。</strong></p>
+<p>Morphllm 的分析印证了这一点：Opus 每个任务的 token 消耗确实更高，但它的”一次性成功率”也更高。用 Opus 做重构，经常一次就对了。用 Haiku 做重构，平均要改 2-3 次。</p>
+<p>一位开发者算了一笔账：</p>
+<blockquote>
+<p>“Opus 有时候反而更便宜——因为它第一次就把重构做对了。”</p>
+</blockquote>
+<p><strong>省模型钱，花在了反复修改的时间上。时间不是钱吗？</strong></p>
+<h2 id="在-OpenClaw-里，模型差距会被放大"><a href="#在-OpenClaw-里，模型差距会被放大" class="headerlink" title="在 OpenClaw 里，模型差距会被放大"></a>在 OpenClaw 里，模型差距会被放大</h2><p>如果你只是在网页聊天界面用 AI，模型的差距还不那么明显——最多就是回答质量有高有低。</p>
+<p>但在 OpenClaw 这种 <strong>Agent 模式</strong>下，模型差距会被急剧放大。</p>
+<p>为什么？因为 Agent 是自主执行任务的。它需要自己决定下一步做什么、调用什么工具、怎么处理中间结果。每一步决策都是一次推理。推理能力弱的模型，每一步都可能走偏——而错误会像滚雪球一样越滚越大。</p>
+<p>举个例子。你在 OpenClaw 里说：”帮我查一下这周的日程，找出空闲时间，然后在 Uber Eats 上预约一份明天中午的午餐。”</p>
+<p>这个任务至少需要：</p>
+<ol>
+<li>理解”这周”的含义（时间推理）</li>
+<li>读取日历数据（工具调用）</li>
+<li>分析空闲时间段（逻辑推理）</li>
+<li>打开 Uber Eats（工具调用）</li>
+<li>选择合适的餐厅和时间（决策）</li>
+<li>下单但不支付（理解约束）</li>
+</ol>
+<p><strong>6 个步骤，每一步都需要正确的推理。用 Opus，可能一气呵成。用 Haiku，可能在第 3 步就搞混了时间，然后后面全错。</strong></p>
+<p>ClaudeFast 的对比文章说得好：Claude Code 是手术刀，OpenClaw 是瑞士军刀。<strong>但不管你用什么刀，刀刃钝了都切不动东西。</strong> 模型就是那个刀刃。</p>
+<h2 id="最佳模型策略：分层使用"><a href="#最佳模型策略：分层使用" class="headerlink" title="最佳模型策略：分层使用"></a>最佳模型策略：分层使用</h2><p>说了这么多，不是说你任何时候都必须用最贵的模型。聪明的做法是<strong>分层使用</strong>。</p>
+<p>Reddit 上一位高赞回答总结了一套被广泛验证的策略：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Opus：负责规划和审查</span><br><span class="line">- 架构设计</span><br><span class="line">- 复杂调试</span><br><span class="line">- 代码审查</span><br><span class="line">- 安全分析</span><br><span class="line"></span><br><span class="line">Sonnet：负责实现</span><br><span class="line">- 日常编码</span><br><span class="line">- 模块实现</span><br><span class="line">- 文档编写</span><br><span class="line">- 常规 CRUD</span><br><span class="line"></span><br><span class="line">Haiku：负责跑腿</span><br><span class="line">- 跑测试</span><br><span class="line">- 格式调整</span><br><span class="line">- 简单查询</span><br><span class="line">- 协调和扫描</span><br></pre></td></tr></table></figure>
+<p>用人话说就是：<strong>Opus 是技术总监，做规划和把关；Sonnet 是高级工程师，干大部分活；Haiku 是实习生，跑腿打杂。</strong></p>
+<p>你不会让实习生做架构设计。同样，你也不应该让 Haiku 做需要深度推理的任务。</p>
+<p>在 OpenClaw 里，如果你的主要用途是自动化日常事务（回消息、查天气、设闹钟），Haiku 或者 Sonnet 就够了。但如果你让它做复杂任务——多步骤自动化、代码生成、数据分析——<strong>拜托，给它一个好脑子。</strong></p>
+<h2 id="OpenClaw-的其他坑"><a href="#OpenClaw-的其他坑" class="headerlink" title="OpenClaw 的其他坑"></a>OpenClaw 的其他坑</h2><p>既然在聊踩坑，顺便说几个跟模型无关的坑。</p>
+<h3 id="安全问题"><a href="#安全问题" class="headerlink" title="安全问题"></a>安全问题</h3><p>2026 年初，安全研究人员发现了 OpenClaw 的一个严重漏洞 <strong>CVE-2026-25253</strong>，CVSS 评分 <strong>8.8</strong>（满分 10）。攻击者可以通过 WebSocket 的源头头绕过，在暴露的 OpenClaw 实例上执行任意代码。</p>
+<p>更吓人的数据：研究人员发现了超过 <strong>13.5 万个暴露在公网的 OpenClaw 实例</strong>，其中 <strong>5 万多个直接存在此漏洞</strong>。</p>
+<p>另外，ClawHub（OpenClaw 的社区技能市场）的安全审计发现，<strong>约 12% 的技能存在恶意行为</strong>。也就是说，你在技能市场随便装的每 8 个扩展里，可能有 1 个是有问题的。</p>
+<p><strong>如果你在用 OpenClaw，请务必：不要把它暴露在公网上，谨慎安装第三方技能，定期更新到最新版本。</strong></p>
+<h3 id="安装复杂"><a href="#安装复杂" class="headerlink" title="安装复杂"></a>安装复杂</h3><p>Claude Code 30 秒就能装好。OpenClaw 需要配置 Node.js 22+、各个平台的 API Key、LLM API Key，加上调试可能需要 30-60 分钟。Reddit 上关于安装问题的吐槽帖子不计其数。</p>
+<h3 id="创始人去了-OpenAI"><a href="#创始人去了-OpenAI" class="headerlink" title="创始人去了 OpenAI"></a>创始人去了 OpenAI</h3><p>2026 年 2 月 14 日，Steinberger 宣布加入 OpenAI。OpenClaw 将转交给一个开源基金会管理，背后有 OpenAI 的资金支持。这对项目的长期方向意味着什么？没人知道。但创始人离开，总是一个风险信号。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>回到最初的话题。</p>
+<p>我那个朋友后来换成了 Sonnet，体验立刻好了一大截。再后来在做复杂任务时切到 Opus，他说”感觉像换了一个人”。</p>
+<p><strong>AI 工具的上限，不是由工具本身决定的，而是由背后的模型决定的。</strong></p>
+<p>OpenClaw 也好，Claude Code 也好，Cursor 也好——它们只是壳。壳再漂亮，里面的大脑不行，输出就是垃圾。就像你买了一辆法拉利的车壳，但装了个奥拓的发动机。外面看着挺唬人，一脚油门下去，原地不动。</p>
+<p>所以我的建议很简单：</p>
+<ol>
+<li><strong>预算允许的话，默认用 Opus。</strong> 它贵，但它省时间。时间比钱贵。</li>
+<li><strong>日常琐事可以用 Sonnet。</strong> 性价比最高，80% 的任务它都能胜任。</li>
+<li><strong>Haiku 只用来做最简单的事。</strong> 格式化、跑测试、回复模板消息。别指望它做任何需要”思考”的事。</li>
+<li><strong>在 Agent 场景下，宁可多花钱也要用好模型。</strong> Agent 的错误会级联放大，一步错步步错。</li>
+</ol>
+<p><strong>你在用 OpenClaw 或者其他 AI 工具时，有没有因为模型选择吃过亏？你现在的模型策略是什么？欢迎评论区聊聊你的真实体验。</strong></p>
+
+    </div>
+
+    
+    
+    
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+        <div class="social-item">
+          <a target="_blank" class="social-link" href="/images/qrcode_wechat_public_account.jpg">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </a>
+        </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/OpenClaw/" rel="tag"># OpenClaw</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-编程/" rel="tag"># AI 编程</a>
+              <a href="/tags/模型选择/" rel="tag"># 模型选择</a>
+              <a href="/tags/Opus/" rel="tag"># Opus</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2026/03/18/202603181505/" rel="prev" title="你的手机会自己点外卖了！Google Gemini Screen Automation 到底有多猛？">
+      <i class="fa fa-chevron-left"></i> 你的手机会自己点外卖了！Google Gemini Screen Automation 到底有多猛？
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2026/03/18/202603181534/" rel="next" title="Android Gradle Plugin 9.0 来了！Kotlin 内置、DSL 重构，这次迁移有多痛？">
+      Android Gradle Plugin 9.0 来了！Kotlin 内置、DSL 重构，这次迁移有多痛？ <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#OpenClaw-是什么？30-秒搞清楚"><span class="nav-text">OpenClaw 是什么？30 秒搞清楚</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模型之间的差距到底有多大？"><span class="nav-text">模型之间的差距到底有多大？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#笨模型的三宗罪"><span class="nav-text">笨模型的三宗罪</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#“省钱”其实更贵"><span class="nav-text">“省钱”其实更贵</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在-OpenClaw-里，模型差距会被放大"><span class="nav-text">在 OpenClaw 里，模型差距会被放大</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#最佳模型策略：分层使用"><span class="nav-text">最佳模型策略：分层使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OpenClaw-的其他坑"><span class="nav-text">OpenClaw 的其他坑</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安全问题"><span class="nav-text">安全问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装复杂"><span class="nav-text">安装复杂</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#创始人去了-OpenAI"><span class="nav-text">创始人去了 OpenAI</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#写在最后"><span class="nav-text">写在最后</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">164</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">268</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https://github.com/xinpengfei520" rel="noopener" target="_blank"><i class="github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener" target="_blank"><i class="envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https://blog.csdn.net/xinpengfei521" rel="noopener" target="_blank"><i class="heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https://juejin.im/user/57c82d0779bc440063eac0f8/posts" rel="noopener" target="_blank"><i class="crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https://open.weixin.qq.com/qr/code?username=x-sir123" rel="noopener" target="_blank"><i class="weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https://www.zhihu.com/people/xin-peng-fei-9/activities" rel="noopener" target="_blank"><i class="tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" rel="noopener" target="_blank"><i class="weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https://www.jianshu.com/u/268aa8e1a12f" rel="noopener" target="_blank"><i class="desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2026</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+</div>
+
+
+
+<div style="width:580px;margin:0 auto; padding:20px 0;">
+	<a target="_blank" href="https://beian.miit.gov.cn/" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">沪ICP备2022014461号-1 </p></a>
+
+	<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=61032202000124" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="https://www.vance.xin/images/beian_pic.png" style="float:left;"><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;">陕公网安备 61032202000124号</p></a>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              leancloudSelector(url).innerText = 'Counter not initialized! More info at console err msg.';
+              console.error('ATTENTION! LeanCloud counter has security bug, see how to solve it here: https://github.com/theme-next/hexo-leancloud-counter-security. \n However, you can still use LeanCloud without security, by setting `security` option to `false`.');
+            
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz","app_key":"Hm8TNHlKhiv0i2VwIXIE3oY9","server_url":"https://g3y7kugt.lc-cn-n1-shared.com","security":true};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script>
+<script src="/js/schemes/pisces.js"></script>
+<script src="/js/next-boot.js"></script>
+
+
+
+  
+
+
+
+
+  <script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'G3y7KUGt4YotKOozJ9fiS3cp-gzGzoHsz',
+      appKey     : 'Hm8TNHlKhiv0i2VwIXIE3oY9',
+      placeholder: "既然来了，就留个脚印再走吧！",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?0c58a1486de42ac6cc1c59c7d98ae887"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>
+<!-- 页面点击小红心 -->
+<script type="text/javascript" src="/js/src/love.js"></script>

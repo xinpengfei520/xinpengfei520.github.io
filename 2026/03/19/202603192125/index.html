@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="你用 Codex 写了一个 CRUD 接口。能跑。测试通过。你提了 PR。 Code Review 的时候，同事指出了 5 个问题：没有错误处理、缺少参数校验、数据库查询没有分页、返回格式不统一、命名不规范。 你看了看同事的 PR——同样用 Codex 写的，同样的功能，但代码干净得像教科书。错误处理、边界检查、类型安全、日志记录，一样不少。 同样的工具，为什么差距这么大？ 因为 Codex 生">
+<meta property="og:type" content="article">
+<meta property="og:title" content="别再手写 CRUD 了！Codex 进阶 6 招，让 AI 帮你写出比同事更优雅的代码">
+<meta property="og:url" content="https://www.vance.xin/2026/03/19/202603192125/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你用 Codex 写了一个 CRUD 接口。能跑。测试通过。你提了 PR。 Code Review 的时候，同事指出了 5 个问题：没有错误处理、缺少参数校验、数据库查询没有分页、返回格式不统一、命名不规范。 你看了看同事的 PR——同样用 Codex 写的，同样的功能，但代码干净得像教科书。错误处理、边界检查、类型安全、日志记录，一样不少。 同样的工具，为什么差距这么大？ 因为 Codex 生">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260319-codex-advanced-elegant-code.webp">
+<meta property="article:published_time" content="2026-03-19T21:25:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T10:13:25.101Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="代码质量">
+<meta property="article:tag" content="OpenAI Codex">
+<meta property="article:tag" content="Context Engineering">
+<meta property="article:tag" content="子Agent">
+<meta property="article:tag" content="重构">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260319-codex-advanced-elegant-code.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/19/202603192125/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/19/202603192125/","path":"2026/03/19/202603192125/","title":"别再手写 CRUD 了！Codex 进阶 6 招，让 AI 帮你写出比同事更优雅的代码"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>别再手写 CRUD 了！Codex 进阶 6 招，让 AI 帮你写出比同事更优雅的代码 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC-1-%E6%8B%9B%EF%BC%9AAGENTS-md-%E5%8F%8D%E9%A6%88%E5%BE%AA%E7%8E%AF%E2%80%94%E2%80%94%E8%AE%A9-Codex-%E8%B6%8A%E7%94%A8%E8%B6%8A%E6%87%82%E4%BD%A0"><span class="nav-text">第 1 招：AGENTS.md 反馈循环——让 Codex 越用越懂你</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC-4-%E6%8B%9B%EF%BC%9AContext-Engineering%E2%80%94%E2%80%94%E7%AE%A1%E7%90%86%E4%B8%8A%E4%B8%8B%E6%96%87%E6%AF%94%E5%86%99-prompt-%E6%9B%B4%E9%87%8D%E8%A6%81"><span class="nav-text">第 4 招：Context Engineering——管理上下文比写 prompt 更重要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC-5-%E6%8B%9B%EF%BC%9ASkills-%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5%E9%97%AD%E7%8E%AF%E2%80%94%E2%80%94%E6%8A%8A%E2%80%9D%E5%86%99%E5%BE%97%E5%A5%BD%E2%80%9D%E5%8F%98%E6%88%90%E4%B9%A0%E6%83%AF"><span class="nav-text">第 5 招：Skills + 代码审查闭环——把”写得好”变成习惯</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC-6-%E6%8B%9B%EF%BC%9A%E7%94%A8-Claude-%E8%A7%84%E5%88%92-Codex-%E6%89%A7%E8%A1%8C%E2%80%94%E2%80%94%E5%8F%8C-Agent-%E5%8D%8F%E4%BD%9C"><span class="nav-text">第 6 招：用 Claude 规划 + Codex 执行——双 Agent 协作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E9%9B%85%E4%BB%A3%E7%A0%81%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="nav-text">优雅代码的本质</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">355</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603192125/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="别再手写 CRUD 了！Codex 进阶 6 招，让 AI 帮你写出比同事更优雅的代码 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          别再手写 CRUD 了！Codex 进阶 6 招，让 AI 帮你写出比同事更优雅的代码
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 21:25:00" itemprop="dateCreated datePublished" datetime="2026-03-19T21:25:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-20 10:13:25" itemprop="dateModified" datetime="2026-03-20T10:13:25+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260319-codex-advanced-elegant-code.webp" alt="cover"></p>
+<p>你用 Codex 写了一个 CRUD 接口。能跑。测试通过。你提了 PR。</p>
+<p>Code Review 的时候，同事指出了 5 个问题：没有错误处理、缺少参数校验、数据库查询没有分页、返回格式不统一、命名不规范。</p>
+<p>你看了看同事的 PR——同样用 Codex 写的，同样的功能，但代码干净得像教科书。错误处理、边界检查、类型安全、日志记录，一样不少。</p>
+<p><strong>同样的工具，为什么差距这么大？</strong></p>
+<p>因为 Codex 生成什么质量的代码，取决于你怎么”指挥”它。大多数人把 Codex 当成一个”快速代码生成器”——能跑就行。但高手把它当成一个”结对编程伙伴”——不只是写代码，而是写<strong>好</strong>代码。</p>
+<p>今天分享 6 个进阶技巧，帮你从”能跑”升级到”优雅”。</p>
+<h2 id="第-1-招：AGENTS-md-反馈循环——让-Codex-越用越懂你"><a href="#第-1-招：AGENTS-md-反馈循环——让-Codex-越用越懂你" class="headerlink" title="第 1 招：AGENTS.md 反馈循环——让 Codex 越用越懂你"></a>第 1 招：AGENTS.md 反馈循环——让 Codex 越用越懂你</h2><p>大部分人的 AGENTS.md 写完就再也没动过。这浪费了它最大的价值。</p>
+<p>AGENTS.md 不应该是一个静态文件，而应该是一个<strong>持续更新的反馈循环</strong>。OpenAI 官方文档明确建议：</p>
+<blockquote>
+<p>“当 Agent 犯了一个错误，把纠正写进 AGENTS.md，让未来的会话自动继承这个修复。”</p>
+</blockquote>
+<p>具体怎么做？每次 Code Review 发现 Codex 的代码有问题，不要只修代码——<strong>同时更新 AGENTS.md</strong>。</p>
+<p>比如你发现 Codex 总是忘记给 API 接口加请求参数校验。在 AGENTS.md 里加一条：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># API 开发规范</span></span><br><span class="line"><span class="bullet">-</span> 所有 API handler 必须在第一行校验请求参数</span><br><span class="line"><span class="bullet">-</span> 使用 zod schema 定义参数类型</span><br><span class="line"><span class="bullet">-</span> 校验失败返回 400，包含具体的错误字段</span><br><span class="line"><span class="bullet">-</span> 示例：</span><br><span class="line">  <span class="code">```typescript</span></span><br><span class="line"><span class="code">  const schema = z.object(&#123;</span></span><br><span class="line"><span class="code">    email: z.string().email(),</span></span><br><span class="line"><span class="code">    name: z.string().min(1).max(100),</span></span><br><span class="line"><span class="code">  &#125;);</span></span><br><span class="line"><span class="code">  const result = schema.safeParse(req.body);</span></span><br><span class="line"><span class="code">  if (!result.success) &#123;</span></span><br><span class="line"><span class="code">    return res.status(400).json(&#123; errors: result.error.flatten() &#125;);</span></span><br><span class="line"><span class="code">  &#125;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">注意这里的关键：**给了代码示例**。Codex 模仿具体示例的准确率，远高于理解抽象规则。</span><br><span class="line"></span><br><span class="line">更进阶的做法：你可以让 Codex 自己更新 AGENTS.md。在 PR Review 的时候说：</span><br><span class="line"></span><br><span class="line">&gt; &quot;这个 PR 里的参数校验做得不对，帮我把正确的做法加到 AGENTS.md 里，以后所有 API 都按这个规范来。&quot;</span><br><span class="line"></span><br><span class="line">一个月下来，你的 AGENTS.md 会变成一份极其精准的团队编码规范。**Codex 相当于一个永远不会忘记规范的同事。**</span><br><span class="line"></span><br><span class="line">AGENTS.md 还支持目录级分层。你可以在 `src/api/AGENTS.md` 放 API 相关规范，在 `src/components/AGENTS.md` 放组件规范。Codex 在哪个目录工作，就自动加载对应的规范。</span><br><span class="line"></span><br><span class="line">## 第 2 招：Plan Mode——先看蓝图，再动手</span><br><span class="line"></span><br><span class="line">这是最被低估的功能。</span><br><span class="line"></span><br><span class="line">大多数人直接说&quot;帮我实现 XX 功能&quot;，然后 Codex 就开始写了。写到一半发现方向不对，删掉重来。一来一回，浪费了大量 Token 和时间。</span><br><span class="line"></span><br><span class="line">**正确的姿势是：永远先让 Codex 出计划。**</span><br><span class="line"></span><br><span class="line">在 CLI 里，输入 `/plan` 或按 `Shift+Tab` 切换到 Plan Mode。在这个模式下，Codex 只会分析和规划，不会修改任何文件。</span><br><span class="line"></span><br><span class="line">你说：</span><br><span class="line"></span><br><span class="line">&gt; &quot;我需要给用户系统加一个&#x27;组织&#x27;功能。一个用户可以属于多个组织，每个组织有管理员和普通成员两种角色。请先出实现计划。&quot;</span><br><span class="line"></span><br><span class="line">Codex 会给你一份详细的方案：</span><br><span class="line">1. 数据库层：需要哪些新表、字段、关系</span><br><span class="line">2. API 层：需要哪些新接口、权限检查逻辑</span><br><span class="line">3. 业务层：角色判定规则、邀请流程</span><br><span class="line">4. 前端层：哪些页面需要修改</span><br><span class="line">5. 测试：需要哪些测试用例</span><br><span class="line"></span><br><span class="line">你审查这份计划，发现它漏掉了&quot;组织之间数据隔离&quot;的问题。你指出来，它修改计划。确认无误后，再说&quot;按计划执行&quot;。</span><br><span class="line"></span><br><span class="line">**一次计划审查，可以省掉 3-5 轮返工。**</span><br><span class="line"></span><br><span class="line">v0.96+ 版本默认启用了 Plan Mode。如果你还在用旧版本，升级吧——这个功能值回票价。</span><br><span class="line"></span><br><span class="line">## 第 3 招：子 Agent 编排——把大任务拆给专家</span><br><span class="line"></span><br><span class="line">2026 年 3 月 16 日，Codex 正式 GA（General Availability）了子 Agent 功能。这是从&quot;用 Codex&quot;到&quot;指挥 Codex&quot;的关键跃迁。</span><br><span class="line"></span><br><span class="line">子 Agent 的核心思想：**每个子任务有独立的上下文窗口**。认证模块的重构 Agent 不会和写测试的 Agent 共享上下文。每个 Agent 各自专注，互不干扰。</span><br><span class="line"></span><br><span class="line">Codex 默认有三种子 Agent：</span><br><span class="line">- **explorer**：专门做代码探索和理解</span><br><span class="line">- **worker**：执行具体的编码任务</span><br><span class="line">- **default**：通用型</span><br><span class="line"></span><br><span class="line">但真正强大的是**自定义子 Agent**。你可以在 `.codex/agents/` 目录下创建 TOML 配置文件：</span><br><span class="line"></span><br><span class="line">```toml</span><br><span class="line"># .codex/agents/security-reviewer.toml</span><br><span class="line">[agent]</span><br><span class="line">name = &quot;security-reviewer&quot;</span><br><span class="line">model = &quot;gpt-5.4&quot;</span><br><span class="line">instructions = &quot;&quot;&quot;</span><br><span class="line">你是一个安全审查专家。只关注以下问题：</span><br><span class="line">1. SQL 注入</span><br><span class="line">2. XSS 攻击</span><br><span class="line">3. 敏感数据泄露</span><br><span class="line">4. 权限绕过</span><br><span class="line">5. 不安全的依赖</span><br><span class="line">不要提代码风格建议，只关注安全问题。</span><br><span class="line">&quot;&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<p>然后在 prompt 里显式调用：</p>
+<blockquote>
+<p>“用 security-reviewer 子 Agent 审查 src&#x2F;api&#x2F; 目录下所有接口的安全性。同时用 worker 子 Agent 给所有接口补充单元测试。两个任务并行执行。”</p>
+</blockquote>
+<p>GitHub 上有一个社区项目（VoltAgent&#x2F;awesome-codex-subagents）收集了 <strong>130+ 个专用子 Agent</strong> 定义，覆盖搜索、重构、测试、文档、安全审查、性能分析等场景。直接复制 TOML 文件到你的 <code>.codex/agents/</code> 目录就能用。</p>
+<p><strong>一个重要的注意事项</strong>：不要让子 Agent 在同一个文件上并行工作。它们会互相冲突。把任务按文件&#x2F;模块拆开，效果最好。</p>
+<h2 id="第-4-招：Context-Engineering——管理上下文比写-prompt-更重要"><a href="#第-4-招：Context-Engineering——管理上下文比写-prompt-更重要" class="headerlink" title="第 4 招：Context Engineering——管理上下文比写 prompt 更重要"></a>第 4 招：Context Engineering——管理上下文比写 prompt 更重要</h2><p>2026 年有一个新概念在开发者社区爆火：<strong>Context Engineering（上下文工程）</strong>。</p>
+<p>核心观点：<strong>AI 编程工具的输出质量，80% 取决于你给它的上下文，20% 取决于 prompt。</strong></p>
+<p>Codex 的上下文来源有四层：</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>来源</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>第 1 层</td>
+<td>你的代码仓库本身</td>
+<td>Codex 自动读取文件、理解结构</td>
+</tr>
+<tr>
+<td>第 2 层</td>
+<td>AGENTS.md（全局 + 仓库 + 目录级）</td>
+<td>持久化的项目规范和偏好</td>
+</tr>
+<tr>
+<td>第 3 层</td>
+<td>Skills</td>
+<td>可复用的工作流程和领域知识</td>
+</tr>
+<tr>
+<td>第 4 层</td>
+<td>MCP 连接的外部系统</td>
+<td>数据库 schema、设计稿、Issue 内容</td>
+</tr>
+</tbody></table>
+<p>大多数人只用了第 1 层和简单的 prompt。高手四层全用。</p>
+<p>一个实际案例：你要重构一个支付模块。普通做法是直接说”帮我重构 payment 模块”。</p>
+<p>进阶做法：</p>
+<ol>
+<li><strong>AGENTS.md</strong> 里已经写好了支付模块的架构约定和安全要求</li>
+<li>创建一个 <strong>Skill</strong>，定义重构的标准流程（分析 → 计划 → 实现 → 测试 → 文档）</li>
+<li>通过 <strong>MCP</strong> 连接 Linear，让 Codex 读取相关的 Issue 和讨论</li>
+<li>用 <strong>子 Agent</strong> 分工：explorer 分析现有代码，worker 实现重构，security-reviewer 审查安全性</li>
+</ol>
+<p>这样给出的上下文足够丰富，Codex 生成的代码质量会有质的飞跃。</p>
+<p>还有一个反面的教训：<strong>避免上下文污染</strong>。当一个对话进行了太多轮次，早期的上下文会干扰后续的输出。Codex 官方的建议是——上下文窗口用到 80% 就开新线程。对于大型重构和多文件修改，尤其要注意这一点。</p>
+<h2 id="第-5-招：Skills-代码审查闭环——把”写得好”变成习惯"><a href="#第-5-招：Skills-代码审查闭环——把”写得好”变成习惯" class="headerlink" title="第 5 招：Skills + 代码审查闭环——把”写得好”变成习惯"></a>第 5 招：Skills + 代码审查闭环——把”写得好”变成习惯</h2><p>写好代码不是一次性的事，而是一个需要固化的流程。Skills 是最好的固化工具。</p>
+<p>创建一个”代码质量审查”Skill：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: quality-review</span><br><span class="line"><span class="section">description: 审查代码变更的质量。当用户说&quot;审查&quot;、&quot;review&quot;、&quot;检查代码&quot;时触发。</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># 代码质量审查清单</span></span><br><span class="line"></span><br><span class="line">对当前变更进行以下检查：</span><br><span class="line"></span><br><span class="line"><span class="section">## 可读性</span></span><br><span class="line"><span class="bullet">-</span> 函数是否小于 30 行</span><br><span class="line"><span class="bullet">-</span> 变量名是否清晰表达意图</span><br><span class="line"><span class="bullet">-</span> 是否有不必要的嵌套（超过 3 层）</span><br><span class="line"><span class="bullet">-</span> 注释是否解释了&quot;为什么&quot;而不是&quot;是什么&quot;</span><br><span class="line"></span><br><span class="line"><span class="section">## 健壮性</span></span><br><span class="line"><span class="bullet">-</span> 所有外部输入是否有校验</span><br><span class="line"><span class="bullet">-</span> 错误处理是否完整（不吞异常）</span><br><span class="line"><span class="bullet">-</span> 边界条件是否覆盖（空数组、null、超长字符串）</span><br><span class="line"></span><br><span class="line"><span class="section">## 性能</span></span><br><span class="line"><span class="bullet">-</span> 是否有 N+1 查询</span><br><span class="line"><span class="bullet">-</span> 是否有不必要的内存分配</span><br><span class="line"><span class="bullet">-</span> 循环内是否有可以提到外面的操作</span><br><span class="line"></span><br><span class="line"><span class="section">## 测试</span></span><br><span class="line"><span class="bullet">-</span> 新代码是否有对应的测试</span><br><span class="line"><span class="bullet">-</span> 边界条件是否在测试中覆盖</span><br><span class="line"><span class="bullet">-</span> 测试是否真的验证了行为而不只是覆盖率</span><br><span class="line"></span><br><span class="line">输出格式：按严重程度列出问题（🔴 必须修复 / 🟡 建议优化 / 🟢 良好实践）</span><br></pre></td></tr></table></figure>
+
+<p>每次写完代码，直接说 <code>/quality-review</code>。Codex 会按这个清单逐一检查，输出一份结构化的审查报告。</p>
+<p>你还可以把这个 Skill 绑定到 Automations 里——<strong>每次提 PR 自动触发审查</strong>。代码质量从”靠自觉”变成了”靠系统”。</p>
+<h2 id="第-6-招：用-Claude-规划-Codex-执行——双-Agent-协作"><a href="#第-6-招：用-Claude-规划-Codex-执行——双-Agent-协作" class="headerlink" title="第 6 招：用 Claude 规划 + Codex 执行——双 Agent 协作"></a>第 6 招：用 Claude 规划 + Codex 执行——双 Agent 协作</h2><p>这是社区里最火的进阶玩法之一。</p>
+<p>社区高手的总结：”Claude 做实现设计，Codex 做执行实现。两者之间的 Token 分配是最优的。”</p>
+<p>具体流程：</p>
+<ol>
+<li><strong>用 Claude（Opus&#x2F;Sonnet）做架构规划</strong>：输入需求，让它输出详细的实现方案——文件结构、接口定义、数据模型、核心算法</li>
+<li><strong>把方案喂给 Codex</strong>：让 Codex 按照方案逐步实现</li>
+<li><strong>遇到复杂 Bug</strong>：切回 Claude 分析根因，再让 Codex 修复</li>
+</ol>
+<p>为什么这样做？因为两个工具擅长的事情不同：</p>
+<table>
+<thead>
+<tr>
+<th>能力</th>
+<th>Claude</th>
+<th>Codex</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>架构规划</td>
+<td>强</td>
+<td>中</td>
+</tr>
+<tr>
+<td>深度推理</td>
+<td>强</td>
+<td>中</td>
+</tr>
+<tr>
+<td>代码生成速度</td>
+<td>中</td>
+<td>强</td>
+</tr>
+<tr>
+<td>多任务并行</td>
+<td>中</td>
+<td>强（子 Agent）</td>
+</tr>
+<tr>
+<td>长时间任务</td>
+<td>强</td>
+<td>强</td>
+</tr>
+<tr>
+<td>复杂 Bug 分析</td>
+<td>强</td>
+<td>中</td>
+</tr>
+</tbody></table>
+<p>一位开发者在社区分享了他的实践：”我用 Claude 生成 PRD（产品需求文档）、架构方案、Epic 拆分。这些文档格式是我和 Claude 一起设计的，专门优化过给 Codex 读。然后把这些文档喂给 Codex 执行。效果比单用任何一个都好。”</p>
+<p><strong>不要把鸡蛋放在一个篮子里。每个 Agent 做它最擅长的事。</strong></p>
+<h2 id="优雅代码的本质"><a href="#优雅代码的本质" class="headerlink" title="优雅代码的本质"></a>优雅代码的本质</h2><p>回到开头的问题：为什么同样用 Codex，代码质量差别这么大？</p>
+<p>答案很简单：<strong>优雅的代码不是”写”出来的，是”约束”出来的。</strong></p>
+<p>AGENTS.md 约束了规范。Plan Mode 约束了方向。子 Agent 约束了专注度。Context Engineering 约束了上下文质量。Skills 约束了流程。Code Review 约束了最终产出。</p>
+<p><strong>你给 Codex 的约束越精确，它给你的代码越优雅。</strong></p>
+<p>这其实和管理团队是一样的道理。一个好的技术 Leader，不是自己写最多代码的人，而是能定义最清晰规范、给出最精确反馈的人。</p>
+<p>Codex 就是你团队里那个能力最强但最需要明确指引的工程师。给它清晰的目标、严格的约束、及时的反馈——它会回报你一份让人赏心悦目的代码。</p>
+<hr>
+<p>你在用 Codex 的时候，有没有发现什么提升代码质量的技巧？有没有写过自定义的子 Agent 或 Skill？你觉得 AI 生成的代码最大的质量短板是什么？评论区聊聊——你的经验，可能正好是别人需要的那块拼图。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E4%BB%A3%E7%A0%81%E8%B4%A8%E9%87%8F/" rel="tag"># 代码质量</a>
+              <a href="/tags/OpenAI-Codex/" rel="tag"># OpenAI Codex</a>
+              <a href="/tags/Context-Engineering/" rel="tag"># Context Engineering</a>
+              <a href="/tags/%E5%AD%90Agent/" rel="tag"># 子Agent</a>
+              <a href="/tags/%E9%87%8D%E6%9E%84/" rel="tag"># 重构</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603192110/" rel="prev" title="Codex 调教指南：从安装到变现，手把手教你用 AI 写出能赚钱的代码">
+                  <i class="fa fa-angle-left"></i> Codex 调教指南：从安装到变现，手把手教你用 AI 写出能赚钱的代码
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/20/202603200900/" rel="next" title="从 Copilot 到 Symphony：AI 编程的 4 次进化，和一条全自动开发流水线的诞生">
+                  从 Copilot 到 Symphony：AI 编程的 4 次进化，和一条全自动开发流水线的诞生 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">713k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">10:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

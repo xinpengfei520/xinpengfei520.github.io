@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="上周有个朋友问我：”我想让 Claude Code 在做代码审查的时候自动查 Sentry 的报错日志，我应该写一个 Skill 还是接一个 MCP？” 我反问他：”你想教 Claude 怎么做代码审查，还是想给 Claude 一个能查 Sentry 的工具？” 他愣了一下：”这……有区别吗？” 有。而且区别很大。 在 Claude Code 的生态里，Skill 和 MCP 是两个最容易被搞混">
+<meta property="og:type" content="article">
+<meta property="og:title" content="别再搞混了：Claude Code 的 Skill 和 MCP 是两种完全不同的东西">
+<meta property="og:url" content="https://www.vance.xin/2026/03/20/202603201140/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="上周有个朋友问我：”我想让 Claude Code 在做代码审查的时候自动查 Sentry 的报错日志，我应该写一个 Skill 还是接一个 MCP？” 我反问他：”你想教 Claude 怎么做代码审查，还是想给 Claude 一个能查 Sentry 的工具？” 他愣了一下：”这……有区别吗？” 有。而且区别很大。 在 Claude Code 的生态里，Skill 和 MCP 是两个最容易被搞混">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260320-claude-code-skills-vs-mcp-difference.webp">
+<meta property="article:published_time" content="2026-03-20T11:40:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T10:13:25.101Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Prompt Engineering">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="Skill">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260320-claude-code-skills-vs-mcp-difference.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/20/202603201140/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/20/202603201140/","path":"2026/03/20/202603201140/","title":"别再搞混了：Claude Code 的 Skill 和 MCP 是两种完全不同的东西"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>别再搞混了：Claude Code 的 Skill 和 MCP 是两种完全不同的东西 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Skill-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9A%E5%86%99%E5%9C%A8-Markdown-%E9%87%8C%E7%9A%84%E2%80%9D%E9%A2%86%E5%9F%9F%E7%9F%A5%E8%AF%86%E2%80%9D"><span class="nav-text">Skill 是什么：写在 Markdown 里的”领域知识”</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E8%B4%A8%EF%BC%9A%E9%AB%98%E7%BA%A7-Prompt"><span class="nav-text">本质：高级 Prompt</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Skill-%E7%9A%84%E4%B8%89%E5%B1%82%E5%8A%A0%E8%BD%BD"><span class="nav-text">Skill 的三层加载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Skill-%E7%9A%84%E4%B8%89%E7%A7%8D%E6%A8%A1%E5%BC%8F"><span class="nav-text">Skill 的三种模式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MCP-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9A%E8%BF%9E%E6%8E%A5%E5%A4%96%E9%83%A8%E4%B8%96%E7%95%8C%E7%9A%84%E2%80%9D%E6%A0%87%E5%87%86%E6%8F%92%E5%A4%B4%E2%80%9D"><span class="nav-text">MCP 是什么：连接外部世界的”标准插头”</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%AC%E8%B4%A8%EF%BC%9A%E5%B7%A5%E5%85%B7%E5%8D%8F%E8%AE%AE"><span class="nav-text">本质：工具协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MCP-%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%B9%E5%BC%8F"><span class="nav-text">MCP 的配置方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MCP-%E7%9A%84%E7%94%9F%E6%80%81%E8%A7%84%E6%A8%A1"><span class="nav-text">MCP 的生态规模</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E5%BC%A0%E8%A1%A8%E7%9C%8B%E6%B8%85%E5%8C%BA%E5%88%AB"><span class="nav-text">一张表看清区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%EF%BC%9A%E5%AE%83%E4%BB%AC%E6%80%8E%E4%B9%88%E9%85%8D%E5%90%88"><span class="nav-text">实战：它们怎么配合</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="nav-text">常见误区</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AF%E5%8C%BA-1%EF%BC%9A%E2%80%9DSkill-%E4%BC%9A%E5%8F%96%E4%BB%A3-MCP%E2%80%9D"><span class="nav-text">误区 1：”Skill 会取代 MCP”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AF%E5%8C%BA-2%EF%BC%9A%E2%80%9DMCP-%E5%A4%AA%E9%87%8D%E4%BA%86%EF%BC%8C%E8%83%BD%E7%94%A8-Skill-%E6%9B%BF%E4%BB%A3%E5%B0%B1%E6%9B%BF%E4%BB%A3%E2%80%9D"><span class="nav-text">误区 2：”MCP 太重了，能用 Skill 替代就替代”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%AF%E5%8C%BA-3%EF%BC%9A%E2%80%9D%E6%88%91%E7%9B%B4%E6%8E%A5%E5%9C%A8-Skill-%E9%87%8C%E5%86%99-API-%E8%B0%83%E7%94%A8%E4%BB%A3%E7%A0%81%E4%B8%8D%E5%B0%B1%E8%A1%8C%E4%BA%86%E2%80%9D"><span class="nav-text">误区 3：”我直接在 Skill 里写 API 调用代码不就行了”</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">355</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/20/202603201140/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="别再搞混了：Claude Code 的 Skill 和 MCP 是两种完全不同的东西 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          别再搞混了：Claude Code 的 Skill 和 MCP 是两种完全不同的东西
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-03-20 11:40:00 / 修改时间：10:13:25" itemprop="dateCreated datePublished" datetime="2026-03-20T11:40:00+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260320-claude-code-skills-vs-mcp-difference.webp" alt="cover"></p>
+<p>上周有个朋友问我：”我想让 Claude Code 在做代码审查的时候自动查 Sentry 的报错日志，我应该写一个 Skill 还是接一个 MCP？”</p>
+<p>我反问他：”你想教 Claude 怎么做代码审查，还是想给 Claude 一个能查 Sentry 的工具？”</p>
+<p>他愣了一下：”这……有区别吗？”</p>
+<p><strong>有。而且区别很大。</strong></p>
+<p>在 Claude Code 的生态里，Skill 和 MCP 是两个最容易被搞混的概念。很多人把它们当成同一种东西的不同写法。甚至有人在社区里问：”Skill 是不是要取代 MCP？”</p>
+<p>答案是：<strong>不会。因为它们根本不是同一类东西。</strong></p>
+<p>Towards Data Science 上有一个很精准的类比：<strong>MCP 是厨房——刀具、锅碗、食材。Skill 是菜谱——告诉你怎么用这些东西做出一道菜。</strong></p>
+<p>厨房和菜谱，缺一不可。但你不会把菜谱当刀用，也不会拿刀当菜谱读。</p>
+<p>今天把这两个概念彻底说清楚。</p>
+<h2 id="Skill-是什么：写在-Markdown-里的”领域知识”"><a href="#Skill-是什么：写在-Markdown-里的”领域知识”" class="headerlink" title="Skill 是什么：写在 Markdown 里的”领域知识”"></a>Skill 是什么：写在 Markdown 里的”领域知识”</h2><h3 id="本质：高级-Prompt"><a href="#本质：高级-Prompt" class="headerlink" title="本质：高级 Prompt"></a>本质：高级 Prompt</h3><p>Skill 的本质非常简单——<strong>它就是一个 Markdown 文件，里面写着一组结构化的指令。</strong></p>
+<p>当你创建一个 Skill，你在做的事情是：把你脑子里的专业知识、工作流程、判断标准，写成 Claude 能理解的文字。</p>
+<p>比如你是一个前端团队的 Tech Lead。你的团队有自己的代码规范：组件用 PascalCase 命名，状态管理只用 Zustand，CSS 必须用 Tailwind，测试覆盖率不低于 80%。</p>
+<p>每次有新人来，你都要花半天给他讲这些规范。每次 Claude 帮你写代码，你都要在 prompt 里重复一遍这些要求。</p>
+<p><strong>Skill 就是把这些”你每次都要说的话”固定下来，让 Claude 自动加载。</strong></p>
+<p>一个最简单的 Skill 长这样：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: frontend-standards</span><br><span class="line">description: &gt;</span><br><span class="line">  Enforce team frontend coding standards. Use when user asks</span><br><span class="line">  to write React components, review frontend code, or create</span><br><span class="line"><span class="section">  new pages.</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># 前端代码规范</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 组件规范</span></span><br><span class="line"><span class="bullet">-</span> 组件命名使用 PascalCase</span><br><span class="line"><span class="bullet">-</span> 每个组件一个文件</span><br><span class="line"><span class="bullet">-</span> Props 必须定义 TypeScript 类型</span><br><span class="line"></span><br><span class="line"><span class="section">## 状态管理</span></span><br><span class="line"><span class="bullet">-</span> 全局状态使用 Zustand</span><br><span class="line"><span class="bullet">-</span> 禁止使用 Redux</span><br><span class="line"><span class="bullet">-</span> 组件内部状态用 useState</span><br><span class="line"></span><br><span class="line"><span class="section">## 样式</span></span><br><span class="line"><span class="bullet">-</span> 只使用 Tailwind CSS</span><br><span class="line"><span class="bullet">-</span> 禁止内联样式</span><br><span class="line"><span class="bullet">-</span> 禁止引入额外的 CSS 框架</span><br><span class="line"></span><br><span class="line"><span class="section">## 测试</span></span><br><span class="line"><span class="bullet">-</span> 每个组件必须有对应的测试文件</span><br><span class="line"><span class="bullet">-</span> 测试覆盖率不低于 80%</span><br></pre></td></tr></table></figure>
+
+<p>没有代码。没有 API 调用。没有外部依赖。<strong>纯文字指令。</strong></p>
+<p>这就是 Skill 最核心的特征：它教 Claude **”怎么做”**，而不是给 Claude **”新能力”**。</p>
+<h3 id="Skill-的三层加载"><a href="#Skill-的三层加载" class="headerlink" title="Skill 的三层加载"></a>Skill 的三层加载</h3><p>Skill 有一个很聪明的设计——<strong>渐进式加载</strong>（Progressive Disclosure）。</p>
+<p>Claude 不会一次性把所有 Skill 的内容塞进上下文窗口。它分三层：</p>
+<p><strong>第一层：元数据（始终加载）</strong><br>只有名字和描述，大约 100 个 token。Claude 根据这个判断要不要激活这个 Skill。</p>
+<p><strong>第二层：SKILL.md 主体（触发时加载）</strong><br>用户的请求匹配了 Skill 的描述，Claude 才会读取完整内容。</p>
+<p><strong>第三层：附属资源（按需加载）</strong><br>scripts&#x2F;、references&#x2F;、assets&#x2F; 目录下的文件，只有 Claude 觉得需要的时候才会去读。</p>
+<p>这意味着你可以装几十个 Skill，不用担心把上下文窗口撑爆。<strong>Claude 只在需要的时候才”翻开菜谱”。</strong></p>
+<h3 id="Skill-的三种模式"><a href="#Skill-的三种模式" class="headerlink" title="Skill 的三种模式"></a>Skill 的三种模式</h3><p>根据复杂度，Skill 分三种模式：</p>
+<p><strong>模式 A：纯 Prompt</strong><br>就是一个 Markdown 文件。适合编码规范、代码审查清单、commit message 格式化这类任务。Claude 的语言能力就足够完成。</p>
+<p><strong>模式 B：Prompt + 脚本</strong><br>Markdown 指令加上 scripts&#x2F; 目录里的 Python 或 JavaScript 脚本。适合需要确定性计算的任务——数据验证、Excel 处理、报表生成。</p>
+<p><strong>模式 C：Prompt + MCP&#x2F;子 Agent</strong><br>在 Skill 的工作流中调用 MCP 服务器或子 Agent。适合涉及外部服务的复杂场景——比如创建 Issue → 建分支 → 修代码 → 提 PR。</p>
+<p><strong>注意模式 C：Skill 和 MCP 在这里是配合关系，不是替代关系。</strong></p>
+<h2 id="MCP-是什么：连接外部世界的”标准插头”"><a href="#MCP-是什么：连接外部世界的”标准插头”" class="headerlink" title="MCP 是什么：连接外部世界的”标准插头”"></a>MCP 是什么：连接外部世界的”标准插头”</h2><h3 id="本质：工具协议"><a href="#本质：工具协议" class="headerlink" title="本质：工具协议"></a>本质：工具协议</h3><p>MCP 的全称是 Model Context Protocol（模型上下文协议）。Anthropic 在 2024 年 11 月发布了它。</p>
+<p><strong>MCP 解决的问题和 Skill 完全不同。</strong></p>
+<p>Skill 解决的是”Claude 不知道怎么做”。MCP 解决的是”Claude 做不到”。</p>
+<p>Claude 自己不能查 GitHub 的 PR。不能发 Slack 消息。不能连你的数据库。不能打开浏览器。</p>
+<p><strong>这些都不是”知识”问题，是”能力”问题。Claude 需要的不是一个菜谱，是一把刀。</strong></p>
+<p>MCP 就是那把刀。更准确地说，MCP 是一个<strong>标准化的接口协议</strong>，让 Claude 能够调用外部工具和访问外部数据。</p>
+<p>它的架构是经典的客户端-服务器模型：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Claude Code（客户端）</span><br><span class="line">    ↓ JSON-RPC 请求</span><br><span class="line">MCP Server（服务器）</span><br><span class="line">    ↓ 调用</span><br><span class="line">外部工具 / API / 数据库</span><br></pre></td></tr></table></figure>
+
+<p>每个 MCP Server 暴露一组”工具”（Tools）。Claude Code 在启动时自动发现这些工具，然后在需要的时候调用它们。</p>
+<p>比如 GitHub MCP Server 暴露的工具包括：创建 PR、查看 Issue、合并分支。Brave Search MCP Server 暴露的工具是：搜索网页、搜索新闻、搜索图片。</p>
+<p><strong>MCP 不告诉 Claude 怎么做。它给 Claude 新的手和脚，让 Claude 能触达原本触达不到的地方。</strong></p>
+<h3 id="MCP-的配置方式"><a href="#MCP-的配置方式" class="headerlink" title="MCP 的配置方式"></a>MCP 的配置方式</h3><p>MCP 的配置写在 <code>.claude/settings.json</code> 里：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;mcpServers&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;brave-search&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;-y&quot;</span><span class="punctuation">,</span> <span class="string">&quot;@anthropic-ai/mcp-brave-search&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;BRAVE_API_KEY&quot;</span><span class="punctuation">:</span> <span class="string">&quot;your-api-key&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;github&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;-y&quot;</span><span class="punctuation">,</span> <span class="string">&quot;@anthropic-ai/mcp-github&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;env&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;GITHUB_TOKEN&quot;</span><span class="punctuation">:</span> <span class="string">&quot;your-token&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>每个 MCP Server 是一个独立运行的进程。Claude Code 通过 JSON-RPC 协议和它通信。支持三种传输模式：stdio（标准输入输出）、SSE（服务器推送事件）、HTTP Streamable。</p>
+<p><strong>关键区别来了：MCP Server 是一个运行中的服务。Skill 是一个静态的文件。</strong></p>
+<p>这是两者最本质的技术差异。</p>
+<h3 id="MCP-的生态规模"><a href="#MCP-的生态规模" class="headerlink" title="MCP 的生态规模"></a>MCP 的生态规模</h3><p>截至 2026 年 3 月，MCP 的生态已经相当庞大：</p>
+<ul>
+<li>月 SDK 下载量超过 9700 万次</li>
+<li>活跃的 MCP Server 超过 10000 个</li>
+<li>支持的平台：Claude、ChatGPT、Cursor、Gemini、VS Code、Copilot</li>
+<li>官方 SDK 覆盖 Python、TypeScript、C#、Java</li>
+</ul>
+<p>Wikipedia 上把 MCP 比作”AI 的 USB-C”——一个标准接口，让任何 AI 都能连接任何工具。</p>
+<h2 id="一张表看清区别"><a href="#一张表看清区别" class="headerlink" title="一张表看清区别"></a>一张表看清区别</h2><table>
+<thead>
+<tr>
+<th>对比维度</th>
+<th>Skill</th>
+<th>MCP</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>本质</strong></td>
+<td>结构化 Prompt（Markdown 指令）</td>
+<td>工具调用协议（JSON-RPC）</td>
+</tr>
+<tr>
+<td><strong>解决的问题</strong></td>
+<td>Claude 不知道”怎么做”</td>
+<td>Claude “做不到”</td>
+</tr>
+<tr>
+<td><strong>类比</strong></td>
+<td>菜谱</td>
+<td>厨房里的刀具和食材</td>
+</tr>
+<tr>
+<td><strong>技术形态</strong></td>
+<td>静态 Markdown 文件</td>
+<td>运行中的服务进程</td>
+</tr>
+<tr>
+<td><strong>存放位置</strong></td>
+<td><code>.claude/skills/</code> 目录</td>
+<td><code>.claude/settings.json</code> 配置</td>
+</tr>
+<tr>
+<td><strong>外部依赖</strong></td>
+<td>无（纯文本即可）</td>
+<td>需要运行 MCP Server</td>
+</tr>
+<tr>
+<td><strong>能否访问外部系统</strong></td>
+<td>不能（除非配合 MCP）</td>
+<td>能（这就是它的核心功能）</td>
+</tr>
+<tr>
+<td><strong>上下文消耗</strong></td>
+<td>极小（渐进式加载）</td>
+<td>较大（但已优化）</td>
+</tr>
+<tr>
+<td><strong>创建门槛</strong></td>
+<td>极低（写个 Markdown）</td>
+<td>中等（需要理解协议和配置）</td>
+</tr>
+<tr>
+<td><strong>跨平台兼容</strong></td>
+<td>Claude Code 生态</td>
+<td>跨所有支持 MCP 的 AI 平台</td>
+</tr>
+</tbody></table>
+<p><strong>一句话总结：Skill 教 Claude 领域知识，MCP 给 Claude 外部工具。</strong></p>
+<h2 id="实战：它们怎么配合"><a href="#实战：它们怎么配合" class="headerlink" title="实战：它们怎么配合"></a>实战：它们怎么配合</h2><p>回到开头那个问题：想让 Claude Code 在代码审查时自动查 Sentry 报错日志，该用 Skill 还是 MCP？</p>
+<p><strong>答案是：两个都要。</strong></p>
+<p><strong>用 MCP 连接 Sentry</strong>——让 Claude 能调用 Sentry 的 API，查询项目的错误日志、异常堆栈、影响范围。</p>
+<p><strong>用 Skill 定义审查流程</strong>——告诉 Claude：先看代码变更，然后查 Sentry 是否有相关报错，重点关注错误频率和影响用户数，最后生成审查报告，格式要包含”风险等级、影响范围、修复建议”。</p>
+<p>Sentry 官方就是这么做的。他们的代码审查 Skill 定义了 PR 分析工作流，同时通过 MCP 获取 Sentry 的错误数据。</p>
+<p>再举几个例子：</p>
+<p><strong>场景 1：自动化部署</strong></p>
+<ul>
+<li>MCP：连接 AWS &#x2F; GCP 的部署 API</li>
+<li>Skill：定义部署流程——先跑测试，再构建镜像，最后灰度发布，每一步的检查标准是什么</li>
+</ul>
+<p><strong>场景 2：技术文档生成</strong></p>
+<ul>
+<li>MCP：连接 GitHub 获取代码变更，连接 Confluence 发布文档</li>
+<li>Skill：定义文档模板和写作风格——API 文档要包含请求示例、返回格式、错误码说明</li>
+</ul>
+<p><strong>场景 3：数据分析报告</strong></p>
+<ul>
+<li>MCP：连接数据库查询数据</li>
+<li>Skill：定义分析框架——先看整体趋势，再拆分维度，找到异常点，最后给出行动建议</li>
+</ul>
+<p><strong>模式很清楚：MCP 负责”拿到数据”，Skill 负责”怎么用数据”。</strong></p>
+<h2 id="常见误区"><a href="#常见误区" class="headerlink" title="常见误区"></a>常见误区</h2><h3 id="误区-1：”Skill-会取代-MCP”"><a href="#误区-1：”Skill-会取代-MCP”" class="headerlink" title="误区 1：”Skill 会取代 MCP”"></a>误区 1：”Skill 会取代 MCP”</h3><p>不会。Simon Willison 在 2025 年说 Skill 可能”比 MCP 更重要”，但开发者 Phil Whittaker 在深度对比后得出结论：<strong>它们解决的是完全不同的问题，互补而非竞争。</strong></p>
+<p>Skill 再强大，也不能帮 Claude 发一条 Slack 消息。MCP 再灵活，也不能教 Claude 你们团队的代码规范。</p>
+<h3 id="误区-2：”MCP-太重了，能用-Skill-替代就替代”"><a href="#误区-2：”MCP-太重了，能用-Skill-替代就替代”" class="headerlink" title="误区 2：”MCP 太重了，能用 Skill 替代就替代”"></a>误区 2：”MCP 太重了，能用 Skill 替代就替代”</h3><p>早期的 MCP 确实有上下文窗口消耗的问题——一个工具可能占 500-900 token，几十个工具就把窗口撑满了。</p>
+<p>但 2026 年 1 月，Claude Code 给 MCP 也加上了渐进式发现（Progressive Discovery）。token 开销从 77000 降到了 8700，降了 85%。这个问题已经解决了。</p>
+<h3 id="误区-3：”我直接在-Skill-里写-API-调用代码不就行了”"><a href="#误区-3：”我直接在-Skill-里写-API-调用代码不就行了”" class="headerlink" title="误区 3：”我直接在 Skill 里写 API 调用代码不就行了”"></a>误区 3：”我直接在 Skill 里写 API 调用代码不就行了”</h3><p>技术上可以——Skill 支持 scripts&#x2F; 目录，你可以写 Python 脚本直接调用 API。</p>
+<p>但 MCP 提供了标准化、权限管理、日志审计、跨平台兼容。如果你的团队明天从 Claude 换到 Codex，MCP Server 直接能用，Skill 里的脚本就得重写。</p>
+<p><strong>单人项目用 Skill 脚本没问题。团队协作和生产环境，MCP 是更稳妥的选择。</strong></p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>Skill 和 MCP 的关系，本质上就是<strong>知识</strong>和<strong>工具</strong>的关系。</p>
+<p>一个厨师光有一把好刀不够——他还需要知道食材的特性、火候的控制、调味的顺序。反过来，光背菜谱也不行——他得有刀、有锅、有灶台才能真的做出菜来。</p>
+<p><strong>Skill 是 Claude 的”大脑”——领域知识、工作流程、判断标准。</strong><br><strong>MCP 是 Claude 的”双手”——连接外部系统、获取数据、执行操作。</strong></p>
+<p>搞清楚这个区别，你才能真正用好 Claude Code 的扩展能力。需要教 Claude 怎么做？写 Skill。需要让 Claude 做到新的事情？接 MCP。需要两者配合？那就是最强大的组合。</p>
+<hr>
+<p>你在用 Claude Code 的 Skill 还是 MCP？有没有遇到过”不知道该用哪个”的场景？你写过自己的 Skill 吗，效果如何？你觉得 Skill 和 MCP 未来会不会合并成一种东西？评论区聊聊你的使用经验。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/Prompt-Engineering/" rel="tag"># Prompt Engineering</a>
+              <a href="/tags/MCP/" rel="tag"># MCP</a>
+              <a href="/tags/Skill/" rel="tag"># Skill</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/20/202603201120/" rel="prev" title="躺在沙发上写代码：Claude Code Remote Control 如何让你用手机操控 AI 编程">
+                  <i class="fa fa-angle-left"></i> 躺在沙发上写代码：Claude Code Remote Control 如何让你用手机操控 AI 编程
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/20/202603201200/" rel="next" title="不招人、不融资，我一个人用 AI 搭了一支 16 人团队，月成本不到 700 块">
+                  不招人、不融资，我一个人用 AI 搭了一支 16 人团队，月成本不到 700 块 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">713k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">10:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

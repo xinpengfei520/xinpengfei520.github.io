@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="你花了两天时间，从零写了一个”帮我每天早上自动搜索新闻、整理成早报、发到群里”的 Agent。代码写了 500 行，调试了十几次，终于跑通了。 然后你发现，ClawHub 上已经有一个现成的 Skill，一行命令安装，五分钟配好，效果比你写的还好。 这种感觉，就像你花了一周手搓了一个轮子，结果隔壁工位的同事说：”npm 上有个包，三行代码搞定。” 2026 年做 AI Agent，最大的杠杆不是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="别再从零造 Agent 了！一文搞懂 Skills 机制，让 AI 能力像乐高一样拼装">
+<meta property="og:url" content="https://www.vance.xin/2026/03/19/202603191935/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你花了两天时间，从零写了一个”帮我每天早上自动搜索新闻、整理成早报、发到群里”的 Agent。代码写了 500 行，调试了十几次，终于跑通了。 然后你发现，ClawHub 上已经有一个现成的 Skill，一行命令安装，五分钟配好，效果比你写的还好。 这种感觉，就像你花了一周手搓了一个轮子，结果隔壁工位的同事说：”npm 上有个包，三行代码搞定。” 2026 年做 AI Agent，最大的杠杆不是">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260319-agent-skills-complete-guide.webp">
+<meta property="article:published_time" content="2026-03-19T19:35:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T10:13:25.100Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="OpenClaw">
+<meta property="article:tag" content="Skills">
+<meta property="article:tag" content="自动化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260319-agent-skills-complete-guide.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/19/202603191935/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/19/202603191935/","path":"2026/03/19/202603191935/","title":"别再从零造 Agent 了！一文搞懂 Skills 机制，让 AI 能力像乐高一样拼装"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>别再从零造 Agent 了！一文搞懂 Skills 机制，让 AI 能力像乐高一样拼装 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Skills-%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9A%E7%BB%99-AI-%E8%A3%85%E6%8A%80%E8%83%BD%E5%8C%85"><span class="nav-text">Skills 到底是什么：给 AI 装技能包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E5%A4%A7-Skills-%E4%BD%93%E7%B3%BB%EF%BC%9AOpenClaw-vs-Claude-Code"><span class="nav-text">两大 Skills 体系：OpenClaw vs Claude Code</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#OpenClaw-Skills%EF%BC%9A%E4%B8%87%E7%89%A9%E7%9A%86%E5%8F%AF%E8%A3%85"><span class="nav-text">OpenClaw Skills：万物皆可装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Claude-Code-Skills%EF%BC%9A%E5%BC%80%E5%8F%91%E8%80%85%E7%9A%84%E7%91%9E%E5%A3%AB%E5%86%9B%E5%88%80"><span class="nav-text">Claude Code Skills：开发者的瑞士军刀</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Skills-vs-MCP-vs-Plugins%EF%BC%9A%E5%88%B0%E5%BA%95%E8%AF%A5%E7%94%A8%E5%93%AA%E4%B8%AA"><span class="nav-text">Skills vs MCP vs Plugins：到底该用哪个</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%8E%E4%B9%88%E5%86%99%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84-Skill"><span class="nav-text">怎么写一个自己的 Skill</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%88%9B%E5%BB%BA%E7%9B%AE%E5%BD%95%E5%92%8C%E6%96%87%E4%BB%B6"><span class="nav-text">第 1 步：创建目录和文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E7%BC%96%E5%86%99-SKILL-md"><span class="nav-text">第 2 步：编写 SKILL.md</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E4%BD%BF%E7%94%A8"><span class="nav-text">第 3 步：使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E9%98%B6%E6%8A%80%E5%B7%A7"><span class="nav-text">进阶技巧</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-%E4%B8%AA%E5%80%BC%E5%BE%97%E5%88%9B%E5%BB%BA%E7%9A%84-Claude-Code-Skills"><span class="nav-text">5 个值得创建的 Claude Code Skills</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Skills-%E7%9A%84%E6%9C%AA%E6%9D%A5%EF%BC%9A%E4%BB%8E%E5%B7%A5%E5%85%B7%E5%88%B0%E7%94%9F%E6%80%81"><span class="nav-text">Skills 的未来：从工具到生态</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">355</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191935/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="别再从零造 Agent 了！一文搞懂 Skills 机制，让 AI 能力像乐高一样拼装 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          别再从零造 Agent 了！一文搞懂 Skills 机制，让 AI 能力像乐高一样拼装
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 19:35:00" itemprop="dateCreated datePublished" datetime="2026-03-19T19:35:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-20 10:13:25" itemprop="dateModified" datetime="2026-03-20T10:13:25+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260319-agent-skills-complete-guide.webp" alt="cover"></p>
+<p>你花了两天时间，从零写了一个”帮我每天早上自动搜索新闻、整理成早报、发到群里”的 Agent。代码写了 500 行，调试了十几次，终于跑通了。</p>
+<p>然后你发现，ClawHub 上已经有一个现成的 Skill，一行命令安装，五分钟配好，效果比你写的还好。</p>
+<p>这种感觉，就像你花了一周手搓了一个轮子，结果隔壁工位的同事说：”npm 上有个包，三行代码搞定。”</p>
+<p><strong>2026 年做 AI Agent，最大的杠杆不是写代码，是选 Skill。</strong></p>
+<p>截至 3 月，ClawHub 上已经有超过 <strong>13,700 个 Skills</strong>。Claude Code 的 Skills 系统也从简单的 Markdown 指令进化成了完整的可编程 Agent 平台。两套 Skills 体系，覆盖了从个人自动化到企业办公的几乎所有场景。</p>
+<p>今天我们来一次彻底的梳理：Skills 到底是什么？两大平台的 Skills 有什么区别？怎么选？怎么用？怎么自己写？</p>
+<h2 id="Skills-到底是什么：给-AI-装技能包"><a href="#Skills-到底是什么：给-AI-装技能包" class="headerlink" title="Skills 到底是什么：给 AI 装技能包"></a>Skills 到底是什么：给 AI 装技能包</h2><p>最简单的理解：<strong>Skills 就是 Agent 的技能包。</strong></p>
+<p>没有 Skills 的 Agent，就像一个聪明但什么工具都没有的人。它能思考、能对话，但做不了具体的事。给它装上”浏览器控制”的 Skill，它就能上网搜索；装上”邮件管理”的 Skill，它就能收发邮件；装上”GitHub”的 Skill，它就能帮你审 PR、管 Issue。</p>
+<p>和传统的”插件”相比，Skills 有一个根本区别：<strong>它们是给 AI 看的指令，不只是给程序看的代码。</strong></p>
+<p>一个 Skill 的核心是一个 Markdown 文件（通常叫 <code>SKILL.md</code>），里面用自然语言写着”你是谁、你要做什么、用什么工具、按什么步骤来”。AI 读到这个文件，就知道自己在这个场景下该怎么行事。</p>
+<p>这和传统软件开发里的”配置文件 + 代码”完全不同。你不需要写 API 调用逻辑，不需要处理错误重试，不需要管状态机。你只需要用人话把流程描述清楚，AI 自己去执行。</p>
+<h2 id="两大-Skills-体系：OpenClaw-vs-Claude-Code"><a href="#两大-Skills-体系：OpenClaw-vs-Claude-Code" class="headerlink" title="两大 Skills 体系：OpenClaw vs Claude Code"></a>两大 Skills 体系：OpenClaw vs Claude Code</h2><p>目前 AI Agent 领域有两套主流的 Skills 体系，虽然名字一样，但设计理念和适用场景完全不同。</p>
+<h3 id="OpenClaw-Skills：万物皆可装"><a href="#OpenClaw-Skills：万物皆可装" class="headerlink" title="OpenClaw Skills：万物皆可装"></a>OpenClaw Skills：万物皆可装</h3><p>OpenClaw 的 Skills 更像是<strong>能力插件市场</strong>。每个 Skill 是一个独立的功能模块，安装后 Agent 就获得了对应的能力。</p>
+<p><strong>核心数据：</strong></p>
+<ul>
+<li>ClawHub 上超过 <strong>13,700 个 Skills</strong></li>
+<li>覆盖：社交媒体、邮件、日历、浏览器、文件管理、智能家居、交易、SEO……</li>
+<li>安装方式：一行命令 <code>openclaw skills install &lt;skill-name&gt;</code></li>
+<li>超过 100 个预装 Skills 随 OpenClaw 一起发布</li>
+</ul>
+<p><strong>典型 Skills 举例：</strong></p>
+<table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GitHub Agent</td>
+<td>审 PR、管 Issue、自动化发布</td>
+</tr>
+<tr>
+<td>Email Assistant</td>
+<td>跨账号收发邮件、自动归类</td>
+</tr>
+<tr>
+<td>Calendar Sync</td>
+<td>自然语言管理 Google&#x2F;Outlook 日历</td>
+</tr>
+<tr>
+<td>Home Assistant</td>
+<td>对话控制智能家居设备</td>
+</tr>
+<tr>
+<td>Browser Control</td>
+<td>自动化网页操作</td>
+</tr>
+<tr>
+<td>SEO Research</td>
+<td>关键词研究、排名追踪</td>
+</tr>
+</tbody></table>
+<p><strong>安全警告：</strong> 这里必须说一个严肃的问题。2026 年 2 月，ClawHub 上发现了 <strong>1,184 个恶意 Skills</strong>，其中一些伪装成热门工具窃取钱包凭证。ClawHub 随后清理了 2,419 个可疑 Skills。安装第三方 Skill 时，务必检查来源、查看代码、关注社区评价。不要装来历不明的 Skill。</p>
+<h3 id="Claude-Code-Skills：开发者的瑞士军刀"><a href="#Claude-Code-Skills：开发者的瑞士军刀" class="headerlink" title="Claude Code Skills：开发者的瑞士军刀"></a>Claude Code Skills：开发者的瑞士军刀</h3><p>Claude Code 的 Skills 更像是<strong>可编程的工作流模板</strong>。每个 Skill 是一个 SKILL.md 文件，定义了 Claude 在特定场景下的行为方式。</p>
+<p><strong>核心特性：</strong></p>
+<ul>
+<li>文件格式：<code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>触发方式：用户手动 <code>/skill-name</code> 或 AI 自动识别场景</li>
+<li>支持 YAML frontmatter 配置（工具限制、模型选择、上下文隔离）</li>
+<li>支持 Shell 命令注入动态数据</li>
+<li>支持子 Agent 执行（<code>context: fork</code>）</li>
+<li>支持参数传递（<code>$ARGUMENTS</code>、<code>$0</code>、<code>$1</code>）</li>
+</ul>
+<p><strong>内置 Skills：</strong></p>
+<table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>功能</th>
+<th>亮点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/simplify</code></td>
+<td>代码质量优化</td>
+<td>并行 3 个审查 Agent</td>
+</tr>
+<tr>
+<td><code>/review</code></td>
+<td>代码审查</td>
+<td>支持 PR 链接</td>
+</tr>
+<tr>
+<td><code>/batch</code></td>
+<td>大规模并行修改</td>
+<td>5-30 个独立工作树 Agent</td>
+</tr>
+<tr>
+<td><code>/loop</code></td>
+<td>定时循环执行</td>
+<td>后台监控任务</td>
+</tr>
+<tr>
+<td><code>/debug</code></td>
+<td>会话问题排查</td>
+<td>Claude 自我诊断</td>
+</tr>
+<tr>
+<td><code>/claude-api</code></td>
+<td>API 参考加载</td>
+<td>自动检测 SDK 导入</td>
+</tr>
+</tbody></table>
+<p><strong>一个关键区别：</strong> Claude Code 的 Skills 分为”用户调用”和”自动调用”两种。用户调用是你手动输入 <code>/deploy</code>；自动调用是 Claude 读到 Skill 的 description，判断当前任务匹配就自动加载。这意味着你可以写一些”守护型” Skill——不需要主动触发，Claude 会在合适的时机自己启用。</p>
+<h2 id="Skills-vs-MCP-vs-Plugins：到底该用哪个"><a href="#Skills-vs-MCP-vs-Plugins：到底该用哪个" class="headerlink" title="Skills vs MCP vs Plugins：到底该用哪个"></a>Skills vs MCP vs Plugins：到底该用哪个</h2><p>这三个概念很容易混淆。简单区分：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>本质</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Skills</td>
+<td>自然语言指令 + 配置</td>
+<td>定义 Agent 的行为方式和工作流</td>
+</tr>
+<tr>
+<td>MCP（Model Context Protocol）</td>
+<td>标准化的工具接口协议</td>
+<td>让 Agent 连接外部服务（API、数据库）</td>
+</tr>
+<tr>
+<td>Plugins</td>
+<td>代码级扩展</td>
+<td>添加底层能力（新的通信渠道、存储引擎）</td>
+</tr>
+</tbody></table>
+<p>打个比方：如果 Agent 是一个人——</p>
+<ul>
+<li><strong>Plugins</strong> 是给它装义肢、换眼睛，改变它的身体结构</li>
+<li><strong>MCP</strong> 是给它配工具——扳手、螺丝刀、万用表</li>
+<li><strong>Skills</strong> 是给它一本操作手册——“碰到这种情况，用这个工具，按这个步骤来”</li>
+</ul>
+<p>实际使用中，三者经常配合。一个”帮我每天自动发周报”的需求：</p>
+<ol>
+<li><strong>Plugin</strong>：安装企业微信通道插件，让 Agent 能收发企微消息</li>
+<li><strong>MCP</strong>：连接日历 API 获取本周日程，连接 Git API 获取代码提交</li>
+<li><strong>Skill</strong>：定义”每周五下午 5 点，汇总本周工作，格式化成周报，发到团队群”</li>
+</ol>
+<h2 id="怎么写一个自己的-Skill"><a href="#怎么写一个自己的-Skill" class="headerlink" title="怎么写一个自己的 Skill"></a>怎么写一个自己的 Skill</h2><p>以 Claude Code 为例，写一个 Skill 只需要三步。</p>
+<h3 id="第-1-步：创建目录和文件"><a href="#第-1-步：创建目录和文件" class="headerlink" title="第 1 步：创建目录和文件"></a>第 1 步：创建目录和文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p .claude/skills/deploy</span><br><span class="line"><span class="built_in">touch</span> .claude/skills/deploy/SKILL.md</span><br></pre></td></tr></table></figure>
+
+<h3 id="第-2-步：编写-SKILL-md"><a href="#第-2-步：编写-SKILL-md" class="headerlink" title="第 2 步：编写 SKILL.md"></a>第 2 步：编写 SKILL.md</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: deploy</span><br><span class="line">description: 部署当前项目到生产环境。当用户说&quot;部署&quot;、&quot;发布&quot;、&quot;上线&quot;时触发。</span><br><span class="line"><span class="section">allowed-tools: Bash, Read, Grep</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="section"># 部署流程</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> 运行 <span class="code">`npm run build`</span>，确认构建成功</span><br><span class="line"><span class="bullet">2.</span> 运行 <span class="code">`npm test`</span>，确认所有测试通过</span><br><span class="line"><span class="bullet">3.</span> 运行 <span class="code">`git status`</span>，确认没有未提交的更改</span><br><span class="line"><span class="bullet">4.</span> 执行 <span class="code">`npm run deploy`</span></span><br><span class="line"><span class="bullet">5.</span> 部署完成后，访问生产地址确认页面正常</span><br><span class="line"><span class="bullet">6.</span> 向用户报告部署结果</span><br><span class="line"></span><br><span class="line">如果任何步骤失败，立即停止并报告错误原因。</span><br></pre></td></tr></table></figure>
+
+<h3 id="第-3-步：使用"><a href="#第-3-步：使用" class="headerlink" title="第 3 步：使用"></a>第 3 步：使用</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&gt; /deploy</span><br></pre></td></tr></table></figure>
+
+<p>就这么简单。Claude 读到这个 SKILL.md，就知道 <code>/deploy</code> 该怎么做。</p>
+<h3 id="进阶技巧"><a href="#进阶技巧" class="headerlink" title="进阶技巧"></a>进阶技巧</h3><p><strong>frontmatter 配置项：</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">name:</span> <span class="string">security-review</span></span><br><span class="line"><span class="attr">description:</span> <span class="string">审查代码安全漏洞</span></span><br><span class="line"><span class="attr">allowed-tools:</span> <span class="string">Read,</span> <span class="string">Grep,</span> <span class="string">Glob</span>  <span class="comment"># 限制工具，防止意外修改</span></span><br><span class="line"><span class="attr">context:</span> <span class="string">fork</span>                     <span class="comment"># 在隔离的子 Agent 中运行</span></span><br><span class="line"><span class="attr">disable-model-invocation:</span> <span class="literal">true</span>    <span class="comment"># 只能手动触发，不能自动触发</span></span><br><span class="line"><span class="attr">model:</span> <span class="string">opus</span>                       <span class="comment"># 指定使用更强的模型</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>参数传递：</strong></p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: fix-issue</span><br><span class="line"><span class="section">description: 修复指定 Issue</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line">请修复 Issue #$ARGUMENTS：</span><br><span class="line"><span class="bullet">1.</span> 读取 Issue 描述</span><br><span class="line"><span class="bullet">2.</span> 定位相关代码</span><br><span class="line"><span class="bullet">3.</span> 实现修复</span><br><span class="line"><span class="bullet">4.</span> 编写测试</span><br><span class="line"><span class="bullet">5.</span> 提交代码</span><br></pre></td></tr></table></figure>
+
+<p>使用：<code>/fix-issue 42</code>，Claude 就会去修 Issue #42。</p>
+<p><strong>Shell 动态注入：</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">name:</span> <span class="string">morning-report</span></span><br><span class="line"><span class="attr">description:</span> <span class="string">生成项目早报</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="string">当前</span> <span class="string">Git</span> <span class="string">状态：</span></span><br><span class="line"><span class="string">```shell</span></span><br><span class="line"><span class="string">git</span> <span class="string">log</span> <span class="string">--oneline</span> <span class="number">-10</span></span><br></pre></td></tr></table></figure>
+
+<p>请根据以上信息生成今日项目早报。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Shell 命令会在 Skill 加载时执行，结果注入到 Claude 的上下文中。这意味着 Skill 可以获取实时数据。</span><br><span class="line"></span><br><span class="line">## 10 个值得安装的 OpenClaw Skills</span><br><span class="line"></span><br><span class="line">如果你刚开始用 OpenClaw，以下 10 个 Skills 覆盖了最常见的需求：</span><br><span class="line"></span><br><span class="line">1. **Web Browser** — 自动化网页浏览和信息提取</span><br><span class="line">2. **GitHub Agent** — PR 审查、Issue 管理、自动化发布</span><br><span class="line">3. **Email Assistant** — 跨平台邮件管理</span><br><span class="line">4. **Calendar Sync** — 日程管理和提醒</span><br><span class="line">5. **File Manager** — 文件搜索、整理、批量操作</span><br><span class="line">6. **RSS Reader** — 信息聚合和定时推送</span><br><span class="line">7. **Markdown Writer** — 长文写作和格式化</span><br><span class="line">8. **Database Query** — 自然语言查询数据库</span><br><span class="line">9. **API Tester** — 接口测试和文档生成</span><br><span class="line">10. **Smart Home** — 智能设备控制（支持 Home Assistant）</span><br><span class="line"></span><br><span class="line">安装方式统一：</span><br><span class="line"></span><br><span class="line">```bash</span><br><span class="line">openclaw skills install @official/web-browser</span><br><span class="line">openclaw skills install @official/github-agent</span><br><span class="line"># ...</span><br></pre></td></tr></table></figure>
+
+<p>安装前建议：</p>
+<ul>
+<li>优先选 <code>@official/</code> 前缀的官方 Skill</li>
+<li>查看 Skill 的下载量和最近更新时间</li>
+<li>检查权限范围——一个”天气查询” Skill 不应该需要文件系统权限</li>
+</ul>
+<h2 id="5-个值得创建的-Claude-Code-Skills"><a href="#5-个值得创建的-Claude-Code-Skills" class="headerlink" title="5 个值得创建的 Claude Code Skills"></a>5 个值得创建的 Claude Code Skills</h2><p>基于社区实践，这 5 个自定义 Skill 能在日常开发中节省大量时间：</p>
+<p><strong>1. <code>/commit</code> — 智能提交</strong><br>自动分析 diff、生成 commit message、遵循项目的提交规范。</p>
+<p><strong>2. <code>/review-pr</code> — PR 审查</strong><br>检查安全漏洞、遗漏的测试、不符合约定的代码。参数支持传入 PR 编号。</p>
+<p><strong>3. <code>/fix-issue &lt;number&gt;</code> — Issue 修复</strong><br>读取 Issue 描述，定位代码，实现修复，编写测试，一条龙。</p>
+<p><strong>4. <code>/writing-agent</code> — 内容创作</strong><br>搜索资料、生成封面、撰写文章、创建文件。这篇文章就是用 Skill 写的。</p>
+<p><strong>5. <code>/security-review</code> — 安全审计</strong><br>用 <code>context: fork</code> 在隔离环境中运行，只允许 Read&#x2F;Grep&#x2F;Glob，检查 OWASP Top 10 漏洞。</p>
+<h2 id="Skills-的未来：从工具到生态"><a href="#Skills-的未来：从工具到生态" class="headerlink" title="Skills 的未来：从工具到生态"></a>Skills 的未来：从工具到生态</h2><p>两个趋势值得关注。</p>
+<p><strong>第一，Skills 正在变成”AI 时代的 npm”。</strong> ClawHub 的 13,700 个 Skills，本质上就是一个 AI Agent 的包管理器。和 npm&#x2F;pip 一样，它面临同样的问题——安全审查、版本管理、依赖冲突。但解决了这些问题之后，它也会释放同样的生产力红利。</p>
+<p><strong>第二，Skills 正在模糊”用户”和”开发者”的界限。</strong> 传统软件开发里，用户和开发者泾渭分明。但写一个 SKILL.md 不需要编程能力——你只需要用自然语言描述工作流。这意味着一个运营人员可以自己写一个”每周五生成运营周报”的 Skill，一个 HR 可以自己写一个”筛选简历并生成评估”的 Skill。</p>
+<p>Anthropic 的 Claude Code 把 Skills 从简单的 Markdown 指令进化成了支持子 Agent、动态注入、生命周期钩子的完整平台。OpenClaw 的 ClawHub 从几百个 Skills 膨胀到了上万个。</p>
+<p><strong>别再从零造 Agent 了。先看看有没有现成的 Skill。</strong> 如果没有，用 SKILL.md 写一个——可能只需要 10 分钟。</p>
+<hr>
+<p>你在用哪些 Skills？有没有自己写过 SKILL.md？如果让你推荐一个最实用的 Skill，你会推荐哪个？评论区分享你的 Skills 使用经验。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/OpenClaw/" rel="tag"># OpenClaw</a>
+              <a href="/tags/Skills/" rel="tag"># Skills</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191920/" rel="prev" title="3 步接入，7×24 小时干活：OpenClaw 接入企业微信后，打工人直接起飞">
+                  <i class="fa fa-angle-left"></i> 3 步接入，7×24 小时干活：OpenClaw 接入企业微信后，打工人直接起飞
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191950/" rel="next" title="智谱把&quot;会操作手机的AI&quot;开源了：AutoGLM 如何用眼睛+大脑+手接管你的手机">
+                  智谱把"会操作手机的AI"开源了：AutoGLM 如何用眼睛+大脑+手接管你的手机 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">713k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">10:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

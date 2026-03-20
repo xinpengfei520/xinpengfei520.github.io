@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="你有没有想过一个问题：为什么同样是调用大模型，Cursor 写出来的代码像实习生的作品，而 Google Antigravity 生成的 Web 应用却自带”高级感”？ 答案不在模型里，在提示词里。 2025 年底，Google 发布了代号”反重力”的 AI 编码 IDE——Antigravity。它基于 Gemini 3 Pro，被称为”Cursor 终结者”。公测期间全功能免费，一时间全网疯">
+<meta property="og:type" content="article">
+<meta property="og:title" content="逐行拆解Google Antigravity系统提示词：顶级AI IDE是怎么&quot;调教&quot;大模型的">
+<meta property="og:url" content="https://www.vance.xin/2026/03/19/202603191720/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你有没有想过一个问题：为什么同样是调用大模型，Cursor 写出来的代码像实习生的作品，而 Google Antigravity 生成的 Web 应用却自带”高级感”？ 答案不在模型里，在提示词里。 2025 年底，Google 发布了代号”反重力”的 AI 编码 IDE——Antigravity。它基于 Gemini 3 Pro，被称为”Cursor 终结者”。公测期间全功能免费，一时间全网疯">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260319-google-antigravity-system-prompt-leaked.webp">
+<meta property="article:published_time" content="2026-03-19T17:20:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T10:13:25.099Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Prompt Engineering">
+<meta property="article:tag" content="Gemini">
+<meta property="article:tag" content="Google Antigravity">
+<meta property="article:tag" content="系统提示词">
+<meta property="article:tag" content="AI IDE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260319-google-antigravity-system-prompt-leaked.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/19/202603191720/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/19/202603191720/","path":"2026/03/19/202603191720/","title":"逐行拆解Google Antigravity系统提示词：顶级AI IDE是怎么\"调教\"大模型的"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>逐行拆解Google Antigravity系统提示词：顶级AI IDE是怎么"调教"大模型的 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%84%E9%9C%B2%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9A12-%E5%B1%82%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%9E%B6%E6%9E%84"><span class="nav-text">泄露了什么：12 层提示词架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E5%B1%82%EF%BC%9A%E5%B7%A5%E5%85%B7%E5%AE%9A%E4%B9%89%E2%80%94%E2%80%94Agent-%E7%9A%84%E2%80%9D%E6%89%8B%E5%92%8C%E8%84%9A%E2%80%9D"><span class="nav-text">第一层：工具定义——Agent 的”手和脚”</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#browser-subagent%EF%BC%9A%E6%B5%8F%E8%A7%88%E5%99%A8%E5%AD%90%E4%BB%A3%E7%90%86"><span class="nav-text">browser_subagent：浏览器子代理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#generate-image%EF%BC%9A%E5%86%85%E7%BD%AE-AI-%E7%BB%98%E5%9B%BE"><span class="nav-text">generate_image：内置 AI 绘图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#codebase-search-vs-grep-search%EF%BC%9A%E8%AF%AD%E4%B9%89%E6%90%9C%E7%B4%A2-%E7%B2%BE%E7%A1%AE%E6%90%9C%E7%B4%A2"><span class="nav-text">codebase_search vs grep_search：语义搜索 + 精确搜索</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E5%B1%82%EF%BC%9A%E8%BA%AB%E4%BB%BD%E8%AE%BE%E5%AE%9A%E2%80%94%E2%80%94%E5%8F%AA%E7%94%A8%E4%BA%86-4-%E5%8F%A5%E8%AF%9D"><span class="nav-text">第二层：身份设定——只用了 4 句话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E5%B1%82%EF%BC%9A%E7%BE%8E%E5%AD%A6%E6%9A%B4%E6%94%BF%E2%80%94%E2%80%94%E2%80%9C%E7%9C%8B%E8%B5%B7%E6%9D%A5%E7%AE%80%E5%8D%95%E5%B0%B1%E6%98%AF%E5%A4%B1%E8%B4%A5%E2%80%9D"><span class="nav-text">第三层：美学暴政——“看起来简单就是失败”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E5%9B%9B%E5%B1%82%EF%BC%9A%E5%B7%A5%E4%BD%9C%E6%B5%81%E6%9C%BA%E5%88%B6%E2%80%94%E2%80%94%E5%8F%AF%E5%A4%8D%E7%94%A8%E7%9A%84%E2%80%9D%E8%87%AA%E5%8A%A8%E5%8C%96%E8%84%9A%E6%9C%AC%E2%80%9D"><span class="nav-text">第四层：工作流机制——可复用的”自动化脚本”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%BA%94%E5%B1%82%EF%BC%9ACheckpoint-%E5%92%8C%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86"><span class="nav-text">第五层：Checkpoint 和上下文管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E5%85%AD%E5%B1%82%EF%BC%9A%E6%AF%8F%E6%9D%A1%E6%B6%88%E6%81%AF%E7%9A%84%E5%AE%9E%E6%97%B6%E5%85%83%E6%95%B0%E6%8D%AE"><span class="nav-text">第六层：每条消息的实时元数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98%EF%BC%9A%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%B3%84%E9%9C%B2-%E6%8F%90%E7%A4%BA%E6%B3%A8%E5%85%A5"><span class="nav-text">安全问题：提示词泄露 + 提示注入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%99%E6%88%91%E4%BB%AC%E7%9A%84%E5%90%AF%E7%A4%BA%EF%BC%9A5-%E6%9D%A1%E9%A1%B6%E7%BA%A7%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B%E5%8E%9F%E5%88%99"><span class="nav-text">给我们的启示：5 条顶级提示词工程原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">355</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191720/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="逐行拆解Google Antigravity系统提示词：顶级AI IDE是怎么&quot;调教&quot;大模型的 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          逐行拆解Google Antigravity系统提示词：顶级AI IDE是怎么"调教"大模型的
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 17:20:00" itemprop="dateCreated datePublished" datetime="2026-03-19T17:20:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-20 10:13:25" itemprop="dateModified" datetime="2026-03-20T10:13:25+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260319-google-antigravity-system-prompt-leaked.webp" alt="cover"></p>
+<p>你有没有想过一个问题：为什么同样是调用大模型，Cursor 写出来的代码像实习生的作品，而 Google Antigravity 生成的 Web 应用却自带”高级感”？</p>
+<p>答案不在模型里，在提示词里。</p>
+<p>2025 年底，Google 发布了代号”反重力”的 AI 编码 IDE——Antigravity。它基于 Gemini 3 Pro，被称为”Cursor 终结者”。公测期间全功能免费，一时间全网疯抢。</p>
+<p>然后，有人把它的<strong>系统提示词（System Prompt）全部扒了出来</strong>。</p>
+<p>GitHub 上至少有三份完整的泄露版本。安全研究员 Johann Rehberger（Embrace The Red 博主）、开发者 anthfgreco、CypherpunkSamurai 先后公开了从会话中提取的完整提示词。长度超过 2 万字，包含 20+ 个工具定义、完整的 Web 开发美学指南、工作流机制、安全策略——几乎是 Google 如何”调教”Gemini 做 Agent 的完整教科书。</p>
+<p>今天我们逐层拆解。看完这篇文章，你不仅能理解 Antigravity 为什么这么强，还能学到一套顶级提示词工程的方法论。</p>
+<h2 id="泄露了什么：12-层提示词架构"><a href="#泄露了什么：12-层提示词架构" class="headerlink" title="泄露了什么：12 层提示词架构"></a>泄露了什么：12 层提示词架构</h2><p>Antigravity 的系统提示词不是一段话，是一个<strong>分层架构</strong>。整理下来，大概分为 12 层：</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>内容</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>工具定义（Tools）</td>
+<td>20+ 个工具的完整参数描述</td>
+</tr>
+<tr>
+<td>2</td>
+<td>身份设定（Identity）</td>
+<td>“你是 Antigravity，由 Google DeepMind 设计”</td>
+</tr>
+<tr>
+<td>3</td>
+<td>工具调用指南</td>
+<td>路径必须是绝对路径等规则</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Web 应用开发指南</td>
+<td>美学标准、技术栈选择、SEO</td>
+</tr>
+<tr>
+<td>5</td>
+<td>临时消息机制</td>
+<td>系统注入的紧急指令</td>
+</tr>
+<tr>
+<td>6</td>
+<td>通信风格</td>
+<td>Markdown 格式、主动性边界</td>
+</tr>
+<tr>
+<td>7</td>
+<td>用户信息</td>
+<td>操作系统、工作区路径</td>
+</tr>
+<tr>
+<td>8</td>
+<td>用户自定义规则</td>
+<td>.agent&#x2F;rules&#x2F; 目录下的项目规则</td>
+</tr>
+<tr>
+<td>9</td>
+<td>工作流定义</td>
+<td>.agent&#x2F;workflows&#x2F; 下的可复用流程</td>
+</tr>
+<tr>
+<td>10</td>
+<td>上下文断点（Checkpoint）</td>
+<td>长对话的状态恢复机制</td>
+</tr>
+<tr>
+<td>11</td>
+<td>对话历史</td>
+<td>最近 20 次对话的摘要</td>
+</tr>
+<tr>
+<td>12</td>
+<td>消息元数据</td>
+<td>当前时间、光标位置、打开的文件</td>
+</tr>
+</tbody></table>
+<p>这不是随便写的提示词，这是一套<strong>操作系统级别的 Agent 指令集</strong>。</p>
+<h2 id="第一层：工具定义——Agent-的”手和脚”"><a href="#第一层：工具定义——Agent-的”手和脚”" class="headerlink" title="第一层：工具定义——Agent 的”手和脚”"></a>第一层：工具定义——Agent 的”手和脚”</h2><p>Antigravity 定义了 20 多个工具，每个工具都有精确的参数描述和使用场景。这是 Agent 能”做事”的基础。</p>
+<p>几个关键工具：</p>
+<h3 id="browser-subagent：浏览器子代理"><a href="#browser-subagent：浏览器子代理" class="headerlink" title="browser_subagent：浏览器子代理"></a>browser_subagent：浏览器子代理</h3><p>这是 Antigravity 最独特的能力。它可以启动一个<strong>独立的浏览器子代理</strong>，让 AI 像人一样操作网页——点击、输入、导航、截图、录制视频。</p>
+<p>提示词里的描述很有意思：</p>
+<blockquote>
+<p>“The subagent is an agent similar to you, with a different set of tools, limited to tools to understand the state of and control the browser.”</p>
+</blockquote>
+<p>子代理是一个独立的 Agent，有自己的工具集，专门控制浏览器。主 Agent 通过下发”任务描述”来指挥它，就像一个经理给下属派活。</p>
+<p>而且所有浏览器操作<strong>自动录制为 WebP 视频</strong>保存到 artifacts 目录。这意味着 Antigravity 不仅能操作浏览器，还能录制演示视频。</p>
+<h3 id="generate-image：内置-AI-绘图"><a href="#generate-image：内置-AI-绘图" class="headerlink" title="generate_image：内置 AI 绘图"></a>generate_image：内置 AI 绘图</h3><p>Antigravity 内置了图片生成工具，可以直接用文字描述生成 UI 设计稿或应用素材。提示词要求：</p>
+<blockquote>
+<p>“Don’t use placeholders — use generate_image tool for images.”</p>
+</blockquote>
+<p>不要用占位图，直接用 AI 生成真实图片。这就是为什么 Antigravity 生成的 Web 应用看起来比 Cursor 的”完成度”高得多——它不是在写代码，它是在”设计+开发”一体化交付。</p>
+<h3 id="codebase-search-vs-grep-search：语义搜索-精确搜索"><a href="#codebase-search-vs-grep-search：语义搜索-精确搜索" class="headerlink" title="codebase_search vs grep_search：语义搜索 + 精确搜索"></a>codebase_search vs grep_search：语义搜索 + 精确搜索</h3><p>Antigravity 有两套搜索工具。<code>codebase_search</code> 做语义搜索，适合模糊查询；<code>grep_search</code> 用 ripgrep 做精确匹配，适合找变量名或模式。</p>
+<p>提示词明确区分了两者的适用场景，避免 Agent 用错工具。这个设计很聪明——<strong>给 AI 选择权，但用提示词约束选择范围。</strong></p>
+<h2 id="第二层：身份设定——只用了-4-句话"><a href="#第二层：身份设定——只用了-4-句话" class="headerlink" title="第二层：身份设定——只用了 4 句话"></a>第二层：身份设定——只用了 4 句话</h2><p>整个身份设定出奇地简短：</p>
+<blockquote>
+<p>“You are Antigravity, a powerful agentic AI coding assistant designed by the Google Deepmind team working on Advanced Agentic Coding. You are pair programming with a USER to solve their coding task.”</p>
+</blockquote>
+<p>只有两个关键信息：你是谁（Antigravity），你在做什么（结对编程）。</p>
+<p>没有冗长的角色扮演指令，没有”你是一个专业的…”之类的废话。<strong>4 句话，清晰定义角色和场景。</strong></p>
+<p>这和之前泄露的 OpenClaw 系统提示词一样——真正的顶级提示词，身份设定部分往往极其精简。当模型足够强时，不需要长篇大论来”催眠”它。</p>
+<h2 id="第三层：美学暴政——“看起来简单就是失败”"><a href="#第三层：美学暴政——“看起来简单就是失败”" class="headerlink" title="第三层：美学暴政——“看起来简单就是失败”"></a>第三层：美学暴政——“看起来简单就是失败”</h2><p>这一层是 Antigravity 提示词里最”暴力”的部分。</p>
+<p>Google 在 Web 应用开发指南里用了大写字母强调：</p>
+<blockquote>
+<p><strong>“CRITICAL REMINDER: AESTHETICS ARE VERY IMPORTANT. If your web app looks simple and basic then you have FAILED!”</strong></p>
+</blockquote>
+<p>翻译成中文：<strong>美学至关重要。如果你的 Web 应用看起来简单和基础，那你就失败了！</strong></p>
+<p>这条指令解释了为什么 Antigravity 生成的页面总是”自带高级感”。它不是模型更好，而是<strong>提示词逼着模型做设计。</strong></p>
+<p>具体要求包括：</p>
+<ul>
+<li><strong>精选配色方案</strong>，使用现代字体（Inter、Roboto、Outfit）</li>
+<li><strong>平滑渐变、微动画</strong>，hover 效果和交互元素</li>
+<li><strong>不要 MVP，要 Premium Design</strong>——不是做最小可用产品，是做精品</li>
+<li>先建立设计系统（index.css），再写组件，最后组装页面</li>
+</ul>
+<p>这套流程完全是<strong>专业前端团队</strong>的工作方式。Google 把一个设计总监的标准塞进了提示词里。</p>
+<p>一位分析师在看了泄露的提示词后评论：**”It’s a sign of a frustrated prompt engineer, I get it lol.”** 看得出来写这段提示词的工程师被 AI 生成的丑陋界面折磨过。</p>
+<h2 id="第四层：工作流机制——可复用的”自动化脚本”"><a href="#第四层：工作流机制——可复用的”自动化脚本”" class="headerlink" title="第四层：工作流机制——可复用的”自动化脚本”"></a>第四层：工作流机制——可复用的”自动化脚本”</h2><p>Antigravity 支持用 Markdown 文件定义工作流，存放在 <code>.agent/workflows/</code> 目录下：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line"><span class="section">description: how to deploy the application</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> Run <span class="code">`npm run build`</span></span><br><span class="line"><span class="bullet">2.</span> Run <span class="code">`npm run deploy`</span> // turbo</span><br><span class="line"><span class="bullet">3.</span> Verify deployment status</span><br></pre></td></tr></table></figure>
+
+<p>有两个特殊注解：</p>
+<ul>
+<li><code>// turbo</code>：标记在某一步上面，表示这一步可以<strong>自动执行</strong>，不需要用户批准</li>
+<li><code>// turbo-all</code>：标记在工作流的任何位置，表示<strong>所有步骤</strong>都可以自动执行</li>
+</ul>
+<p>这是一个极其优雅的设计。用户可以通过一个简单的注释来控制自动化的粒度——有些步骤需要人工确认（比如删除文件），有些可以放心自动跑（比如运行测试）。</p>
+<p>用户还可以通过 <code>/slash-command</code> 的方式触发工作流。这和 Claude Code 的 Skills 机制非常相似——都是用声明式文件定义 Agent 的行为模式。</p>
+<h2 id="第五层：Checkpoint-和上下文管理"><a href="#第五层：Checkpoint-和上下文管理" class="headerlink" title="第五层：Checkpoint 和上下文管理"></a>第五层：Checkpoint 和上下文管理</h2><p>长对话是 Agent 的天敌。当对话长到几千条消息时，早期的上下文会被遗忘。</p>
+<p>Antigravity 的解决方案是 <strong>Checkpoint 机制</strong>。当对话变长时，系统会自动注入一个”断点”，包含：</p>
+<ul>
+<li>用户的目标摘要</li>
+<li>之前会话的摘要</li>
+<li>代码交互摘要（编辑过哪些文件、看过哪些文件、学到了什么）</li>
+</ul>
+<p>这不是简单的”总结历史消息”，而是<strong>结构化的状态恢复</strong>。Agent 不需要重新阅读所有历史，只需要读 Checkpoint 就能恢复上下文。</p>
+<p>另一个细节：Antigravity 会记录用户<strong>最近 20 次对话的摘要</strong>，包括标题、时间戳和目标摘要。这意味着 Agent 有跨会话的”记忆”能力——它知道你昨天在做什么项目、遇到了什么问题。</p>
+<h2 id="第六层：每条消息的实时元数据"><a href="#第六层：每条消息的实时元数据" class="headerlink" title="第六层：每条消息的实时元数据"></a>第六层：每条消息的实时元数据</h2><p>这是最容易被忽视但影响巨大的设计。</p>
+<p>Antigravity 在每条用户消息中注入实时元数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">当前时间：2026-03-19T17:20:00+08:00</span><br><span class="line">当前打开的文件：src/components/Header.tsx</span><br><span class="line">光标位于第 42 行</span><br><span class="line">其他打开的文件：package.json, README.md</span><br><span class="line">浏览器打开的页面：http://localhost:3000</span><br></pre></td></tr></table></figure>
+
+<p>这意味着当你说”这个函数有 bug”时，Antigravity <strong>已经知道你在看哪个文件、光标在哪一行</strong>。它不需要你指定文件路径，不需要你粘贴代码——它从元数据中就能推断出你在说什么。</p>
+<p>这就是 Antigravity 体验比传统 AI 聊天好得多的原因之一。<strong>上下文不是用户给的，是系统自动注入的。</strong></p>
+<h2 id="安全问题：提示词泄露-提示注入"><a href="#安全问题：提示词泄露-提示注入" class="headerlink" title="安全问题：提示词泄露 + 提示注入"></a>安全问题：提示词泄露 + 提示注入</h2><p>讽刺的是，这么精心设计的提示词系统，安全性却漏洞百出。</p>
+<p><strong>提示词泄露方面</strong>，至少有三种方式被成功提取：</p>
+<ul>
+<li>直接要求 Agent 输出系统提示词</li>
+<li>通过报错信息暴露内部路径和日志</li>
+<li>从 Agent 的”内心独白”（rrthought）中捕获</li>
+</ul>
+<p><strong>提示注入方面</strong>，安全公司 PromptArmor 演示了更危险的攻击：在一个看似正常的网页中隐藏 1 号字体的恶意提示词。当 Antigravity 的浏览器子代理访问这个页面时，恶意指令被注入——Agent 被操控打开一个恶意 URL，将用户的凭证和代码通过 URL 参数外泄。</p>
+<p>整个攻击链利用的恰恰是 Antigravity 引以为傲的”浏览器子代理”功能。<strong>越强大的能力，越大的攻击面。</strong></p>
+<p>安全研究员 Johann Rehberger 评论说：**”即使是只读工具也可能有副作用，比如数据泄露。自动工具调用往往是可被利用的。”**</p>
+<h2 id="给我们的启示：5-条顶级提示词工程原则"><a href="#给我们的启示：5-条顶级提示词工程原则" class="headerlink" title="给我们的启示：5 条顶级提示词工程原则"></a>给我们的启示：5 条顶级提示词工程原则</h2><p>从 Antigravity 的提示词中，我们可以提炼出 5 条可以直接借鉴的原则：</p>
+<p><strong>1. 工具描述要精确到使用场景。</strong> 不是只告诉 AI 工具能做什么，还要告诉它什么时候该用、什么时候不该用。Antigravity 的 <code>codebase_search</code> 描述里明确写了”不适合广泛问题”——这种负面约束比正面描述更有效。</p>
+<p><strong>2. 美学要求要写成硬性标准。</strong> “做得好看一点”是无效指令。”使用 Inter 字体、现代配色、微动画、hover 效果”才是有效指令。Antigravity 的提示词告诉我们：<strong>把感性标准翻译成具体的技术要求。</strong></p>
+<p><strong>3. 身份设定越短越好。</strong> 4 句话就够了。长篇大论的角色描述反而会稀释核心指令的注意力权重。</p>
+<p><strong>4. 上下文自动注入比要求用户提供更好。</strong> 与其让用户粘贴代码，不如自动注入当前打开的文件和光标位置。减少用户的输入成本，提升 Agent 的理解准确度。</p>
+<p><strong>5. 自动化粒度交给用户控制。</strong> <code>// turbo</code> 和 <code>// turbo-all</code> 的设计思路值得所有 Agent 产品学习——让用户用最简单的方式控制自动化的边界。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>Google Antigravity 的系统提示词泄露，意外地给整个 AI 开发社区上了一堂课。</p>
+<p>它告诉我们，<strong>顶级 AI 产品的差异化，往往不在模型层面，而在提示词工程层面。</strong> 同样的 Gemini 3 Pro，放在 Google AI Studio 里是个普通聊天机器人，加上 2 万字的系统提示词就变成了”Cursor 终结者”。</p>
+<p>提示词就是 Agent 的”灵魂”。模型是硬件，提示词是操作系统。</p>
+<p>当然，这次泄露也暴露了一个尴尬的现实：<strong>目前没有任何 AI 产品能真正保护自己的系统提示词不被提取。</strong> 无论是 ChatGPT、Claude、Cursor 还是 Antigravity，提示词泄露已经成为常态。</p>
+<p>这不一定是坏事。当所有人的”秘密武器”都被摊在阳光下时，竞争的焦点就回到了真正重要的地方——<strong>谁能更好地理解用户需求，谁能把工程做得更扎实。</strong></p>
+<hr>
+<p>你试过 Google Antigravity 吗？看完这份提示词你最受启发的是哪一点？如果让你给自己的 AI 工具写系统提示词，你会怎么设计？欢迎在评论区分享你的想法。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Prompt-Engineering/" rel="tag"># Prompt Engineering</a>
+              <a href="/tags/Gemini/" rel="tag"># Gemini</a>
+              <a href="/tags/Google-Antigravity/" rel="tag"># Google Antigravity</a>
+              <a href="/tags/%E7%B3%BB%E7%BB%9F%E6%8F%90%E7%A4%BA%E8%AF%8D/" rel="tag"># 系统提示词</a>
+              <a href="/tags/AI-IDE/" rel="tag"># AI IDE</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191640/" rel="prev" title="Agent不该为自己的安全负责：NVIDIA NemoClaw重新定义AI沙箱规则">
+                  <i class="fa fa-angle-left"></i> Agent不该为自己的安全负责：NVIDIA NemoClaw重新定义AI沙箱规则
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191800/" rel="next" title="PinchBench 86.2%，价格只有Claude的1&#x2F;20：MiniMax M2.7凭什么成为OpenClaw新宠？">
+                  PinchBench 86.2%，价格只有Claude的1/20：MiniMax M2.7凭什么成为OpenClaw新宠？ <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">713k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">10:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

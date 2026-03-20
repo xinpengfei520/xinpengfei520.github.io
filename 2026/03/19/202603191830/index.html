@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="你让 OpenClaw 帮你写了一个 API，调了三轮才满意。第二天你说”昨天那个 API 还需要加个分页”——它完全不记得了。 这是 AI Agent 最大的痛点之一：没有记忆，每次对话都从零开始。 OpenClaw 的解决方案是一个叫做”双源记忆系统”的架构。两个独立的记忆源——长期记忆（MEMORY.md）和每日日志（daily logs）——协同工作，让 Agent 既能记住长期偏好，又">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为什么你的 AI Agent 总是&quot;失忆&quot;？OpenClaw 用两个文本文件解决了">
+<meta property="og:url" content="https://www.vance.xin/2026/03/19/202603191830/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你让 OpenClaw 帮你写了一个 API，调了三轮才满意。第二天你说”昨天那个 API 还需要加个分页”——它完全不记得了。 这是 AI Agent 最大的痛点之一：没有记忆，每次对话都从零开始。 OpenClaw 的解决方案是一个叫做”双源记忆系统”的架构。两个独立的记忆源——长期记忆（MEMORY.md）和每日日志（daily logs）——协同工作，让 Agent 既能记住长期偏好，又">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260319-openclaw-dual-source-memory-system-architecture.webp">
+<meta property="article:published_time" content="2026-03-19T18:30:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T10:13:25.100Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="OpenClaw">
+<meta property="article:tag" content="架构设计">
+<meta property="article:tag" content="记忆系统">
+<meta property="article:tag" content="向量搜索">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260319-openclaw-dual-source-memory-system-architecture.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/19/202603191830/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/19/202603191830/","path":"2026/03/19/202603191830/","title":"为什么你的 AI Agent 总是\"失忆\"？OpenClaw 用两个文本文件解决了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>为什么你的 AI Agent 总是"失忆"？OpenClaw 用两个文本文件解决了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E2%80%9D%E5%8F%8C%E6%BA%90%E2%80%9D%EF%BC%9A%E5%8D%95%E4%B8%80%E8%AE%B0%E5%BF%86%E7%9A%84%E5%9B%B0%E5%A2%83"><span class="nav-text">为什么需要”双源”：单一记忆的困境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%BA%90%EF%BC%9AMEMORY-md%E2%80%94%E2%80%94Agent-%E7%9A%84%E2%80%9D%E6%80%A7%E6%A0%BC%E6%A1%A3%E6%A1%88%E2%80%9D"><span class="nav-text">第一源：MEMORY.md——Agent 的”性格档案”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%BA%90%EF%BC%9A%E6%AF%8F%E6%97%A5%E6%97%A5%E5%BF%97%E2%80%94%E2%80%94Agent-%E7%9A%84%E2%80%9D%E5%B7%A5%E4%BD%9C%E6%97%A5%E8%AE%B0%E2%80%9D"><span class="nav-text">第二源：每日日志——Agent 的”工作日记”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E5%BC%95%E6%93%8E%EF%BC%9A%E6%B7%B7%E5%90%88%E6%90%9C%E7%B4%A2"><span class="nav-text">核心引擎：混合搜索</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E6%9C%BA%E5%88%B6%EF%BC%9APre-Compaction-Flush"><span class="nav-text">关键机制：Pre-Compaction Flush</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ContextEngine%EF%BC%9A%E6%8F%92%E4%BB%B6%E5%8C%96%E7%9A%84%E8%AE%B0%E5%BF%86%E6%9E%B6%E6%9E%84"><span class="nav-text">ContextEngine：插件化的记忆架构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%EF%BC%9A%E6%80%8E%E4%B9%88%E7%94%A8%E5%A5%BD%E5%8F%8C%E6%BA%90%E8%AE%B0%E5%BF%86"><span class="nav-text">实战：怎么用好双源记忆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%92%8C%E5%85%B6%E4%BB%96-Agent-%E6%A1%86%E6%9E%B6%E7%9A%84%E8%AE%B0%E5%BF%86%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94"><span class="nav-text">和其他 Agent 框架的记忆方案对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B1%80%E9%99%90%E5%92%8C%E6%9C%AA%E6%9D%A5%E6%96%B9%E5%90%91"><span class="nav-text">局限和未来方向</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">355</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191830/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="为什么你的 AI Agent 总是&quot;失忆&quot;？OpenClaw 用两个文本文件解决了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          为什么你的 AI Agent 总是"失忆"？OpenClaw 用两个文本文件解决了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 18:30:00" itemprop="dateCreated datePublished" datetime="2026-03-19T18:30:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-20 10:13:25" itemprop="dateModified" datetime="2026-03-20T10:13:25+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-dual-source-memory-system-architecture.webp" alt="cover"></p>
+<p>你让 OpenClaw 帮你写了一个 API，调了三轮才满意。第二天你说”昨天那个 API 还需要加个分页”——它完全不记得了。</p>
+<p>这是 AI Agent 最大的痛点之一：<strong>没有记忆，每次对话都从零开始。</strong></p>
+<p>OpenClaw 的解决方案是一个叫做”双源记忆系统”的架构。两个独立的记忆源——长期记忆（MEMORY.md）和每日日志（daily logs）——协同工作，让 Agent 既能记住长期偏好，又能回忆昨天的工作细节。</p>
+<p>这套系统在 2026 年初的 v0.5 版本中引入，3 月 7 日的 v2026.3.7-beta.1 又通过 ContextEngine 插件接口进行了重大升级。社区里有人说：**”这是 OpenClaw 和其他 Agent 框架拉开差距的关键设计。”**</p>
+<p>今天我们从架构到代码，完整拆解这套双源记忆系统。</p>
+<h2 id="为什么需要”双源”：单一记忆的困境"><a href="#为什么需要”双源”：单一记忆的困境" class="headerlink" title="为什么需要”双源”：单一记忆的困境"></a>为什么需要”双源”：单一记忆的困境</h2><p>在聊架构之前，先理解一个问题：为什么不用一个记忆源？</p>
+<p><strong>纯长期记忆的问题：</strong> 如果只有一个长期知识库，每次对话的临时信息——“刚才那个变量叫 userCount”、”上一轮我们决定用 PostgreSQL”——要么不存，要么全存。不存就丢失上下文，全存就把知识库变成垃圾场。</p>
+<p><strong>纯短期日志的问题：</strong> 如果只有逐日记录，Agent 知道你昨天做了什么，但不知道你”永远偏好 TypeScript 而不是 JavaScript”。每次都得重新告诉它你的偏好。</p>
+<p><strong>双源的设计哲学：</strong> 长期记忆存”你是谁、你喜欢什么、项目的核心约定”，每日日志存”今天做了什么、遇到了什么问题、决定了什么方案”。一个管身份，一个管经历。像人脑的语义记忆和情景记忆。</p>
+<p>这不是 OpenClaw 发明的概念，但它的实现方式——纯文本文件 + 向量索引 + 混合搜索——在工程上非常优雅。</p>
+<h2 id="第一源：MEMORY-md——Agent-的”性格档案”"><a href="#第一源：MEMORY-md——Agent-的”性格档案”" class="headerlink" title="第一源：MEMORY.md——Agent 的”性格档案”"></a>第一源：MEMORY.md——Agent 的”性格档案”</h2><p><code>MEMORY.md</code> 是 OpenClaw 的长期记忆文件，存在项目根目录下。它是一个纯 Markdown 文件，Agent 可以读，也可以写。</p>
+<p>一个典型的 MEMORY.md 长这样：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># User Preferences</span></span><br><span class="line"><span class="bullet">-</span> Prefers TypeScript over JavaScript</span><br><span class="line"><span class="bullet">-</span> Uses Vim keybindings</span><br><span class="line"><span class="bullet">-</span> Code style: functional, immutable, no classes</span><br><span class="line"></span><br><span class="line"><span class="section"># Project Context</span></span><br><span class="line"><span class="bullet">-</span> Tech stack: Next.js 15 + Prisma + PostgreSQL</span><br><span class="line"><span class="bullet">-</span> Deployment: Vercel + Supabase</span><br><span class="line"><span class="bullet">-</span> Testing: Vitest, not Jest</span><br><span class="line"></span><br><span class="line"><span class="section"># Working Agreements</span></span><br><span class="line"><span class="bullet">-</span> Always run tests before committing</span><br><span class="line"><span class="bullet">-</span> PR descriptions must include &quot;Why&quot; section</span><br><span class="line"><span class="bullet">-</span> Never use default exports</span><br></pre></td></tr></table></figure>
+
+<p>几个设计要点：</p>
+<p><strong>第一，纯文本，人类可读可编辑。</strong> 不是数据库，不是 JSON，是你用任何文本编辑器都能打开的 Markdown。这意味着你可以随时手动修改 Agent 的”记忆”——加一条偏好，删一条过时的信息。</p>
+<p><strong>第二，Agent 自主维护。</strong> OpenClaw 的 Agent 在对话过程中会自动判断哪些信息值得写入 MEMORY.md。你说”以后别用 Jest 了，换成 Vitest”，它会把这条偏好追加到文件里。下次对话，它读到这条，就知道该用 Vitest。</p>
+<p><strong>第三，每次对话开始时自动加载。</strong> Agent 启动时，MEMORY.md 的内容会被注入到系统提示词（system prompt）中。这相当于 Agent 的”人格初始化”——它一醒来就知道自己该怎么行事。</p>
+<p><strong>第四，有容量限制。</strong> MEMORY.md 不能无限膨胀。OpenClaw 建议控制在 200 行以内，超过部分会被截断。这迫使你和 Agent 一起维护这个文件的质量——只保留真正重要的信息。</p>
+<h2 id="第二源：每日日志——Agent-的”工作日记”"><a href="#第二源：每日日志——Agent-的”工作日记”" class="headerlink" title="第二源：每日日志——Agent 的”工作日记”"></a>第二源：每日日志——Agent 的”工作日记”</h2><p>每日日志存在 <code>.openclaw/logs/</code> 目录下，文件名是日期：<code>2026-03-19.md</code>、<code>2026-03-18.md</code>……</p>
+<p>每个日志文件记录了当天的对话摘要、关键决策、遇到的问题和解决方案。格式大概是这样的：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># 2026-03-19</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Session 1 (09:00-10:30)</span></span><br><span class="line"><span class="bullet">-</span> Built user notification API with WebSocket support</span><br><span class="line"><span class="bullet">-</span> Decided to use Redis pub/sub instead of polling</span><br><span class="line"><span class="bullet">-</span> Fixed: Prisma connection pool exhaustion under load</span><br><span class="line"></span><br><span class="line"><span class="section">## Session 2 (14:00-15:45)</span></span><br><span class="line"><span class="bullet">-</span> Refactored auth middleware to support OAuth2</span><br><span class="line"><span class="bullet">-</span> Key decision: JWT stored in httpOnly cookie, not localStorage</span><br><span class="line"><span class="bullet">-</span> TODO: Add refresh token rotation</span><br></pre></td></tr></table></figure>
+
+<p>和 MEMORY.md 不同，每日日志有几个独特特性：</p>
+<p><strong>第一，自动生成，无需手动维护。</strong> 每轮对话结束时，Agent 会自动把关键信息压缩成摘要，追加到当天的日志文件里。你不需要操心。</p>
+<p><strong>第二，有时间维度。</strong> 你可以问 Agent：”上周三我们做了什么？”它会去查 <code>2026-03-12.md</code>，给你一个精确的回答。这是 MEMORY.md 做不到的——长期记忆没有时间概念。</p>
+<p><strong>第三，天然支持渐进式遗忘。</strong> 越早的日志，被检索到的概率越低。OpenClaw 的搜索算法会给近期日志更高的权重。这模拟了人类记忆的”近因效应”——昨天的事比上个月的事记得更清楚。</p>
+<h2 id="核心引擎：混合搜索"><a href="#核心引擎：混合搜索" class="headerlink" title="核心引擎：混合搜索"></a>核心引擎：混合搜索</h2><p>两个记忆源存了数据，但怎么找到需要的信息？这就是 OpenClaw 混合搜索引擎的工作。</p>
+<p>当 Agent 需要回忆某些信息时，它调用内置的 <code>memorySearch</code> 工具。这个工具同时执行两种搜索：</p>
+<p><strong>向量搜索（Vector Search）：</strong> 把查询文本转成嵌入向量，和记忆库中的向量做余弦相似度比较。适合语义匹配——你问”之前怎么处理认证的”，它能匹配到”JWT stored in httpOnly cookie”，即使两句话没有任何相同的词。</p>
+<p><strong>关键词搜索（BM25）：</strong> 传统的全文检索。适合精确匹配——你问”Prisma 连接池”，它能直接找到包含这两个词的日志条目。</p>
+<p>两种搜索的结果会被合并、去重、排序，返回最相关的记忆片段。</p>
+<p>技术实现上：</p>
+<p><strong>存储层：SQLite + 向量扩展。</strong> OpenClaw 用 SQLite 作为本地向量数据库。每条记忆被切分成约 400 Token 的 chunk，80 Token 重叠，用 SHA-256 做去重。这意味着同一段信息不会被重复索引。</p>
+<p><strong>嵌入模型：可插拔。</strong> 默认使用 OpenAI 的 text-embedding-3-small，但也支持 Gemini、Voyage、甚至本地模型。你可以在 <code>settings.json</code> 里配置：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;memory&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;embedding&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;provider&quot;</span><span class="punctuation">:</span> <span class="string">&quot;openai&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;model&quot;</span><span class="punctuation">:</span> <span class="string">&quot;text-embedding-3-small&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;dimensions&quot;</span><span class="punctuation">:</span> <span class="number">1536</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>搜索权重：可调节。</strong> 向量搜索和 BM25 的权重比默认是 0.7:0.3。如果你的使用场景更偏精确查找（比如代码片段检索），可以把 BM25 的权重调高。</p>
+<h2 id="关键机制：Pre-Compaction-Flush"><a href="#关键机制：Pre-Compaction-Flush" class="headerlink" title="关键机制：Pre-Compaction Flush"></a>关键机制：Pre-Compaction Flush</h2><p>双源记忆系统里最精巧的设计，是 <strong>pre-compaction flush</strong>（压缩前刷写）机制。</p>
+<p>什么是 compaction？当对话上下文太长时，OpenClaw 会对早期消息做摘要压缩，释放上下文窗口空间。这个过程叫 compaction。</p>
+<p>问题来了：如果一段重要的对话在 compaction 时被压缩了，细节就丢失了。摘要只保留大意，不保留具体的代码片段、参数值、配置项。</p>
+<p><strong>Pre-compaction flush 的解决方案：</strong> 在 compaction 执行之前，先把即将被压缩的对话内容写入记忆系统。具体流程是：</p>
+<ol>
+<li>检测到上下文即将溢出，触发 compaction</li>
+<li><strong>暂停压缩</strong>，先执行 flush</li>
+<li>把即将被压缩的消息中的关键信息提取出来</li>
+<li>写入每日日志（短期）和&#x2F;或 MEMORY.md（长期）</li>
+<li>建立向量索引</li>
+<li><strong>恢复压缩</strong>，对原始消息做摘要</li>
+</ol>
+<p>这样，即使对话被压缩了，关键信息已经安全地存到了记忆系统里。Agent 以后可以通过 <code>memorySearch</code> 检索到这些信息。</p>
+<p>社区的评价是：**”这个 flush-before-discard 模式解决了所有 Agent 框架都面临的上下文丢失问题。”**</p>
+<h2 id="ContextEngine：插件化的记忆架构"><a href="#ContextEngine：插件化的记忆架构" class="headerlink" title="ContextEngine：插件化的记忆架构"></a>ContextEngine：插件化的记忆架构</h2><p>2026 年 3 月 7 日，OpenClaw v2026.3.7-beta.1 引入了 <strong>ContextEngine</strong> 插件接口。这是双源记忆系统的一次重大升级。</p>
+<p>ContextEngine 定义了五个生命周期钩子：</p>
+<table>
+<thead>
+<tr>
+<th>钩子</th>
+<th>触发时机</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bootstrap</code></td>
+<td>Agent 启动时</td>
+<td>加载初始记忆、建立索引</td>
+</tr>
+<tr>
+<td><code>ingest</code></td>
+<td>新消息到达时</td>
+<td>提取信息、判断是否值得记忆</td>
+</tr>
+<tr>
+<td><code>assemble</code></td>
+<td>构建上下文时</td>
+<td>决定哪些记忆注入到当前对话</td>
+</tr>
+<tr>
+<td><code>compact</code></td>
+<td>上下文压缩时</td>
+<td>执行 pre-compaction flush</td>
+</tr>
+<tr>
+<td><code>afterTurn</code></td>
+<td>每轮对话结束后</td>
+<td>更新日志、维护索引</td>
+</tr>
+</tbody></table>
+<p>这意味着你可以写自定义的 ContextEngine 插件，完全改变 Agent 的记忆行为。</p>
+<p>比如，你可以写一个插件，让 Agent 把记忆存到 Notion 而不是本地文件。或者写一个插件，让 Agent 根据项目的 Git 历史自动构建上下文——谁改了什么文件、什么时候改的、commit message 写了什么。</p>
+<p>36 氪的评价是：**”ContextEngine 把 OpenClaw 从一个’带记忆的 Agent’变成了一个’记忆架构可编程的 Agent 平台’。”**</p>
+<h2 id="实战：怎么用好双源记忆"><a href="#实战：怎么用好双源记忆" class="headerlink" title="实战：怎么用好双源记忆"></a>实战：怎么用好双源记忆</h2><p>理解了架构，来聊聊实战中怎么用好这套系统。</p>
+<p><strong>技巧 1：主动维护 MEMORY.md。</strong> 不要完全依赖 Agent 自动写入。定期检查 MEMORY.md，删掉过时的信息，补充遗漏的偏好。一个干净的 MEMORY.md 比一个臃肿的 MEMORY.md 效果好 10 倍。</p>
+<p><strong>技巧 2：用 <code>memorySearch</code> 调试记忆。</strong> 如果 Agent 的行为不符合预期，直接问它：”搜索你的记忆，关于 X 你记得什么？”看看返回的结果是否正确。很多时候问题不是 Agent 笨，而是记忆库里存了错误的信息。</p>
+<p><strong>技巧 3：利用日志做复盘。</strong> 每日日志不只是给 Agent 用的，你自己也可以看。<code>cat .openclaw/logs/2026-03-19.md</code> 就能看到今天所有的对话摘要。这是一个天然的工作日报。</p>
+<p><strong>技巧 4：为团队项目配置共享记忆。</strong> 把 MEMORY.md 提交到 Git 仓库里。团队成员的 Agent 都能读到同样的项目约定。这比口头传达”我们项目用 Vitest 不用 Jest”高效得多。</p>
+<h2 id="和其他-Agent-框架的记忆方案对比"><a href="#和其他-Agent-框架的记忆方案对比" class="headerlink" title="和其他 Agent 框架的记忆方案对比"></a>和其他 Agent 框架的记忆方案对比</h2><p>OpenClaw 不是唯一做记忆系统的。简单对比：</p>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>记忆方案</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OpenClaw</td>
+<td>双源（MEMORY.md + 日志）</td>
+<td>纯文本、人类可编辑、混合搜索</td>
+</tr>
+<tr>
+<td>Claude Code</td>
+<td>文件记忆（~&#x2F;.claude&#x2F;memory&#x2F;）</td>
+<td>结构化文件、MEMORY.md 索引、项目隔离</td>
+</tr>
+<tr>
+<td>Cursor</td>
+<td>对话摘要 + .cursorrules</td>
+<td>无持久化日志，依赖规则文件</td>
+</tr>
+<tr>
+<td>AutoGPT</td>
+<td>向量数据库（Pinecone&#x2F;Weaviate）</td>
+<td>纯向量，无人类可读层</td>
+</tr>
+<tr>
+<td>LangChain Memory</td>
+<td>ConversationBufferMemory</td>
+<td>内存级，进程退出即丢失</td>
+</tr>
+</tbody></table>
+<p>OpenClaw 的独特之处在于<strong>两层都是人类可读的纯文本</strong>。你不需要数据库客户端就能查看和修改 Agent 的全部记忆。这在调试和审计时价值巨大。</p>
+<p>AutoGPT 的纯向量方案搜索能力更强，但你无法直接阅读”Agent 到底记住了什么”。LangChain 的内存方案最简单，但不支持跨会话持久化。</p>
+<h2 id="局限和未来方向"><a href="#局限和未来方向" class="headerlink" title="局限和未来方向"></a>局限和未来方向</h2><p>诚实说，双源记忆系统也有局限。</p>
+<p><strong>第一，记忆质量依赖 Agent 的判断。</strong> Agent 决定”什么值得记住”。如果它判断失误——把重要信息忘了，或者把噪音当成知识存下来——记忆库的质量就会下降。目前没有自动清理过时记忆的机制。</p>
+<p><strong>第二，向量搜索有成本。</strong> 每次 <code>memorySearch</code> 都要调用嵌入模型 API。如果记忆库很大（数百条记录），每次搜索的 Token 消耗不可忽略。</p>
+<p><strong>第三，多 Agent 协作场景不够成熟。</strong> 当多个 Agent 同时读写同一个 MEMORY.md 时，可能出现冲突。ContextEngine 的 <code>ingest</code> 钩子没有提供锁机制。</p>
+<p>社区里讨论最多的下一步是<strong>记忆的自动衰减和整理</strong>——让 Agent 定期回顾自己的记忆，合并重复项，淘汰过时信息。就像人脑在睡眠时整理白天的记忆一样。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>记忆是 AI Agent 从”工具”变成”助手”的分水岭。</p>
+<p>没有记忆的 Agent，每次对话都是初次见面。有了记忆，它知道你的偏好、你的项目、你昨天做了什么、你上周为什么改变了方案。</p>
+<p>OpenClaw 的双源记忆系统不是最复杂的方案，但可能是最务实的——纯文本文件保证了透明和可控，混合搜索保证了检索质量，pre-compaction flush 保证了信息不丢失，ContextEngine 保证了可扩展性。</p>
+<p><strong>当你的 Agent 开始记住你的名字、你的代码风格、你昨天犯的那个 bug——你和 AI 的关系就变了。</strong> 它不再是一个你每次都需要从头教的工具，而是一个越用越懂你的搭档。</p>
+<p>这才是 Agent 时代真正让人兴奋的地方。</p>
+<hr>
+<p>你在用 OpenClaw 的记忆系统吗？MEMORY.md 里你都写了什么？你觉得 AI Agent 应该记住你的哪些信息？欢迎在评论区聊聊你的记忆管理经验。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/OpenClaw/" rel="tag"># OpenClaw</a>
+              <a href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" rel="tag"># 架构设计</a>
+              <a href="/tags/%E8%AE%B0%E5%BF%86%E7%B3%BB%E7%BB%9F/" rel="tag"># 记忆系统</a>
+              <a href="/tags/%E5%90%91%E9%87%8F%E6%90%9C%E7%B4%A2/" rel="tag"># 向量搜索</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191800/" rel="prev" title="PinchBench 86.2%，价格只有Claude的1&#x2F;20：MiniMax M2.7凭什么成为OpenClaw新宠？">
+                  <i class="fa fa-angle-left"></i> PinchBench 86.2%，价格只有Claude的1/20：MiniMax M2.7凭什么成为OpenClaw新宠？
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191910/" rel="next" title="手机里养龙虾？小米 miclaw 把 AI Agent 从电脑搬进了口袋">
+                  手机里养龙虾？小米 miclaw 把 AI Agent 从电脑搬进了口袋 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">713k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">10:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

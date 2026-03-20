@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="你有没有想过一个问题：你跟 AI 聊的每一句话，都去了哪里？ 你让 ChatGPT 帮你写一封辞职信，这封信的内容存在了 OpenAI 的服务器上。你让 Claude 帮你分析公司的财报数据，这些数据经过了 Anthropic 的 API。你让 AI 助手整理你的邮箱，它需要读取你所有的邮件内容。 大多数时候，这不是问题。但如果你在处理商业机密、个人隐私、或者任何你不希望被第三方看到的信息——你">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据不出家门！用树莓派&#x2F;NAS本地部署OpenClaw，打造真正属于你的AI管家">
+<meta property="og:url" content="https://www.vance.xin/2026/03/19/202603191520/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你有没有想过一个问题：你跟 AI 聊的每一句话，都去了哪里？ 你让 ChatGPT 帮你写一封辞职信，这封信的内容存在了 OpenAI 的服务器上。你让 Claude 帮你分析公司的财报数据，这些数据经过了 Anthropic 的 API。你让 AI 助手整理你的邮箱，它需要读取你所有的邮件内容。 大多数时候，这不是问题。但如果你在处理商业机密、个人隐私、或者任何你不希望被第三方看到的信息——你">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260319-openclaw-nas-raspberrypi-local-deploy.webp">
+<meta property="article:published_time" content="2026-03-19T15:20:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T10:13:25.099Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="OpenClaw">
+<meta property="article:tag" content="树莓派">
+<meta property="article:tag" content="NAS">
+<meta property="article:tag" content="Ollama">
+<meta property="article:tag" content="本地部署">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260319-openclaw-nas-raspberrypi-local-deploy.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/19/202603191520/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/19/202603191520/","path":"2026/03/19/202603191520/","title":"数据不出家门！用树莓派/NAS本地部署OpenClaw，打造真正属于你的AI管家"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>数据不出家门！用树莓派/NAS本地部署OpenClaw，打造真正属于你的AI管家 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%80%E5%AE%9A%E8%A6%81%E6%9C%AC%E5%9C%B0%E9%83%A8%E7%BD%B2"><span class="nav-text">为什么一定要本地部署</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%B8%80%EF%BC%9A%E6%A0%91%E8%8E%93%E6%B4%BE%E9%83%A8%E7%BD%B2%E2%80%94%E2%80%94300-%E5%9D%97%E9%92%B1%E7%9A%84-Jarvis"><span class="nav-text">方案一：树莓派部署——300 块钱的 Jarvis</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E8%A6%81%E6%B1%82"><span class="nav-text">硬件要求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2%E6%AD%A5%E9%AA%A4"><span class="nav-text">部署步骤</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%BA%8C%EF%BC%9ANAS-%E9%83%A8%E7%BD%B2%E2%80%94%E2%80%94%E4%BD%A0%E7%9A%84-NAS-%E7%BB%88%E4%BA%8E%E6%9C%89%E4%BA%86%E7%81%B5%E9%AD%82"><span class="nav-text">方案二：NAS 部署——你的 NAS 终于有了灵魂</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BE%A4%E6%99%96%EF%BC%88Synology%EF%BC%89%E9%83%A8%E7%BD%B2"><span class="nav-text">群晖（Synology）部署</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A8%81%E8%81%94%E9%80%9A%EF%BC%88QNAP%EF%BC%89%E9%83%A8%E7%BD%B2"><span class="nav-text">威联通（QNAP）部署</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98%EF%BC%88%E8%B8%A9%E5%9D%91%E6%8F%90%E9%86%92%EF%BC%89"><span class="nav-text">权限问题（踩坑提醒）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%88%E6%9E%81%E6%96%B9%E6%A1%88%EF%BC%9A%E9%85%8D%E5%90%88-Ollama-%E5%AE%9E%E7%8E%B0%E5%AE%8C%E5%85%A8%E7%A6%BB%E7%BA%BF"><span class="nav-text">终极方案：配合 Ollama 实现完全离线</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84%E5%9B%BE"><span class="nav-text">架构图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Ollama-%E5%AE%89%E8%A3%85%E5%92%8C%E9%85%8D%E7%BD%AE"><span class="nav-text">Ollama 安装和配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-OpenClaw-%E8%BF%9E%E6%8E%A5-Ollama"><span class="nav-text">配置 OpenClaw 连接 Ollama</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E6%A8%A1%E5%BC%8F%EF%BC%9A%E6%9C%AC%E5%9C%B0-%E4%BA%91%E7%AB%AF%E4%B8%A4%E6%9D%A1%E8%85%BF%E8%B5%B0%E8%B7%AF"><span class="nav-text">混合模式：本地 + 云端两条腿走路</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E9%80%89%E8%B4%AD%E6%8C%87%E5%8D%97%EF%BC%9A%E6%8C%89%E9%A2%84%E7%AE%97%E9%80%89%E6%96%B9%E6%A1%88"><span class="nav-text">硬件选购指南：按预算选方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%B8%AA%E5%BF%85%E9%A1%BB%E7%9F%A5%E9%81%93%E7%9A%84%E5%AE%89%E5%85%A8%E5%8A%A0%E5%9B%BA%E6%8E%AA%E6%96%BD"><span class="nav-text">3 个必须知道的安全加固措施</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%B8%8D%E8%A6%81%E6%8A%8A%E7%AE%A1%E7%90%86%E9%9D%A2%E6%9D%BF%E6%9A%B4%E9%9C%B2%E5%88%B0%E5%85%AC%E7%BD%91"><span class="nav-text">1. 不要把管理面板暴露到公网</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E9%99%90%E5%88%B6-OpenClaw-%E7%9A%84%E7%B3%BB%E7%BB%9F%E6%9D%83%E9%99%90"><span class="nav-text">2. 限制 OpenClaw 的系统权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Ollama-%E6%B2%A1%E6%9C%89%E5%86%85%E7%BD%AE%E8%AE%A4%E8%AF%81"><span class="nav-text">3. Ollama 没有内置认证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">355</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191520/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="数据不出家门！用树莓派&#x2F;NAS本地部署OpenClaw，打造真正属于你的AI管家 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据不出家门！用树莓派/NAS本地部署OpenClaw，打造真正属于你的AI管家
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 15:20:00" itemprop="dateCreated datePublished" datetime="2026-03-19T15:20:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-20 10:13:25" itemprop="dateModified" datetime="2026-03-20T10:13:25+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-nas-raspberrypi-local-deploy.webp" alt="cover"></p>
+<p>你有没有想过一个问题：你跟 AI 聊的每一句话，都去了哪里？</p>
+<p>你让 ChatGPT 帮你写一封辞职信，这封信的内容存在了 OpenAI 的服务器上。你让 Claude 帮你分析公司的财报数据，这些数据经过了 Anthropic 的 API。你让 AI 助手整理你的邮箱，它需要读取你所有的邮件内容。</p>
+<p>大多数时候，这不是问题。但如果你在处理商业机密、个人隐私、或者任何你不希望被第三方看到的信息——你确定要把这些数据发到大洋彼岸的服务器上吗？</p>
+<p>OpenClaw 的核心理念之一就是<strong>本地优先</strong>。它可以跑在你家里的树莓派上，跑在你的 NAS 里，配合 Ollama 本地模型，实现真正的<strong>数据零外泄</strong>。</p>
+<p>今天这篇文章，我分别演示树莓派和 NAS 两种部署方案，再配上 Ollama 本地模型，让你拥有一个完全属于自己的 AI 管家——数据不出家门，7×24 小时在线。</p>
+<h2 id="为什么一定要本地部署"><a href="#为什么一定要本地部署" class="headerlink" title="为什么一定要本地部署"></a>为什么一定要本地部署</h2><p>先说一个数据：2026 年 3 月中旬，中国政府要求国有企业和政府机构禁止在办公电脑上运行 OpenClaw。国家互联网应急中心发布了风险提示，其中一条核心风险就是**”核心数据泄露”**。</p>
+<p>这个风险不仅是 OpenClaw 的问题，而是所有依赖云端 API 的 AI 工具的通病。只要你的数据经过第三方服务器，就存在泄露的可能。</p>
+<p>本地部署解决了三个核心问题：</p>
+<p><strong>第一，数据隐私。</strong> 对话记录、文件内容、操作日志——全部存在你自己的设备上。不经过任何第三方服务器。配合 Ollama 本地模型，连模型推理都在本地完成，真正做到”数据不出家门”。</p>
+<p><strong>第二，可用性。</strong> 云端 API 可能限速、宕机、甚至被封。本地部署不依赖外部服务（纯离线模式），网络断了照样能用。</p>
+<p><strong>第三，成本。</strong> 云端 API 按 Token 收费，一个活跃会话一天能烧掉几十美元。本地模型推理成本为零——除了电费和一次性硬件投入，没有任何持续费用。</p>
+<p>OpenClaw 的官方文档说得很直白：**”Privacy — conversations never leave your machine.”**</p>
+<h2 id="方案一：树莓派部署——300-块钱的-Jarvis"><a href="#方案一：树莓派部署——300-块钱的-Jarvis" class="headerlink" title="方案一：树莓派部署——300 块钱的 Jarvis"></a>方案一：树莓派部署——300 块钱的 Jarvis</h2><p>树莓派是 OpenClaw 本地部署最经典的方案。原因很简单：便宜、省电、安静、7×24 小时运行。</p>
+<h3 id="硬件要求"><a href="#硬件要求" class="headerlink" title="硬件要求"></a>硬件要求</h3><table>
+<thead>
+<tr>
+<th>硬件</th>
+<th>最低配置</th>
+<th>推荐配置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>树莓派</td>
+<td>Pi 4（4GB）</td>
+<td>Pi 5（8GB）</td>
+</tr>
+<tr>
+<td>存储</td>
+<td>32GB SD 卡</td>
+<td>64GB+ NVMe SSD</td>
+</tr>
+<tr>
+<td>电源</td>
+<td>官方电源适配器</td>
+<td>官方电源适配器</td>
+</tr>
+<tr>
+<td>网络</td>
+<td>Wi-Fi</td>
+<td>有线以太网（推荐）</td>
+</tr>
+</tbody></table>
+<p><strong>成本：</strong> 树莓派 5 套装大概 500-800 元，二手树莓派 4 两三百块就能搞定。</p>
+<p><strong>重要提示：</strong> 树莓派上不要跑本地模型。即使是最小的 3B 参数模型，在树莓派上推理也慢到无法使用。树莓派的角色是<strong>运行 OpenClaw Gateway</strong>，模型推理交给云端 API 或者局域网内的另一台设备。</p>
+<h3 id="部署步骤"><a href="#部署步骤" class="headerlink" title="部署步骤"></a>部署步骤</h3><p><strong>第 1 步：安装系统</strong></p>
+<p>用 Raspberry Pi Imager 烧录 <strong>Raspberry Pi OS Lite（64-bit）</strong>。Lite 版没有桌面环境，对于跑服务器来说，桌面是多余的。</p>
+<p>确认架构是 aarch64：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">uname</span> -m</span><br><span class="line"><span class="comment"># 输出应该是 aarch64</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>第 2 步：安装 OpenClaw</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 一键安装（会自动安装 Node.js 22+）</span></span><br><span class="line">curl -fsSL https://openclaw.ai/install.sh | bash</span><br></pre></td></tr></table></figure>
+
+<p>安装完成后运行向导：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openclaw onboard --install-daemon</span><br></pre></td></tr></table></figure>
+
+<p>向导会引导你：</p>
+<ol>
+<li>选择模型提供商（推荐 DeepSeek，便宜）</li>
+<li>输入 API Key</li>
+<li>选择消息平台（Telegram 最简单）</li>
+<li>安装为系统服务（开机自启）</li>
+</ol>
+<p><strong>第 3 步：设置为系统服务</strong></p>
+<p><code>--install-daemon</code> 会自动创建 systemd 服务。如果手动设置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 设置开机自启</span></span><br><span class="line"><span class="built_in">sudo</span> systemctl <span class="built_in">enable</span> openclaw</span><br><span class="line"><span class="built_in">sudo</span> systemctl start openclaw</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看状态</span></span><br><span class="line"><span class="built_in">sudo</span> systemctl status openclaw</span><br></pre></td></tr></table></figure>
+
+<p><strong>第 4 步：远程访问</strong></p>
+<p>树莓派跑起来后，你需要从其他设备访问管理面板。两种方式：</p>
+<p><strong>方式 A：SSH 隧道（安全，推荐）</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在你的电脑上执行</span></span><br><span class="line">ssh -L 18789:localhost:18789 pi@你的树莓派IP</span><br><span class="line"></span><br><span class="line"><span class="comment"># 然后在浏览器打开 http://localhost:18789</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>方式 B：内网穿透（外网访问）</strong></p>
+<p>用 frp、Cloudflare Tunnel 或 Tailscale，把树莓派的服务暴露到公网。</p>
+<p>OpenClaw 官方文档的建议是：**”Break-even: A Pi pays for itself in ~6-12 months vs cloud VPS.”** 一台树莓派 6-12 个月就能回本。</p>
+<h2 id="方案二：NAS-部署——你的-NAS-终于有了灵魂"><a href="#方案二：NAS-部署——你的-NAS-终于有了灵魂" class="headerlink" title="方案二：NAS 部署——你的 NAS 终于有了灵魂"></a>方案二：NAS 部署——你的 NAS 终于有了灵魂</h2><p>如果你家里已经有群晖或威联通的 NAS，恭喜你——你已经拥有了最完美的 OpenClaw 宿主机。</p>
+<p>NAS 的天然优势：</p>
+<ul>
+<li><strong>24 小时在线</strong>，本来就在跑</li>
+<li><strong>有 Docker 支持</strong>，部署极简</li>
+<li><strong>有存储空间</strong>，记忆持久化不是问题</li>
+<li><strong>有 UPS 保护</strong>，不怕突然断电</li>
+</ul>
+<h3 id="群晖（Synology）部署"><a href="#群晖（Synology）部署" class="headerlink" title="群晖（Synology）部署"></a>群晖（Synology）部署</h3><p><strong>要求：</strong> DSM 7.0+，支持 Container Manager（原 Docker 套件）</p>
+<p><strong>第 1 步：</strong> 打开 Container Manager → 注册表 → 搜索 <code>openclaw/openclaw</code>，下载 latest 镜像。</p>
+<p><strong>第 2 步：</strong> 创建容器，配置如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 或者用 SSH 命令行（更快）</span></span><br><span class="line">docker run -d \</span><br><span class="line">  --name openclaw \</span><br><span class="line">  --restart always \</span><br><span class="line">  -p 3000:3000 \</span><br><span class="line">  -v /volume1/docker/openclaw:/root/.openclaw \</span><br><span class="line">  -e ANTHROPIC_API_KEY=<span class="string">&quot;你的API-Key&quot;</span> \</span><br><span class="line">  openclaw/openclaw:latest</span><br></pre></td></tr></table></figure>
+
+<p>关键配置：</p>
+<ul>
+<li><strong>端口映射</strong>：本地 3000 → 容器 3000</li>
+<li><strong>目录映射</strong>：<code>/volume1/docker/openclaw</code> → <code>/root/.openclaw</code>（持久化数据）</li>
+<li><strong>环境变量</strong>：<code>ANTHROPIC_API_KEY</code>（或 DeepSeek 的 Key）</li>
+</ul>
+<p><strong>第 3 步：</strong> 访问 <code>http://NAS内网IP:3000</code> 完成初始化。</p>
+<h3 id="威联通（QNAP）部署"><a href="#威联通（QNAP）部署" class="headerlink" title="威联通（QNAP）部署"></a>威联通（QNAP）部署</h3><p><strong>要求：</strong> QTS 5.0+，安装 Container Station</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">docker run -d \</span><br><span class="line">  --name openclaw \</span><br><span class="line">  --restart always \</span><br><span class="line">  -p 3000:3000 \</span><br><span class="line">  -v /share/Container/openclaw:/root/.openclaw \</span><br><span class="line">  -e ANTHROPIC_API_KEY=<span class="string">&quot;你的API-Key&quot;</span> \</span><br><span class="line">  openclaw/openclaw:latest</span><br></pre></td></tr></table></figure>
+
+<p>操作方式和群晖几乎一样，只是路径不同。</p>
+<h3 id="权限问题（踩坑提醒）"><a href="#权限问题（踩坑提醒）" class="headerlink" title="权限问题（踩坑提醒）"></a>权限问题（踩坑提醒）</h3><p>Synology NAS 上最常见的报错是 <strong>EACCES: permission denied</strong>。解决方法：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># SSH 登录 NAS 后执行</span></span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">chown</span> -R 1000:1000 /volume1/docker/openclaw</span><br></pre></td></tr></table></figure>
+
+<p>或者在 docker-compose.yml 里加上：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">user:</span> <span class="string">&#x27;1000:1000&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="终极方案：配合-Ollama-实现完全离线"><a href="#终极方案：配合-Ollama-实现完全离线" class="headerlink" title="终极方案：配合 Ollama 实现完全离线"></a>终极方案：配合 Ollama 实现完全离线</h2><p>树莓派或 NAS 上跑 OpenClaw Gateway，再配一台跑 Ollama 的设备，就能实现<strong>完全零外泄</strong>。</p>
+<h3 id="架构图"><a href="#架构图" class="headerlink" title="架构图"></a>架构图</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────┐</span><br><span class="line">│ 树莓派 / NAS             │</span><br><span class="line">│ OpenClaw Gateway        │</span><br><span class="line">│ (接收消息、调度任务)      │</span><br><span class="line">└──────────┬──────────────┘</span><br><span class="line">           │ 局域网 HTTP</span><br><span class="line">           ▼</span><br><span class="line">┌─────────────────────────┐</span><br><span class="line">│ 你的电脑 / 另一台设备     │</span><br><span class="line">│ Ollama 本地模型           │</span><br><span class="line">│ (推理、生成)              │</span><br><span class="line">└─────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="Ollama-安装和配置"><a href="#Ollama-安装和配置" class="headerlink" title="Ollama 安装和配置"></a>Ollama 安装和配置</h3><p>在你的 PC 或 Mac 上安装 Ollama：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -fsSL https://ollama.com/install.sh | sh</span><br></pre></td></tr></table></figure>
+
+<p>拉取推荐模型：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 根据你的硬件选择</span></span><br><span class="line">ollama pull qwen3.5:9b     <span class="comment"># 8GB 显存/内存可跑</span></span><br><span class="line">ollama pull qwen3.5:27b    <span class="comment"># 20GB+ 显存，效果更好</span></span><br><span class="line">ollama pull glm-4:9b       <span class="comment"># 中文优化，8GB 可跑</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>关键坑点：</strong> OpenClaw 要求模型上下文窗口至少 64K Token，但 Ollama 默认只有 2048-4096。<strong>你必须手动调大</strong>，否则会出现各种诡异问题——看起来能对话，但定时任务会输出乱码。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法：通过环境变量设置</span></span><br><span class="line">OLLAMA_NUM_CTX=24576 ollama serve</span><br></pre></td></tr></table></figure>
+
+<p>让 Ollama 监听局域网（默认只监听 localhost）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">OLLAMA_HOST=0.0.0.0 ollama serve</span><br></pre></td></tr></table></figure>
+
+<h3 id="配置-OpenClaw-连接-Ollama"><a href="#配置-OpenClaw-连接-Ollama" class="headerlink" title="配置 OpenClaw 连接 Ollama"></a>配置 OpenClaw 连接 Ollama</h3><p>在 OpenClaw 的配置文件 <code>~/.openclaw/openclaw.json</code> 中：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;providers&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;ollama&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;openai-compatible&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;baseUrl&quot;</span><span class="punctuation">:</span> <span class="string">&quot;http://你的Ollama设备IP:11434/v1&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;apiKey&quot;</span><span class="punctuation">:</span> <span class="string">&quot;ollama&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;agents&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;defaults&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;model&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;provider&quot;</span><span class="punctuation">:</span> <span class="string">&quot;ollama&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;qwen3.5:9b&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>apiKey</code> 填 <code>&quot;ollama&quot;</code> 即可——Ollama 不需要认证，但 OpenClaw 要求这个字段不能为空。</p>
+<h3 id="混合模式：本地-云端两条腿走路"><a href="#混合模式：本地-云端两条腿走路" class="headerlink" title="混合模式：本地 + 云端两条腿走路"></a>混合模式：本地 + 云端两条腿走路</h3><p>纯本地模型能覆盖 80-90% 的日常任务。但遇到复杂推理、长文本分析，本地 9B 模型确实不够用。</p>
+<p>推荐策略：<strong>日常走本地，复杂走云端。</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;agents&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;defaults&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;model&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;primary&quot;</span><span class="punctuation">:</span> <span class="string">&quot;ollama/qwen3.5:9b&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;fallback&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deepseek/deepseek-chat&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>笔记整理、消息回复、定时任务 → 本地模型，零成本</li>
+<li>代码生成、数据分析、复杂推理 → 切换云端 API</li>
+</ul>
+<p>这样既保了隐私，又不牺牲关键任务的质量。</p>
+<h2 id="硬件选购指南：按预算选方案"><a href="#硬件选购指南：按预算选方案" class="headerlink" title="硬件选购指南：按预算选方案"></a>硬件选购指南：按预算选方案</h2><table>
+<thead>
+<tr>
+<th>预算</th>
+<th>方案</th>
+<th>适合场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>¥0</td>
+<td>旧电脑&#x2F;旧笔记本直接装</td>
+<td>体验和学习</td>
+</tr>
+<tr>
+<td>¥300</td>
+<td>二手树莓派 4 + 云端 API</td>
+<td>轻量自动化</td>
+</tr>
+<tr>
+<td>¥800</td>
+<td>树莓派 5 + 云端 API</td>
+<td>正式使用</td>
+</tr>
+<tr>
+<td>¥0（已有）</td>
+<td>家里的 NAS + Docker</td>
+<td>最佳性价比</td>
+</tr>
+<tr>
+<td>¥4000+</td>
+<td>Mac Mini + Ollama</td>
+<td>本地大模型</td>
+</tr>
+</tbody></table>
+<p><strong>我的建议：</strong> 如果你已经有 NAS，直接用 NAS 部署，零额外硬件成本。如果没有 NAS，树莓派 5 是最具性价比的选择。如果你对隐私要求极高且预算充足，Mac Mini M4 + Ollama 是终极方案——64GB 统一内存可以流畅跑 27B 参数模型。</p>
+<h2 id="3-个必须知道的安全加固措施"><a href="#3-个必须知道的安全加固措施" class="headerlink" title="3 个必须知道的安全加固措施"></a>3 个必须知道的安全加固措施</h2><p>本地部署不等于绝对安全。如果你把服务暴露到公网，又没做任何防护，那比用云端 API 还危险。</p>
+<h3 id="1-不要把管理面板暴露到公网"><a href="#1-不要把管理面板暴露到公网" class="headerlink" title="1. 不要把管理面板暴露到公网"></a>1. 不要把管理面板暴露到公网</h3><p>OpenClaw 的 Gateway 默认监听 <code>localhost:18789</code>。如果你用内网穿透把它暴露出去，一定要加认证。推荐用 Cloudflare Tunnel + Access 或者 Tailscale 做安全访问。</p>
+<h3 id="2-限制-OpenClaw-的系统权限"><a href="#2-限制-OpenClaw-的系统权限" class="headerlink" title="2. 限制 OpenClaw 的系统权限"></a>2. 限制 OpenClaw 的系统权限</h3><p>本地部署的 OpenClaw 有你设备的完整访问权限。建议：</p>
+<ul>
+<li>用专用用户运行 OpenClaw，不要用 root</li>
+<li>限制工作目录范围</li>
+<li>关闭不需要的工具（<code>tools.exec.enabled: false</code>）</li>
+</ul>
+<h3 id="3-Ollama-没有内置认证"><a href="#3-Ollama-没有内置认证" class="headerlink" title="3. Ollama 没有内置认证"></a>3. Ollama 没有内置认证</h3><p>Ollama 默认不需要密码就能调用。如果 Ollama 跑在和 OpenClaw 不同的设备上，确保它只监听内网 IP，不要暴露到公网。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 只监听内网</span></span><br><span class="line">OLLAMA_HOST=192.168.1.100 ollama serve</span><br><span class="line"><span class="comment"># 而不是 0.0.0.0</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>电影里钢铁侠的 Jarvis 是一个完全私有的 AI 管家——它跑在 Tony Stark 自己的服务器上，只听他一个人的指令，数据不出 Stark 大厦。</p>
+<p>现在，你可以用一台 300 块的树莓派或者家里闲置的 NAS，搭一个属于你自己的 Jarvis。它的”大脑”跑在你的局域网里，它的”记忆”存在你的硬盘上，它的对话记录没有任何人能看到——除了你。</p>
+<p>这才是<strong>本地优先</strong>的真正含义。不是因为本地跑更快（大多数时候云端更快），也不是因为本地更省钱（虽然确实更省），而是因为：<strong>你的数据，应该由你自己掌控。</strong></p>
+<p>在一个数据即石油的时代，这可能是你做过的最值的一笔投资。</p>
+<hr>
+<p>你是用什么设备跑 OpenClaw 的？树莓派、NAS、还是 Mac Mini？有没有试过纯本地模型的效果？欢迎在评论区分享你的部署方案和使用体验。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/OpenClaw/" rel="tag"># OpenClaw</a>
+              <a href="/tags/%E6%A0%91%E8%8E%93%E6%B4%BE/" rel="tag"># 树莓派</a>
+              <a href="/tags/NAS/" rel="tag"># NAS</a>
+              <a href="/tags/Ollama/" rel="tag"># Ollama</a>
+              <a href="/tags/%E6%9C%AC%E5%9C%B0%E9%83%A8%E7%BD%B2/" rel="tag"># 本地部署</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191440/" rel="prev" title="10分钟上手！用TypeScript给OpenClaw写一个自定义插件（附完整代码）">
+                  <i class="fa fa-angle-left"></i> 10分钟上手！用TypeScript给OpenClaw写一个自定义插件（附完整代码）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191600/" rel="next" title="内存省194倍，启动快600倍：Rust重写的OpenClaw替代品到底有多猛？">
+                  内存省194倍，启动快600倍：Rust重写的OpenClaw替代品到底有多猛？ <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">713k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">10:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

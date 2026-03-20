@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="凌晨 2 点，你的 Discord 服务器里弹出一条消息：”这个项目怎么安装？文档在哪？” 你睡了。没人回。 第二天早上你醒来，发现那个人已经退群了。 这个场景你熟悉吗？如果你运营过任何一个技术社群、开源项目、或者小型创业社区，你一定经历过：问题来了没人答，新人来了没人接，活跃度越来越低，群慢慢就”死”了。 问题不在于没有内容，而在于没有”响应”。人类不可能 24 小时在线。但 AI 可以。 今">
+<meta property="og:type" content="article">
+<meta property="og:title" content="社群没人说话？用OpenClaw接入Telegram&#x2F;Discord，打造24小时AI客服">
+<meta property="og:url" content="https://www.vance.xin/2026/03/19/202603191240/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="凌晨 2 点，你的 Discord 服务器里弹出一条消息：”这个项目怎么安装？文档在哪？” 你睡了。没人回。 第二天早上你醒来，发现那个人已经退群了。 这个场景你熟悉吗？如果你运营过任何一个技术社群、开源项目、或者小型创业社区，你一定经历过：问题来了没人答，新人来了没人接，活跃度越来越低，群慢慢就”死”了。 问题不在于没有内容，而在于没有”响应”。人类不可能 24 小时在线。但 AI 可以。 今">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260319-openclaw-telegram-discord-bot.webp">
+<meta property="article:published_time" content="2026-03-19T12:40:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T10:13:25.099Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="OpenClaw">
+<meta property="article:tag" content="Telegram">
+<meta property="article:tag" content="Discord">
+<meta property="article:tag" content="社群运营">
+<meta property="article:tag" content="AI客服">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260319-openclaw-telegram-discord-bot.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/19/202603191240/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/19/202603191240/","path":"2026/03/19/202603191240/","title":"社群没人说话？用OpenClaw接入Telegram/Discord，打造24小时AI客服"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>社群没人说话？用OpenClaw接入Telegram/Discord，打造24小时AI客服 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-OpenClaw-%E6%98%AF%E6%9C%80%E9%80%82%E5%90%88%E5%81%9A%E7%A4%BE%E7%BE%A4%E5%AE%A2%E6%9C%8D%E7%9A%84%E5%B7%A5%E5%85%B7"><span class="nav-text">为什么 OpenClaw 是最适合做社群客服的工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%EF%BC%9A3-%E6%AD%A5%E6%8E%A5%E5%85%A5-Telegram"><span class="nav-text">实战：3 步接入 Telegram</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%88%9B%E5%BB%BA-Telegram-Bot"><span class="nav-text">第 1 步：创建 Telegram Bot</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E9%85%8D%E7%BD%AE-OpenClaw"><span class="nav-text">第 2 步：配置 OpenClaw</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E6%B7%BB%E5%8A%A0%E5%88%B0%E7%BE%A4%E7%BB%84%E5%B9%B6%E8%AE%BE%E7%BD%AE%E8%A1%8C%E4%B8%BA"><span class="nav-text">第 3 步：添加到群组并设置行为</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%EF%BC%9A%E6%8E%A5%E5%85%A5-Discord"><span class="nav-text">实战：接入 Discord</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-1-%E6%AD%A5%EF%BC%9A%E5%88%9B%E5%BB%BA-Discord-Application"><span class="nav-text">第 1 步：创建 Discord Application</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-2-%E6%AD%A5%EF%BC%9A%E7%94%9F%E6%88%90%E9%82%80%E8%AF%B7%E9%93%BE%E6%8E%A5"><span class="nav-text">第 2 步：生成邀请链接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC-3-%E6%AD%A5%EF%BC%9A%E9%85%8D%E7%BD%AE-OpenClaw"><span class="nav-text">第 3 步：配置 OpenClaw</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A9-AI-%E5%AE%A2%E6%9C%8D%E7%9C%9F%E6%AD%A3%E5%A5%BD%E7%94%A8%E7%9A%84-5-%E4%B8%AA%E5%85%B3%E9%94%AE%E8%AE%BE%E7%BD%AE"><span class="nav-text">让 AI 客服真正好用的 5 个关键设置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%96%82%E7%BB%99%E5%AE%83%E4%BD%A0%E7%9A%84%E7%9F%A5%E8%AF%86%E5%BA%93"><span class="nav-text">1. 喂给它你的知识库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E8%AE%BE%E7%BD%AE%E2%80%9D%E4%B8%8D%E7%9F%A5%E9%81%93%E5%B0%B1%E8%AF%B4%E4%B8%8D%E7%9F%A5%E9%81%93%E2%80%9D"><span class="nav-text">2. 设置”不知道就说不知道”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E8%AE%BE%E7%BD%AE%E4%BA%BA%E5%B7%A5%E5%8D%87%E7%BA%A7%E6%9C%BA%E5%88%B6"><span class="nav-text">3. 设置人工升级机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%AE%9A%E6%97%B6%E5%8F%91%E9%80%81%E7%A4%BE%E7%BE%A4%E6%97%A5%E6%8A%A5"><span class="nav-text">4. 定时发送社群日报</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E6%96%B0%E4%BA%BA%E8%87%AA%E5%8A%A8%E6%AC%A2%E8%BF%8E"><span class="nav-text">5. 新人自动欢迎</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%90%E6%9C%AC%E5%92%8C%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-text">成本和注意事项</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%88%90%E6%9C%AC%E9%A2%84%E4%BC%B0"><span class="nav-text">成本预估</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E5%85%A8%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-text">安全注意事项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C%E6%80%8E%E4%B9%88%E6%A0%B7%EF%BC%9A%E4%B8%80%E4%B8%AA%E7%9C%9F%E5%AE%9E%E6%A1%88%E4%BE%8B"><span class="nav-text">效果怎么样：一个真实案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">355</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191240/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="社群没人说话？用OpenClaw接入Telegram&#x2F;Discord，打造24小时AI客服 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          社群没人说话？用OpenClaw接入Telegram/Discord，打造24小时AI客服
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 12:40:00" itemprop="dateCreated datePublished" datetime="2026-03-19T12:40:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-20 10:13:25" itemprop="dateModified" datetime="2026-03-20T10:13:25+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-telegram-discord-bot.webp" alt="cover"></p>
+<p>凌晨 2 点，你的 Discord 服务器里弹出一条消息：”这个项目怎么安装？文档在哪？”</p>
+<p>你睡了。没人回。</p>
+<p>第二天早上你醒来，发现那个人已经退群了。</p>
+<p>这个场景你熟悉吗？如果你运营过任何一个技术社群、开源项目、或者小型创业社区，你一定经历过：<strong>问题来了没人答，新人来了没人接，活跃度越来越低，群慢慢就”死”了。</strong></p>
+<p>问题不在于没有内容，而在于没有”响应”。人类不可能 24 小时在线。但 AI 可以。</p>
+<p>今天这篇文章，我手把手教你用 OpenClaw 接入 Telegram 和 Discord，搭一个 24 小时在线的 AI 助手。它能回答常见问题、引导新人、整理讨论记录，甚至在你睡觉的时候替你”撑场子”。</p>
+<h2 id="为什么-OpenClaw-是最适合做社群客服的工具"><a href="#为什么-OpenClaw-是最适合做社群客服的工具" class="headerlink" title="为什么 OpenClaw 是最适合做社群客服的工具"></a>为什么 OpenClaw 是最适合做社群客服的工具</h2><p>市面上做 AI 客服的工具很多。为什么偏偏选 OpenClaw？</p>
+<p><strong>第一，它原生支持群聊。</strong> 大多数 AI 助手只能做 1 对 1 私聊。OpenClaw 天然支持在 Telegram 群组和 Discord 频道里工作，能看到群里的消息，被 @ 时自动回复，或者在后台静默监听、需要时主动介入。</p>
+<p><strong>第二，它有长期记忆。</strong> 普通聊天机器人每次对话都是”失忆”的。OpenClaw 会记住社群的上下文——谁是核心成员，常见问题有哪些，上周讨论了什么。它会越用越”懂”你的社群。</p>
+<p><strong>第三，它本地运行、开源免费。</strong> 数据不经过第三方服务器，社群成员的消息不会被泄露。而且你可以完全自定义它的行为——哪些该答，哪些不该答，什么时候该把问题升级给真人处理。</p>
+<p><strong>第四，它支持技能扩展。</strong> 通过 Skills 系统，你可以让它不仅”回答问题”，还能”做事”——查文档、搜代码、跑命令、生成报告，甚至帮新人自动配置开发环境。</p>
+<h2 id="实战：3-步接入-Telegram"><a href="#实战：3-步接入-Telegram" class="headerlink" title="实战：3 步接入 Telegram"></a>实战：3 步接入 Telegram</h2><p>Telegram 是 OpenClaw 最成熟的集成平台，也最简单。</p>
+<h3 id="第-1-步：创建-Telegram-Bot"><a href="#第-1-步：创建-Telegram-Bot" class="headerlink" title="第 1 步：创建 Telegram Bot"></a>第 1 步：创建 Telegram Bot</h3><p>打开 Telegram，搜索 <code>@BotFather</code>，发送 <code>/newbot</code>。</p>
+<p>按提示输入：</p>
+<ul>
+<li>Bot 名称（比如 <code>MyCommunityAssistant</code>）</li>
+<li>Bot 用户名（比如 <code>my_community_bot</code>）</li>
+</ul>
+<p>BotFather 会返回一个 <strong>Bot Token</strong>，类似 <code>123456789:ABCdef...</code>。保存好，这是你的钥匙。</p>
+<h3 id="第-2-步：配置-OpenClaw"><a href="#第-2-步：配置-OpenClaw" class="headerlink" title="第 2 步：配置 OpenClaw"></a>第 2 步：配置 OpenClaw</h3><p>在 OpenClaw 配置文件中添加 Telegram 集成：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># config.yaml</span></span><br><span class="line"><span class="attr">integrations:</span></span><br><span class="line">  <span class="attr">telegram:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">botToken:</span> <span class="string">&quot;你的Bot Token&quot;</span></span><br><span class="line">    <span class="attr">mode:</span> <span class="string">&quot;polling&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>或者直接在安装向导中选择 Telegram：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">openclaw onboard --install-daemon</span><br><span class="line"><span class="comment"># 在 channel 选择步骤选 &quot;Telegram (Bot API)&quot;</span></span><br><span class="line"><span class="comment"># 粘贴你的 Bot Token</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="第-3-步：添加到群组并设置行为"><a href="#第-3-步：添加到群组并设置行为" class="headerlink" title="第 3 步：添加到群组并设置行为"></a>第 3 步：添加到群组并设置行为</h3><p>把 Bot 拉进你的 Telegram 群组。然后配置它在群里的行为：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># AGENTS.md（放在工作空间根目录）</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 社群助手身份</span></span><br><span class="line"></span><br><span class="line">你是 [社群名称] 的技术助手。</span><br><span class="line"></span><br><span class="line"><span class="section">## 行为规则</span></span><br><span class="line"></span><br><span class="line"><span class="section">### 在群聊中：</span></span><br><span class="line"><span class="bullet">-</span> 只在被 @ 时回复，不要主动插话</span><br><span class="line"><span class="bullet">-</span> 回答要简洁，不超过 3 段</span><br><span class="line"><span class="bullet">-</span> 如果不确定答案，说&quot;这个问题我不太确定，建议等管理员确认&quot;</span><br><span class="line"><span class="bullet">-</span> 遇到争吵或敏感话题，不参与，回复&quot;这个话题建议大家私下讨论&quot;</span><br><span class="line"></span><br><span class="line"><span class="section">### 可以做的事：</span></span><br><span class="line"><span class="bullet">-</span> 回答关于项目的技术问题</span><br><span class="line"><span class="bullet">-</span> 引导新人查看文档和入门指南</span><br><span class="line"><span class="bullet">-</span> 整理群里的讨论要点</span><br><span class="line"></span><br><span class="line"><span class="section">### 不可以做的事：</span></span><br><span class="line"><span class="bullet">-</span> 不发表个人观点</span><br><span class="line"><span class="bullet">-</span> 不执行任何系统命令</span><br><span class="line"><span class="bullet">-</span> 不分享群成员的私人信息</span><br></pre></td></tr></table></figure>
+
+<p>启动 Gateway：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openclaw gateway --port 18789 --verbose</span><br></pre></td></tr></table></figure>
+
+<p>在群里 @ 你的 Bot，发一条测试消息。如果它正确回复了，恭喜你，你的 24 小时 AI 客服上线了。</p>
+<h2 id="实战：接入-Discord"><a href="#实战：接入-Discord" class="headerlink" title="实战：接入 Discord"></a>实战：接入 Discord</h2><p>Discord 的接入稍微多一步，但逻辑一样。</p>
+<h3 id="第-1-步：创建-Discord-Application"><a href="#第-1-步：创建-Discord-Application" class="headerlink" title="第 1 步：创建 Discord Application"></a>第 1 步：创建 Discord Application</h3><ol>
+<li>打开 <a target="_blank" rel="noopener" href="https://discord.com/developers/applications">Discord Developer Portal</a></li>
+<li>点击 “New Application”，输入名称</li>
+<li>进入 “Bot” 页面，点击 “Add Bot”</li>
+<li>复制 Bot Token</li>
+<li>在 “Privileged Gateway Intents” 中，打开 <code>Message Content Intent</code>（这样 Bot 才能读取群里的消息）</li>
+</ol>
+<h3 id="第-2-步：生成邀请链接"><a href="#第-2-步：生成邀请链接" class="headerlink" title="第 2 步：生成邀请链接"></a>第 2 步：生成邀请链接</h3><p>在 “OAuth2 → URL Generator” 页面：</p>
+<ul>
+<li>Scopes 勾选 <code>bot</code></li>
+<li>Bot Permissions 勾选 <code>Send Messages</code>、<code>Read Message History</code>、<code>Use Slash Commands</code></li>
+</ul>
+<p>复制生成的链接，在浏览器中打开，把 Bot 邀请到你的 Discord 服务器。</p>
+<h3 id="第-3-步：配置-OpenClaw"><a href="#第-3-步：配置-OpenClaw" class="headerlink" title="第 3 步：配置 OpenClaw"></a>第 3 步：配置 OpenClaw</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># config.yaml</span></span><br><span class="line"><span class="attr">integrations:</span></span><br><span class="line">  <span class="attr">discord:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">botToken:</span> <span class="string">&quot;你的Discord Bot Token&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>启动 Gateway 后，在 Discord 频道里 @ 你的 Bot 测试。</p>
+<p><strong>Discord 的优势在于频道隔离。</strong> 你可以给 Bot 设置不同频道的不同行为：</p>
+<ul>
+<li><code>#general</code> → 只回答基础问题</li>
+<li><code>#tech-support</code> → 可以查文档、搜代码、给出技术建议</li>
+<li><code>#announcements</code> → 不回复任何消息</li>
+</ul>
+<h2 id="让-AI-客服真正好用的-5-个关键设置"><a href="#让-AI-客服真正好用的-5-个关键设置" class="headerlink" title="让 AI 客服真正好用的 5 个关键设置"></a>让 AI 客服真正好用的 5 个关键设置</h2><p>光把 Bot 接进群是不够的。一个”好用”的社群 AI 客服，需要这 5 个关键配置。</p>
+<h3 id="1-喂给它你的知识库"><a href="#1-喂给它你的知识库" class="headerlink" title="1. 喂给它你的知识库"></a>1. 喂给它你的知识库</h3><p>AI 客服最大的价值是”能回答问题”。但它需要知道答案在哪。</p>
+<p>把你的 FAQ 文档、项目文档、常见问题列表放到 OpenClaw 的工作空间目录下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">~/.openclaw/workspace/</span><br><span class="line">├── AGENTS.md          # AI 的身份和行为规则</span><br><span class="line">├── docs/</span><br><span class="line">│   ├── faq.md         # 常见问题</span><br><span class="line">│   ├── quickstart.md  # 快速入门</span><br><span class="line">│   └── api-reference.md</span><br><span class="line">└── knowledge/</span><br><span class="line">    └── community-rules.md  # 社群规则</span><br></pre></td></tr></table></figure>
+
+<p>OpenClaw 会自动读取这些文件作为上下文。当有人问”怎么安装？”，它会从 <code>quickstart.md</code> 里找到答案并回复。</p>
+<h3 id="2-设置”不知道就说不知道”"><a href="#2-设置”不知道就说不知道”" class="headerlink" title="2. 设置”不知道就说不知道”"></a>2. 设置”不知道就说不知道”</h3><p>AI 最危险的行为是”编造答案”。在 AGENTS.md 里加一条铁律：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## 核心原则</span></span><br><span class="line">如果知识库中没有相关信息，诚实回答&quot;这个问题我暂时无法确认，</span><br><span class="line">请等管理员回复，或查看官方文档：[链接]&quot;。</span><br><span class="line">绝对不要编造技术细节或虚构功能。</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-设置人工升级机制"><a href="#3-设置人工升级机制" class="headerlink" title="3. 设置人工升级机制"></a>3. 设置人工升级机制</h3><p>不是所有问题都应该让 AI 回答。设置一个升级规则：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## 升级到人工</span></span><br><span class="line">以下情况不要自己回答，标记 @admin 提醒管理员：</span><br><span class="line"><span class="bullet">-</span> 涉及付费、退款、账号问题</span><br><span class="line"><span class="bullet">-</span> 用户明确表示&quot;我要找真人&quot;</span><br><span class="line"><span class="bullet">-</span> Bug 报告（记录详情后转交）</span><br><span class="line"><span class="bullet">-</span> 任何你不确定的技术问题</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-定时发送社群日报"><a href="#4-定时发送社群日报" class="headerlink" title="4. 定时发送社群日报"></a>4. 定时发送社群日报</h3><p>用定时任务让 Bot 每天发一份群活动摘要：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">openclaw cron add --name <span class="string">&quot;community-digest&quot;</span> \</span><br><span class="line">  --schedule <span class="string">&quot;0 21 * * *&quot;</span> \</span><br><span class="line">  --prompt <span class="string">&quot;整理今天群里的讨论要点，生成一份简短的社群日报，</span></span><br><span class="line"><span class="string">  包含：今日热门话题、待解决问题、新成员数量。发送到群里。&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这个功能特别受欢迎。很多不活跃的成员看了日报之后会重新参与讨论。</p>
+<h3 id="5-新人自动欢迎"><a href="#5-新人自动欢迎" class="headerlink" title="5. 新人自动欢迎"></a>5. 新人自动欢迎</h3><p>在 AGENTS.md 中设置新人引导流程：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## 新成员加入时</span></span><br><span class="line"><span class="bullet">-</span> 发送欢迎消息，包含社群介绍和基本规则</span><br><span class="line"><span class="bullet">-</span> 推荐阅读入门文档链接</span><br><span class="line"><span class="bullet">-</span> 提示&quot;有任何问题可以直接 @ 我&quot;</span><br></pre></td></tr></table></figure>
+
+<h2 id="成本和注意事项"><a href="#成本和注意事项" class="headerlink" title="成本和注意事项"></a>成本和注意事项</h2><h3 id="成本预估"><a href="#成本预估" class="headerlink" title="成本预估"></a>成本预估</h3><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>月费用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>OpenClaw 本体</td>
+<td>免费（开源）</td>
+</tr>
+<tr>
+<td>模型 API（DeepSeek）</td>
+<td>30-80 元（取决于群活跃度）</td>
+</tr>
+<tr>
+<td>服务器（可选）</td>
+<td>29-99 元（阿里云&#x2F;腾讯云）</td>
+</tr>
+<tr>
+<td><strong>总计</strong></td>
+<td><strong>30-180 元&#x2F;月</strong></td>
+</tr>
+</tbody></table>
+<p>用 DeepSeek 或智谱 GLM 做社群客服完全够用，不需要用 Claude 或 GPT-4 这种贵的模型。简单的 FAQ 回答不需要太强的推理能力，性价比更重要。</p>
+<h3 id="安全注意事项"><a href="#安全注意事项" class="headerlink" title="安全注意事项"></a>安全注意事项</h3><p><strong>必须做的：</strong></p>
+<ul>
+<li>限制 Bot 的系统权限——社群客服不需要执行 Shell 命令和读写文件</li>
+<li>关闭 DM 开放策略（<code>dmPolicy=&quot;paired&quot;</code>），防止陌生人通过私聊操控 Bot</li>
+<li>定期检查 Bot 的回复日志，看看有没有”翻车”的回答</li>
+<li>运行 <code>openclaw doctor</code> 检查安全配置</li>
+</ul>
+<p><strong>绝对不要做的：</strong></p>
+<ul>
+<li>不要给 Bot 管理员权限</li>
+<li>不要让它接触任何 API Key 或敏感凭证</li>
+<li>不要让它在群里执行代码或系统命令</li>
+<li>不要开放不受控的自动回复（一定要设 @ 触发或关键词触发）</li>
+</ul>
+<p>OpenClaw 的维护者说过一句大实话：”如果你连命令行都不会用，这个项目对你来说太危险了。”社群客服场景相对安全，但基本的安全意识不能少。</p>
+<h2 id="效果怎么样：一个真实案例"><a href="#效果怎么样：一个真实案例" class="headerlink" title="效果怎么样：一个真实案例"></a>效果怎么样：一个真实案例</h2><p>一个开源项目社群，之前 Discord 日活不到 20 人，新人提问平均响应时间 6 小时（因为维护者在不同时区）。</p>
+<p>接入 OpenClaw 后：</p>
+<ul>
+<li><strong>响应时间从 6 小时降到 30 秒</strong></li>
+<li><strong>70% 的常见问题被 AI 直接解决</strong>，不需要人工介入</li>
+<li>**日活从 20 提升到 50+**，因为新人能立刻得到帮助，留存率提高了</li>
+<li>维护者的时间从”回答重复问题”释放出来，专注于开发和高价值的社区互动</li>
+</ul>
+<p>效果最好的功能是”每日社群摘要”。很多潜水的成员说：”看了摘要才知道群里在讨论什么有意思的东西，就想参与进来了。”</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>社群运营最难的不是”有没有内容”，而是”有没有响应”。</p>
+<p>一个 24 小时在线、随时能回答问题、定时发送有价值摘要的 AI 助手，不能让一个”死群”起死回生，但它能做到一件更重要的事：<strong>让每个走进来的新人不会因为”没人理”而转身离开。</strong></p>
+<p>这才是社群活下去的关键——不是热闹，是不冷场。</p>
+<p>当然，AI 客服永远替代不了真人的温度。最好的模式是 AI 处理 80% 的重复问题，让你把精力集中在那 20% 真正需要人类判断和关怀的互动上。</p>
+<p>技术社群、开源项目、创业社区、学习小组……只要你有一个需要持续维护的群，这套方案都适用。成本不到 100 元&#x2F;月，搭建时间不到 1 小时。</p>
+<p>试试看？</p>
+<hr>
+<p>你的社群用了什么工具来提升活跃度？有没有试过 AI 客服？效果怎么样？欢迎在评论区分享你的经验和踩过的坑。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/OpenClaw/" rel="tag"># OpenClaw</a>
+              <a href="/tags/Telegram/" rel="tag"># Telegram</a>
+              <a href="/tags/Discord/" rel="tag"># Discord</a>
+              <a href="/tags/%E7%A4%BE%E7%BE%A4%E8%BF%90%E8%90%A5/" rel="tag"># 社群运营</a>
+              <a href="/tags/AI%E5%AE%A2%E6%9C%8D/" rel="tag"># AI客服</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191200/" rel="prev" title="我用OpenClaw搭了一条内容流水线，1人干3人的活（附完整SOP）">
+                  <i class="fa fa-angle-left"></i> 我用OpenClaw搭了一条内容流水线，1人干3人的活（附完整SOP）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191320/" rel="next" title="Star数超越Linux！拆解OpenClaw的5层架构，看懂AI Agent的&quot;操作系统&quot;">
+                  Star数超越Linux！拆解OpenClaw的5层架构，看懂AI Agent的"操作系统" <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">713k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">10:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

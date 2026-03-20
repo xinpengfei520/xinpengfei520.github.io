@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="跑 OpenClaw 最大的开销是什么？不是硬件，不是电费，是模型 API 的 Token 费用。 一个活跃的 OpenClaw Agent 24 小时跑下来，上下文能膨胀到 20 万 Token 以上。用 Claude Opus 跑，一天烧掉几十美元是常事。用 Claude Sonnet 省一点，但一个月下来也是一笔不小的开销。 有没有一个模型，能力接近 Claude，但价格只有它的零头？ 3">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PinchBench 86.2%，价格只有Claude的1&#x2F;20：MiniMax M2.7凭什么成为OpenClaw新宠？">
+<meta property="og:url" content="https://www.vance.xin/2026/03/19/202603191800/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="跑 OpenClaw 最大的开销是什么？不是硬件，不是电费，是模型 API 的 Token 费用。 一个活跃的 OpenClaw Agent 24 小时跑下来，上下文能膨胀到 20 万 Token 以上。用 Claude Opus 跑，一天烧掉几十美元是常事。用 Claude Sonnet 省一点，但一个月下来也是一笔不小的开销。 有没有一个模型，能力接近 Claude，但价格只有它的零头？ 3">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260319-minimax-m27-openclaw-best-model.webp">
+<meta property="article:published_time" content="2026-03-19T18:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T10:13:25.099Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="OpenClaw">
+<meta property="article:tag" content="MiniMax">
+<meta property="article:tag" content="M2.7">
+<meta property="article:tag" content="大模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260319-minimax-m27-openclaw-best-model.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/19/202603191800/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/19/202603191800/","path":"2026/03/19/202603191800/","title":"PinchBench 86.2%，价格只有Claude的1/20：MiniMax M2.7凭什么成为OpenClaw新宠？"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>PinchBench 86.2%，价格只有Claude的1/20：MiniMax M2.7凭什么成为OpenClaw新宠？ | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#M2-7-%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%EF%BC%9A%E5%85%A8%E9%9D%A2%E5%AF%B9%E6%A0%87-Opus"><span class="nav-text">M2.7 核心数据：全面对标 Opus</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%B7%E6%A0%BC%EF%BC%9A%E7%9C%9F%E6%AD%A3%E7%9A%84%E6%9D%80%E6%89%8B%E9%94%8F"><span class="nav-text">价格：真正的杀手锏</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E8%BF%9B%E5%8C%96%EF%BC%9AAI-%E5%8F%82%E4%B8%8E%E8%AE%AD%E7%BB%83%E8%87%AA%E5%B7%B1"><span class="nav-text">自进化：AI 参与训练自己</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OpenClaw-%E5%AE%9E%E6%B5%8B%EF%BC%9A%E6%B7%B1%E5%BA%A6%E9%98%85%E8%AF%BB%E5%9E%8B%E9%80%89%E6%89%8B"><span class="nav-text">OpenClaw 实测：深度阅读型选手</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%92%8C-DeepSeek%E3%80%81Qwen-%E6%80%8E%E4%B9%88%E9%80%89"><span class="nav-text">和 DeepSeek、Qwen 怎么选</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E9%94%AE%E6%8E%A5%E5%85%A5-OpenClaw"><span class="nav-text">一键接入 OpenClaw</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%80%BC%E5%BE%97%E5%85%B3%E6%B3%A8%E7%9A%84%E9%A3%8E%E9%99%A9"><span class="nav-text">值得关注的风险</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">355</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191800/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="PinchBench 86.2%，价格只有Claude的1&#x2F;20：MiniMax M2.7凭什么成为OpenClaw新宠？ | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PinchBench 86.2%，价格只有Claude的1/20：MiniMax M2.7凭什么成为OpenClaw新宠？
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 18:00:00" itemprop="dateCreated datePublished" datetime="2026-03-19T18:00:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-20 10:13:25" itemprop="dateModified" datetime="2026-03-20T10:13:25+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260319-minimax-m27-openclaw-best-model.webp" alt="cover"></p>
+<p>跑 OpenClaw 最大的开销是什么？不是硬件，不是电费，是模型 API 的 Token 费用。</p>
+<p>一个活跃的 OpenClaw Agent 24 小时跑下来，上下文能膨胀到 20 万 Token 以上。用 Claude Opus 跑，一天烧掉几十美元是常事。用 Claude Sonnet 省一点，但一个月下来也是一笔不小的开销。</p>
+<p>有没有一个模型，能力接近 Claude，但价格只有它的零头？</p>
+<p>3 月 18 日，MiniMax 发布了 M2.7。在 Kilo 团队的 PinchBench（OpenClaw Agent 专用基准测试）上拿到了 **86.2%**，距离 Claude Opus 4.6 的 87.4% 只差 1.2 个百分点。价格呢？输入 $0.30&#x2F;M Token，输出 $1.20&#x2F;M Token——大约是 Claude 的 <strong>1&#x2F;20</strong>。</p>
+<p>更有意思的是，这个模型会”自我进化”。它参与了自己的训练过程，自主跑了 100 多轮优化，把内部评测分数提升了 30%。</p>
+<p>今天我们来聊聊：M2.7 到底有多强？它真的适合跑 OpenClaw 吗？和 DeepSeek、Qwen 比谁更值？</p>
+<h2 id="M2-7-核心数据：全面对标-Opus"><a href="#M2-7-核心数据：全面对标-Opus" class="headerlink" title="M2.7 核心数据：全面对标 Opus"></a>M2.7 核心数据：全面对标 Opus</h2><p>先看硬数据。M2.7 在多个关键基准测试上的表现：</p>
+<table>
+<thead>
+<tr>
+<th>基准测试</th>
+<th>M2.7</th>
+<th>参考对比</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SWE-Pro（多语言编程）</td>
+<td>56.22%</td>
+<td>接近 Opus 最佳水平</td>
+</tr>
+<tr>
+<td>SWE Multilingual</td>
+<td>76.5%</td>
+<td>多语言代码能力突出</td>
+</tr>
+<tr>
+<td>VIBE-Pro（全栈项目交付）</td>
+<td>55.6%</td>
+<td>接近 Opus 4.6</td>
+</tr>
+<tr>
+<td>Terminal Bench 2（系统理解）</td>
+<td>57.0%</td>
+<td>复杂工程系统</td>
+</tr>
+<tr>
+<td>PinchBench（OpenClaw Agent）</td>
+<td>86.2%</td>
+<td>Opus 4.6 为 87.4%</td>
+</tr>
+<tr>
+<td>MLE Bench Lite（机器学习竞赛）</td>
+<td>66.6% 奖牌率</td>
+<td>追平 Gemini 3.1</td>
+</tr>
+</tbody></table>
+<p>几个关键信息：</p>
+<p><strong>第一，编码能力已经到了第一梯队。</strong> SWE-Pro 56.22%，和 GPT-5.3-Codex 持平。SWE Multilingual 76.5%，意味着不只是 Python 写得好，TypeScript、Rust、Go 也都能打。</p>
+<p><strong>第二，Agent 能力特别强。</strong> PinchBench 是专门测试 OpenClaw Agent 场景的基准，涵盖了代码生成、工具调用、多轮对话、文件操作等真实任务。86.2% 的得分排在第 5 名，前面是 Opus 4.6（87.4%）、Sonnet 4.6（87.0%）、GLM-5（86.4%）和 GPT-5.4（86.4%）。</p>
+<p><strong>第三，从 M2.5 到 M2.7，跳跃巨大。</strong> M2.5 在 PinchBench 上是 82.5%，M2.7 直接跳到 86.2%，3.7 个百分点的提升把 MiniMax 从”中游”拉到了”顶级”。</p>
+<h2 id="价格：真正的杀手锏"><a href="#价格：真正的杀手锏" class="headerlink" title="价格：真正的杀手锏"></a>价格：真正的杀手锏</h2><p>能力接近顶尖不算新鲜，价格才是 M2.7 真正的杀手锏。</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>输入价格（&#x2F;M Token）</th>
+<th>输出价格（&#x2F;M Token）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude Opus 4.6</td>
+<td>$15.00</td>
+<td>$75.00</td>
+</tr>
+<tr>
+<td>Claude Sonnet 4.6</td>
+<td>$3.00</td>
+<td>$15.00</td>
+</tr>
+<tr>
+<td>GPT-5.4</td>
+<td>$2.50</td>
+<td>$10.00</td>
+</tr>
+<tr>
+<td>MiniMax M2.7</td>
+<td><strong>$0.30</strong></td>
+<td><strong>$1.20</strong></td>
+</tr>
+<tr>
+<td>DeepSeek V3.2</td>
+<td>$0.27</td>
+<td>$0.42</td>
+</tr>
+</tbody></table>
+<p>M2.7 的输入价格是 Opus 的 1&#x2F;50，输出价格是 Opus 的 1&#x2F;62。即使和”性价比之王” Sonnet 比，M2.7 也便宜了 10 倍以上。</p>
+<p>VentureBeat 的评价是：<strong>M2.7 是目前世界上最便宜的前沿级 AI 模型之一。</strong></p>
+<p>算一笔账：一个 OpenClaw Agent 7×24 小时运行，每天消耗大约 500 万 Token（保守估计）。用 Claude Opus 一天要花 $100+，用 M2.7 只需要 <strong>$3-5</strong>。一个月下来，省的钱够买一台 Mac Mini。</p>
+<h2 id="自进化：AI-参与训练自己"><a href="#自进化：AI-参与训练自己" class="headerlink" title="自进化：AI 参与训练自己"></a>自进化：AI 参与训练自己</h2><p>M2.7 最让人兴奋的不是跑分，是它的训练方式。</p>
+<p>传统模型训练：人类工程师写数据 → 训练模型 → 人类评估 → 调参 → 再训练。整个过程依赖大量人力。</p>
+<p>M2.7 的方式：模型自己参与优化。MiniMax 让 M2.7 <strong>自主构建了强化学习的训练脚手架</strong>——它自己搜索最优的采样参数组合（温度、频率惩罚、存在惩罚），自己设计更具体的工作流指南（比如修复 bug 后自动搜索其他文件中的相同模式），自己添加循环检测等优化。</p>
+<p>这个过程跑了 <strong>100 多轮</strong>，最终在内部评测集上实现了 <strong>30% 的性能提升</strong>。</p>
+<p>MiniMax 在官方公告里说：**”我们相信，未来的 AI 自进化将逐步走向完全自主，在无人参与的情况下协调数据构建、模型训练、推理架构、评估等各个阶段。”**</p>
+<p>这是一个信号。AI 不只是在帮人写代码，它开始帮自己写训练代码了。</p>
+<h2 id="OpenClaw-实测：深度阅读型选手"><a href="#OpenClaw-实测：深度阅读型选手" class="headerlink" title="OpenClaw 实测：深度阅读型选手"></a>OpenClaw 实测：深度阅读型选手</h2><p>Kilo 团队对 M2.7 做了两轮测试。PinchBench 测日常 Agent 任务，Kilo Bench 测极端场景（89 个任务，从 Git 操作到密码分析到 QEMU 自动化）。</p>
+<p>在 Kilo Bench 上，M2.7 以 47% 的通过率排名第二，仅次于 Qwen3.5-plus 的 49%。但 Kilo 团队发现了一个有趣的行为模式：</p>
+<p><strong>M2.7 是一个”深度阅读型”选手。</strong> 它在执行任务之前，会大量阅读周围的代码文件，分析依赖关系，追踪调用链。这让它在需要全局理解的复杂任务上表现出色——比如跨文件重构、大型代码库的 bug 修复。</p>
+<p>但这也带来了一个问题：<strong>它太爱读了</strong>，有时候会因为过度探索而超时。M2.7 平均每次任务消耗约 280 万输入 Token，是所有测试模型中最高的。</p>
+<p>Kilo 团队的评价很精准：**”深度阅读能发现更深层的 bug——但它会消耗更多时间和 Token。”**</p>
+<p>还有一个值得注意的发现：每个模型都有”独门绝技”——解决了其他所有模型都解决不了的特定任务。M2.7 在一个 SPARQL 查询任务上独家通关，因为它能区分”EU 国家过滤器是一个资格条件，不是输出过滤器”——这是推理能力，不是编码能力。</p>
+<p>Kilo 团队的结论是：<strong>这些模型不是互相替代的，是互补的。</strong> 一个理想的”预言家”如果能针对每个任务选最佳模型，总通过率可以从最佳单模型的 49% 提升到 67%。</p>
+<h2 id="和-DeepSeek、Qwen-怎么选"><a href="#和-DeepSeek、Qwen-怎么选" class="headerlink" title="和 DeepSeek、Qwen 怎么选"></a>和 DeepSeek、Qwen 怎么选</h2><p>OpenClaw 社区里，国产模型的选择集中在三个：DeepSeek、Qwen（通义千问）和 MiniMax。快速对比：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>MiniMax M2.7</th>
+<th>DeepSeek V3.2</th>
+<th>Qwen3.5-plus</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PinchBench</td>
+<td>86.2%</td>
+<td>~84%</td>
+<td>85.8%</td>
+</tr>
+<tr>
+<td>价格（输入）</td>
+<td>$0.30&#x2F;M</td>
+<td>$0.27&#x2F;M</td>
+<td>$0.50&#x2F;M</td>
+</tr>
+<tr>
+<td>价格（输出）</td>
+<td>$1.20&#x2F;M</td>
+<td>$0.42&#x2F;M</td>
+<td>$2.00&#x2F;M</td>
+</tr>
+<tr>
+<td>上下文窗口</td>
+<td>200K</td>
+<td>128K</td>
+<td>128K</td>
+</tr>
+<tr>
+<td>Agent 工具调用</td>
+<td>强（97% Skill 遵循率）</td>
+<td>强</td>
+<td>强</td>
+</tr>
+<tr>
+<td>自进化能力</td>
+<td>有</td>
+<td>无</td>
+<td>无</td>
+</tr>
+<tr>
+<td>OpenClaw 集成</td>
+<td>OAuth 原生支持</td>
+<td>OpenAI 兼容</td>
+<td>OpenAI 兼容</td>
+</tr>
+<tr>
+<td>最佳场景</td>
+<td>复杂编码 + 长上下文</td>
+<td>日常编码 + 极低成本</td>
+<td>全能型 + 中文</td>
+</tr>
+</tbody></table>
+<p><strong>选 DeepSeek 的理由：</strong> 极致便宜。如果你的 Agent 主要做简单任务——消息回复、日程管理、简单问答——DeepSeek V3.2 的输出价格只有 $0.42&#x2F;M，是最省钱的选择。社区里有人用 DeepSeek 跑 OpenClaw，月费不到 $3。</p>
+<p><strong>选 Qwen3.5-plus 的理由：</strong> 中文能力最强，Kilo Bench 通过率最高（49%）。如果你的 Agent 主要用中文交互，处理中文文档和代码注释，Qwen 是最稳的选择。</p>
+<p><strong>选 M2.7 的理由：</strong> 编码能力最强（SWE-Pro 56.22%），上下文窗口最大（200K），Agent 场景优化最好（97% Skill 遵循率），OpenClaw 原生集成最丝滑。如果你的 Agent 需要做复杂编码任务——全栈项目交付、生产环境调试、跨文件重构——M2.7 是性价比最高的选择。</p>
+<p>一句话总结：<strong>日常省钱选 DeepSeek，中文场景选 Qwen，编码 Agent 选 M2.7。</strong></p>
+<h2 id="一键接入-OpenClaw"><a href="#一键接入-OpenClaw" class="headerlink" title="一键接入 OpenClaw"></a>一键接入 OpenClaw</h2><p>M2.7 接入 OpenClaw 非常简单。MiniMax 提供了 OAuth 原生支持，不需要手动配置 API Key：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装 OpenClaw</span></span><br><span class="line">curl -fsSL https://openclaw.ai/install.sh | bash</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动向导，选择 MiniMax 作为模型提供商</span></span><br><span class="line"><span class="comment"># 选择 OAuth 认证，浏览器登录即可</span></span><br></pre></td></tr></table></figure>
+
+<p>如果你已经有 OpenClaw 环境，手动配置也很简单：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;providers&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;minimax&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;openai-compatible&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;baseUrl&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://api.minimax.io/v1&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;apiKey&quot;</span><span class="punctuation">:</span> <span class="string">&quot;你的API-Key&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;agents&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;defaults&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;model&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;provider&quot;</span><span class="punctuation">:</span> <span class="string">&quot;minimax&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;MiniMax-M2.7&quot;</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>一个隐藏福利：选择 MiniMax 作为 Provider 后，OpenClaw 的图片工具会<strong>自动连接 MiniMax 的视觉模型 API</strong>——不需要额外配置，你的 Agent 就能”看图说话”。</p>
+<h2 id="值得关注的风险"><a href="#值得关注的风险" class="headerlink" title="值得关注的风险"></a>值得关注的风险</h2><p>公平起见，M2.7 也不是完美的。</p>
+<p><strong>第一，独立第三方评测不全是好消息。</strong> Artificial Analysis 给 M2.7 的智能指数评分是 50 分，评价是”在同价位中领先，但在速度上偏慢，输出偏啰嗦”。BridgeBench（Vibe Coding 基准）上，M2.5 排第 12 名，M2.7 反而掉到了第 19 名——在”随意写代码”的场景里，M2.7 的深度阅读行为反而成了减分项。</p>
+<p><strong>第二，Token 消耗偏高。</strong> M2.7 的”深度阅读”习惯意味着每次任务消耗的 Token 量高于同级模型。虽然单价便宜，但如果每次任务多读 3 倍的上下文，省钱的优势会被抵消一部分。</p>
+<p><strong>第三，不是开源模型。</strong> M2.7 是闭源的。MiniMax 的 M2 系列（M2、M2.1、M2.5）是开源的，但 M2.7 目前只通过 API 提供。如果你需要本地部署以保护隐私，M2.7 暂时做不到。</p>
+<p><strong>第四，Anthropic 的蒸馏指控。</strong> 2026 年 2 月，Anthropic 指控三家中国公司——DeepSeek、Moonshot AI 和 MiniMax——试图从 Claude 模型中提取知识。这个争议目前没有定论，但如果你在合规敏感的环境下使用，需要评估这个风险。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>AI Agent 时代的竞争，模型选择是一个关键决策。</p>
+<p>过去，这个选择很简单——用 Claude 就对了。但当 M2.7 以 1&#x2F;20 的价格达到 95% 的效果时，这个选择变得有趣了。</p>
+<p>尤其是对于 7×24 小时运行的 OpenClaw Agent 来说，<strong>模型成本是一个乘数效应</strong>。省下来的不是一次两次的 Token 费，是每天、每周、每月持续积累的开支。一年下来，M2.7 和 Claude Opus 的费用差距可能是数千美元级别。</p>
+<p>当然，如果你的任务对准确性要求极高——处理敏感数据、关键业务逻辑——Claude Opus 仍然是最安全的选择。但对于 80% 的日常 Agent 任务，M2.7 已经”够用且便宜”。</p>
+<p>最聪明的做法可能是<strong>混合部署</strong>：M2.7 做主力，处理日常编码和自动化；Claude 做后备，处理复杂推理和关键任务。OpenClaw 本身就支持模型路由和自动切换，这套方案天然可行。</p>
+<hr>
+<p>你在 OpenClaw 里用的是什么模型？有没有试过 MiniMax 的 M2 系列？如果让你在 DeepSeek、Qwen 和 MiniMax 之间选一个跑 24 小时 Agent，你会选谁？欢迎在评论区分享你的选择和理由。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/OpenClaw/" rel="tag"># OpenClaw</a>
+              <a href="/tags/MiniMax/" rel="tag"># MiniMax</a>
+              <a href="/tags/M2-7/" rel="tag"># M2.7</a>
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 大模型</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191720/" rel="prev" title="逐行拆解Google Antigravity系统提示词：顶级AI IDE是怎么&quot;调教&quot;大模型的">
+                  <i class="fa fa-angle-left"></i> 逐行拆解Google Antigravity系统提示词：顶级AI IDE是怎么"调教"大模型的
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/19/202603191830/" rel="next" title="为什么你的 AI Agent 总是&quot;失忆&quot;？OpenClaw 用两个文本文件解决了">
+                  为什么你的 AI Agent 总是"失忆"？OpenClaw 用两个文本文件解决了 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">713k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">10:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

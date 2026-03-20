@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="你是不是也经历过这样的场景？ 刷到一个教程，标题写着”用 LangChain + CrewAI 搭建你的第一个 AI Agent”。你兴冲冲地打开 VS Code，跟着敲了三个小时代码。结果呢？光是处理依赖冲突就花了一个小时，链式调用报错排查又花了一个小时，最后你的”智能 Agent”连一个简单的文件读写都搞不定。 关掉电脑，你开始怀疑自己：是不是我太菜了？ 不是你的问题。是你选错了工具。 今天">
+<meta property="og:type" content="article">
+<meta property="og:title" content="别被割韭菜了！放弃繁杂的 Agent 框架，回归原生 Claude Code 才是新手的唯一捷径">
+<meta property="og:url" content="https://www.vance.xin/2026/03/20/202603202130/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你是不是也经历过这样的场景？ 刷到一个教程，标题写着”用 LangChain + CrewAI 搭建你的第一个 AI Agent”。你兴冲冲地打开 VS Code，跟着敲了三个小时代码。结果呢？光是处理依赖冲突就花了一个小时，链式调用报错排查又花了一个小时，最后你的”智能 Agent”连一个简单的文件读写都搞不定。 关掉电脑，你开始怀疑自己：是不是我太菜了？ 不是你的问题。是你选错了工具。 今天">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260320-claude-code-vs-agent-frameworks.webp">
+<meta property="article:published_time" content="2026-03-20T21:30:00.000Z">
+<meta property="article:modified_time" content="2026-03-20T11:11:14.007Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="开发者工具">
+<meta property="article:tag" content="Agent框架">
+<meta property="article:tag" content="LangChain">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260320-claude-code-vs-agent-frameworks.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/20/202603202130/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/20/202603202130/","path":"2026/03/20/202603202130/","title":"别被割韭菜了！放弃繁杂的 Agent 框架，回归原生 Claude Code 才是新手的唯一捷径"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>别被割韭菜了！放弃繁杂的 Agent 框架，回归原生 Claude Code 才是新手的唯一捷径 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Agent-%E6%A1%86%E6%9E%B6%E7%9A%84%E2%80%9D%E7%B9%81%E8%8D%A3%E2%80%9D%E8%83%8C%E5%90%8E%EF%BC%9A%E4%B8%80%E5%9C%BA%E9%9B%86%E4%BD%93%E7%84%A6%E8%99%91"><span class="nav-text">Agent 框架的”繁荣”背后：一场集体焦虑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B0%E6%89%8B%E8%B8%A9%E5%9D%91%E7%9A%84%E4%B8%89%E4%B8%AA%E7%BB%8F%E5%85%B8%E5%A7%BF%E5%8A%BF"><span class="nav-text">新手踩坑的三个经典姿势</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A7%BF%E5%8A%BF%E4%B8%80%EF%BC%9A%E4%BE%9D%E8%B5%96%E5%9C%B0%E7%8B%B1"><span class="nav-text">姿势一：依赖地狱</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A7%BF%E5%8A%BF%E4%BA%8C%EF%BC%9A%E6%8A%BD%E8%B1%A1%E9%BB%91%E7%9B%92"><span class="nav-text">姿势二：抽象黑盒</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A7%BF%E5%8A%BF%E4%B8%89%EF%BC%9A%E6%A1%86%E6%9E%B6%E7%84%A6%E8%99%91"><span class="nav-text">姿势三：框架焦虑</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Claude-Code%EF%BC%9A%E4%B8%8D%E6%98%AF%E6%A1%86%E6%9E%B6%EF%BC%8C%E6%98%AF%E5%B7%A5%E5%85%B7"><span class="nav-text">Claude Code：不是框架，是工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%B6%E9%85%8D%E7%BD%AE%E5%90%AF%E5%8A%A8"><span class="nav-text">零配置启动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%A8%E6%A0%88%E8%83%BD%E5%8A%9B%E5%86%85%E7%BD%AE"><span class="nav-text">全栈能力内置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8A%E9%99%90%E8%B6%B3%E5%A4%9F%E9%AB%98"><span class="nav-text">上限足够高</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%86%E6%9E%B6-vs-%E5%8E%9F%E7%94%9F%E5%B7%A5%E5%85%B7%EF%BC%9A%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E8%AF%A5%E7%94%A8%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-text">框架 vs 原生工具：什么时候该用什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%96%B0%E6%89%8B%E7%9A%84-30-%E5%A4%A9%E8%B7%AF%E5%BE%84%E5%BB%BA%E8%AE%AE"><span class="nav-text">一个新手的 30 天路径建议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">216</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">369</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/20/202603202130/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="别被割韭菜了！放弃繁杂的 Agent 框架，回归原生 Claude Code 才是新手的唯一捷径 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          别被割韭菜了！放弃繁杂的 Agent 框架，回归原生 Claude Code 才是新手的唯一捷径
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-03-20 21:30:00 / 修改时间：11:11:14" itemprop="dateCreated datePublished" datetime="2026-03-20T21:30:00+00:00">2026-03-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260320-claude-code-vs-agent-frameworks.webp" alt="cover"></p>
+<p>你是不是也经历过这样的场景？</p>
+<p>刷到一个教程，标题写着”用 LangChain + CrewAI 搭建你的第一个 AI Agent”。你兴冲冲地打开 VS Code，跟着敲了三个小时代码。结果呢？光是处理依赖冲突就花了一个小时，链式调用报错排查又花了一个小时，最后你的”智能 Agent”连一个简单的文件读写都搞不定。</p>
+<p>关掉电脑，你开始怀疑自己：是不是我太菜了？</p>
+<p>不是你的问题。是你选错了工具。</p>
+<p>今天我想聊一个可能会得罪一些人的观点：<strong>对于大多数新手来说，那些花里胡哨的 Agent 框架，不是通往 AI 编程的捷径，而是弯路。</strong> 真正的捷径，可能就是打开终端，输入 <code>claude</code>，然后开始干活。</p>
+<h2 id="Agent-框架的”繁荣”背后：一场集体焦虑"><a href="#Agent-框架的”繁荣”背后：一场集体焦虑" class="headerlink" title="Agent 框架的”繁荣”背后：一场集体焦虑"></a>Agent 框架的”繁荣”背后：一场集体焦虑</h2><p>先说说为什么 Agent 框架这么火。</p>
+<p>2023 年 LangChain 横空出世的时候，整个开发者社区都在兴奋。终于有人把 LLM 的各种能力串起来了！链式调用、工具使用、记忆管理，听起来就像搭乐高一样简单。</p>
+<p>但现实是什么？</p>
+<p>Designveloper 的一篇深度分析总结了开发者们的真实反馈：LangChain 的抽象层层嵌套——prompt 套在 chain 里，chain 套在 agent 里，agent 套在 runner 里。调试的时候，你不是在写业务逻辑，而是在”考古”——翻框架源码，搞清楚它到底在哪一层吃掉了你的错误信息。</p>
+<p>一个开发者在 Reddit 上说了一句话，引起了大量共鸣：</p>
+<blockquote>
+<p>“你根本不需要一个库来串联 prompt。”</p>
+</blockquote>
+<p>这不是个别人的吐槽。UpGrad 的调研显示，开发者离开 LangChain 的三大原因是：<strong>高复杂度、频繁的破坏性 API 变更、以及过度工程化的抽象层</strong>。LocalLLaMA 社区甚至有帖子讨论”LangChain 和 LlamaIndex 正在急剧衰落”，200 多人点赞认同。</p>
+<p>问题的根源在于：这些框架试图用”通用抽象”来解决”具体问题”。它们假设你需要一个万能瑞士军刀，但实际上你只是想拧一颗螺丝。</p>
+<h2 id="新手踩坑的三个经典姿势"><a href="#新手踩坑的三个经典姿势" class="headerlink" title="新手踩坑的三个经典姿势"></a>新手踩坑的三个经典姿势</h2><p>我见过太多新手在 Agent 框架上栽跟头，总结下来有三个经典姿势。</p>
+<h3 id="姿势一：依赖地狱"><a href="#姿势一：依赖地狱" class="headerlink" title="姿势一：依赖地狱"></a>姿势一：依赖地狱</h3><p>LangChain 生态的一个特点是”全家桶”——它集成了几十种向量数据库、多个 LLM 提供商、各种文档加载器。听起来很酷，但代价是什么？</p>
+<p>即使你只想做一个简单的 RAG 应用，也要装一堆你根本用不到的依赖。版本冲突、环境问题、莫名其妙的 import error……这些在经验丰富的开发者眼里是小事，但对新手来说，每一个都是劝退关卡。</p>
+<p>Sebastian Manassero 在 Medium 上写得很直白：”LangChain 对简单任务来说像是魔法般的过度工程，对复杂任务来说又出奇地脆弱。”</p>
+<h3 id="姿势二：抽象黑盒"><a href="#姿势二：抽象黑盒" class="headerlink" title="姿势二：抽象黑盒"></a>姿势二：抽象黑盒</h3><p>好的抽象应该降低认知负担。坏的抽象让你既看不懂底层在干什么，又无法在出问题时快速定位。</p>
+<p>LangChain 的文档不一致是出了名的。很多开发者发现，要理解框架怎么工作，最快的方法不是读文档，而是直接读源码。这完全违背了”框架应该简化工作”的初衷。</p>
+<p>一个真实案例：Octomind 团队在尝试将 LangChain 用于生产后得出结论——“LangChain 唯一做到的事情，就是增加了代码的复杂度，而没有任何可感知的收益。”</p>
+<h3 id="姿势三：框架焦虑"><a href="#姿势三：框架焦虑" class="headerlink" title="姿势三：框架焦虑"></a>姿势三：框架焦虑</h3><p>这可能是最隐蔽的坑。</p>
+<p>今天有人说 LangChain 好用，明天有人推荐 CrewAI，后天又冒出来一个 Deep Agents。你还没学会一个，下一个就来了。AI 领域的框架更新速度远超传统开发，上周的最佳实践，这周可能就过时了。</p>
+<p>一位 Reddit 用户说得好：”Agent 框架在几个月内诞生又消亡。与其追框架，不如用底层原语——pydantic 做输出验证，MCP 做标准协议，自己搭就完了。”</p>
+<h2 id="Claude-Code：不是框架，是工具"><a href="#Claude-Code：不是框架，是工具" class="headerlink" title="Claude Code：不是框架，是工具"></a>Claude Code：不是框架，是工具</h2><p>说完了框架的问题，再说说为什么我推荐新手直接用 Claude Code。</p>
+<p>Claude Code 不是一个框架。它不需要你理解什么是 chain、什么是 runner、什么是 callback。它就是一个跑在终端里的编程工具——你用自然语言告诉它你想干什么，它去翻代码、改文件、跑测试、提交 PR。</p>
+<p>Builder.io 的入门指南这样描述：**”Claude Code 不是聊天机器人。它是一个恰好通过对话来沟通的编程 Agent。”**</p>
+<p>具体来说，Claude Code 对新手友好在这几个地方：</p>
+<h3 id="零配置启动"><a href="#零配置启动" class="headerlink" title="零配置启动"></a>零配置启动</h3><p>安装完之后，在任意项目目录下输入 <code>claude</code>，它就开始工作了。不需要写配置文件，不需要定义 chain，不需要注册 tool。它自己会扫描你的代码库，理解项目结构，然后等你下指令。</p>
+<p>NxCode 的教程说：”大多数开发者在前几次使用中就能找到节奏。”没有学习曲线陡峭到让人放弃的问题。</p>
+<h3 id="全栈能力内置"><a href="#全栈能力内置" class="headerlink" title="全栈能力内置"></a>全栈能力内置</h3><p>Claude Code 能做什么？读文件、写代码、跑命令、搜索代码库、创建 PR、运行测试……这些能力是内置的，不需要你额外安装插件或者配置工具链。</p>
+<p>对比一下：在 LangChain 里实现同样的功能，你需要定义 tool、写 callback、配置 memory、处理 state。在 Claude Code 里，你只需要说一句话：”帮我在这个项目里加一个用户登录功能。”</p>
+<h3 id="上限足够高"><a href="#上限足够高" class="headerlink" title="上限足够高"></a>上限足够高</h3><p>有人可能会说：Claude Code 功能简单，做不了复杂的事。这是误解。</p>
+<p>Claude Code 现在支持 Agent Teams——多个 Claude 实例并行工作，处理大型项目。支持自定义 Skills——你可以用 SKILL.md 文件教它新技能。支持 Hooks——在特定生命周期事件触发 shell 命令。支持 MCP 协议——连接任何外部工具和数据源。</p>
+<p>Towards AI 的文章总结得好：Claude Code 的技能系统已经从简单的 Markdown 指令，进化成了一个支持子 Agent 执行、动态上下文注入、生命周期钩子的完整可编程平台。</p>
+<p>换句话说，<strong>入门的门槛极低，但天花板足够高。</strong> 这才是新手真正需要的工具。</p>
+<h2 id="框架-vs-原生工具：什么时候该用什么？"><a href="#框架-vs-原生工具：什么时候该用什么？" class="headerlink" title="框架 vs 原生工具：什么时候该用什么？"></a>框架 vs 原生工具：什么时候该用什么？</h2><p>我不是说 Agent 框架一无是处。让我说清楚这个边界。</p>
+<p><strong>如果你是这类人，框架有价值：</strong></p>
+<ul>
+<li>你需要构建多模型路由系统（Claude + GPT + Gemini 混合调用）</li>
+<li>你在做企业级的多 Agent 编排，需要精细的状态管理</li>
+<li>你的团队已经有成熟的 LangGraph 基础设施</li>
+</ul>
+<p><strong>如果你是这类人，直接用 Claude Code：</strong></p>
+<ul>
+<li>你刚接触 AI 编程，想快速上手</li>
+<li>你的日常工作是写功能、修 Bug、重构代码</li>
+<li>你想用 AI 提升个人开发效率，而不是搭建 AI 平台</li>
+<li>你受够了框架的复杂度，想回归简单</li>
+</ul>
+<p>一个开发者社区里流传的判断标准很实用：<strong>如果你的需求用一句话能说清楚，就别用框架。</strong> “帮我重构这个函数”、”给这个 API 加上错误处理”、”分析这个代码库的架构”——这些都是 Claude Code 的舒适区。</p>
+<p>codegen.com 的测评也印证了这个判断：”开发者社区普遍认为 Claude Code 是处理复杂问题的最强工具——多文件 Bug、架构推理、陌生代码库分析。很多团队日常用 Cursor 或 Copilot，遇到真正难的问题就切到 Claude Code。”</p>
+<h2 id="一个新手的-30-天路径建议"><a href="#一个新手的-30-天路径建议" class="headerlink" title="一个新手的 30 天路径建议"></a>一个新手的 30 天路径建议</h2><p>如果你是 AI 编程新手，我建议的路径是这样的：</p>
+<p><strong>第 1 周：认识 Claude Code</strong></p>
+<ul>
+<li>安装，在一个小项目里试用</li>
+<li>学会基本指令：让它读代码、改代码、跑测试</li>
+<li>感受”对话式编程”的节奏</li>
+</ul>
+<p><strong>第 2 周：用它干活</strong></p>
+<ul>
+<li>把日常工作中的一个小任务交给它</li>
+<li>练习写好 prompt——越具体，效果越好</li>
+<li>学会用 <code>/compact</code> 管理上下文</li>
+</ul>
+<p><strong>第 3 周：探索进阶</strong></p>
+<ul>
+<li>写一个 CLAUDE.md 文件，定义项目规范</li>
+<li>尝试自定义 Slash Command</li>
+<li>了解 MCP 协议，连接一个外部工具</li>
+</ul>
+<p><strong>第 4 周：建立工作流</strong></p>
+<ul>
+<li>用 Skills 和 Hooks 自动化重复任务</li>
+<li>尝试子 Agent 模式处理复杂任务</li>
+<li>回过头来，评估是否真的需要框架</li>
+</ul>
+<p>到了第四周，你对 AI 编程的理解，会比花同样时间学框架的人深得多。因为你一直在解决真实问题，而不是在和框架较劲。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>AI 编程工具的发展方向越来越清晰：<strong>降低门槛，而不是增加门槛。</strong></p>
+<p>LangChain 的创始团队自己都在反思。他们在博客里写道：”每次模型变强，同一个问题就会回来——你还需要 Agent 框架吗？”然后他们自己给了答案：”Agent 框架仍然有用，但前提是它们的进化速度跟得上模型。”</p>
+<p>问题是，大多数框架跟不上。</p>
+<p>而 Claude Code 的思路完全不同。它不试图在你和模型之间加一层抽象。它就是让你直接和一个足够聪明的 AI 对话，然后看着它帮你干活。简单，直接，有效。</p>
+<p>对新手来说，这就够了。别被花哨的框架割了韭菜。<strong>打开终端，输入 <code>claude</code>，开始写你的第一行 AI 辅助代码。</strong> 这才是 2026 年入门 AI 编程最快的方式。</p>
+<p>你现在是直接用 Claude Code，还是在用某个框架？踩过什么坑？欢迎在评论区分享你的经历，帮后来的新手少走弯路。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7/" rel="tag"># 开发者工具</a>
+              <a href="/tags/Agent%E6%A1%86%E6%9E%B6/" rel="tag"># Agent框架</a>
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/20/202603202100/" rel="prev" title="别在 ChatGPT 和 Claude 之间反复横跳了！揭秘大厂疯狂抢夺开发者背后的真相">
+                  <i class="fa fa-angle-left"></i> 别在 ChatGPT 和 Claude 之间反复横跳了！揭秘大厂疯狂抢夺开发者背后的真相
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/20/202603202200/" rel="next" title="删掉你电脑里乱七八糟的 AI 插件吧！2026 年，顶级开发者的核心利器只有纯净版 Claude Code">
+                  删掉你电脑里乱七八糟的 AI 插件吧！2026 年，顶级开发者的核心利器只有纯净版 Claude Code <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">751k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">11:23</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

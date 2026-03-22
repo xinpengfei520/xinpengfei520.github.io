@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="3 月 19 日，Cursor 高调发布了新模型 Composer 2。 官方博客写得很漂亮——“首次对基座模型进行继续预训练，再结合大规模强化学习”。言下之意：这是我们自己练出来的。 结果不到 24 小时，就被人扒了个底朝天。 一个开发者在调试 API 的时候，发现了一个不该出现的东西：kimi-k2p5-rl-0317-s515-fast。 这不是 Cursor 的模型名字。这是月之暗面的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI 圈大瓜：Cursor 的&quot;自研&quot;Composer 2，竟然是 Kimi K2.5 套壳？">
+<meta property="og:url" content="https://www.vance.xin/2026/03/21/202603211930/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="3 月 19 日，Cursor 高调发布了新模型 Composer 2。 官方博客写得很漂亮——“首次对基座模型进行继续预训练，再结合大规模强化学习”。言下之意：这是我们自己练出来的。 结果不到 24 小时，就被人扒了个底朝天。 一个开发者在调试 API 的时候，发现了一个不该出现的东西：kimi-k2p5-rl-0317-s515-fast。 这不是 Cursor 的模型名字。这是月之暗面的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260321-cursor-composer2-kimi-k25-scandal.webp">
+<meta property="article:published_time" content="2026-03-21T19:30:00.000Z">
+<meta property="article:modified_time" content="2026-03-22T07:41:27.870Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Cursor">
+<meta property="article:tag" content="Kimi K2.5">
+<meta property="article:tag" content="开源模型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260321-cursor-composer2-kimi-k25-scandal.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/21/202603211930/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/21/202603211930/","path":"2026/03/21/202603211930/","title":"AI 圈大瓜：Cursor 的\"自研\"Composer 2，竟然是 Kimi K2.5 套壳？"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>AI 圈大瓜：Cursor 的"自研"Composer 2，竟然是 Kimi K2.5 套壳？ | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%A8%A1%E5%9E%8B-ID%EF%BC%8C%E5%BC%95%E7%88%86%E4%B8%80%E5%9C%BA%E9%A3%8E%E6%9A%B4"><span class="nav-text">一个模型 ID，引爆一场风暴</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%88%E4%B9%8B%E6%9A%97%E9%9D%A2%E7%9A%84%E6%84%A4%E6%80%92"><span class="nav-text">月之暗面的愤怒</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8D%E8%BD%AC%E6%9D%A5%E4%BA%86%EF%BC%9A%E5%85%B6%E5%AE%9E%E6%98%AF%E2%80%9D%E5%90%88%E6%B3%95%E5%90%88%E4%BD%9C%E2%80%9D%EF%BC%9F"><span class="nav-text">反转来了：其实是”合法合作”？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E4%BA%8B%E4%B8%BA%E4%BB%80%E4%B9%88%E5%80%BC%E5%BE%97%E5%85%B3%E6%B3%A8"><span class="nav-text">这事为什么值得关注</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E2%80%9C%E8%87%AA%E7%A0%94%E2%80%9D%E7%9A%84%E5%90%AB%E4%B9%89%E8%A2%AB%E7%A8%80%E9%87%8A%E4%BA%86"><span class="nav-text">1. “自研”的含义被稀释了</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%BC%80%E6%BA%90%E8%AE%B8%E5%8F%AF%E8%AF%81%E7%9A%84%E8%80%83%E9%AA%8C"><span class="nav-text">2. 开源许可证的考验</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%94%A8%E6%88%B7%E7%9F%A5%E6%83%85%E6%9D%83"><span class="nav-text">3. 用户知情权</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AI-%E8%A1%8C%E4%B8%9A%E7%9A%84%E2%80%9D%E5%A5%97%E5%A3%B3%E2%80%9D%E9%97%AE%E9%A2%98"><span class="nav-text">AI 行业的”套壳”问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E7%BB%AD%E5%BD%B1%E5%93%8D"><span class="nav-text">后续影响</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">234</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">381</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/21/202603211930/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="AI 圈大瓜：Cursor 的&quot;自研&quot;Composer 2，竟然是 Kimi K2.5 套壳？ | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AI 圈大瓜：Cursor 的"自研"Composer 2，竟然是 Kimi K2.5 套壳？
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-21 19:30:00" itemprop="dateCreated datePublished" datetime="2026-03-21T19:30:00+00:00">2026-03-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-22 07:41:27" itemprop="dateModified" datetime="2026-03-22T07:41:27+00:00">2026-03-22</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260321-cursor-composer2-kimi-k25-scandal.webp" alt="cover"></p>
+<p>3 月 19 日，Cursor 高调发布了新模型 Composer 2。</p>
+<p>官方博客写得很漂亮——“首次对基座模型进行继续预训练，再结合大规模强化学习”。言下之意：这是我们自己练出来的。</p>
+<p>结果不到 24 小时，就被人扒了个底朝天。</p>
+<p>一个开发者在调试 API 的时候，发现了一个不该出现的东西：<code>kimi-k2p5-rl-0317-s515-fast</code>。</p>
+<p>这不是 Cursor 的模型名字。这是月之暗面的 Kimi K2.5。</p>
+<p>AI 圈，又炸了。</p>
+<h2 id="一个模型-ID，引爆一场风暴"><a href="#一个模型-ID，引爆一场风暴" class="headerlink" title="一个模型 ID，引爆一场风暴"></a>一个模型 ID，引爆一场风暴</h2><p>事情是这样的。</p>
+<p>3 月 19 日，Cursor 发布 Composer 2，宣称是迄今为止最强的自研编程模型。在 Terminal-Bench 2.0 上拿到了 61.7% 的得分，超过了 Claude Opus 4.6 的 58.0%。定价也很诱人——每百万输入 token 只要 0.5 美元。</p>
+<p>看起来，一切都很美好。</p>
+<p>然而第二天，一位叫 Fynn 的开发者（@fynnso），在测试 Cursor 的 OpenAI 兼容接口时，无意间看到了 API 返回的模型 ID：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">accounts/anysphere/models/kimi-k2p5-rl-0317-s515-fast</span><br></pre></td></tr></table></figure>
+
+<p>这串字符的含义，搞 AI 的人一眼就能看懂：</p>
+<ul>
+<li><strong>anysphere</strong> —— Cursor 的母公司</li>
+<li><strong>kimi-k2p5</strong> —— Kimi K2.5，月之暗面的开源模型</li>
+<li><strong>rl</strong> —— 强化学习</li>
+<li><strong>0317</strong> —— 训练日期，3 月 17 日</li>
+<li><strong>fast</strong> —— 推理加速版本</li>
+</ul>
+<p>翻译一下：<strong>Cursor 拿了 Kimi K2.5，在上面做了 RL 微调，然后改了个名字叫 Composer 2。</strong></p>
+<p>这条推文发出后，24 小时内阅读量超过 44 万。</p>
+<h2 id="月之暗面的愤怒"><a href="#月之暗面的愤怒" class="headerlink" title="月之暗面的愤怒"></a>月之暗面的愤怒</h2><p>消息传开后，月之暗面的预训练负责人杜羽伦（Yulun Du）第一时间在社交媒体上发声。</p>
+<p>他说团队测试了 Composer 2 的 tokenizer，发现”跟我们 Kimi 的 tokenizer 完全一致”。他直接 @ 了 Cursor 联合创始人 Michael Truell，质问：</p>
+<p><strong>“为什么不尊重我们的许可证？为什么一分钱都没付？”</strong></p>
+<p>这就牵出了一个关键问题——许可证。</p>
+<p>Kimi K2.5 采用的是修改版 MIT 协议。核心条款很明确：</p>
+<blockquote>
+<p>如果你的商业产品月活超过 1 亿，或者月营收超过 2000 万美元，你必须在用户界面上显著标注”Kimi K2.5”。</p>
+</blockquote>
+<p>那 Cursor 触发了这个条款吗？</p>
+<p>来看几个数字：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>估值</td>
+<td>293 亿美元</td>
+</tr>
+<tr>
+<td>年化营收</td>
+<td>约 20 亿美元</td>
+</tr>
+<tr>
+<td>月营收</td>
+<td>约 1.67 亿美元</td>
+</tr>
+<tr>
+<td>许可证阈值</td>
+<td>月营收 2000 万美元</td>
+</tr>
+</tbody></table>
+<p><strong>Cursor 的月营收是许可证阈值的 8 倍多。</strong></p>
+<p>但 Cursor 的界面上，写的是”Composer 2”。没有任何地方提到 Kimi K2.5。</p>
+<h2 id="反转来了：其实是”合法合作”？"><a href="#反转来了：其实是”合法合作”？" class="headerlink" title="反转来了：其实是”合法合作”？"></a>反转来了：其实是”合法合作”？</h2><p>就在大家以为要打官司的时候，剧情反转了。</p>
+<p>3 月 20 日，Kimi 官方账号发了一条推文：</p>
+<blockquote>
+<p>“恭喜 @cursor_ai 团队发布 Composer 2！我们很自豪看到 Kimi K2.5 提供了基础。Cursor 通过 @FireworksAI_HQ 的推理平台访问 Kimi K2.5，这是经过授权的商业合作。”</p>
+</blockquote>
+<p>Cursor 也终于承认了：</p>
+<blockquote>
+<p>“是的，Composer 2 基于开源基座模型。最终模型大约只有 1&#x2F;4 的算力来自基座，剩下 3&#x2F;4 是我们自己的训练。所以评测结果差异很大。”</p>
+</blockquote>
+<p>同时，Cursor 也承认了一个问题：</p>
+<blockquote>
+<p>“同意大家的反馈，我们应该一开始就说明基座模型来源。下一个模型我们会这样做。”</p>
+</blockquote>
+<p>好家伙。意思就是：<strong>用了，但没说。被抓了，才承认。下次注意。</strong></p>
+<h2 id="这事为什么值得关注"><a href="#这事为什么值得关注" class="headerlink" title="这事为什么值得关注"></a>这事为什么值得关注</h2><p>你可能会说：既然最后确认是合法合作，那不就没事了吗？</p>
+<p>没那么简单。这件事暴露了好几个值得深思的问题。</p>
+<h3 id="1-“自研”的含义被稀释了"><a href="#1-“自研”的含义被稀释了" class="headerlink" title="1. “自研”的含义被稀释了"></a>1. “自研”的含义被稀释了</h3><p>Cursor 发布 Composer 2 时，用的表述是”首次对基座模型进行继续预训练”。</p>
+<p>这话技术上没毛病——继续预训练和 RL 确实是施加在某个基座之上的。但问题是，<strong>你刻意不提基座是谁的，就会让人以为你从头到尾都是自己做的。</strong></p>
+<p>这就像你买了一辆特斯拉的白车身，重新喷漆、改装内饰、换了发动机，然后告诉大家”这是我自己造的车”。</p>
+<p>技术上你确实做了大量工作。但消费者的理解是不一样的。</p>
+<h3 id="2-开源许可证的考验"><a href="#2-开源许可证的考验" class="headerlink" title="2. 开源许可证的考验"></a>2. 开源许可证的考验</h3><p>Kimi K2.5 是万亿参数的 MoE 架构模型，384 个专家，每个 token 只激活 3.2% 的参数。月之暗面把这样一个模型开源出来，本身就是对社区的巨大贡献。</p>
+<p>他们唯一的要求是：<strong>如果你用它赚大钱了，请标注来源。</strong></p>
+<p>这个要求过分吗？一点也不。</p>
+<p>但如果没有 @fynnso 那次偶然的 API 调试，这个标注可能永远不会出现。</p>
+<p>这给所有开源模型作者敲响了警钟：<strong>你写了许可证，不代表别人会遵守。你需要技术手段来保护自己。</strong></p>
+<h3 id="3-用户知情权"><a href="#3-用户知情权" class="headerlink" title="3. 用户知情权"></a>3. 用户知情权</h3><p>Cursor 的付费用户每月花 20 美元订阅 Pro 版。他们以为自己在用 Cursor 的自研模型，实际上用的是 Kimi K2.5 + RL。</p>
+<p>这重要吗？</p>
+<p>如果模型效果好，也许用户不在乎底层是什么。但透明度本身就是一种信任。你今天不说基座模型来源，明天会不会不说训练数据来源？后天会不会不说安全审计结果？</p>
+<p>信任是一点一点建立的，也是一点一点失去的。</p>
+<h2 id="AI-行业的”套壳”问题"><a href="#AI-行业的”套壳”问题" class="headerlink" title="AI 行业的”套壳”问题"></a>AI 行业的”套壳”问题</h2><p>其实，Cursor 不是第一个这样做的。</p>
+<p>有传闻说，Cursor 之前的 Composer 1 系列可能也基于 GLM 4.x。但 GLM 用的是标准 MIT 协议，没有标注要求，所以没有法律问题。</p>
+<p>这次的区别在于：<strong>Kimi K2.5 的许可证明确要求标注，而 Cursor 没有标注。</strong></p>
+<p>在开源 AI 的生态里，”拿来主义”本身没有问题。开源的意义就在于让所有人都能使用和改进。但”拿来不说”就是另一回事了。</p>
+<p>这也反映了 AI 行业的一个尴尬现实：<strong>很多所谓的”自研”，其实都站在开源模型的肩膀上。</strong> 这本身不丢人，但你得说出来。</p>
+<p>就像 Hacker News 上有人评论的：”现在靠重新包装开源模型就能赚大钱。”</p>
+<p>一针见血。</p>
+<h2 id="后续影响"><a href="#后续影响" class="headerlink" title="后续影响"></a>后续影响</h2><p>这件事虽然以”和解”告终，但影响深远。</p>
+<p><strong>对 Cursor：</strong> 短期信誉受损，但技术能力依然在线。他们在 Kimi K2.5 基础上做的 RL 训练确实有效果，Composer 2 的编程能力是实打实的。只是以后发布新模型时，恐怕不敢再含糊其辞了。</p>
+<p><strong>对月之暗面：</strong> 这波反而是大赢特赢。全世界都知道了——一个估值 293 亿美元的硅谷明星公司，选择了你的模型作为基座。这比任何广告都管用。</p>
+<p><strong>对开源社区：</strong> 修改版 MIT 协议经受住了考验。社区压力 + 许可证条款，成功让一家巨头公司承认并遵守了规则。但大家也看到了，这个过程不是自动的——需要有人发现，有人发声。</p>
+<p><strong>对开发者：</strong> 你用的 AI 编程工具，底层到底是什么模型？你可能永远不知道。但这件事告诉我们：保持好奇心，偶尔戳一戳 API，你可能会发现有趣的东西。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>AI 行业发展太快，快到很多规则还没来得及建立。</p>
+<p>开源模型的许可证、商业使用的透明度、用户的知情权——这些问题会越来越频繁地出现。</p>
+<p>Cursor 这次的事情，结局算是好的。双方和解，许可证得到尊重，用户也知道了真相。</p>
+<p>但下一次呢？</p>
+<p>不是每个开源作者都有月之暗面的影响力，不是每次都有开发者恰好去调试 API。</p>
+<p><strong>在这个 AI 大模型遍地开花的时代，我们需要的不只是更强的模型，还需要更透明的规则。</strong></p>
+<p>你怎么看这件事？你觉得 AI 公司用开源模型做商业产品，标注来源应该是”道德要求”还是”法律义务”？欢迎在评论区聊聊你的看法。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/Cursor/" rel="tag"># Cursor</a>
+              <a href="/tags/Kimi-K2-5/" rel="tag"># Kimi K2.5</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90%E6%A8%A1%E5%9E%8B/" rel="tag"># 开源模型</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/21/202603211900/" rel="prev" title="AI + 编程：一个人顶一支团队，个体开发者的黄金时代来了">
+                  <i class="fa fa-angle-left"></i> AI + 编程：一个人顶一支团队，个体开发者的黄金时代来了
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/21/202603212000/" rel="next" title="未来的软件公司，可能只有 1 个人 + Claude">
+                  未来的软件公司，可能只有 1 个人 + Claude <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">818k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">12:23</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

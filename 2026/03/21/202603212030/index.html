@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="你有没有想过，写代码这件事，可能越来越像打《星际争霸》？ 不是开玩笑。Boris Cherny，Claude Code 的创造者，现在每天的工作状态是这样的：打开 5 个终端窗口，每个窗口里跑一个 Claude Code agent。一个在写新功能，一个在修 bug，一个在跑测试，一个在写文档，一个在做 code review。 他不写代码。他指挥 AI 写代码。 一天产出 20-30 个 PR">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Code + Agent Teams：软件开发进入&quot;组织级 AI&quot;时代">
+<meta property="og:url" content="https://www.vance.xin/2026/03/21/202603212030/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你有没有想过，写代码这件事，可能越来越像打《星际争霸》？ 不是开玩笑。Boris Cherny，Claude Code 的创造者，现在每天的工作状态是这样的：打开 5 个终端窗口，每个窗口里跑一个 Claude Code agent。一个在写新功能，一个在修 bug，一个在跑测试，一个在写文档，一个在做 code review。 他不写代码。他指挥 AI 写代码。 一天产出 20-30 个 PR">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260321-claude-code-agent-teams.webp">
+<meta property="article:published_time" content="2026-03-21T20:30:00.000Z">
+<meta property="article:modified_time" content="2026-03-22T07:41:27.870Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="多智能体">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="软件工程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260321-claude-code-agent-teams.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/21/202603212030/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/21/202603212030/","path":"2026/03/21/202603212030/","title":"Claude Code + Agent Teams：软件开发进入\"组织级 AI\"时代"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Claude Code + Agent Teams：软件开发进入"组织级 AI"时代 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8E%E4%B8%80%E4%B8%AA%E8%A2%AB%E6%8B%92%E7%9A%84-PR-%E8%AF%B4%E8%B5%B7"><span class="nav-text">从一个被拒的 PR 说起</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%87%E6%8C%A5%E5%AE%B6%E6%A8%A1%E5%BC%8F%EF%BC%9A%E4%BB%8E%E6%89%93%E5%AD%97%E5%91%98%E5%88%B0%E6%8C%87%E6%8C%A5%E5%AE%B6"><span class="nav-text">指挥家模式：从打字员到指挥家</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Agent-Teams%EF%BC%9A%E4%BB%8E%E4%B8%AA%E4%BA%BA%E6%A8%A1%E5%BC%8F%E5%88%B0%E7%BB%84%E7%BB%87%E6%A8%A1%E5%BC%8F"><span class="nav-text">Agent Teams：从个人模式到组织模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%9F%E5%AE%9E%E5%9C%BA%E6%99%AF%EF%BC%9AAgent-Teams-%E8%83%BD%E5%B9%B2%E4%BB%80%E4%B9%88"><span class="nav-text">真实场景：Agent Teams 能干什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%BA%E6%99%AF%E4%B8%80%EF%BC%9A%E8%B7%A8%E5%B1%82%E9%87%8D%E6%9E%84"><span class="nav-text">场景一：跨层重构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%BA%E6%99%AF%E4%BA%8C%EF%BC%9A%E6%9E%B6%E6%9E%84%E5%86%B3%E7%AD%96"><span class="nav-text">场景二：架构决策</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%BA%E6%99%AF%E4%B8%89%EF%BC%9A%E5%A4%9A%E5%81%87%E8%AE%BE%E8%B0%83%E8%AF%95"><span class="nav-text">场景三：多假设调试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%A8%E9%87%8F%E6%80%8E%E4%B9%88%E4%BF%9D%E8%AF%81%EF%BC%9F"><span class="nav-text">质量怎么保证？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E4%B8%8D%E5%8F%AA%E6%98%AF%E6%95%88%E7%8E%87%E6%8F%90%E5%8D%87%EF%BC%8C%E6%98%AF%E8%8C%83%E5%BC%8F%E8%BD%AC%E6%8D%A2"><span class="nav-text">这不只是效率提升，是范式转换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E5%B7%A5%E7%A8%8B%E5%B8%88%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88"><span class="nav-text">对工程师意味着什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E5%8F%AF%E4%BB%A5%E7%8E%B0%E5%9C%A8%E5%B0%B1%E5%BC%80%E5%A7%8B"><span class="nav-text">你可以现在就开始</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">234</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">381</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/21/202603212030/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Claude Code + Agent Teams：软件开发进入&quot;组织级 AI&quot;时代 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Claude Code + Agent Teams：软件开发进入"组织级 AI"时代
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-21 20:30:00" itemprop="dateCreated datePublished" datetime="2026-03-21T20:30:00+00:00">2026-03-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-03-22 07:41:27" itemprop="dateModified" datetime="2026-03-22T07:41:27+00:00">2026-03-22</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260321-claude-code-agent-teams.webp" alt="cover"></p>
+<p>你有没有想过，写代码这件事，可能越来越像打《星际争霸》？</p>
+<p>不是开玩笑。Boris Cherny，Claude Code 的创造者，现在每天的工作状态是这样的：打开 5 个终端窗口，每个窗口里跑一个 Claude Code agent。一个在写新功能，一个在修 bug，一个在跑测试，一个在写文档，一个在做 code review。</p>
+<p>他不写代码。他指挥 AI 写代码。</p>
+<p>一天产出 20-30 个 PR。</p>
+<p>这不是未来。这是 2026 年 3 月，正在发生的事情。而随着 Claude Code Agent Teams 的发布，这件事从”个人技巧”变成了”组织能力”。</p>
+<h2 id="从一个被拒的-PR-说起"><a href="#从一个被拒的-PR-说起" class="headerlink" title="从一个被拒的 PR 说起"></a>从一个被拒的 PR 说起</h2><p>Boris Cherny 加入 Anthropic 之前，在 Meta 当了五年 Principal Engineer，是公司里最高产的工程师之一。</p>
+<p>加入 Anthropic 后，他写了第一个 PR。代码很干净，逻辑很清晰，测试很完整。</p>
+<p><strong>被拒了。</strong></p>
+<p>原因不是代码有问题。原因是——这代码是手写的。</p>
+<p>在 Anthropic 内部，基线预期是：代码由 AI 生成。人类工程师的工作不是打字，是做判断。</p>
+<p>这个被拒的 PR 成了催化剂。Boris 开始重新思考软件开发的基本流程，最终发展出了他所说的”指挥家模式”。</p>
+<h2 id="指挥家模式：从打字员到指挥家"><a href="#指挥家模式：从打字员到指挥家" class="headerlink" title="指挥家模式：从打字员到指挥家"></a>指挥家模式：从打字员到指挥家</h2><p>传统的开发流程是这样的：想清楚→写代码→跑测试→调试→提 PR。一个人，一条线，从头到尾。</p>
+<p>Boris 的工作流完全不同。</p>
+<p>他同时开 5 个终端，每个终端里是一个独立的 Claude Code 实例，工作在不同的 Git 分支上：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[tab 1] Claude Code — feature/auth-refresh      → 执行中</span><br><span class="line">[tab 2] Claude Code — feature/rate-limiting     → 等待审查</span><br><span class="line">[tab 3] Claude Code — fix/db-connection-pool    → 规划中</span><br><span class="line">[tab 4] Claude Code — chore/update-dependencies → 执行中</span><br><span class="line">[tab 5] Claude Code — docs/api-reference        → 等待输入</span><br></pre></td></tr></table></figure>
+
+<p>当 agent 1 在执行时，他切到 agent 2 查看结果。当 agent 2 在思考时，他给 agent 3 下达新任务。就像一个指挥家，手里不拿乐器，但脑子里装着整首曲子的结构。</p>
+<p><strong>工程师的工作从”实现”变成了”判断”——定义正确输出的形状，在 agent 需要决策时做出选择。</strong></p>
+<p>在 Anthropic 内部，大约 80% 的代码现在由 Claude Code 编写。</p>
+<h2 id="Agent-Teams：从个人模式到组织模式"><a href="#Agent-Teams：从个人模式到组织模式" class="headerlink" title="Agent Teams：从个人模式到组织模式"></a>Agent Teams：从个人模式到组织模式</h2><p>Boris 的工作流虽然强大，但有一个问题——它依赖个人的操作技巧。5 个 agent 之间不能直接通信，所有协调都要通过人来完成。</p>
+<p>Agent Teams 解决了这个问题。</p>
+<p>随着 Opus 4.6 发布，Anthropic 推出了 Agent Teams 这个实验性功能。它让多个 Claude Code 实例组成一个真正的团队，有分工、有沟通、有协作。</p>
+<p>具体怎么工作？四个核心组件：</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Team Lead</strong></td>
+<td>主 Claude Code 会话，负责创建团队、分配任务、综合结果</td>
+</tr>
+<tr>
+<td><strong>Teammates</strong></td>
+<td>独立的 Claude Code 实例，各有自己的上下文窗口</td>
+</tr>
+<tr>
+<td><strong>共享任务列表</strong></td>
+<td>所有 agent 可见的中央工作队列，支持状态追踪和依赖管理</td>
+</tr>
+<tr>
+<td><strong>邮箱系统</strong></td>
+<td>agent 之间直接通信的消息机制</td>
+</tr>
+</tbody></table>
+<p>关键区别在于：<strong>之前的 subagent 模式是”辐射状”的——所有信息都要通过主 agent 中转。Agent Teams 是”网状”的——任何 teammate 可以直接跟任何 teammate 对话。</strong></p>
+<p>打个比方：subagent 像是你分别派了几个外包，他们各干各的，只跟你汇报。Agent Teams 像是你组了一个项目组，大家坐在同一个办公室里，随时可以互相讨论。</p>
+<h2 id="真实场景：Agent-Teams-能干什么"><a href="#真实场景：Agent-Teams-能干什么" class="headerlink" title="真实场景：Agent Teams 能干什么"></a>真实场景：Agent Teams 能干什么</h2><p>听起来很炫，但实际效果如何？</p>
+<h3 id="场景一：跨层重构"><a href="#场景一：跨层重构" class="headerlink" title="场景一：跨层重构"></a>场景一：跨层重构</h3><p>你要重构一个功能，涉及前端 React 组件、后端 API、数据库迁移和测试。传统方式：一个人从头做到尾，至少两天。</p>
+<p>Agent Teams 的做法：Team Lead 分析任务，生成 3 个 Teammate——前端 agent 改 React 组件，后端 agent 改 API 和数据库，测试 agent 写集成测试。三个 agent 并行工作，通过消息系统协调接口约定。</p>
+<p>20 分钟内完成，人类只需要最终 review。</p>
+<h3 id="场景二：架构决策"><a href="#场景二：架构决策" class="headerlink" title="场景二：架构决策"></a>场景二：架构决策</h3><p>有开发者尝试了一个很有意思的架构：两个 agent，一个”架构师”，一个”魔鬼代言人”。架构师负责系统设计——组件边界、数据模型、API 约定。魔鬼代言人的唯一工作就是挑毛病、找风险。</p>
+<p>在任何代码被写出来之前，通过两个 agent 的辩论，把设计问题提前暴露出来。这比传统的设计评审会效率高太多了。</p>
+<h3 id="场景三：多假设调试"><a href="#场景三：多假设调试" class="headerlink" title="场景三：多假设调试"></a>场景三：多假设调试</h3><p>生产环境出了一个诡异的 bug。你不确定是网络问题、缓存问题还是并发问题。</p>
+<p>传统做法：一个一个假设排查，可能要花半天。</p>
+<p>Agent Teams 做法：同时 spawn 3 个 Teammate，每个追查一个假设方向，互相分享发现，互相推翻对方的假设。DevOps 场景下的测试数据显示，多 agent 方式的可行建议率达到 100%，而单 agent 只有 1.7%。</p>
+<h2 id="质量怎么保证？"><a href="#质量怎么保证？" class="headerlink" title="质量怎么保证？"></a>质量怎么保证？</h2><p>80% 的代码由 AI 写，质量能行吗？</p>
+<p>Boris 的答案是四层防线：</p>
+<p><strong>第一层：agent 自测。</strong> Claude Code 自己写测试、自己跑测试，在提交前完成自验证。</p>
+<p><strong>第二层：Best of N 审查。</strong> 一个 PR 打开后，多个 review agent 独立并行审查，从不同角度评估代码质量。一个去重 agent 综合结果。这一层能捕获大约 80% 的低级 bug。</p>
+<p><strong>第三层：动态 lint。</strong> 当某类错误反复出现，Boris 不是写一个 ticket。他让 Claude 写一条 lint 规则，从源头阻止这类问题。质量系统本身也是 AI 生成的，而且在自我进化。</p>
+<p><strong>第四层：人类终审。</strong> 所有进入生产环境的 PR，仍然需要人类工程师签字。不是因为自动化不够好，而是因为责任和判断属于人。</p>
+<p><strong>人没有被移出循环。人在循环中的位置变了——从写代码的人变成了做最终判断的人。</strong></p>
+<h2 id="这不只是效率提升，是范式转换"><a href="#这不只是效率提升，是范式转换" class="headerlink" title="这不只是效率提升，是范式转换"></a>这不只是效率提升，是范式转换</h2><p>很多人把 Agent Teams 理解为”更快的开发工具”。这种理解太浅了。</p>
+<p>Gartner 预测，到 2028 年，33% 的企业软件将包含 Agentic AI。CIO 杂志说得更直接：”2026 年的工程师会花更少的时间写基础代码，花更多的时间编排 AI agent 的动态组合。”</p>
+<p>这里发生的是一个根本性的转变：</p>
+<p><strong>AI 编程工具经历了三个阶段：</strong></p>
+<ol>
+<li><strong>补全阶段</strong>（2022-2024）：帮你打字更快，本质上是高级自动完成</li>
+<li><strong>助手阶段</strong>（2024-2025）：能理解上下文、写函数、做解释，但仍然是一问一答</li>
+<li><strong>组织阶段</strong>（2026-）：多个 agent 组成团队，有角色分工、有通信机制、有任务管理，能自主协作完成复杂项目</li>
+</ol>
+<p>从第二阶段到第三阶段，不是量的变化，是质的飞跃。就像从一个人用 Excel 到用 ERP 系统——工具的复杂度上了一个台阶，但解决问题的维度也完全不同了。</p>
+<p>微软也注意到了这个趋势。他们在 2026 年 3 月把 Claude Cowork 背后的技术集成进了 Microsoft 365 Copilot，推出了 Copilot Cowork。这不是巧合——当 AI 从个人工具变成组织基础设施，每一个巨头都会入场。</p>
+<h2 id="对工程师意味着什么"><a href="#对工程师意味着什么" class="headerlink" title="对工程师意味着什么"></a>对工程师意味着什么</h2><p>Boris Cherny 说了一句让我印象很深的话：</p>
+<blockquote>
+<p>“智识谦逊比过去的经验更重要。”</p>
+</blockquote>
+<p>他自己也承认，六个月前尝试过但放弃的方案，到了现在可能已经可行了。模型能力在以超出所有人预期的速度进步。</p>
+<p>这意味着什么？</p>
+<p><strong>正在贬值的技能：</strong></p>
+<ul>
+<li>特定框架的深度经验（AI 可以在几小时内用另一个框架重写前端）</li>
+<li>语法记忆和模板代码编写能力</li>
+<li>“从头到尾自己写”的执行力</li>
+</ul>
+<p><strong>正在升值的技能：</strong></p>
+<ul>
+<li>系统性调试：能形成假设并高效缩小排查范围</li>
+<li>跨领域广度：全栈技术深度 + 商业&#x2F;设计&#x2F;产品嗅觉</li>
+<li>上下文切换能力：同时管理 5 个 agent，不丢状态</li>
+<li>架构判断力：知道什么该让 agent 做，什么该自己把关</li>
+</ul>
+<h2 id="你可以现在就开始"><a href="#你可以现在就开始" class="headerlink" title="你可以现在就开始"></a>你可以现在就开始</h2><p>Agent Teams 目前还是实验性功能，但核心能力已经可用。</p>
+<p><strong>第一步：先学会并行 agent 工作流。</strong> 不需要 Agent Teams，打开 5 个终端，每个跑一个 Claude Code，练习在它们之间切换和分配任务。习惯”指挥”而不是”动手”。</p>
+<p><strong>第二步：尝试 builder-validator 模式。</strong> 用一个 agent 写代码，另一个 agent 审查代码。这是最简单的多 agent 协作，但效果立竿见影。</p>
+<p><strong>第三步：开启 Agent Teams。</strong> 设置环境变量，在复杂任务中尝试 Team Lead + Teammates 模式。从跨层重构或多假设调试这类天然适合并行的任务开始。</p>
+<p><strong>关键心态：</strong> 像 Boris 说的，不要试图把 AI 放在盒子里。给它工具，给它自主权，然后退后一步。你的价值不在于写出每一行代码，而在于知道应该写什么、为什么写、以及写出来之后怎么验证。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>Boris Cherny 用了一个历史类比：我们就像 15 世纪的抄写员，刚刚遇到了古腾堡的印刷机。</p>
+<p>抄写员并没有消失。抄写这个功能——对文本的仔细、专业处理——变成了作家、编辑和出版商的基础。印刷机没有缩小识字率的市场，它让识字率爆炸式增长。</p>
+<p>软件开发也是一样。AI 不会让工程师消失。它会让”能做软件”的人群爆炸式增长。在 Anthropic 内部，几乎 100% 的非工程师现在都在用 Claude Code 构建自己的工具和工作流。</p>
+<p><strong>蛋糕在变大。问题是，你在更大的蛋糕里扮演什么角色。</strong></p>
+<p>你已经开始用多 agent 工作流了吗？还是觉得管理一个 agent 都够呛？欢迎在评论区分享你的真实体验。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># 多智能体</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/" rel="tag"># 软件工程</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/21/202603212000/" rel="prev" title="未来的软件公司，可能只有 1 个人 + Claude">
+                  <i class="fa fa-angle-left"></i> 未来的软件公司，可能只有 1 个人 + Claude
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/21/202603212100/" rel="next" title="2026：AI Agent 正在杀死 IDE，开发者的主战场变了">
+                  2026：AI Agent 正在杀死 IDE，开发者的主战场变了 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">818k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">12:23</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

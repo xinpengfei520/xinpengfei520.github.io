@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="上一篇文章讲了 token 是什么，很多人在评论区问：那”上下文窗口”又是什么？200K 上下文和 1M 上下文有什么区别？ 这个问题问得好。如果说 token 是 AI 的”计费单位”，那上下文窗口就是 AI 的”工作记忆”——它决定了 AI 一次能”记住”多少东西。 今天这篇文章，我用最直白的方式把上下文窗口这件事讲清楚。 上下文窗口是什么？一个比方就懂了我跟朋友聊天的时候发现一个事——聊了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI 的&quot;记忆力&quot;有多大？200K 和 1M 上下文到底差在哪">
+<meta property="og:url" content="https://www.vance.xin/2026/03/30/202603301100/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="上一篇文章讲了 token 是什么，很多人在评论区问：那”上下文窗口”又是什么？200K 上下文和 1M 上下文有什么区别？ 这个问题问得好。如果说 token 是 AI 的”计费单位”，那上下文窗口就是 AI 的”工作记忆”——它决定了 AI 一次能”记住”多少东西。 今天这篇文章，我用最直白的方式把上下文窗口这件事讲清楚。 上下文窗口是什么？一个比方就懂了我跟朋友聊天的时候发现一个事——聊了">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260330-ai-context-window-explained.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260330-context-window-size-comparison.webp">
+<meta property="article:published_time" content="2026-03-30T11:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-30T12:37:58.893Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="上下文窗口">
+<meta property="article:tag" content="ChatGPT">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="Context Window">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260330-ai-context-window-explained.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/30/202603301100/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/30/202603301100/","path":"2026/03/30/202603301100/","title":"AI 的\"记忆力\"有多大？200K 和 1M 上下文到底差在哪"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>AI 的"记忆力"有多大？200K 和 1M 上下文到底差在哪 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AA%97%E5%8F%A3%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%E4%B8%80%E4%B8%AA%E6%AF%94%E6%96%B9%E5%B0%B1%E6%87%82%E4%BA%86"><span class="nav-text">上下文窗口是什么？一个比方就懂了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AA%97%E5%8F%A3%E5%BE%88%E9%87%8D%E8%A6%81%EF%BC%9F"><span class="nav-text">为什么上下文窗口很重要？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#200K-%E5%92%8C-1M-%E4%B8%8A%E4%B8%8B%E6%96%87%EF%BC%8C%E5%AE%9E%E9%99%85%E4%BD%93%E9%AA%8C%E5%B7%AE%E5%A4%9A%E5%B0%91%EF%BC%9F"><span class="nav-text">200K 和 1M 上下文，实际体验差多少？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1M-%E4%B8%8A%E4%B8%8B%E6%96%87%E7%9A%84%E4%B8%89%E4%B8%AA%E5%9D%91"><span class="nav-text">1M 上下文的三个坑</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E5%A4%A7%E5%B0%8F%E5%92%8C-Token-%E6%B6%88%E8%80%97%E9%80%9F%E5%BA%A6%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-text">上下文大小和 Token 消耗速度的关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%8E%E4%B9%88%E9%80%89%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AA%97%E5%8F%A3%EF%BC%9F"><span class="nav-text">怎么选上下文窗口？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%A5%E5%B8%B8%E8%81%8A%E5%A4%A9%E3%80%81%E7%AE%80%E5%8D%95%E9%97%AE%E7%AD%94-%E2%86%92-128K-%E5%A4%9F%E4%BA%86"><span class="nav-text">日常聊天、简单问答 → 128K 够了</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5%E3%80%81%E9%95%BF%E6%96%87%E5%88%86%E6%9E%90-%E2%86%92-200K-%E6%98%AF%E7%94%9C%E8%9C%9C%E7%82%B9"><span class="nav-text">代码审查、长文分析 → 200K 是甜蜜点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B4%E4%B8%AA%E4%BB%A3%E7%A0%81%E5%BA%93%E5%88%86%E6%9E%90%E3%80%81%E7%A0%94%E7%A9%B6%E8%AE%BA%E6%96%87%E9%9B%86-%E2%86%92-%E6%89%8D%E9%9C%80%E8%A6%81-1M"><span class="nav-text">整个代码库分析、研究论文集 → 才需要 1M</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E7%9C%81%E9%92%B1%E5%8F%88%E5%A5%BD%E7%94%A8%E7%9A%84%E6%8A%80%E5%B7%A7"><span class="nav-text">一个省钱又好用的技巧</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">249</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">412</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/30/202603301100/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="AI 的&quot;记忆力&quot;有多大？200K 和 1M 上下文到底差在哪 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AI 的"记忆力"有多大？200K 和 1M 上下文到底差在哪
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-03-30 11:00:00 / 修改时间：12:37:58" itemprop="dateCreated datePublished" datetime="2026-03-30T11:00:00+00:00">2026-03-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260330-ai-context-window-explained.webp" alt="cover"></p>
+<p>上一篇文章讲了 token 是什么，很多人在评论区问：那”上下文窗口”又是什么？200K 上下文和 1M 上下文有什么区别？</p>
+<p>这个问题问得好。如果说 token 是 AI 的”计费单位”，那上下文窗口就是 AI 的”工作记忆”——它决定了 AI 一次能”记住”多少东西。</p>
+<p>今天这篇文章，我用最直白的方式把上下文窗口这件事讲清楚。</p>
+<h2 id="上下文窗口是什么？一个比方就懂了"><a href="#上下文窗口是什么？一个比方就懂了" class="headerlink" title="上下文窗口是什么？一个比方就懂了"></a>上下文窗口是什么？一个比方就懂了</h2><p>我跟朋友聊天的时候发现一个事——聊了半小时之后，话题从天气聊到工作，从工作聊到周末计划。我说”所以我觉得还是算了”，他立刻就知道我说的是周末爬山那事。这就是上下文的作用。</p>
+<p><strong>上下文窗口，就是 AI 的”聊天记忆容量”。</strong></p>
+<p>但 AI 的记忆跟人不一样。人的记忆是模糊的、有选择性的——你会记住重点，忘掉细节。AI 的记忆是精确的、机械的——它要么记住所有东西，要么什么都不记得。</p>
+<p>上下文窗口的大小，用 token 来衡量。比如：</p>
+<ul>
+<li><strong>128K 上下文</strong> &#x3D; 能记住大约 128,000 个 token</li>
+<li><strong>200K 上下文</strong> &#x3D; 能记住大约 200,000 个 token</li>
+<li><strong>1M 上下文</strong> &#x3D; 能记住大约 1,000,000 个 token</li>
+</ul>
+<p>换算成人话：</p>
+<ul>
+<li>128K ≈ 一本中等长度的小说（10 万字左右）</li>
+<li>200K ≈ 两本小说</li>
+<li>1M ≈ 十本小说</li>
+</ul>
+<p><img src="https://image.vance.xin/aigc/image/20260330-context-window-size-comparison.webp" alt="上下文窗口大小对比"></p>
+<h2 id="为什么上下文窗口很重要？"><a href="#为什么上下文窗口很重要？" class="headerlink" title="为什么上下文窗口很重要？"></a>为什么上下文窗口很重要？</h2><p>因为它决定了 AI 能处理多复杂的任务。</p>
+<p>上周我想让 AI 总结一篇 5 万字的研究报告，结果发现它只有 32K 上下文（大约 2.4 万字）——根本装不下。我得把文章拆成三段，分别喂给它，然后自己把三段总结拼起来。要是它有 200K 上下文，一口气就能读完。</p>
+<p>写代码的时候也一样。我用 Claude Code 重构一个项目，50 个文件，总共 15 万个 token。如果 AI 只有 128K 上下文，它只能看到其中一部分文件——改着改着就忘了另一半代码长什么样，容易改出 bug。但如果有 200K 上下文，它能把整个项目装进脑子里，改起来就不容易出错。</p>
+<p>还有长对话的问题。你跟 AI 聊了 20 轮，每轮你说 100 个 token，AI 回 300 个 token。到第 20 轮的时候，历史对话已经累积了 8 万个 token。如果 AI 只有 32K 上下文，到第 8 轮就装不下了——它会自动”忘掉”最早的几轮对话，突然不记得你们之前聊了什么。</p>
+<h2 id="200K-和-1M-上下文，实际体验差多少？"><a href="#200K-和-1M-上下文，实际体验差多少？" class="headerlink" title="200K 和 1M 上下文，实际体验差多少？"></a>200K 和 1M 上下文，实际体验差多少？</h2><p>2026 年 3 月，主流 AI 模型的上下文窗口大概是这样的：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>上下文窗口</th>
+<th>适合场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude Opus 4.6</td>
+<td>200K</td>
+<td>代码审查、长文分析、复杂对话</td>
+</tr>
+<tr>
+<td>GPT-5.2</td>
+<td>400K</td>
+<td>多文档对比、大型项目重构</td>
+</tr>
+<tr>
+<td>Gemini 3 Pro</td>
+<td>10M</td>
+<td>整个代码库分析、研究论文集</td>
+</tr>
+</tbody></table>
+<p>乍一看，1M 比 200K 大五倍，应该好用五倍吧？</p>
+<p><strong>实际上没那么简单。</strong></p>
+<h3 id="1M-上下文的三个坑"><a href="#1M-上下文的三个坑" class="headerlink" title="1M 上下文的三个坑"></a>1M 上下文的三个坑</h3><p><strong>性能会下降。</strong></p>
+<p>NoLiMa 研究发现，当上下文超过 32K token 的时候，12 个主流模型里有 11 个的表现会掉到短上下文时的 50% 以下。上下文越大，AI 越容易”找不到重点”。</p>
+<p>就像你让一个人在一个图书馆里找一本书，比在一个书架上找要慢得多——信息太多反而干扰判断。</p>
+<p><strong>价格会翻倍。</strong></p>
+<p>很多人不知道的是：<strong>超过 200K 之后，token 价格会涨。</strong></p>
+<p>以 Gemini 为例：</p>
+<ul>
+<li>前 200K token：正常价格</li>
+<li>超过 200K 的部分：<strong>价格翻倍</strong></li>
+</ul>
+<p>所以如果你用 1M 上下文，实际花的钱可能是 200K 的 2-3 倍，而不是 5 倍——但也不便宜。</p>
+<p><strong>你可能用不到那么大。</strong></p>
+<p>Reddit 上有个讨论很有意思：一个开发者说”我的经验是，1M 上下文的模型在填满 40% 之后就开始跑偏，经常忘记自己在干什么。”</p>
+<p>另一个人回复：”我还是更喜欢 200K 的模型。虽然容量小，但它在整个窗口范围内表现都很稳定。”</p>
+<p>这就是工程上的权衡——<strong>不是越大越好，而是够用就好。</strong></p>
+<h2 id="上下文大小和-Token-消耗速度的关系"><a href="#上下文大小和-Token-消耗速度的关系" class="headerlink" title="上下文大小和 Token 消耗速度的关系"></a>上下文大小和 Token 消耗速度的关系</h2><p>上下文窗口大小不会直接影响 token 消耗速度——这点很多人不知道。</p>
+<p>什么意思？</p>
+<p>假设你跟 AI 聊天，每轮你说 100 个 token，AI 回 300 个 token。不管 AI 的上下文窗口是 200K 还是 1M，这一轮消耗的 token 数量都是 400 个——跟窗口大小没关系。</p>
+<p><strong>但是，上下文窗口会间接影响你的消费习惯。</strong></p>
+<p>如果你知道 AI 有 1M 上下文，你可能会：</p>
+<ul>
+<li>一次性贴更多文件进去（”反正装得下”）</li>
+<li>不开新对话（”还有空间，继续聊”）</li>
+<li>不删无关内容（”懒得整理了”）</li>
+</ul>
+<p>结果就是：你的每一轮对话都在处理更多 token，账单自然就上去了。</p>
+<p><strong>真实案例：</strong></p>
+<p>我之前用 Claude Opus（200K 上下文）写代码，习惯每完成一个功能就开新对话。后来换成 Gemini（1M 上下文），觉得”反正装得下”，就一直在同一个窗口里聊。</p>
+<p>一个月后看账单，Gemini 的消费比 Claude 高了 60%——不是因为 Gemini 贵，而是因为我用它的方式变了。</p>
+<h2 id="怎么选上下文窗口？"><a href="#怎么选上下文窗口？" class="headerlink" title="怎么选上下文窗口？"></a>怎么选上下文窗口？</h2><p>根据 2026 年的实际使用经验，我的建议是：</p>
+<h3 id="日常聊天、简单问答-→-128K-够了"><a href="#日常聊天、简单问答-→-128K-够了" class="headerlink" title="日常聊天、简单问答 → 128K 够了"></a>日常聊天、简单问答 → 128K 够了</h3><p>如果你只是问问题、翻译、写邮件，128K 完全够用。省钱，速度还快。</p>
+<h3 id="代码审查、长文分析-→-200K-是甜蜜点"><a href="#代码审查、长文分析-→-200K-是甜蜜点" class="headerlink" title="代码审查、长文分析 → 200K 是甜蜜点"></a>代码审查、长文分析 → 200K 是甜蜜点</h3><p>200K 是目前性价比最高的选择。能装下一个中型项目的代码，或者两三篇长文，而且模型表现稳定。</p>
+<p>Claude Opus 4.6 的 200K 上下文，在整个窗口范围内表现都很一致——不会因为内容多了就开始犯糊涂。</p>
+<h3 id="整个代码库分析、研究论文集-→-才需要-1M"><a href="#整个代码库分析、研究论文集-→-才需要-1M" class="headerlink" title="整个代码库分析、研究论文集 → 才需要 1M"></a>整个代码库分析、研究论文集 → 才需要 1M</h3><p>只有在你真的需要一次性处理海量信息的时候，1M 上下文才有意义。比如：</p>
+<ul>
+<li>分析一个有几百个文件的大型项目</li>
+<li>对比十几篇研究论文</li>
+<li>处理一整本书的内容</li>
+</ul>
+<p>但即使在这些场景下，也要注意：<strong>别把所有东西都塞进去。</strong> 只放相关的部分，AI 的表现会更好。</p>
+<h2 id="一个省钱又好用的技巧"><a href="#一个省钱又好用的技巧" class="headerlink" title="一个省钱又好用的技巧"></a>一个省钱又好用的技巧</h2><p>不管你用多大的上下文窗口，有一个技巧永远有效：<strong>话题一换就开新对话。</strong></p>
+<p>为什么？</p>
+<p>因为 AI 是无状态的——每次你发新消息，它都会重新读一遍所有历史对话。对话越长，重复处理的 token 越多，消耗越大。</p>
+<p>我现在的习惯是：</p>
+<ul>
+<li>写完一个功能 → 开新对话</li>
+<li>聊完一个话题 → 开新对话</li>
+<li>切换任务 → 开新对话</li>
+</ul>
+<p>这样做不光省钱，AI 的回复质量也更好——因为上下文干净，它不容易被无关信息干扰。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>上下文窗口听起来是个技术指标，但它其实就是 AI 的”工作记忆”。</p>
+<p>128K、200K、1M 的区别，不只是数字大小，更是使用场景和成本的权衡。大部分人大部分时候，200K 就够了——能装下足够多的信息，价格合理，表现稳定。</p>
+<p>1M 上下文很诱人，但别被”越大越好”的直觉骗了。上下文太大，AI 容易跑偏，价格也会翻倍。<strong>够用就好，别贪多。</strong></p>
+<p>最后一个建议：不管你用多大的上下文，都要养成”开新对话”的习惯。这是最简单也最有效的省钱方式——而且 AI 的回复质量也会更好。</p>
+<p><strong>你平时用的 AI 是多大的上下文窗口？有没有遇到过”上下文不够用”或者”上下文太大反而变笨”的情况？评论区聊聊。</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AA%97%E5%8F%A3/" rel="tag"># 上下文窗口</a>
+              <a href="/tags/ChatGPT/" rel="tag"># ChatGPT</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+              <a href="/tags/Context-Window/" rel="tag"># Context Window</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/30/202603301030/" rel="prev" title="每次跟 AI 聊天都在花钱？一文搞懂 Tokens 到底是什么">
+                  <i class="fa fa-angle-left"></i> 每次跟 AI 聊天都在花钱？一文搞懂 Tokens 到底是什么
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">861k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">13:03</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

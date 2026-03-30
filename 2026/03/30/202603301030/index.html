@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="你有没有注意过，ChatGPT、Claude 这些 AI 工具的定价页面上，写的都是”每百万 tokens 多少钱”？ 第一次看到这个词的时候，我也懵了。什么是 token？为什么不直接按字数收费？输入 token、输出 token、缓存 token 又是什么鬼？ 后来搞明白之后我才意识到：理解 tokens，是理解 AI 定价的钥匙。 不懂 tokens，你就不知道自己的钱花在了哪里，更不知道">
+<meta property="og:type" content="article">
+<meta property="og:title" content="每次跟 AI 聊天都在花钱？一文搞懂 Tokens 到底是什么">
+<meta property="og:url" content="https://www.vance.xin/2026/03/30/202603301030/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="你有没有注意过，ChatGPT、Claude 这些 AI 工具的定价页面上，写的都是”每百万 tokens 多少钱”？ 第一次看到这个词的时候，我也懵了。什么是 token？为什么不直接按字数收费？输入 token、输出 token、缓存 token 又是什么鬼？ 后来搞明白之后我才意识到：理解 tokens，是理解 AI 定价的钥匙。 不懂 tokens，你就不知道自己的钱花在了哪里，更不知道">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260330-what-are-ai-tokens-explained.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260330-ai-tokens-input-output-cache.webp">
+<meta property="article:published_time" content="2026-03-30T10:30:00.000Z">
+<meta property="article:modified_time" content="2026-03-30T12:37:58.893Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="ChatGPT">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="Tokens">
+<meta property="article:tag" content="省钱技巧">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260330-what-are-ai-tokens-explained.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/03/30/202603301030/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/03/30/202603301030/","path":"2026/03/30/202603301030/","title":"每次跟 AI 聊天都在花钱？一文搞懂 Tokens 到底是什么"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>每次跟 AI 聊天都在花钱？一文搞懂 Tokens 到底是什么 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Token-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%E4%B8%80%E4%B8%AA%E6%AF%94%E6%96%B9%E5%B0%B1%E5%A4%9F%E4%BA%86"><span class="nav-text">Token 是什么？一个比方就够了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-AI-%E8%A6%81%E7%94%A8-Token%EF%BC%8C%E4%B8%8D%E7%9B%B4%E6%8E%A5%E7%94%A8%E2%80%9D%E5%AD%97%E2%80%9D%EF%BC%9F"><span class="nav-text">为什么 AI 要用 Token，不直接用”字”？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E7%A7%8D-Token%EF%BC%9A%E8%BE%93%E5%85%A5%E3%80%81%E8%BE%93%E5%87%BA%E3%80%81%E7%BC%93%E5%AD%98"><span class="nav-text">三种 Token：输入、输出、缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%93%E5%85%A5-Token%EF%BC%88Input-Tokens%EF%BC%89"><span class="nav-text">输入 Token（Input Tokens）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%93%E5%87%BA-Token%EF%BC%88Output-Tokens%EF%BC%89"><span class="nav-text">输出 Token（Output Tokens）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%93%E5%AD%98-Token%EF%BC%88Cached-Tokens%EF%BC%89"><span class="nav-text">缓存 Token（Cached Tokens）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E7%9C%9F%E5%AE%9E%E5%9C%BA%E6%99%AF%EF%BC%9A%E4%BD%A0%E8%B7%9F-AI-%E8%81%8A-10-%E8%BD%AE%EF%BC%8C%E5%88%B0%E5%BA%95%E8%8A%B1%E4%BA%86%E5%A4%9A%E5%B0%91-token%EF%BC%9F"><span class="nav-text">一个真实场景：你跟 AI 聊 10 轮，到底花了多少 token？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%81-Token-%E7%9A%84%E5%AE%9E%E7%94%A8%E6%8A%80%E5%B7%A7"><span class="nav-text">省 Token 的实用技巧</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%9D%E9%A2%98%E4%B8%80%E6%8D%A2%E5%B0%B1%E5%BC%80%E6%96%B0%E7%AA%97%E5%8F%A3"><span class="nav-text">话题一换就开新窗口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9C%80%E6%B1%82%E4%B8%80%E6%AC%A1%E8%AF%B4%E6%B8%85%E6%A5%9A%EF%BC%8C%E5%88%AB%E6%8C%A4%E7%89%99%E8%86%8F"><span class="nav-text">需求一次说清楚，别挤牙膏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E8%BE%93%E5%87%BA%E9%95%BF%E5%BA%A6"><span class="nav-text">控制输出长度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E5%87%A0%E6%9D%A1%E4%B9%9F%E5%80%BC%E5%BE%97%E7%9F%A5%E9%81%93"><span class="nav-text">其他几条也值得知道</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">249</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">412</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/30/202603301030/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="每次跟 AI 聊天都在花钱？一文搞懂 Tokens 到底是什么 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          每次跟 AI 聊天都在花钱？一文搞懂 Tokens 到底是什么
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-03-30 10:30:00 / 修改时间：12:37:58" itemprop="dateCreated datePublished" datetime="2026-03-30T10:30:00+00:00">2026-03-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260330-what-are-ai-tokens-explained.webp" alt="cover"></p>
+<p>你有没有注意过，ChatGPT、Claude 这些 AI 工具的定价页面上，写的都是”每百万 tokens 多少钱”？</p>
+<p>第一次看到这个词的时候，我也懵了。什么是 token？为什么不直接按字数收费？输入 token、输出 token、缓存 token 又是什么鬼？</p>
+<p>后来搞明白之后我才意识到：<strong>理解 tokens，是理解 AI 定价的钥匙。</strong> 不懂 tokens，你就不知道自己的钱花在了哪里，更不知道怎么省钱。</p>
+<h2 id="Token-是什么？一个比方就够了"><a href="#Token-是什么？一个比方就够了" class="headerlink" title="Token 是什么？一个比方就够了"></a>Token 是什么？一个比方就够了</h2><p>先忘掉所有技术术语。</p>
+<p>想象你去一家餐厅点菜。菜单上的价格不是按”一道菜”标的，而是按”食材克数”标的。你点了一份红烧肉，厨房不看”这是一道菜”，而是拆开看——猪肉 200 克、酱油 30 毫升、糖 15 克——然后按食材的总量给你算钱。</p>
+<p><strong>Token 就是 AI 世界里的”食材克数”。</strong></p>
+<p>你发给 AI 的每一句话，AI 不是”读一句话”，而是先把这句话拆成一个一个的小碎片——这些碎片就叫 token。AI 按 token 的数量来计算工作量和费用。</p>
+<p>举个例子：”我想学编程” 这五个汉字，大概会被拆成 3-5 个 token。”I want to learn programming” 这句英文，大概是 5-6 个 token。</p>
+<p><strong>一个粗略的换算：</strong></p>
+<ul>
+<li>英文：1 个 token ≈ 0.75 个单词（4 个字母左右）</li>
+<li>中文：1 个 token ≈ 1-2 个汉字</li>
+</ul>
+<p>所以中文用户要注意——同样的意思，中文消耗的 token 数量通常比英文多。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260330-ai-tokens-input-output-cache.webp" alt="Token 类型详解"></p>
+<h2 id="为什么-AI-要用-Token，不直接用”字”？"><a href="#为什么-AI-要用-Token，不直接用”字”？" class="headerlink" title="为什么 AI 要用 Token，不直接用”字”？"></a>为什么 AI 要用 Token，不直接用”字”？</h2><p>你可能会问：干嘛搞这么复杂，直接按字数收费不好吗？</p>
+<p>因为 AI 不认识”字”。</p>
+<p>AI 的大脑是一个数学模型，它只能处理数字。所以在处理你的文字之前，必须先把文字转换成数字。这个转换的过程叫做<strong>分词（tokenization）</strong>。</p>
+<p>NVIDIA 的技术博客举了一个很直观的例子：英文单词 “darkness” 会被拆成两个 token——“dark”（编号 217）和 “ness”（编号 655）。而 “brightness” 也被拆成 “bright”（编号 491）和 “ness”（编号 655）。</p>
+<p>注意到了吗？**”ness” 的编号是一样的。** 这就是 token 的聪明之处——通过共享的编号，AI 学会了 “darkness” 和 “brightness” 之间有某种结构上的关系。如果按整个单词来编号，AI 就发现不了这种规律。</p>
+<p>所以 token 不是 AI 故意为难你，而是它理解世界的方式。</p>
+<h2 id="三种-Token：输入、输出、缓存"><a href="#三种-Token：输入、输出、缓存" class="headerlink" title="三种 Token：输入、输出、缓存"></a>三种 Token：输入、输出、缓存</h2><p>现在你知道 token 是什么了。但在实际使用中，token 还分三种类型，价格各不相同。</p>
+<h3 id="输入-Token（Input-Tokens）"><a href="#输入-Token（Input-Tokens）" class="headerlink" title="输入 Token（Input Tokens）"></a>输入 Token（Input Tokens）</h3><p><strong>你发给 AI 的所有内容，都算输入 token。</strong></p>
+<p>包括：你打的文字、上传的文件、贴的图片、系统提示词（system prompt），甚至之前的对话历史——全部都要转成 token 喂给 AI。</p>
+<p>但这里有一个坑，我一开始也不知道：<strong>AI 的 API 是无状态的。</strong> 什么意思？就是 AI 其实不记得你之前说了什么。每次你发新消息，系统都会把之前所有的对话历史重新发一遍。</p>
+<p>FinOps 基金会管这个叫 <strong>“上下文窗口蔓延”（Context Window Creep）</strong>——随着对话越来越长，每发一条新消息，重复发送的历史内容就越多，输入 token 像滚雪球一样越来越大。</p>
+<p>这就是为什么你聊到后面会觉得越来越贵、速度越来越慢。</p>
+<h3 id="输出-Token（Output-Tokens）"><a href="#输出-Token（Output-Tokens）" class="headerlink" title="输出 Token（Output Tokens）"></a>输出 Token（Output Tokens）</h3><p><strong>AI 回复你的内容，就是输出 token。</strong></p>
+<p>输出 token 是最贵的——通常是输入 token 价格的 <strong>3 到 5 倍</strong>。</p>
+<p>为什么？因为生成回复比理解问题消耗的算力大得多。读一篇文章和写一篇文章，哪个更累？写当然更累。AI 也一样。</p>
+<p>看一组真实价格对比（2026 年 3 月数据）：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>输入价格（每百万 token）</th>
+<th>输出价格（每百万 token）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GPT-4o</td>
+<td>$2.50</td>
+<td>$10.00</td>
+</tr>
+<tr>
+<td>Claude Sonnet 4.6</td>
+<td>$3.00</td>
+<td>$15.00</td>
+</tr>
+<tr>
+<td>Claude Opus 4.6</td>
+<td>$5.00</td>
+<td>$25.00</td>
+</tr>
+</tbody></table>
+<p>一眼就能看出来——<strong>输出永远比输入贵。</strong> 所以如果你希望 AI 写一篇 5000 字的长文，那个输出 token 的账单会很可观。</p>
+<h3 id="缓存-Token（Cached-Tokens）"><a href="#缓存-Token（Cached-Tokens）" class="headerlink" title="缓存 Token（Cached Tokens）"></a>缓存 Token（Cached Tokens）</h3><p><strong>如果你发送的内容跟上次有大量重复，重复的部分可以走缓存，价格便宜一半甚至更多。</strong></p>
+<p>举个例子：你用 AI 写代码，每次都会带上同样的系统提示词（比如”你是一个 Python 专家，代码要简洁”）。这段提示词第一次发送时是普通输入 token，但从第二次开始，AI 发现”这段我刚处理过”，就会自动缓存，按更便宜的价格计费。</p>
+<p>以 OpenAI 的定价为例：</p>
+<ul>
+<li>普通输入：$2.50 &#x2F; 百万 token</li>
+<li>缓存输入：$1.25 &#x2F; 百万 token（<strong>半价</strong>）</li>
+</ul>
+<p>Anthropic 的缓存更狠——缓存命中的价格只有正常输入的 **10%**。</p>
+<p>简单说：<strong>用法越固定、重复越多，缓存省得越多。</strong> 这对写代码的开发者来说是个好消息——你的系统提示词和项目上下文天然就是高度重复的。</p>
+<h2 id="一个真实场景：你跟-AI-聊-10-轮，到底花了多少-token？"><a href="#一个真实场景：你跟-AI-聊-10-轮，到底花了多少-token？" class="headerlink" title="一个真实场景：你跟 AI 聊 10 轮，到底花了多少 token？"></a>一个真实场景：你跟 AI 聊 10 轮，到底花了多少 token？</h2><p>说了这么多概念，来算一笔真实的账。</p>
+<p>假设你跟 AI 聊天，每轮你说 100 个 token，AI 回复 300 个 token。</p>
+<table>
+<thead>
+<tr>
+<th>轮次</th>
+<th>输入 token（含历史）</th>
+<th>输出 token</th>
+<th>累计输入</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>第 1 轮</td>
+<td>100</td>
+<td>300</td>
+<td>100</td>
+</tr>
+<tr>
+<td>第 2 轮</td>
+<td>500</td>
+<td>300</td>
+<td>600</td>
+</tr>
+<tr>
+<td>第 3 轮</td>
+<td>1,100</td>
+<td>300</td>
+<td>1,700</td>
+</tr>
+<tr>
+<td>第 5 轮</td>
+<td>2,900</td>
+<td>300</td>
+<td>6,600</td>
+</tr>
+<tr>
+<td>第 10 轮</td>
+<td>6,700</td>
+<td>300</td>
+<td>30,900</td>
+</tr>
+</tbody></table>
+<p>看到没有？<strong>到第 10 轮的时候，单次输入就要 6700 个 token——其中绝大部分是重复发送的历史对话。</strong> 累计输入已经超过 3 万 token 了。</p>
+<p>这就是”上下文窗口蔓延”的威力。你以为自己只打了 1000 个字，实际上 AI 处理了 3 万多个 token。</p>
+<h2 id="省-Token-的实用技巧"><a href="#省-Token-的实用技巧" class="headerlink" title="省 Token 的实用技巧"></a>省 Token 的实用技巧</h2><p>明白了 token 的运作方式，省钱就有了方向。我自己踩了不少坑之后，总结出几条最管用的。</p>
+<h3 id="话题一换就开新窗口"><a href="#话题一换就开新窗口" class="headerlink" title="话题一换就开新窗口"></a>话题一换就开新窗口</h3><p>这是效果最立竿见影的一条。上面那个 10 轮对话的表格已经说明了——对话越长，每轮重复发送的历史越多，token 消耗指数级增长。我以前习惯在一个窗口里从早聊到晚，后来看了一次 API 账单才发现，最后几轮每条消息的 token 消耗是第一轮的几十倍。现在我的习惯是：<strong>话题一变就开新对话，绝不留恋。</strong></p>
+<h3 id="需求一次说清楚，别挤牙膏"><a href="#需求一次说清楚，别挤牙膏" class="headerlink" title="需求一次说清楚，别挤牙膏"></a>需求一次说清楚，别挤牙膏</h3><p>这条也是血泪教训。很多人（包括以前的我）习惯这样跟 AI 聊：</p>
+<blockquote>
+<p>“帮我写个函数”<br>“用 Python”<br>“要处理 JSON”<br>“加上错误处理”</p>
+</blockquote>
+<p>四轮对话，四次重复发送历史。换成一句话：</p>
+<blockquote>
+<p>“用 Python 写一个处理 JSON 的函数，包含完整的错误处理”</p>
+</blockquote>
+<p>一轮搞定，token 消耗立刻降到四分之一。<strong>把 AI 当一个刚入职的同事——你交代任务的时候，一次说清楚比让人来回问强。</strong></p>
+<h3 id="控制输出长度"><a href="#控制输出长度" class="headerlink" title="控制输出长度"></a>控制输出长度</h3><p>输出 token 最贵，这条很多人忽略了。AI 默认会尽量详细地回复，你不限制它就会一直写。所以如果你只需要一个简短的答案，明确告诉它：”用三句话总结”比”帮我总结一下”省钱得多。</p>
+<h3 id="其他几条也值得知道"><a href="#其他几条也值得知道" class="headerlink" title="其他几条也值得知道"></a>其他几条也值得知道</h3><p><strong>选对模型。</strong> 简单的问答、翻译、格式转换，用 GPT-4o-mini 或者 Claude Haiku 就够了，价格只有旗舰模型的几十分之一。我的经验是先用便宜模型试，不满意再换贵的——80% 的日常任务，便宜模型完全能搞定。</p>
+<p><strong>别贴无关内容。</strong> 你贴给 AI 的每一个字都在消耗 token。只贴相关的部分，把无关内容删掉再发。</p>
+<p><strong>用英文提问可以省 30%-50% 的 token。</strong> 同样的意思，中文比英文消耗更多 token。当然如果你需要中文回复，省下的输入可能被输出吃掉，具体看情况。</p>
+<p><strong>通过 API 调用的话，善用系统提示词缓存。</strong> 把不变的提示词放在最前面，更容易命中缓存，享受半价甚至更低的价格。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>Token 听起来是一个技术概念，但它其实就是 AI 世界的”度量衡”——就像用水按吨计费、用电按度计费一样，用 AI 按 token 计费。</p>
+<p>我上个月的 Claude 账单是 87 美元，其中大概有三分之一是”上下文窗口蔓延”贡献的——就是那些重复发送的对话历史。搞清楚这件事之后，我养成了两个习惯：话题一换就开新窗口，需求一次说完不分三条发。光这两个改变，这个月的消耗就降了 40% 左右。</p>
+<p>而且省 token 不光省钱，AI 的回复质量也会更好——上下文越干净，它越不容易跑偏。这可能是最划算的”免费升级”了。</p>
+<p><strong>你每个月在 AI 工具上花多少钱？有没有注意过自己的 token 消耗？评论区聊聊你的使用习惯。</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/ChatGPT/" rel="tag"># ChatGPT</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+              <a href="/tags/Tokens/" rel="tag"># Tokens</a>
+              <a href="/tags/%E7%9C%81%E9%92%B1%E6%8A%80%E5%B7%A7/" rel="tag"># 省钱技巧</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/03/25/202603252053/" rel="prev" title="Claude Code 最能打的 10 个 Skill：装上这些，效率直接上一个台阶">
+                  <i class="fa fa-angle-left"></i> Claude Code 最能打的 10 个 Skill：装上这些，效率直接上一个台阶
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/03/30/202603301100/" rel="next" title="AI 的&quot;记忆力&quot;有多大？200K 和 1M 上下文到底差在哪">
+                  AI 的"记忆力"有多大？200K 和 1M 上下文到底差在哪 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">861k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">13:03</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

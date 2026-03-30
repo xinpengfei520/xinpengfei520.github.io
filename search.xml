@@ -1,6 +1,597 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>AI 的&quot;记忆力&quot;有多大？200K 和 1M 上下文到底差在哪</title>
+    <url>/2026/03/30/202603301100/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260330-ai-context-window-explained.webp" alt="cover"></p>
+<p>上一篇文章讲了 token 是什么，很多人在评论区问：那”上下文窗口”又是什么？200K 上下文和 1M 上下文有什么区别？</p>
+<p>这个问题问得好。如果说 token 是 AI 的”计费单位”，那上下文窗口就是 AI 的”工作记忆”——它决定了 AI 一次能”记住”多少东西。</p>
+<p>今天这篇文章，我用最直白的方式把上下文窗口这件事讲清楚。</p>
+<h2 id="上下文窗口是什么？一个比方就懂了"><a href="#上下文窗口是什么？一个比方就懂了" class="headerlink" title="上下文窗口是什么？一个比方就懂了"></a>上下文窗口是什么？一个比方就懂了</h2><p>我跟朋友聊天的时候发现一个事——聊了半小时之后，话题从天气聊到工作，从工作聊到周末计划。我说”所以我觉得还是算了”，他立刻就知道我说的是周末爬山那事。这就是上下文的作用。</p>
+<p><strong>上下文窗口，就是 AI 的”聊天记忆容量”。</strong></p>
+<p>但 AI 的记忆跟人不一样。人的记忆是模糊的、有选择性的——你会记住重点，忘掉细节。AI 的记忆是精确的、机械的——它要么记住所有东西，要么什么都不记得。</p>
+<p>上下文窗口的大小，用 token 来衡量。比如：</p>
+<ul>
+<li><strong>128K 上下文</strong> &#x3D; 能记住大约 128,000 个 token</li>
+<li><strong>200K 上下文</strong> &#x3D; 能记住大约 200,000 个 token</li>
+<li><strong>1M 上下文</strong> &#x3D; 能记住大约 1,000,000 个 token</li>
+</ul>
+<p>换算成人话：</p>
+<ul>
+<li>128K ≈ 一本中等长度的小说（10 万字左右）</li>
+<li>200K ≈ 两本小说</li>
+<li>1M ≈ 十本小说</li>
+</ul>
+<p><img src="https://image.vance.xin/aigc/image/20260330-context-window-size-comparison.webp" alt="上下文窗口大小对比"></p>
+<h2 id="为什么上下文窗口很重要？"><a href="#为什么上下文窗口很重要？" class="headerlink" title="为什么上下文窗口很重要？"></a>为什么上下文窗口很重要？</h2><p>因为它决定了 AI 能处理多复杂的任务。</p>
+<p>上周我想让 AI 总结一篇 5 万字的研究报告，结果发现它只有 32K 上下文（大约 2.4 万字）——根本装不下。我得把文章拆成三段，分别喂给它，然后自己把三段总结拼起来。要是它有 200K 上下文，一口气就能读完。</p>
+<p>写代码的时候也一样。我用 Claude Code 重构一个项目，50 个文件，总共 15 万个 token。如果 AI 只有 128K 上下文，它只能看到其中一部分文件——改着改着就忘了另一半代码长什么样，容易改出 bug。但如果有 200K 上下文，它能把整个项目装进脑子里，改起来就不容易出错。</p>
+<p>还有长对话的问题。你跟 AI 聊了 20 轮，每轮你说 100 个 token，AI 回 300 个 token。到第 20 轮的时候，历史对话已经累积了 8 万个 token。如果 AI 只有 32K 上下文，到第 8 轮就装不下了——它会自动”忘掉”最早的几轮对话，突然不记得你们之前聊了什么。</p>
+<h2 id="200K-和-1M-上下文，实际体验差多少？"><a href="#200K-和-1M-上下文，实际体验差多少？" class="headerlink" title="200K 和 1M 上下文，实际体验差多少？"></a>200K 和 1M 上下文，实际体验差多少？</h2><p>2026 年 3 月，主流 AI 模型的上下文窗口大概是这样的：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>上下文窗口</th>
+<th>适合场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claude Opus 4.6</td>
+<td>200K</td>
+<td>代码审查、长文分析、复杂对话</td>
+</tr>
+<tr>
+<td>GPT-5.2</td>
+<td>400K</td>
+<td>多文档对比、大型项目重构</td>
+</tr>
+<tr>
+<td>Gemini 3 Pro</td>
+<td>10M</td>
+<td>整个代码库分析、研究论文集</td>
+</tr>
+</tbody></table>
+<p>乍一看，1M 比 200K 大五倍，应该好用五倍吧？</p>
+<p><strong>实际上没那么简单。</strong></p>
+<h3 id="1M-上下文的三个坑"><a href="#1M-上下文的三个坑" class="headerlink" title="1M 上下文的三个坑"></a>1M 上下文的三个坑</h3><p><strong>性能会下降。</strong></p>
+<p>NoLiMa 研究发现，当上下文超过 32K token 的时候，12 个主流模型里有 11 个的表现会掉到短上下文时的 50% 以下。上下文越大，AI 越容易”找不到重点”。</p>
+<p>就像你让一个人在一个图书馆里找一本书，比在一个书架上找要慢得多——信息太多反而干扰判断。</p>
+<p><strong>价格会翻倍。</strong></p>
+<p>很多人不知道的是：<strong>超过 200K 之后，token 价格会涨。</strong></p>
+<p>以 Gemini 为例：</p>
+<ul>
+<li>前 200K token：正常价格</li>
+<li>超过 200K 的部分：<strong>价格翻倍</strong></li>
+</ul>
+<p>所以如果你用 1M 上下文，实际花的钱可能是 200K 的 2-3 倍，而不是 5 倍——但也不便宜。</p>
+<p><strong>你可能用不到那么大。</strong></p>
+<p>Reddit 上有个讨论很有意思：一个开发者说”我的经验是，1M 上下文的模型在填满 40% 之后就开始跑偏，经常忘记自己在干什么。”</p>
+<p>另一个人回复：”我还是更喜欢 200K 的模型。虽然容量小，但它在整个窗口范围内表现都很稳定。”</p>
+<p>这就是工程上的权衡——<strong>不是越大越好，而是够用就好。</strong></p>
+<h2 id="上下文大小和-Token-消耗速度的关系"><a href="#上下文大小和-Token-消耗速度的关系" class="headerlink" title="上下文大小和 Token 消耗速度的关系"></a>上下文大小和 Token 消耗速度的关系</h2><p>上下文窗口大小不会直接影响 token 消耗速度——这点很多人不知道。</p>
+<p>什么意思？</p>
+<p>假设你跟 AI 聊天，每轮你说 100 个 token，AI 回 300 个 token。不管 AI 的上下文窗口是 200K 还是 1M，这一轮消耗的 token 数量都是 400 个——跟窗口大小没关系。</p>
+<p><strong>但是，上下文窗口会间接影响你的消费习惯。</strong></p>
+<p>如果你知道 AI 有 1M 上下文，你可能会：</p>
+<ul>
+<li>一次性贴更多文件进去（”反正装得下”）</li>
+<li>不开新对话（”还有空间，继续聊”）</li>
+<li>不删无关内容（”懒得整理了”）</li>
+</ul>
+<p>结果就是：你的每一轮对话都在处理更多 token，账单自然就上去了。</p>
+<p><strong>真实案例：</strong></p>
+<p>我之前用 Claude Opus（200K 上下文）写代码，习惯每完成一个功能就开新对话。后来换成 Gemini（1M 上下文），觉得”反正装得下”，就一直在同一个窗口里聊。</p>
+<p>一个月后看账单，Gemini 的消费比 Claude 高了 60%——不是因为 Gemini 贵，而是因为我用它的方式变了。</p>
+<h2 id="怎么选上下文窗口？"><a href="#怎么选上下文窗口？" class="headerlink" title="怎么选上下文窗口？"></a>怎么选上下文窗口？</h2><p>根据 2026 年的实际使用经验，我的建议是：</p>
+<h3 id="日常聊天、简单问答-→-128K-够了"><a href="#日常聊天、简单问答-→-128K-够了" class="headerlink" title="日常聊天、简单问答 → 128K 够了"></a>日常聊天、简单问答 → 128K 够了</h3><p>如果你只是问问题、翻译、写邮件，128K 完全够用。省钱，速度还快。</p>
+<h3 id="代码审查、长文分析-→-200K-是甜蜜点"><a href="#代码审查、长文分析-→-200K-是甜蜜点" class="headerlink" title="代码审查、长文分析 → 200K 是甜蜜点"></a>代码审查、长文分析 → 200K 是甜蜜点</h3><p>200K 是目前性价比最高的选择。能装下一个中型项目的代码，或者两三篇长文，而且模型表现稳定。</p>
+<p>Claude Opus 4.6 的 200K 上下文，在整个窗口范围内表现都很一致——不会因为内容多了就开始犯糊涂。</p>
+<h3 id="整个代码库分析、研究论文集-→-才需要-1M"><a href="#整个代码库分析、研究论文集-→-才需要-1M" class="headerlink" title="整个代码库分析、研究论文集 → 才需要 1M"></a>整个代码库分析、研究论文集 → 才需要 1M</h3><p>只有在你真的需要一次性处理海量信息的时候，1M 上下文才有意义。比如：</p>
+<ul>
+<li>分析一个有几百个文件的大型项目</li>
+<li>对比十几篇研究论文</li>
+<li>处理一整本书的内容</li>
+</ul>
+<p>但即使在这些场景下，也要注意：<strong>别把所有东西都塞进去。</strong> 只放相关的部分，AI 的表现会更好。</p>
+<h2 id="一个省钱又好用的技巧"><a href="#一个省钱又好用的技巧" class="headerlink" title="一个省钱又好用的技巧"></a>一个省钱又好用的技巧</h2><p>不管你用多大的上下文窗口，有一个技巧永远有效：<strong>话题一换就开新对话。</strong></p>
+<p>为什么？</p>
+<p>因为 AI 是无状态的——每次你发新消息，它都会重新读一遍所有历史对话。对话越长，重复处理的 token 越多，消耗越大。</p>
+<p>我现在的习惯是：</p>
+<ul>
+<li>写完一个功能 → 开新对话</li>
+<li>聊完一个话题 → 开新对话</li>
+<li>切换任务 → 开新对话</li>
+</ul>
+<p>这样做不光省钱，AI 的回复质量也更好——因为上下文干净，它不容易被无关信息干扰。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>上下文窗口听起来是个技术指标，但它其实就是 AI 的”工作记忆”。</p>
+<p>128K、200K、1M 的区别，不只是数字大小，更是使用场景和成本的权衡。大部分人大部分时候，200K 就够了——能装下足够多的信息，价格合理，表现稳定。</p>
+<p>1M 上下文很诱人，但别被”越大越好”的直觉骗了。上下文太大，AI 容易跑偏，价格也会翻倍。<strong>够用就好，别贪多。</strong></p>
+<p>最后一个建议：不管你用多大的上下文，都要养成”开新对话”的习惯。这是最简单也最有效的省钱方式——而且 AI 的回复质量也会更好。</p>
+<p><strong>你平时用的 AI 是多大的上下文窗口？有没有遇到过”上下文不够用”或者”上下文太大反而变笨”的情况？评论区聊聊。</strong></p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>上下文窗口</tag>
+        <tag>ChatGPT</tag>
+        <tag>Claude</tag>
+        <tag>Context Window</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>每次跟 AI 聊天都在花钱？一文搞懂 Tokens 到底是什么</title>
+    <url>/2026/03/30/202603301030/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260330-what-are-ai-tokens-explained.webp" alt="cover"></p>
+<p>你有没有注意过，ChatGPT、Claude 这些 AI 工具的定价页面上，写的都是”每百万 tokens 多少钱”？</p>
+<p>第一次看到这个词的时候，我也懵了。什么是 token？为什么不直接按字数收费？输入 token、输出 token、缓存 token 又是什么鬼？</p>
+<p>后来搞明白之后我才意识到：<strong>理解 tokens，是理解 AI 定价的钥匙。</strong> 不懂 tokens，你就不知道自己的钱花在了哪里，更不知道怎么省钱。</p>
+<h2 id="Token-是什么？一个比方就够了"><a href="#Token-是什么？一个比方就够了" class="headerlink" title="Token 是什么？一个比方就够了"></a>Token 是什么？一个比方就够了</h2><p>先忘掉所有技术术语。</p>
+<p>想象你去一家餐厅点菜。菜单上的价格不是按”一道菜”标的，而是按”食材克数”标的。你点了一份红烧肉，厨房不看”这是一道菜”，而是拆开看——猪肉 200 克、酱油 30 毫升、糖 15 克——然后按食材的总量给你算钱。</p>
+<p><strong>Token 就是 AI 世界里的”食材克数”。</strong></p>
+<p>你发给 AI 的每一句话，AI 不是”读一句话”，而是先把这句话拆成一个一个的小碎片——这些碎片就叫 token。AI 按 token 的数量来计算工作量和费用。</p>
+<p>举个例子：”我想学编程” 这五个汉字，大概会被拆成 3-5 个 token。”I want to learn programming” 这句英文，大概是 5-6 个 token。</p>
+<p><strong>一个粗略的换算：</strong></p>
+<ul>
+<li>英文：1 个 token ≈ 0.75 个单词（4 个字母左右）</li>
+<li>中文：1 个 token ≈ 1-2 个汉字</li>
+</ul>
+<p>所以中文用户要注意——同样的意思，中文消耗的 token 数量通常比英文多。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260330-ai-tokens-input-output-cache.webp" alt="Token 类型详解"></p>
+<h2 id="为什么-AI-要用-Token，不直接用”字”？"><a href="#为什么-AI-要用-Token，不直接用”字”？" class="headerlink" title="为什么 AI 要用 Token，不直接用”字”？"></a>为什么 AI 要用 Token，不直接用”字”？</h2><p>你可能会问：干嘛搞这么复杂，直接按字数收费不好吗？</p>
+<p>因为 AI 不认识”字”。</p>
+<p>AI 的大脑是一个数学模型，它只能处理数字。所以在处理你的文字之前，必须先把文字转换成数字。这个转换的过程叫做<strong>分词（tokenization）</strong>。</p>
+<p>NVIDIA 的技术博客举了一个很直观的例子：英文单词 “darkness” 会被拆成两个 token——“dark”（编号 217）和 “ness”（编号 655）。而 “brightness” 也被拆成 “bright”（编号 491）和 “ness”（编号 655）。</p>
+<p>注意到了吗？**”ness” 的编号是一样的。** 这就是 token 的聪明之处——通过共享的编号，AI 学会了 “darkness” 和 “brightness” 之间有某种结构上的关系。如果按整个单词来编号，AI 就发现不了这种规律。</p>
+<p>所以 token 不是 AI 故意为难你，而是它理解世界的方式。</p>
+<h2 id="三种-Token：输入、输出、缓存"><a href="#三种-Token：输入、输出、缓存" class="headerlink" title="三种 Token：输入、输出、缓存"></a>三种 Token：输入、输出、缓存</h2><p>现在你知道 token 是什么了。但在实际使用中，token 还分三种类型，价格各不相同。</p>
+<h3 id="输入-Token（Input-Tokens）"><a href="#输入-Token（Input-Tokens）" class="headerlink" title="输入 Token（Input Tokens）"></a>输入 Token（Input Tokens）</h3><p><strong>你发给 AI 的所有内容，都算输入 token。</strong></p>
+<p>包括：你打的文字、上传的文件、贴的图片、系统提示词（system prompt），甚至之前的对话历史——全部都要转成 token 喂给 AI。</p>
+<p>但这里有一个坑，我一开始也不知道：<strong>AI 的 API 是无状态的。</strong> 什么意思？就是 AI 其实不记得你之前说了什么。每次你发新消息，系统都会把之前所有的对话历史重新发一遍。</p>
+<p>FinOps 基金会管这个叫 <strong>“上下文窗口蔓延”（Context Window Creep）</strong>——随着对话越来越长，每发一条新消息，重复发送的历史内容就越多，输入 token 像滚雪球一样越来越大。</p>
+<p>这就是为什么你聊到后面会觉得越来越贵、速度越来越慢。</p>
+<h3 id="输出-Token（Output-Tokens）"><a href="#输出-Token（Output-Tokens）" class="headerlink" title="输出 Token（Output Tokens）"></a>输出 Token（Output Tokens）</h3><p><strong>AI 回复你的内容，就是输出 token。</strong></p>
+<p>输出 token 是最贵的——通常是输入 token 价格的 <strong>3 到 5 倍</strong>。</p>
+<p>为什么？因为生成回复比理解问题消耗的算力大得多。读一篇文章和写一篇文章，哪个更累？写当然更累。AI 也一样。</p>
+<p>看一组真实价格对比（2026 年 3 月数据）：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>输入价格（每百万 token）</th>
+<th>输出价格（每百万 token）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GPT-4o</td>
+<td>$2.50</td>
+<td>$10.00</td>
+</tr>
+<tr>
+<td>Claude Sonnet 4.6</td>
+<td>$3.00</td>
+<td>$15.00</td>
+</tr>
+<tr>
+<td>Claude Opus 4.6</td>
+<td>$5.00</td>
+<td>$25.00</td>
+</tr>
+</tbody></table>
+<p>一眼就能看出来——<strong>输出永远比输入贵。</strong> 所以如果你希望 AI 写一篇 5000 字的长文，那个输出 token 的账单会很可观。</p>
+<h3 id="缓存-Token（Cached-Tokens）"><a href="#缓存-Token（Cached-Tokens）" class="headerlink" title="缓存 Token（Cached Tokens）"></a>缓存 Token（Cached Tokens）</h3><p><strong>如果你发送的内容跟上次有大量重复，重复的部分可以走缓存，价格便宜一半甚至更多。</strong></p>
+<p>举个例子：你用 AI 写代码，每次都会带上同样的系统提示词（比如”你是一个 Python 专家，代码要简洁”）。这段提示词第一次发送时是普通输入 token，但从第二次开始，AI 发现”这段我刚处理过”，就会自动缓存，按更便宜的价格计费。</p>
+<p>以 OpenAI 的定价为例：</p>
+<ul>
+<li>普通输入：$2.50 &#x2F; 百万 token</li>
+<li>缓存输入：$1.25 &#x2F; 百万 token（<strong>半价</strong>）</li>
+</ul>
+<p>Anthropic 的缓存更狠——缓存命中的价格只有正常输入的 **10%**。</p>
+<p>简单说：<strong>用法越固定、重复越多，缓存省得越多。</strong> 这对写代码的开发者来说是个好消息——你的系统提示词和项目上下文天然就是高度重复的。</p>
+<h2 id="一个真实场景：你跟-AI-聊-10-轮，到底花了多少-token？"><a href="#一个真实场景：你跟-AI-聊-10-轮，到底花了多少-token？" class="headerlink" title="一个真实场景：你跟 AI 聊 10 轮，到底花了多少 token？"></a>一个真实场景：你跟 AI 聊 10 轮，到底花了多少 token？</h2><p>说了这么多概念，来算一笔真实的账。</p>
+<p>假设你跟 AI 聊天，每轮你说 100 个 token，AI 回复 300 个 token。</p>
+<table>
+<thead>
+<tr>
+<th>轮次</th>
+<th>输入 token（含历史）</th>
+<th>输出 token</th>
+<th>累计输入</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>第 1 轮</td>
+<td>100</td>
+<td>300</td>
+<td>100</td>
+</tr>
+<tr>
+<td>第 2 轮</td>
+<td>500</td>
+<td>300</td>
+<td>600</td>
+</tr>
+<tr>
+<td>第 3 轮</td>
+<td>1,100</td>
+<td>300</td>
+<td>1,700</td>
+</tr>
+<tr>
+<td>第 5 轮</td>
+<td>2,900</td>
+<td>300</td>
+<td>6,600</td>
+</tr>
+<tr>
+<td>第 10 轮</td>
+<td>6,700</td>
+<td>300</td>
+<td>30,900</td>
+</tr>
+</tbody></table>
+<p>看到没有？<strong>到第 10 轮的时候，单次输入就要 6700 个 token——其中绝大部分是重复发送的历史对话。</strong> 累计输入已经超过 3 万 token 了。</p>
+<p>这就是”上下文窗口蔓延”的威力。你以为自己只打了 1000 个字，实际上 AI 处理了 3 万多个 token。</p>
+<h2 id="省-Token-的实用技巧"><a href="#省-Token-的实用技巧" class="headerlink" title="省 Token 的实用技巧"></a>省 Token 的实用技巧</h2><p>明白了 token 的运作方式，省钱就有了方向。我自己踩了不少坑之后，总结出几条最管用的。</p>
+<h3 id="话题一换就开新窗口"><a href="#话题一换就开新窗口" class="headerlink" title="话题一换就开新窗口"></a>话题一换就开新窗口</h3><p>这是效果最立竿见影的一条。上面那个 10 轮对话的表格已经说明了——对话越长，每轮重复发送的历史越多，token 消耗指数级增长。我以前习惯在一个窗口里从早聊到晚，后来看了一次 API 账单才发现，最后几轮每条消息的 token 消耗是第一轮的几十倍。现在我的习惯是：<strong>话题一变就开新对话，绝不留恋。</strong></p>
+<h3 id="需求一次说清楚，别挤牙膏"><a href="#需求一次说清楚，别挤牙膏" class="headerlink" title="需求一次说清楚，别挤牙膏"></a>需求一次说清楚，别挤牙膏</h3><p>这条也是血泪教训。很多人（包括以前的我）习惯这样跟 AI 聊：</p>
+<blockquote>
+<p>“帮我写个函数”<br>“用 Python”<br>“要处理 JSON”<br>“加上错误处理”</p>
+</blockquote>
+<p>四轮对话，四次重复发送历史。换成一句话：</p>
+<blockquote>
+<p>“用 Python 写一个处理 JSON 的函数，包含完整的错误处理”</p>
+</blockquote>
+<p>一轮搞定，token 消耗立刻降到四分之一。<strong>把 AI 当一个刚入职的同事——你交代任务的时候，一次说清楚比让人来回问强。</strong></p>
+<h3 id="控制输出长度"><a href="#控制输出长度" class="headerlink" title="控制输出长度"></a>控制输出长度</h3><p>输出 token 最贵，这条很多人忽略了。AI 默认会尽量详细地回复，你不限制它就会一直写。所以如果你只需要一个简短的答案，明确告诉它：”用三句话总结”比”帮我总结一下”省钱得多。</p>
+<h3 id="其他几条也值得知道"><a href="#其他几条也值得知道" class="headerlink" title="其他几条也值得知道"></a>其他几条也值得知道</h3><p><strong>选对模型。</strong> 简单的问答、翻译、格式转换，用 GPT-4o-mini 或者 Claude Haiku 就够了，价格只有旗舰模型的几十分之一。我的经验是先用便宜模型试，不满意再换贵的——80% 的日常任务，便宜模型完全能搞定。</p>
+<p><strong>别贴无关内容。</strong> 你贴给 AI 的每一个字都在消耗 token。只贴相关的部分，把无关内容删掉再发。</p>
+<p><strong>用英文提问可以省 30%-50% 的 token。</strong> 同样的意思，中文比英文消耗更多 token。当然如果你需要中文回复，省下的输入可能被输出吃掉，具体看情况。</p>
+<p><strong>通过 API 调用的话，善用系统提示词缓存。</strong> 把不变的提示词放在最前面，更容易命中缓存，享受半价甚至更低的价格。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>Token 听起来是一个技术概念，但它其实就是 AI 世界的”度量衡”——就像用水按吨计费、用电按度计费一样，用 AI 按 token 计费。</p>
+<p>我上个月的 Claude 账单是 87 美元，其中大概有三分之一是”上下文窗口蔓延”贡献的——就是那些重复发送的对话历史。搞清楚这件事之后，我养成了两个习惯：话题一换就开新窗口，需求一次说完不分三条发。光这两个改变，这个月的消耗就降了 40% 左右。</p>
+<p>而且省 token 不光省钱，AI 的回复质量也会更好——上下文越干净，它越不容易跑偏。这可能是最划算的”免费升级”了。</p>
+<p><strong>你每个月在 AI 工具上花多少钱？有没有注意过自己的 token 消耗？评论区聊聊你的使用习惯。</strong></p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>ChatGPT</tag>
+        <tag>Claude</tag>
+        <tag>Tokens</tag>
+        <tag>省钱技巧</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Claude Code 最能打的 10 个 Skill：装上这些，效率直接上一个台阶</title>
+    <url>/2026/03/25/202603252053/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260325-claude-code-top-10-skills.webp" alt="cover"></p>
+<p>Claude Code 用了一段时间之后，你会发现一件事：原生的 Claude Code 只是个底座。真正让它变强的，是 Skill。</p>
+<p>Skill 就是给 Claude Code 装插件。每个 Skill 是一段预设的工作流程，用 <code>/skill名称</code> 呼出，Claude 立刻知道该怎么干。不用每次写长 prompt，不用反复解释你的需求，一个命令，一套完整的专业流程就跑起来了。</p>
+<p>我用下来觉得最值钱的有 10 个，按实用程度排下来，跟你分享一下。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260325-claude-code-skills-grid.webp" alt="10个核心Skill一览"></p>
+<h2 id="1-browse-—-让-Claude-真的会「看」网页"><a href="#1-browse-—-让-Claude-真的会「看」网页" class="headerlink" title="1. &#x2F;browse — 让 Claude 真的会「看」网页"></a>1. &#x2F;browse — 让 Claude 真的会「看」网页</h2><p>这是我用得最高频的一个 Skill。</p>
+<p><code>/browse</code> 给 Claude Code 接上了一个无头浏览器。你说”打开这个页面截图”，它真的去打开，截图发给你；你说”测试一下这个按钮点了有没有反应”，它真的去点。不是模拟，是真实的浏览器操作。</p>
+<p>场景很多：验证部署是否成功、测试一个表单有没有 bug、对比改版前后的页面长什么样、拿竞品截图做参考。以前这些事要自己手动做，现在丢给 Claude，它跑完把结果发给你。</p>
+<h2 id="2-find-skills-—-让-Claude-帮你找-Skill"><a href="#2-find-skills-—-让-Claude-帮你找-Skill" class="headerlink" title="2. &#x2F;find-skills — 让 Claude 帮你找 Skill"></a>2. &#x2F;find-skills — 让 Claude 帮你找 Skill</h2><p>有点套娃，但很实用。</p>
+<p>当你知道自己想做某件事，但不确定有没有现成的 Skill 时，用 <code>/find-skills</code>。你描述需求，Claude 去搜索已安装的 Skill 列表，给你推荐最合适的那个，还会告诉你怎么触发它。</p>
+<p>我刚开始用 Skill 的时候，光是记住哪个 Skill 叫什么名字就够呛，后来发现有需求直接问 <code>/find-skills</code> 就行，它比我自己翻文档快多了。</p>
+<h2 id="3-skill-creator-—-自己造-Skill"><a href="#3-skill-creator-—-自己造-Skill" class="headerlink" title="3. &#x2F;skill-creator — 自己造 Skill"></a>3. &#x2F;skill-creator — 自己造 Skill</h2><p>用一段时间之后，你会发现有些工作流是你自己独有的，市面上找不到对应的 Skill。这时候 <code>/skill-creator</code> 就派上用场了。</p>
+<p>你描述你想要的工作流，<code>/skill-creator</code> 帮你生成一个新的 Skill 文件，保存到你的 <code>.claude/skills/</code> 目录里。之后这个 Skill 就归你了，随时用。我自己用它创建了一个适配这个博客的 <code>writing-agent</code>，现在写文章就是一句话的事。</p>
+<p>它还支持给 Skill 跑评测——对比两版 Skill 哪个效果更好，有点像 A&#x2F;B Test，但是针对 AI 工作流的。</p>
+<h2 id="4-investigate-—-系统化的-Debug-流程"><a href="#4-investigate-—-系统化的-Debug-流程" class="headerlink" title="4. &#x2F;investigate — 系统化的 Debug 流程"></a>4. &#x2F;investigate — 系统化的 Debug 流程</h2><p>遇到 bug 最怕的不是 bug 本身，是绕了半天、最后发现治标不治本。<code>/investigate</code> 的设计逻辑很简单粗暴：<strong>不找到根因，不动代码。</strong></p>
+<p>它分四个阶段：调查现象 → 分析日志和代码 → 建立假设 → 实施修复。每个阶段都有结构化输出，Claude 不会跳步骤，不会因为看到一个可疑的地方就直接改。这对那种”改了 A 又冒出 B”的连锁 bug，特别有效。</p>
+<p>我现在遇到说不清楚的 bug，第一反应就是 <code>/investigate</code>，而不是直接跟 Claude 说”帮我修这个错误”。</p>
+<h2 id="5-qa-—-测试-修-bug，一条龙"><a href="#5-qa-—-测试-修-bug，一条龙" class="headerlink" title="5. &#x2F;qa — 测试 + 修 bug，一条龙"></a>5. &#x2F;qa — 测试 + 修 bug，一条龙</h2><p><code>/qa</code> 是我最喜欢的一个 Skill，因为它省了一大堆来回的对话。</p>
+<p>你跑 <code>/qa</code>，Claude 会系统地测试你的 Web 应用：找 bug、截图记录、写报告，然后<strong>直接去修</strong>，修完再验证，验证通过才提交。不用你一个个告诉它该改哪里，它自己走完整个测试-修复-验证的循环。</p>
+<p>有三个档位：Quick（只查高优先级问题）、Standard（加上中等问题）、Exhaustive（连视觉细节都查）。上周我上了一个新的评论组件，跑 Standard 直接抓出来一个 XSS 漏洞——用户名里的尖括号没转义，差点就带着这个上线了。</p>
+<p>如果你只想要报告不想让它动代码，用 <code>/qa-only</code>，纯报告模式。</p>
+<h2 id="6-review-—-合代码前的最后一关"><a href="#6-review-—-合代码前的最后一关" class="headerlink" title="6. &#x2F;review — 合代码前的最后一关"></a>6. &#x2F;review — 合代码前的最后一关</h2><p>代码改完准备合并，跑一下 <code>/review</code>。</p>
+<p>它会分析你的 diff，检查这几件事：SQL 有没有安全漏洞、有没有把不可信的输入直接传给 LLM、有没有条件竞争导致的副作用、还有其他常见的结构性问题。</p>
+<p>不是风格检查，不是”这里可以写得更优雅”，是真正影响安全和正确性的问题。上次它抓出来一个我写的 SQL 拼接，我自己看了三遍都没注意到——就这种肉眼容易滑过去的问题，机器反而比人敏感。</p>
+<h2 id="7-ship-—-从-commit-到-PR，一步到位"><a href="#7-ship-—-从-commit-到-PR，一步到位" class="headerlink" title="7. &#x2F;ship — 从 commit 到 PR，一步到位"></a>7. &#x2F;ship — 从 commit 到 PR，一步到位</h2><p><code>/ship</code> 把 git 工作流的几个步骤打包成一个命令：检测并合并 base 分支 → 跑测试 → review diff → 更新 CHANGELOG → 提交 → push → 创建 PR。</p>
+<p>之前有一次发版忘了合 base 分支，PR 里多了一堆不相关的 diff，review 的人直接懵了。<code>/ship</code> 之后这种低级错误就没再出过，想发版了直接跑这一个命令，剩下的事 Claude 搞定。如果你用 <code>/land-and-deploy</code>，还能继续接上自动合 PR、等 CI、验证生产环境的流程。</p>
+<h2 id="8-autoplan-—-让-AI-帮你把方案想透再动手"><a href="#8-autoplan-—-让-AI-帮你把方案想透再动手" class="headerlink" title="8. &#x2F;autoplan — 让 AI 帮你把方案想透再动手"></a>8. &#x2F;autoplan — 让 AI 帮你把方案想透再动手</h2><p>这个 Skill 解决一个很常见的痛点：你把需求扔给 Claude，它马上开始写代码，但写到一半你发现方向就不对。</p>
+<p><code>/autoplan</code> 会先让 Claude 做完整的方案设计：从产品视角（这个功能值不值得做）、工程视角（架构怎么设计）、设计视角（用户体验有没有问题）三个角度全部过一遍，形成一份完整的执行方案，然后再问你确认。</p>
+<p>不过说实话，小改动别用它——有一次我就改个按钮颜色，它也跑了完整的三轮评审，属于杀鸡用牛刀了。但凡涉及架构调整或者新功能，先跑 <code>/autoplan</code> 确实能少走弯路。</p>
+<h2 id="9-git-commit-—-永远不再为-commit-message-发愁"><a href="#9-git-commit-—-永远不再为-commit-message-发愁" class="headerlink" title="9. &#x2F;git-commit — 永远不再为 commit message 发愁"></a>9. &#x2F;git-commit — 永远不再为 commit message 发愁</h2><p>技术上这个是最简单的 Skill，但我用得最高频之一。</p>
+<p><code>/git-commit</code> 读取你的 diff，分析改动内容，自动生成一条符合仓库风格的 commit message，然后精确暂存相关文件、提交。</p>
+<p>最重要的一点：它只暂存和这次任务相关的文件，不会把其他改动一起带进去。这对同时在改多个东西的场景，特别关键。commit message 写得也很准——不是”update code”，是”fix(auth): prevent session token from persisting after logout”这种有信息量的描述。</p>
+<h2 id="10-mcp-builder-—-给-Claude-Code-接入任何外部服务"><a href="#10-mcp-builder-—-给-Claude-Code-接入任何外部服务" class="headerlink" title="10. &#x2F;mcp-builder — 给 Claude Code 接入任何外部服务"></a>10. &#x2F;mcp-builder — 给 Claude Code 接入任何外部服务</h2><p>这是一个偏进阶但天花板很高的 Skill。</p>
+<p>MCP（Model Context Protocol）是 Claude 跟外部工具通信的标准协议。<code>/mcp-builder</code> 帮你从零开始构建一个 MCP Server——你想让 Claude Code 调用你们公司内部的 API？接入某个第三方服务？有了 MCP Server，Claude 就能直接用这些工具，就像它原生支持一样。</p>
+<p>支持 Python（FastMCP）和 Node&#x2F;TypeScript 两种写法，还有评估模块帮你测试 Server 的质量。我用它给博客接了个图片上传的 MCP Server，现在写文章时 Claude 可以直接帮我传图到 CDN，不用再手动操作七牛云后台了。如果你有类似的定制需求，这个 Skill 是最底层的入口。</p>
+<hr>
+<p>这 10 个 Skill 里，如果你只装三个，我的建议是：<code>/browse</code>、<code>/git-commit</code>、<code>/investigate</code>。</p>
+<p><code>/browse</code> 让 Claude 能真正帮你测试页面，不只是聊代码；<code>/git-commit</code> 解决每天最高频的小摩擦；<code>/investigate</code> 在你最头疼的时候，让 debug 变得有章可循。</p>
+<p>装 Skill 的方式很简单，在 Claude Code 里输入 <code>/find-skills</code> 搜索你想要的，或者去 GitHub 找社区分享的 Skill 直接复制到 <code>.claude/skills/</code> 目录下就行。</p>
+<p>用 Claude Code 用到现在，我越来越觉得——原生能力决定下限，Skill 决定上限。你有没有特别好用的 Skill，评论区说说？</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>开发工具</tag>
+        <tag>效率工具</tag>
+        <tag>Skill</tag>
+        <tag>AI工具</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Claude Code 输入太难用？20 个快捷键让你效率翻倍</title>
+    <url>/2026/03/25/202603251838/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260325-claude-code-keyboard-shortcuts.webp" alt="cover"></p>
+<p>“这个输入框用起来怎么这么难受？”</p>
+<p>这是我帮朋友安装 Claude Code 时，她说的第一句话。光标不知道跑哪去了，想删一个词删了一整行，想换行直接把消息发出去了。刚接触终端输入的人，几乎都会在这里被卡住。</p>
+<p>但其实 Claude Code 的输入框不难用，难的是这些快捷键没人告诉你。我自己摸索了两三周才把常用的都找齐，现在整理出来，非技术背景的朋友照着用就行，用过一周你就知道为什么不想换回去了。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260325-claude-code-shortcuts-cheatsheet.webp" alt="快捷键速查图"></p>
+<h2 id="最先要记的：光标移动"><a href="#最先要记的：光标移动" class="headerlink" title="最先要记的：光标移动"></a>最先要记的：光标移动</h2><p>用鼠标选中再删是很多人的本能反应。但终端里没有鼠标，这时候这两个快捷键就是你的救命稻草：</p>
+<ul>
+<li><strong><code>Ctrl + A</code></strong> — 把光标跳到这一行最前面（A &#x3D; 开头&#x2F;All the way back）</li>
+<li><strong><code>Ctrl + E</code></strong> — 把光标跳到这一行最后面（E &#x3D; End）</li>
+</ul>
+<p>举个场景：你写了一长串 prompt，发现开头有个错字。不用按着方向键慢慢移，直接 <code>Ctrl+A</code> 跳过去改，改完 <code>Ctrl+E</code> 跳回末尾继续写。</p>
+<p>按单词移动更快：</p>
+<ul>
+<li>**<code>Alt + B</code>**（macOS 是 <code>Option + B</code>）— 向左跳一个单词</li>
+<li>**<code>Alt + F</code>**（macOS 是 <code>Option + F</code>）— 向右跳一个单词</li>
+</ul>
+<blockquote>
+<p><strong>macOS 用户注意</strong>：Alt&#x2F;Option 快捷键需要先把终端配置一下。iTerm2 里进 Preferences → Profiles → Keys，把 Left Option Key 改成 “Esc+”。Terminal.app 则去 Preferences → Profiles → Keyboard，勾上 “Use Option as Meta Key”。配置一次，之后就好使了。</p>
+</blockquote>
+<hr>
+<h2 id="删除：别再一个字一个字按退格了"><a href="#删除：别再一个字一个字按退格了" class="headerlink" title="删除：别再一个字一个字按退格了"></a>删除：别再一个字一个字按退格了</h2><ul>
+<li><strong><code>Ctrl + K</code></strong> — 删除光标到行尾的所有内容</li>
+<li><strong><code>Ctrl + U</code></strong> — 删除整行（想重新写时很好用）</li>
+<li><strong><code>Ctrl + W</code></strong> — 向左删除一个单词</li>
+</ul>
+<p>其中我最喜欢的是 **<code>Ctrl + Y</code>**——把刚刚删掉的内容粘贴回来。</p>
+<p>很多人不知道，<code>Ctrl+U</code> 删掉的整行内容其实被暂存了，后悔了按 <code>Ctrl+Y</code> 直接找回来。我第一次发现这个功能的时候愣了一下，感觉像发现了作弊码。<code>Ctrl+K</code> 删掉的内容也一样能恢复，两个都能用 <code>Ctrl+Y</code> 找回。</p>
+<hr>
+<h2 id="多行输入：这才是最多人卡住的地方"><a href="#多行输入：这才是最多人卡住的地方" class="headerlink" title="多行输入：这才是最多人卡住的地方"></a>多行输入：这才是最多人卡住的地方</h2><p>终端里按 <code>Enter</code> 默认是”发送”，不是换行。想写多行 prompt，怎么办？</p>
+<p>有四种方法，任选一种：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>快捷键</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>反斜杠换行</td>
+<td><code>\</code> 然后按 <code>Enter</code></td>
+<td>所有终端通用，最保险</td>
+</tr>
+<tr>
+<td>macOS 默认</td>
+<td><code>Option + Enter</code></td>
+<td>Mac 上最方便</td>
+</tr>
+<tr>
+<td>控制换行</td>
+<td><code>Ctrl + J</code></td>
+<td>等同于换行符，通用</td>
+</tr>
+<tr>
+<td>Shift+Enter</td>
+<td><code>Shift + Enter</code></td>
+<td>需要先运行 <code>/terminal-setup</code> 开启</td>
+</tr>
+</tbody></table>
+<p>我自己最常用的是 <code>\</code> + <code>Enter</code>，因为在任何终端里都能用，不用担心配置问题。</p>
+<p>如果你经常写很长的 prompt，还有一个更好的方式——</p>
+<hr>
+<h2 id="Ctrl-G：在真正的文本编辑器里写-Prompt"><a href="#Ctrl-G：在真正的文本编辑器里写-Prompt" class="headerlink" title="Ctrl + G：在真正的文本编辑器里写 Prompt"></a>Ctrl + G：在真正的文本编辑器里写 Prompt</h2><p>这是我用得最多的快捷键，但知道的人很少。</p>
+<p>按 **<code>Ctrl + G</code>**，Claude Code 会打开你系统里设置的默认文本编辑器（比如 VS Code、Vim、nano）。你在编辑器里把 prompt 写好，保存关掉，内容会自动填回 Claude Code 的输入框。</p>
+<p>场景：你要给 Claude 一段有格式要求的 prompt，或者要粘贴一段代码说明需求，在单行输入框里根本没法操作。<code>Ctrl+G</code> 打开编辑器，写完直接发，舒服多了。</p>
+<p>如果你用 VS Code，提前在终端里运行一次：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">export</span> EDITOR=<span class="string">&quot;code --wait&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>之后 <code>Ctrl+G</code> 就会打开 VS Code 来编辑 prompt。</p>
+<hr>
+<h2 id="历史记录：找回之前的-Prompt"><a href="#历史记录：找回之前的-Prompt" class="headerlink" title="历史记录：找回之前的 Prompt"></a>历史记录：找回之前的 Prompt</h2><ul>
+<li><strong><code>↑</code> &#x2F; <code>↓</code> 方向键</strong> — 翻看之前发过的消息</li>
+<li><strong><code>Ctrl + R</code></strong> — 模糊搜索历史记录</li>
+</ul>
+<p>我最常用 <code>Ctrl+R</code> 的场景，是找之前写过的长 prompt。有时候给 Claude 写了一大段背景说明，发完觉得写得不错，下次想复用——方向键翻找太痛苦，<code>Ctrl+R</code> 输入一个关键词，秒找到，按 <code>Enter</code> 直接用，省去重写的时间。</p>
+<hr>
+<h2 id="操控-Claude-的进行：三个必学快捷键"><a href="#操控-Claude-的进行：三个必学快捷键" class="headerlink" title="操控 Claude 的进行：三个必学快捷键"></a>操控 Claude 的进行：三个必学快捷键</h2><ul>
+<li><p><strong><code>Ctrl + C</code></strong> — 终止当前的生成。Claude 正在写代码写到一半，觉得方向不对，按这个立刻停。</p>
+</li>
+<li><p><strong><code>Ctrl + L</code></strong> — 清屏。把终端滚动区域清干净，但对话历史还在。</p>
+</li>
+<li><p><strong><code>Ctrl + D</code></strong> — 退出 Claude Code 会话。</p>
+</li>
+<li><p><strong><code>Ctrl + F</code></strong> — 终止所有后台 Agent（需要快速按两次确认）。开了多个并行任务时，一键全停。这个我在 Claude 跑偏了的时候用过几次，比一个个任务去取消省事很多。</p>
+</li>
+</ul>
+<hr>
+<h2 id="模式切换：提升工作流的快捷键"><a href="#模式切换：提升工作流的快捷键" class="headerlink" title="模式切换：提升工作流的快捷键"></a>模式切换：提升工作流的快捷键</h2><p><strong><code>Shift + Tab</code></strong> — 循环切换权限模式：默认、自动接受编辑、计划模式、全自动。我一般写代码时切到”自动接受编辑”，不用每次确认，省很多来回。</p>
+<p>**<code>Alt + T</code>**（macOS 是 <code>Option + T</code>）— 开关「深度思考」模式。遇到比较绕的问题，比如让 Claude 分析一段复杂的业务逻辑，我会先按这个开启，让它多想一会儿再回答。不需要时关掉，省 token。</p>
+<p>**<code>Alt + P</code>**（macOS 是 <code>Option + P</code>）— 切换模型，而且不清空当前输入的内容。你写了半段 prompt，突然想换个模型试试，直接按，内容还在。</p>
+<hr>
+<h2 id="vim-模式：给熟悉-Vim-的人用的"><a href="#vim-模式：给熟悉-Vim-的人用的" class="headerlink" title="&#x2F;vim 模式：给熟悉 Vim 的人用的"></a>&#x2F;vim 模式：给熟悉 Vim 的人用的</h2><p>如果你平时用 Vim 编辑器，输入 <code>/vim</code> 回车，Claude Code 的输入框就会变成 Vim 模式，支持 <code>hjkl</code> 移动、<code>dd</code> 删行、<code>ciw</code> 改单词这些操作。</p>
+<p>不懂 Vim 的话跳过这段就行，这不是必须掌握的。</p>
+<hr>
+<h2 id="三个实用的-Slash-命令"><a href="#三个实用的-Slash-命令" class="headerlink" title="三个实用的 Slash 命令"></a>三个实用的 Slash 命令</h2><p>这几个是输入框里以 <code>/</code> 开头的命令，不是快捷键，但同样常用：</p>
+<ul>
+<li><strong><code>/btw</code></strong> — 在 Claude 运行任务的过程中，插入一个问题，不影响对话历史。比如 Claude 正在帮你重构代码，你突然想问”那个文件叫什么名字来着”，不用打断任务，直接 <code>/btw 那个文件叫啥</code>。</li>
+<li><strong><code>/terminal-setup</code></strong> — 让 Claude Code 帮你自动配置终端，开启 <code>Shift+Enter</code> 换行、<code>Alt+T</code> 切换思考等快捷键。第一次用 Claude Code 的时候建议先跑一次这个。</li>
+<li><strong><code>/keybindings</code></strong> — 打开快捷键配置文件，所有快捷键都可以按自己的习惯改。</li>
+</ul>
+<hr>
+<h2 id="快速参考卡"><a href="#快速参考卡" class="headerlink" title="快速参考卡"></a>快速参考卡</h2><p>把这张表存下来，用到时查：</p>
+<p><strong>光标移动</strong></p>
+<table>
+<thead>
+<tr>
+<th>快捷键</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ctrl + A</code></td>
+<td>跳到行首</td>
+</tr>
+<tr>
+<td><code>Ctrl + E</code></td>
+<td>跳到行尾</td>
+</tr>
+<tr>
+<td><code>Alt + B</code></td>
+<td>向左跳一个词</td>
+</tr>
+<tr>
+<td><code>Alt + F</code></td>
+<td>向右跳一个词</td>
+</tr>
+</tbody></table>
+<p><strong>删除与恢复</strong></p>
+<table>
+<thead>
+<tr>
+<th>快捷键</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ctrl + K</code></td>
+<td>删除到行尾</td>
+</tr>
+<tr>
+<td><code>Ctrl + U</code></td>
+<td>删除整行</td>
+</tr>
+<tr>
+<td><code>Ctrl + W</code></td>
+<td>删除左边一个词</td>
+</tr>
+<tr>
+<td><code>Ctrl + Y</code></td>
+<td>恢复刚刚删的内容</td>
+</tr>
+</tbody></table>
+<p><strong>多行输入</strong></p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>快捷键</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>通用换行</td>
+<td><code>\</code> + <code>Enter</code></td>
+</tr>
+<tr>
+<td>Mac 换行</td>
+<td><code>Option + Enter</code></td>
+</tr>
+<tr>
+<td>控制换行</td>
+<td><code>Ctrl + J</code></td>
+</tr>
+</tbody></table>
+<p><strong>控制 Claude</strong></p>
+<table>
+<thead>
+<tr>
+<th>快捷键</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ctrl + C</code></td>
+<td>停止当前生成</td>
+</tr>
+<tr>
+<td><code>Ctrl + G</code></td>
+<td>在编辑器里写 Prompt</td>
+</tr>
+<tr>
+<td><code>Ctrl + L</code></td>
+<td>清屏</td>
+</tr>
+<tr>
+<td><code>Ctrl + D</code></td>
+<td>退出</td>
+</tr>
+<tr>
+<td><code>Ctrl + R</code></td>
+<td>搜索历史记录</td>
+</tr>
+</tbody></table>
+<hr>
+<p>上手 Claude Code 的第一周，我建议只先记三个：<code>Ctrl+U</code>（删整行）、<code>Ctrl+A</code> + <code>Ctrl+E</code>（行首行尾跳）、<code>\</code> + <code>Enter</code>（换行）。这三个解决了 80% 的输入问题。其他的等用顺手了再慢慢加进肌肉记忆。</p>
+<p>说实话，现在我用 Claude Code 输入的速度已经比用鼠标点 ChatGPT 快了。最关键的不是速度，是思路不会被打断——不用抬手摸鼠标，不用眼睛找光标，脑子里的想法直接流到输入框里。这种状态，试过一次就回不去了。</p>
+<p><strong>你在用 Claude Code 时最头疼的输入问题是什么？或者你有什么我没提到的好用快捷键，评论区分享一下。</strong></p>
+]]></content>
+      <categories>
+        <category>教程</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>教程</tag>
+        <tag>效率工具</tag>
+        <tag>快捷键</tag>
+        <tag>终端</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>OpenAI 亲手关掉了 Sora：6 个月，顶流 App 就这样没了</title>
+    <url>/2026/03/25/202603251342/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260325-openai-sora-shutdown.webp" alt="cover"></p>
+<p>昨天下午，Sora 官方账号在 X 上发了一条让人错愕的帖子。</p>
+<p>“We’re saying goodbye to Sora.”</p>
+<p>没有提前预警，没有解释原因，就这么一句话。距离 Sora 独立 App 正式上线，刚好六个月。</p>
+<p>更魔幻的是，就在关闭公告发出前一天，OpenAI 刚刚发布了一篇博客——《Creating with Sora safely》，洋洋洒洒讲了他们为了让 Sora 更安全做了哪些努力，言辞之间全是”我们会继续改进”的意思。第二天，产品没了。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260325-sora-timeline-shutdown.webp" alt="Sora 生命周期时间线"></p>
+<h2 id="Sora-这-15-个月，走得有多快"><a href="#Sora-这-15-个月，走得有多快" class="headerlink" title="Sora 这 15 个月，走得有多快"></a>Sora 这 15 个月，走得有多快</h2><p>2024 年 2 月，OpenAI 第一次展示 Sora，是一段 AI 生成的雪地奔跑视频。我当时看完的第一反应是：这假的吧？反复看了三遍，找不到破绽。那时候我还以为这东西离普通人用上还有好几年，没想到不到一年就公开了。</p>
+<p>同年 12 月，Sora 正式对外开放，但功能还比较克制，主要面向 ChatGPT Plus 用户。</p>
+<p>真正的爆发是 2025 年 9 月。Sora 2 横空出世，配套推出独立 App。视频质量上了一个台阶，更重要的是有了社交功能——你可以生成视频、混剪别人的作品、发到公共 Feed 里。就像一个 AI 驱动的抖音。</p>
+<p>上线 5 天，下载量破百万。那周它登上了苹果 App Store 全球排行榜第一名。</p>
+<p>人们用它生成戴安娜王妃做跑酷的视频，生成狗狗开车的荒诞短片，生成各种名人的”如果当时……”。社交网络上 Sora 生成的内容铺天盖地。</p>
+<p>然后，就在三个月前——2025 年 12 月——迪士尼宣布向 OpenAI 投资 10 亿美元，并授权超过 200 个角色用于 Sora 创作：米老鼠、灰姑娘、尤达大师……一时间所有人都觉得，这才是 AI 内容创作真正起飞的时刻。</p>
+<p>结果，这笔钱还没到账，产品先没了。</p>
+<h2 id="关掉它的理由，OpenAI-没说，但不难猜"><a href="#关掉它的理由，OpenAI-没说，但不难猜" class="headerlink" title="关掉它的理由，OpenAI 没说，但不难猜"></a>关掉它的理由，OpenAI 没说，但不难猜</h2><p>OpenAI 在公告里没有解释为什么关。对外只说”会分享更多关于时间线和如何保存你的作品的信息”。</p>
+<p>但就在同一天，还有另一条新闻：OpenAI 同步宣布关闭了 Instant Checkout 购物功能，同时加快推进把 ChatGPT App、浏览器、Codex 编程 App 整合成一个”超级桌面应用”。</p>
+<p>这三件事放在一起，逻辑就清楚了：<strong>OpenAI 在做减法。</strong></p>
+<p>说到底，Sora 触碰了 OpenAI 眼下最敏感的那根弦——算力。生成一条十秒视频烧掉的计算资源，抵得上几百轮 ChatGPT 对话。Sora 越火，亏得越多。而 OpenAI 当前估值 7300 亿美元，正在为 IPO 做准备，投资人盯着的是利润，不是”有多少人在用 AI 拍狗狗开车的视频”。这个账算不过来，其他的讨论都是虚的。</p>
+<p>版权和安全的问题当然也有。Sora 上线之后，好莱坞反应激烈，明星面孔、版权角色、虚假视频一条接一条出来，OpenAI 一边打补丁一边应对投诉。就在关闭公告发出前一天，他们刚更新了 Sora 的安全指南。第二天就关了。那份安全更新，现在看来更像一份告别信。</p>
+<p>更直接的证据是，就在几周前，OpenAI 应用负责人 Fidji Simo 在内部全员会上说：公司需要停止被”side quests”分心，要”aggressive 地”聚焦高生产力场景。Sora 是消费娱乐产品，不是企业生产力工具。在这个战略框架里，它的结局从那时起就写好了。</p>
+<h2 id="迪士尼那-10-亿美元，就这么黄了"><a href="#迪士尼那-10-亿美元，就这么黄了" class="headerlink" title="迪士尼那 10 亿美元，就这么黄了"></a>迪士尼那 10 亿美元，就这么黄了</h2><p>三个月前迪士尼宣布投资的时候，我当时第一反应是——好莱坞终于服了。双方谈的是三年授权协议，迪士尼把旗下 200 多个角色——漫威、皮克斯、星球大战的 IP——全授权给 Sora 用户创作”粉丝向”视频，自己还要掏 10 亿美元入股。这在以前想都不敢想，好莱坞一直是反 AI 最积极的那批人。</p>
+<p>但这笔交易一直没有正式完成。昨天，迪士尼发了一条声明，措辞客气却很干脆：”我们尊重 OpenAI 退出视频生成业务的决定，感谢双方团队的合作。”</p>
+<p>10 亿的投资，随着 Sora 一起没了。</p>
+<h2 id="Sora-没了，AI-视频这条赛道还在"><a href="#Sora-没了，AI-视频这条赛道还在" class="headerlink" title="Sora 没了，AI 视频这条赛道还在"></a>Sora 没了，AI 视频这条赛道还在</h2><p>Sora 关闭，不代表 AI 视频这条路走不通。</p>
+<p>市场上的选手还有很多：Google 的 Veo 3、Runway、Kling、可灵——尤其是国内厂商，在这个方向投入相当大。Sora 退出之后，这些竞品反而少了最强的竞争对手。</p>
+<p>OpenAI 自己也没有完全放弃视频技术。Axios 的报道提到，Sora 的研究团队会继续做”世界模拟研究”，方向转向机器人和物理世界的理解——这是比拍短视频更底层、也更长期的赌注。</p>
+<p>有意思的是，这个转向其实很符合 OpenAI 近期的整体逻辑：把消费者娱乐功能砍掉，把算力集中到 ChatGPT 企业版、Agent 工作流、还有隐隐约约的硬件布局上。</p>
+<h2 id="一个产品的命运，往往不由它自己决定"><a href="#一个产品的命运，往往不由它自己决定" class="headerlink" title="一个产品的命运，往往不由它自己决定"></a>一个产品的命运，往往不由它自己决定</h2><p>Sora 本身不差。视频质量在当时是顶级的，社交产品设计也很聪明。</p>
+<p>但它出生在一个很尴尬的时间点：OpenAI 正在准备 IPO，正在跟 Anthropic 争企业市场，正在砍掉一切不够”核心”的东西。Sora 是消费级娱乐产品，是算力黑洞，是版权纠纷的高发区。</p>
+<p>这些问题单拎出来，可能都有解法。放在一起，在一家急于证明盈利能力的公司里，结论只有一个：关掉。</p>
+<p>我的判断是：Sora 死得不冤，但死得很可惜。</p>
+<p>不冤在于，一个靠搞笑视频刷屏的消费级 App，本来就和 OpenAI 想成为的那种公司不搭。版权、安全、算力成本，这三座山压在一起，任何一家急着 IPO 的公司都会做同样的决定。</p>
+<p>可惜在于，它本可以成为 AI 内容创作的第一个真正意义上的平台——如果它出生在一家不那么在乎季度利润的公司里。</p>
+<p>迪士尼那条告别声明最后说：”我们将继续寻找新方式，让粉丝以负责任的态度拥抱新技术。”这话说得客气，但潜台词很清楚：这件事我们还没放弃，只是这次合作方选错了。</p>
+<p><strong>你怎么看 Sora 的关闭？是 OpenAI 的战略收缩，还是 AI 视频这条路本身就走不通？评论区聊聊。</strong></p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>OpenAI</tag>
+        <tag>大模型</tag>
+        <tag>Sora</tag>
+        <tag>AI视频</tag>
+        <tag>AI战略</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>阿里云 JVS Claw 全面开放：人人都能养一只云端&quot;龙虾&quot;了</title>
     <url>/2026/03/25/202603251104/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260325-alibaba-jvs-claw-open-access.webp" alt="cover"></p>
@@ -163,8 +754,7 @@
 <p><strong>支持 React、Angular、Next.js。</strong> 不再只是生成静态页面，支持服务端逻辑，能通过 prompt 安装 npm 包。说一句”加上 Framer Motion 动画”，Agent 自己去装包、写代码。</p>
 <p><strong>关掉浏览器不丢进度了。</strong> 听起来是个基本功能，但对 Vibe Coding 工具来说，这一步很多竞品都没做好。</p>
 <p>我昨晚花了十分钟试了一下，让它做一个带用户注册的待办清单应用。从输入 prompt 到看见带 Google 登录的完整页面，大概三分钟。Firebase 的数据库配置、认证逻辑它全自动搞定了，我一行配置代码都没碰。说实话，有点被震到。以前光配 Firebase 就得折腾半小时，现在点一下按钮就完事了。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[用自然语言描述应用] --&gt; B[Antigravity Agent 理解需求]</span><br><span class="line">    B --&gt; C[生成前端代码]</span><br><span class="line">    B --&gt; D[自动接入 Firebase 后端]</span><br><span class="line">    B --&gt; E[检测并安装依赖包]</span><br><span class="line">    C --&gt; F[实时预览应用]</span><br><span class="line">    D --&gt; F</span><br><span class="line">    E --&gt; F</span><br><span class="line">    F --&gt; G[一键部署上线]</span><br></pre></td></tr></table></figure>
-
+<p><img src="https://image.vance.xin/images/20260327-google-ai-studio-vibe-coding-flow.webp" alt="AI Studio Vibe Coding 工作流程"></p>
 <h2 id="Antigravity：从-Windsurf-到-Google-的那个-Agent"><a href="#Antigravity：从-Windsurf-到-Google-的那个-Agent" class="headerlink" title="Antigravity：从 Windsurf 到 Google 的那个 Agent"></a>Antigravity：从 Windsurf 到 Google 的那个 Agent</h2><p>Antigravity 这个名字你可能听过。它是 Google 去年 11 月跟 Gemini 3 一起发布的桌面 IDE，底层技术来自 Windsurf 团队——Google 花了 <strong>24 亿美元</strong>收购的。</p>
 <p>这次 AI Studio 里用的不是完整的 Antigravity IDE，而是把它的 Agent 能力抽出来，嵌进了浏览器端的 Vibe Coding 工作流。这个 Agent 的核心能力是：<strong>理解整个项目结构，执行多步骤的代码修改</strong>。不是那种改一行代码的补全工具，是真正能理解”把登录模块改成 Google OAuth，同时把用户数据存到 Firestore 里”这种复杂指令的。</p>
 <p>背后跑的模型是 <strong>Gemini 3.1 Pro</strong>。Google 说内部团队已经用这套系统构建了”数十万个应用”——虽然大部分大概率是测试用的一次性项目，但至少说明基础设施经过了压力测试。</p>
@@ -208,29 +798,28 @@
 <p>算一下，还剩大概 9 个月，要招 3500 人。平均每天招 12 个人。每天。</p>
 <p>别的科技公司还在裁员、冻结 HC、”优化组织结构”，OpenAI 反过来开始搞人海战术了。这事儿乍一看挺猛，但仔细想想，它可能没有看上去那么自信——更像是一场被逼出来的加速。</p>
 <h2 id="先看事实：钱从哪来，人往哪去"><a href="#先看事实：钱从哪来，人往哪去" class="headerlink" title="先看事实：钱从哪来，人往哪去"></a>先看事实：钱从哪来，人往哪去</h2><p>OpenAI 现在不缺钱。最新一轮融资估值 <strong>8400 亿美元</strong>，软银孙正义领投，融资规模 <strong>1100 亿美元</strong>。年化收入已经突破 <strong>250 亿美元</strong>。手握这种量级的现金，招人的底气是够的。</p>
-<p>那招来的人干什么？《金融时报》说了四个方向：<strong>产品开发、工程、研究、销售</strong>。</p>
-<p>但最值得注意的是一个新岗位——**”技术大使”（Technical Ambassador）**。这个角色不是写代码的，是帮企业客户把 OpenAI 的工具用起来的。说白了，就是 AI 行业的售前+客户成功。</p>
-<p>为什么要专门设这个岗？因为 OpenAI 的企业市场正在被 Anthropic 抢走。</p>
+<p>那招来的人干什么？产品开发、工程、研究、销售——四条线同时铺。</p>
+<p>但真正让我停下来想了一下的是一个新岗位——**”技术大使”（Technical Ambassador）**。这个角色不是写代码的，是帮企业客户把 OpenAI 的工具用起来的。说白了，就是 AI 行业的售前+客户成功。我上个月帮一个做零售的朋友接 OpenAI 的 API，光是搞清楚 function calling 的最佳实践就折腾了两天。这种”最后一公里”的痛苦，就是这个岗位存在的理由。</p>
+<p>OpenAI 为什么要专门设这个岗？因为企业市场正在被 Anthropic 抢走。</p>
 <h2 id="真正的对手：Anthropic-的威胁比想象中大"><a href="#真正的对手：Anthropic-的威胁比想象中大" class="headerlink" title="真正的对手：Anthropic 的威胁比想象中大"></a>真正的对手：Anthropic 的威胁比想象中大</h2><p>可能不少人还觉得 OpenAI 是 AI 行业的绝对老大。数据讲的是另一个故事。</p>
 <p>Ramp（一家管理企业支出的金融科技公司）的数据显示：<strong>企业客户首次购买 AI 服务时，选择 Anthropic 的概率比选择 OpenAI 高 70%。</strong> 不是高一点点，是高 70%。</p>
-<p>换句话说，新客户正在用脚投票，而且投给了 Anthropic。</p>
-<p>这背后有几个原因。Anthropic 从 2021 年成立就死磕企业市场，它的 Claude Code 编程工具一推出就迅速占领了开发者心智。今年更夸张——Anthropic 的收入增速达到了<strong>每周新增 10 亿美元年化收入</strong>。OpenAI 今年预计收入 250 亿美元，Anthropic 预计 190 亿美元，差距已经从”碾压”变成了”咬得很紧”。</p>
+<p>新客户在选谁，这个数字说得够清楚了。</p>
+<p>为什么会这样？我翻了几份报告，拼出来的画面有点出乎意料。Anthropic 从 2021 年成立就死磕企业市场，它的 Claude Code 编程工具一推出就迅速占领了开发者心智。今年更夸张——Anthropic 的收入增速达到了<strong>每周新增 10 亿美元年化收入</strong>。OpenAI 今年预计收入 250 亿美元，Anthropic 预计 190 亿美元，差距已经从”碾压”变成了”咬得很紧”。</p>
 <p>按照 EpochAI 的预测，如果两家维持当前增速，Anthropic 有可能在 <strong>2026 年中</strong>就在年化收入上反超 OpenAI。</p>
 <p>这就解释了为什么 Sam Altman 去年 12 月在内部发了一封”Code Red”邮件——叫停所有非核心项目，集中火力应对 Google Gemini 3 和 Anthropic 的双重夹击。</p>
-<h2 id="8000-人的-OpenAI-要做什么"><a href="#8000-人的-OpenAI-要做什么" class="headerlink" title="8000 人的 OpenAI 要做什么"></a>8000 人的 OpenAI 要做什么</h2><p>扩招不只是”多招点人”那么简单。从各种迹象看，OpenAI 正在经历一次身份切换——从”做研究的”变成”做生意的”。</p>
+<h2 id="8000-人的-OpenAI-要做什么"><a href="#8000-人的-OpenAI-要做什么" class="headerlink" title="8000 人的 OpenAI 要做什么"></a>8000 人的 OpenAI 要做什么</h2><p>扩招不只是”多招点人”那么简单。OpenAI 正在经历一次身份切换——从”做研究的”变成”做生意的”。</p>
 <p>最核心的动作是<strong>猛攻企业市场</strong>。技术大使这个岗位就是信号。OpenAI 发现光有好模型不够，还得有人手把手教企业用。它现在跟四大咨询公司合作，帮客户从”AI 试点”走到”全面部署”，同时还在跟 Brookfield 这样的私募巨头谈判，要把 AI 工具植入对方投资组合里的所有公司。这步棋下得很重——OpenAI 不想只当”供应商”，它想当”基础设施”。</p>
-<p>产品层面也在收拢。应用业务负责人菲吉·西莫最近放话，要把编程平台 Codex、ChatGPT、浏览器 ChatGPT Atlas 整合成一个桌面”超级应用”。不再零散地卖 API，而是卖一整套解决方案。与此同时，今年 2 月拿下美国国防部合同、伦敦都柏林东京新加坡四地开设办公室、旧金山新租 28 万平方英尺办公空间——所有的动作都指向同一个方向：<strong>OpenAI 在从一家研究公司变成一家全球化的商业公司</strong>。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">graph LR</span><br><span class="line">    A[研究实验室] --&gt; B[消费者产品]</span><br><span class="line">    B --&gt; C[企业服务]</span><br><span class="line">    C --&gt; D[政府与军方]</span><br><span class="line">    D --&gt; E[全球化商业巨头]</span><br></pre></td></tr></table></figure>
-
+<p>产品层面也在收拢。应用业务负责人菲吉·西莫最近放话，要把编程平台 Codex、ChatGPT、浏览器 ChatGPT Atlas 整合成一个桌面”超级应用”。不再零散地卖 API，而是卖一整套解决方案。与此同时，今年 2 月拿下美国国防部合同、伦敦都柏林东京新加坡四地开设办公室、旧金山新租 28 万平方英尺办公空间——方向已经很明确了——<strong>OpenAI 不想再当研究公司，它要当全球化的商业巨头</strong>。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260328-openai-evolution-timeline.webp" alt="OpenAI 演进路径"></p>
 <h2 id="这场扩招的风险在哪"><a href="#这场扩招的风险在哪" class="headerlink" title="这场扩招的风险在哪"></a>这场扩招的风险在哪</h2><p>招这么多人，风险不小。烧钱、抢不到顶级人才、组织臃肿——每一条都值得担心。但我觉得最要命的是<strong>文化稀释</strong>。</p>
 <p>2024 年初 OpenAI 才 800 人。两年之内膨胀到 8000 人，意味着 90% 的员工都是”新来的”。这种速度在科技史上不是没有过——雅虎 2005 年前后也经历过类似的急速膨胀，结果内部流程越来越重，决策越来越慢，搜索引擎这个核心产品反而被 Google 打得找不着北。</p>
 <p>OpenAI 做出 GPT 和 ChatGPT 的时候靠的是什么？一小撮顶级研究员，极度扁平的组织，疯狂的迭代速度。当公司变成 8000 人的时候，这些东西还能保住吗？我不乐观。工程师薪资 20 万到 45 万美元只是 base，算上股权和福利，8000 人一年的人力成本可能超过 50 亿美元。花这么多钱养一个”大公司”，换来的东西未必比 800 人时代更好。</p>
 <h2 id="对普通开发者意味着什么"><a href="#对普通开发者意味着什么" class="headerlink" title="对普通开发者意味着什么"></a>对普通开发者意味着什么</h2><p>我最近在 OpenAI 的招聘页面翻了一圈，发现一个挺有意思的现象：研究岗的占比在缩小，产品、销售、客户成功类的岗位在急速膨胀。”技术大使”这种角色两年前在 AI 行业根本不存在，现在居然成了刚需。</p>
-<p>这对做 AI 相关工作的人来说是一个信号：<strong>行业的重心正在从”做模型”转向”用模型”。</strong> 如果你既懂技术又能跟客户打交道，现在是一个不错的窗口期。</p>
+<p>这说明了一件事：<strong>现在 AI 行业最缺的不是能训模型的人，是能帮别人把模型用起来的人。</strong> “技术大使”两年前根本不存在，现在成了刚需——如果你既能写代码又能跟客户掰扯需求，这可能是你职业生涯里少有的卖方市场。</p>
 <p>另一个好消息是：OpenAI 和 Anthropic 打得越凶，开发者越受益。API 价格在降，工具在变多，选择在变广。我现在写代码用 Claude Code，做产品原型用 ChatGPT，跑数据分析用 Gemini——多工具混用已经是常态，而且只会越来越方便。</p>
 <h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>800 人到 8000 人，两年十倍。这个数字很震撼，但也让人捏一把汗。</p>
 <p>Sam Altman 应该比谁都清楚——OpenAI 最大的资产从来不是人多，而是那帮人足够聪明、足够疯狂、足够快。当公司膨胀到 8000 人的时候，这种东西还在不在，可能比招多少人更重要。</p>
-<p>Google 2023 年裁掉 12000 人的时候，很多人事后复盘才发现：这些岗位中有不少是前几年高速扩张期”拍脑袋招进来的”。OpenAI 现在日招 12 人，会不会在两年后回头看，发现同样的问题？不知道。但值得每一个关注 AI 行业的人盯着看。</p>
+<p>Google 2023 年裁掉 12000 人的时候，很多人事后复盘才发现：这些岗位中有不少是前几年高速扩张期”拍脑袋招进来的”。OpenAI 现在日招 12 人，会不会在两年后回头看，发现同样的问题？我赌会。但我也赌 Sam Altman 到时候会说”这是战略性调整”而不是”我们招多了”。</p>
 <p><strong>你怎么看 OpenAI 这波扩招？是该有的商业化提速，还是被 Anthropic 逼急了的应激反应？评论区聊聊。</strong></p>
 ]]></content>
       <categories>
@@ -283,8 +872,7 @@
 <li>“再跑一次，只跑失败的那几个”</li>
 </ul>
 <p>说完一句，看结果，再说下一句。手不碰键盘，眼睛一直盯着输出。有一次我调一个接口超时的 bug，连续说了十几轮指令，从定位问题到修复完成大概十分钟，全程没打一个字。那种感觉有点像在指挥一个很听话的实习生干活。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">flowchart TD</span><br><span class="line">    A[想清楚需求] --&gt; B[长按 Fn 语音输入]</span><br><span class="line">    B --&gt; C[微信输入法实时转写]</span><br><span class="line">    C --&gt; D[文字出现在终端]</span><br><span class="line">    D --&gt; E[Claude Code 执行任务]</span><br><span class="line">    E --&gt; F[查看结果]</span><br><span class="line">    F --&gt; G&#123;需要调整?&#125;</span><br><span class="line">    G --&gt;|是| A</span><br><span class="line">    G --&gt;|否| H[完成]</span><br></pre></td></tr></table></figure>
-
+<p><img src="https://image.vance.xin/aigc/image/20260328-claude-code-voice-input-workflow.webp" alt="语音 + Claude Code 工作流程"></p>
 <h2 id="几个实用技巧"><a href="#几个实用技巧" class="headerlink" title="几个实用技巧"></a>几个实用技巧</h2><p>用了两周之后，踩了一些坑，也摸出了一些门道：</p>
 <h3 id="1-复杂需求用免提模式"><a href="#1-复杂需求用免提模式" class="headerlink" title="1. 复杂需求用免提模式"></a>1. 复杂需求用免提模式</h3><p>简单指令长按 Fn 就行。但如果你要描述一个多步骤的重构方案，按着 Fn 说一分钟手会酸。这时候用 <code>Fn + 空格</code> 进入免提模式，可以边想边说，按任意键结束。我重构认证模块那次就是免提模式说的——“帮我重构用户认证模块，第一把 JWT 验证逻辑抽成中间件，第二错误码统一用枚举，第三加上刷新 token 的逻辑”——一口气说完，比打字快了四五倍。</p>
 <h3 id="2-先说目标，再说约束"><a href="#2-先说目标，再说约束" class="headerlink" title="2. 先说目标，再说约束"></a>2. 先说目标，再说约束</h3><p>刚开始用的时候我犯过一个错：想到哪说到哪，结果 Claude Code 拿到的指令乱七八糟，改出来的东西也不对。后来我养成了习惯——先说”我要干什么”，再说”有什么限制条件”。这个技巧不光对语音有用，打字的时候也适用。</p>
@@ -398,16 +986,16 @@
 <p>这不是一次普通的产品发布会。这是马斯克把自己旗下三家公司的命运，绑在了同一颗芯片上。</p>
 <h2 id="TERAFAB-到底要造什么？"><a href="#TERAFAB-到底要造什么？" class="headerlink" title="TERAFAB 到底要造什么？"></a>TERAFAB 到底要造什么？</h2><p>先说规模。</p>
 <p>TERAFAB 计划年产 <strong>1000 亿到 2000 亿颗</strong> 先进 2nm AI 芯片。采用全链路闭环模式——从芯片设计、光刻、制造、存储芯片、先进封装到测试，全部在同一座工厂里完成。</p>
-<p>这在半导体行业史上从未有过。目前全球没有任何一家芯片厂把这些环节全部整合在一个屋顶下。</p>
+<p>这在半导体行业史上从未有过——目前全球没有任何一家芯片厂敢把这些环节全塞进同一个屋顶下。</p>
 <p>工厂将生产两类芯片：</p>
 <p><strong>第一类：地面芯片。</strong> 主要是 AI5 系列，用于特斯拉的全自动驾驶（FSD）、Optimus 人形机器人和 Cybercab 无人出租车。计划 2027 年量产。后续 AI6 到 AI9 系列已列入研发路线图。</p>
 <p><strong>第二类：太空芯片。</strong> 高功率、耐辐射的专用芯片，用于 SpaceX 的轨道数据中心和 xAI 的太阳能 AI 卫星。</p>
 <p>产能分配：<strong>80% 给太空，20% 给地面。</strong></p>
-<p>没看错。一座芯片厂，八成产能是给太空用的。</p>
-<h2 id="为什么三家公司要绑在一起？"><a href="#为什么三家公司要绑在一起？" class="headerlink" title="为什么三家公司要绑在一起？"></a>为什么三家公司要绑在一起？</h2><p>理解 TERAFAB，需要先理解马斯克这三家公司之间的关系。</p>
+<p>我第一反应是——等等，你花 250 亿建个厂，八成产能不是给自家车用的？</p>
+<h2 id="为什么三家公司要绑在一起？"><a href="#为什么三家公司要绑在一起？" class="headerlink" title="为什么三家公司要绑在一起？"></a>为什么三家公司要绑在一起？</h2><p>TERAFAB 看上去是一座芯片厂，但你把股权关系扒开看，这事比建厂有意思多了。</p>
 <p><strong>2026 年 2 月</strong>，SpaceX 以全股票交易方式完成了对 xAI 的收购。xAI 现在是 SpaceX 的全资子公司。</p>
 <p><strong>2026 年 1 月</strong>，特斯拉宣布向 xAI 投资 20 亿美元，并签署框架合作协议。特斯拉的部分车型已经集成了 xAI 的聊天机器人 Grok。特斯拉还向 xAI 出售 Megapack 储能设备。</p>
-<p>三家公司的分工很清晰：</p>
+<p>三家公司各管一摊：</p>
 <table>
 <thead>
 <tr>
@@ -459,7 +1047,7 @@
 <h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>250 亿美元。1 太瓦算力。2nm 制程。年产 2000 亿颗芯片。80% 送上太空。</p>
 <p>这些数字，每一个单拎出来都足够震撼。放在一起，我说不好这是人类工业史上最伟大的项目之一，还是最壮观的画饼之一。但有一点我比较确定：马斯克不是在吹牛，他是真的要干。</p>
 <p>马斯克在发布会结尾说了一句话：**”我们正在开创一个银河文明。”**</p>
-<p>在 AI 算力军备竞赛中，马斯克已经把赌注推到了桌子中央。你觉得 TERAFAB 能建成吗？欢迎在评论区聊聊你的判断。</p>
+<p>别人还在讨论”要不要自研芯片”的时候，马斯克已经在盖厂了。这就是他一直以来的打法——等你反应过来，他的工厂已经在浇混凝土了。你觉得 TERAFAB 能建成吗？评论区聊聊你的判断。</p>
 ]]></content>
       <categories>
         <category>观点</category>
@@ -476,34 +1064,23 @@
     <title>GLM-5-Turbo：第一个专门为 Agent 而生的基座模型，意味着什么？</title>
     <url>/2026/03/23/202603230930/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260323-glm-5-turbo-agent-model.webp" alt="cover"></p>
-<p>你有没有遇到过这种情况？</p>
-<p>让 AI Agent 帮你完成一个复杂任务——比如”去这 5 个网站抓取数据，整理成表格，生成报告，发到我邮箱”。前两步顺利完成，第三步突然卡住了。要么忘了前面抓到的数据，要么工具调用出错，要么直接开始”创意发挥”偏离了方向。</p>
-<p>这不是 Agent 框架的问题。这是底层模型的问题。</p>
+<p>上周我让 Claude Code 帮我重构一个项目的认证模块——读文件、分析依赖、生成方案，一共大概七八步。跑到第四步的时候它突然把前面分析好的依赖关系全忘了，开始从头编。我盯着屏幕愣了三秒。</p>
+<p>这种事不是第一次了。换过好几个模型，长链路任务跑到中间”失忆”几乎是常态。框架层的 workaround 能缓解，但根子上是底层模型没为这种场景练过。</p>
 <p>3 月 16 日，智谱 AI 发布了 GLM-5-Turbo。它的定位很特别：<strong>全球首个专门为 OpenClaw Agent 场景深度优化的基座模型。</strong></p>
 <p>不是”通用模型加了个 Agent 模式”。是从训练阶段就为 Agent 而生。</p>
 <p>这个定位本身，可能比模型性能更值得关注。</p>
-<h2 id="为什么通用模型跑-Agent-会”失速”？"><a href="#为什么通用模型跑-Agent-会”失速”？" class="headerlink" title="为什么通用模型跑 Agent 会”失速”？"></a>为什么通用模型跑 Agent 会”失速”？</h2><p>先说一个直觉：既然 GPT-5、Claude Opus 这些通用模型那么强，为什么还需要专门给 Agent 做一个模型？</p>
-<p>原因很简单。<strong>聊天和干活，是两件完全不同的事。</strong></p>
-<p>聊天是一问一答。你问一个问题，模型回一个答案。上下文短，链路简单，错了也无所谓——人类会立刻纠正。</p>
-<p>Agent 干活完全不同。它需要：</p>
-<ol>
-<li><strong>理解复杂的多层指令</strong> —— 不是”帮我写一段代码”，而是”先读这个项目的结构，找到所有跟用户认证相关的文件，分析它们的依赖关系，然后写一个重构方案”。</li>
-<li><strong>连续调用多个工具</strong> —— 读文件、搜索网页、执行代码、调 API，一个任务可能要调用十几次工具，任何一步出错就可能导致整个链路崩溃。</li>
-<li><strong>长时间保持状态</strong> —— 一个复杂任务可能跑几十分钟甚至几个小时，模型需要始终记住自己在做什么、做到了哪一步。</li>
-<li><strong>在没有人类干预的情况下自主决策</strong> —— 遇到错误要自己判断是重试还是换方案，不能每一步都等人拍板。</li>
-</ol>
-<p>通用模型在这些场景下容易”失速”——指令遵循偏移、工具调用出错、长任务中途”忘记”目标。这不是模型不够聪明，而是它们没有被专门训练来做这些事。</p>
-<p>就像一个口才很好的人，不一定是一个好的项目经理。<strong>会说话和会做事，需要不同的能力。</strong></p>
-<h2 id="GLM-5-Turbo-做了什么不一样的事"><a href="#GLM-5-Turbo-做了什么不一样的事" class="headerlink" title="GLM-5-Turbo 做了什么不一样的事"></a>GLM-5-Turbo 做了什么不一样的事</h2><p>智谱的思路很直接：<strong>既然框架层的工程适配解决不了根本问题，那就在基座模型层动刀。</strong></p>
-<p>GLM-5-Turbo（代号 Pony-Alpha-2）基于 GLM-5 的 744 亿参数 MoE 架构，但从训练数据到优化目标都做了专项调整：</p>
-<p><strong>工具调用稳定性。</strong> 这是 Agent 场景最核心的能力。第三方测试显示，GLM-5-Turbo 的工具调用错误率仅 **0.67%**。在一个需要连续调用十几个工具的长链路任务里，这个差异是决定性的。</p>
-<p><strong>复杂指令遵循。</strong> 模型能精准理解和拆解多层嵌套的指令，支持识别目标、规划步骤、多智能体协同。不再”漏掉”指令的第三个条件，也不再”创意发挥”改变任务方向。</p>
-<p><strong>长任务不中断。</strong> 针对定时触发、长时间运行的场景做了重点优化。支持 <strong>200K 上下文窗口</strong>，确保长任务不失速、不遗忘。</p>
-<p><strong>高吞吐长链路执行。</strong> 针对数据量大、链条长的业务流程提升执行效率和稳定性。</p>
+<h2 id="为什么通用模型跑-Agent-会”失速”？"><a href="#为什么通用模型跑-Agent-会”失速”？" class="headerlink" title="为什么通用模型跑 Agent 会”失速”？"></a>为什么通用模型跑 Agent 会”失速”？</h2><p>你可能会问：GPT-5、Claude Opus 这些通用模型已经够强了，为什么还需要专门给 Agent 做一个模型？</p>
+<p>因为<strong>聊天和干活，是两码事</strong>。</p>
+<p>聊天是一问一答，上下文短，错了人类马上纠正。Agent 干活不一样——它得理解”先读项目结构，找所有认证相关文件，分析依赖关系，写重构方案”这种多层嵌套指令；它得连续调用十几个工具，中间任何一步出错整个链路就崩了；它得在跑了半小时之后还记得自己在干什么。</p>
+<p>这些能力通用模型不是”不行”，是”没专门练过”。就像你团队里那个演讲最好的人，不一定是执行力最强的那个。</p>
+<h2 id="GLM-5-Turbo-做了什么不一样的事"><a href="#GLM-5-Turbo-做了什么不一样的事" class="headerlink" title="GLM-5-Turbo 做了什么不一样的事"></a>GLM-5-Turbo 做了什么不一样的事</h2><p>智谱的思路很暴力：框架层补不了的短板，直接在基座模型层动刀。</p>
+<p>GLM-5-Turbo（代号 Pony-Alpha-2）基于 GLM-5 的 744 亿参数 MoE 架构，训练数据和优化目标都为 Agent 场景做了专项调整。</p>
+<p>最值得说的是<strong>工具调用稳定性</strong>。第三方测试显示错误率仅 **0.67%**——这个数字什么概念？我之前用某个模型跑一个 15 步的数据抓取任务，平均跑 3 次才能完整跑通一次。如果错误率真能压到 0.67%，理论上跑一次就成。对长链路任务来说，这个差异是生死线。</p>
+<p>其他几个改进也值得提：200K 上下文窗口让长任务不”失忆”，复杂指令遵循不再漏掉第三个条件，多步骤执行效率也做了针对性提升。</p>
 <p>VentureBeat 的报道给了一个很精确的定位：”Rather than a straightforward successor to GLM-5, GLM-5-Turbo appears to be a more execution-focused variant.”</p>
 <p><strong>不是 GLM-5 的升级版，而是 GLM-5 的”干活版”。</strong></p>
 <h2 id="ZClawBench：智谱造了一把新尺子"><a href="#ZClawBench：智谱造了一把新尺子" class="headerlink" title="ZClawBench：智谱造了一把新尺子"></a>ZClawBench：智谱造了一把新尺子</h2><p>模型好不好，要看评测。但现有的评测基准几乎都是为聊天场景设计的。</p>
-<p>智谱于是做了一件有意思的事：<strong>自己造了一个专门评测 Agent 能力的基准——ZClawBench。</strong></p>
+<p>智谱干了一件很聪明的事——<strong>自己造了一个评测 Agent 能力的基准：ZClawBench。</strong></p>
 <p>ZClawBench 基于对 OpenClaw 大量真实用例的分析构建，覆盖五大类任务：</p>
 <ul>
 <li>环境搭建</li>
@@ -515,7 +1092,7 @@
 <p>题库和测试轨迹已全面公开。这意味着任何人都可以拿这把尺子去量自己的模型。</p>
 <p>官方数据显示，GLM-5-Turbo 在 ZClawBench 上取得<strong>国产模型第一</strong>的成绩，并获得了阿里、字节 Coze、美团等大厂的内测认可。</p>
 <p>当然，”自研评测基准+自家模型拿第一”这种组合，你可以持保留态度。但至少，智谱把题库公开了——这是一个可以验证的声明，不是一个空口白话。</p>
-<h2 id="价格：便宜-5-倍的-Agent-引擎"><a href="#价格：便宜-5-倍的-Agent-引擎" class="headerlink" title="价格：便宜 5 倍的 Agent 引擎"></a>价格：便宜 5 倍的 Agent 引擎</h2><p>如果只看性能，GLM-5-Turbo 可能不是最炸裂的发布。但看价格，事情就变得有意思了。</p>
+<h2 id="价格：便宜-5-倍的-Agent-引擎"><a href="#价格：便宜-5-倍的-Agent-引擎" class="headerlink" title="价格：便宜 5 倍的 Agent 引擎"></a>价格：便宜 5 倍的 Agent 引擎</h2><p>性能聊完了，聊钱。这才是我觉得 GLM-5-Turbo 真正有杀伤力的地方。</p>
 <table>
 <thead>
 <tr>
@@ -544,24 +1121,21 @@
 <p>GLM-5-Turbo 的价格比 Claude Opus 便宜约 5 倍。对于需要 7x24 小时运行 Agent 的企业来说，这不是一个小数字。</p>
 <p>不过也要注意，相比前代 GLM-4.7，GLM-5-Turbo 已经累计涨价约 83%。智谱的策略很清楚：<strong>在 Agent 场景建立护城河，然后用定价权变现。</strong></p>
 <p>同时发布的”龙虾套餐”订阅包（个人版和 Team 版），也在明确这个信号：Agent 不是一次性消费，是持续性订阅。</p>
-<h2 id="一个更大的趋势：Agent-正在重塑模型市场"><a href="#一个更大的趋势：Agent-正在重塑模型市场" class="headerlink" title="一个更大的趋势：Agent 正在重塑模型市场"></a>一个更大的趋势：Agent 正在重塑模型市场</h2><p>GLM-5-Turbo 的发布，放在更大的背景下看更有意义。</p>
-<p>过去两年，大模型的竞争逻辑是”谁的聊天更聪明”。MMLU 分数、数学推理能力、代码生成质量——所有评测都围绕”对话”这个范式。</p>
-<p>但 OpenClaw 的爆火改变了游戏规则。</p>
+<h2 id="一个更大的趋势：Agent-正在重塑模型市场"><a href="#一个更大的趋势：Agent-正在重塑模型市场" class="headerlink" title="一个更大的趋势：Agent 正在重塑模型市场"></a>一个更大的趋势：Agent 正在重塑模型市场</h2><p>跳出 GLM-5-Turbo 本身，这件事还有一层更大的意思。</p>
+<p>过去两年大模型卷的是”谁聊天更聪明”——MMLU 刷分、数学推理、代码生成，清一色对话范式。</p>
+<p>OpenClaw 的爆火把桌子掀了。</p>
 <p>智谱的数据显示，OpenClaw 工作流中 skills 的使用占比从 **26% 飙升到 45%**。这意味着用户越来越多地让 Agent 调用工具干活，而不是纯粹聊天。</p>
 <p>当使用场景变了，模型的评价标准也在变。<strong>不是”回答得好不好”，而是”执行得稳不稳”。</strong></p>
 <p>这就是为什么智谱愿意为 Agent 场景单独做一个模型。这也是为什么这个模型是闭源的——这是智谱 2025 年以来的第一个闭源模型。开源拉生态，闭源做利润。Agent 基座模型，是智谱选定的利润阵地。</p>
 <p>放眼全球，其他厂商也在往同一个方向走。Anthropic 用 Claude 做 Claude Code 和 Claude Cowork。OpenAI 推出了 Codex 模型专攻代码 Agent。Google 的 Gemini 在 Project Astra 中强化了 Agent 能力。</p>
-<p><strong>大模型正在从”聊天引擎”变成”执行引擎”。GLM-5-Turbo 只是这个趋势的最新一个注脚。</strong></p>
-<h2 id="对开发者的实际意义"><a href="#对开发者的实际意义" class="headerlink" title="对开发者的实际意义"></a>对开发者的实际意义</h2><p>如果你正在用 OpenClaw 或其他 Agent 框架做开发，GLM-5-Turbo 值得关注几个点：</p>
-<p><strong>1. 如果你的 Agent 主要处理中文任务，GLM-5-Turbo 可能是当前性价比最高的选择。</strong> 智谱作为国内公司，在中文语料上做了深度优化。多个社区实测反馈显示，GLM 在中文场景的表现比同价位的其他模型更自然。</p>
-<p><strong>2. 长链路任务是它的主场。</strong> 如果你的 Agent 需要连续调用多个工具、处理复杂的多步骤任务，GLM-5-Turbo 的工具调用稳定性和长上下文能力会有明显优势。</p>
-<p><strong>3. 别只看一个模型。</strong> 社区的经验是：不同模型在不同场景下各有优势。GLM-5 中文强，MiniMax M2.5 编码强（SWE-Bench 80.2%），DeepSeek V3.2 响应快、价格低。<strong>最聪明的做法是按任务类型混合使用多个模型。</strong></p>
-<p><strong>4. ZClawBench 值得关注。</strong> 不管你用不用 GLM-5-Turbo，ZClawBench 作为一个公开的 Agent 评测基准，可以帮你更科学地比较不同模型在 Agent 场景下的真实表现。比看 MMLU 分数有用多了。</p>
-<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>GLM-5-Turbo 本身是不是”最好的 Agent 模型”？这个问题见仁见智。</p>
-<p>但它代表的趋势是确定的：<strong>大模型的战场正在从”谁聊天更聪明”转向”谁干活更靠谱”。</strong></p>
-<p>过去，我们评价一个模型，看的是它能不能写一首好诗、解一道数学题、通过一场考试。</p>
-<p>现在，我们评价一个模型，看的是它能不能稳定地调用 15 个工具、执行一个跨越 3 个小时的复杂任务、在中途遇到错误时自主修复而不崩溃。</p>
-<p><strong>从 Chat 到 Agent，大模型正在完成它的”成人礼”。</strong></p>
+<p><strong>大模型正在从”聊天引擎”变成”执行引擎”。</strong> GLM-5-Turbo 不是开创者，但它可能是第一个把这个方向变成产品定位的。</p>
+<h2 id="对开发者的实际意义"><a href="#对开发者的实际意义" class="headerlink" title="对开发者的实际意义"></a>对开发者的实际意义</h2><p>如果你正在用 OpenClaw 或其他 Agent 框架做开发，说几个我觉得实用的判断：</p>
+<p><strong>中文 Agent 任务，先试它。</strong> 智谱在中文语料上的积累是实打实的优势，社区多个实测反馈都说 GLM 在中文场景比同价位竞品更自然。加上价格只有 Claude Opus 的五分之一，中文长链路任务选它不亏。</p>
+<p><strong>但别只押一个模型。</strong> 我自己的经验是混着用最靠谱——GLM-5 跑中文任务，MiniMax M2.5 编码强（SWE-Bench 80.2%），DeepSeek V3.2 响应快、价格更低。按任务类型分配模型，比死磕一个”全能选手”效果好得多。</p>
+<p>另外 <strong>ZClawBench 值得收藏</strong>。不管你用不用 GLM-5-Turbo，这个公开的 Agent 评测基准比看 MMLU 分数实在多了——至少它测的是”能不能把活干完”，而不是”能不能考高分”。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>说实话，GLM-5-Turbo 不是最聪明的模型，但可能是当前最适合当 Agent 底座的国产模型。如果你的 Agent 主要跑中文任务、链路长、对成本敏感——先试它，别纠结。</p>
+<p>更大的变化是：<strong>大模型的战场正在从”谁聊天更聪明”转向”谁干活更靠谱”。</strong> 以前我们看一个模型，看的是它能不能写诗、解数学题、通过考试。现在看的是它能不能稳定调用 15 个工具、跑 3 个小时不崩、中途出错了自己修复。</p>
+<p>这才是真正重要的转变。</p>
 <p>你的 OpenClaw 用的是什么模型？体验过 GLM-5-Turbo 吗？不同模型之间的差异大吗？欢迎在评论区分享你的真实体验。</p>
 ]]></content>
       <categories>
@@ -597,16 +1171,9 @@
 <p>“正如 OpenClaw 是基于 AI 编程的基础做的一个智能体产品，WorkBuddy 正是基于’国产类 Cursor 产品’ CodeBuddy 的基础，做的’龙虾化’改造。”</p>
 </blockquote>
 <p>所以准确地说：<strong>WorkBuddy 不是 OpenClaw 的代码套壳，而是功能对标、生态兼容。</strong> 它走的是另一条技术路线，但对用户来说，干的是差不多的事。</p>
-<h2 id="WorkBuddy-到底能干什么？"><a href="#WorkBuddy-到底能干什么？" class="headerlink" title="WorkBuddy 到底能干什么？"></a>WorkBuddy 到底能干什么？</h2><p>说完身世，说产品。</p>
-<p>WorkBuddy 定位为”全场景职场 AI 智能体桌面工作台”。翻译成人话：<strong>它是一个能听懂指令、操控你电脑的 AI 员工。</strong></p>
-<p>核心能力：</p>
-<ul>
-<li><strong>兼容 OpenClaw 技能。</strong> 你在 OpenClaw 社区找到的 skills，可以直接导入 WorkBuddy 使用。</li>
-<li><strong>内置 20+ 技能包。</strong> 发票处理、报告生成、数据分析、海报制作、知识库构建——开箱即用。</li>
-<li><strong>支持 MCP 协议。</strong> 可以接入外部数据源和工具，能力无限扩展。</li>
-<li><strong>多模型切换。</strong> 混元、DeepSeek、GLM、Kimi、MiniMax，按需选择，不绑定单一模型。</li>
-<li><strong>多端遥控。</strong> 企业微信、QQ、飞书、钉钉都能连。出门在外，掏出手机发条消息，它就在你的办公电脑上自动干活。</li>
-</ul>
+<h2 id="WorkBuddy-到底能干什么？"><a href="#WorkBuddy-到底能干什么？" class="headerlink" title="WorkBuddy 到底能干什么？"></a>WorkBuddy 到底能干什么？</h2><p>身世聊完了，说说这东西到底能干什么。</p>
+<p>WorkBuddy 官方定位是”全场景职场 AI 智能体桌面工作台”——说白了就是一个能听懂指令、操控你电脑的 AI 员工。</p>
+<p>我装了之后试了一圈，几个能力值得提：OpenClaw 社区的 skills 可以直接导进来用，内置了 20 多个技能包（发票处理、报告生成、数据分析这些），支持 MCP 协议接外部工具，而且模型可以切换——混元、DeepSeek、GLM、Kimi、MiniMax 随便选，不绑死一家。最让我眼前一亮的是多端遥控：企业微信、QQ、飞书、钉钉都能连，出门在外掏出手机发条消息，它就在你办公室的电脑上自动干活。</p>
 <p>跟原版 OpenClaw 相比，WorkBuddy 有两个明显的差异点：</p>
 <p><strong>第一，不需要部署。</strong> OpenClaw 的云端部署对普通人来说门槛不低，你得会用终端、会配置环境。WorkBuddy 直接下载安装就能用。</p>
 <p><strong>第二，安全机制不同。</strong> OpenClaw 的工作原理是”透传”——它直接操控你的系统，信息可能暴露在公网上。WorkBuddy 用的是自研的沙箱机制，任务在隔离环境中执行。汪晟杰说他们”刻意规避了 OpenClaw 的透传工作原理”。</p>
@@ -662,17 +1229,13 @@
 <td>已上线</td>
 </tr>
 </tbody></table>
-<p>这套组合拳的逻辑很清楚：<strong>QClaw 和 ClawBot 负责拉新——用微信的流量把用户吸引进来。WorkBuddy 负责留存——用企业级体验把用户留住。Lighthouse 负责开发者生态。SkillHub 负责技能市场。</strong></p>
-<p>从消费端到企业端，从个人用户到开发者，腾讯在每个入口都布了棋子。</p>
-<h2 id="大厂”捞虾”背后的真正战争"><a href="#大厂”捞虾”背后的真正战争" class="headerlink" title="大厂”捞虾”背后的真正战争"></a>大厂”捞虾”背后的真正战争</h2><p>腾讯不是唯一在做这件事的大厂。</p>
-<p>阿里推出了企业级 AI Agent 平台”悟空”。百度在自家搜索 APP 里集成了 OpenClaw，为 7 亿用户提供服务。字节跳动和智谱 AI 升级了各自的模型以支持 Agent 工作流。小米推出了 Miclaw Agent，华为搞出了”鸿蒙版龙虾”小艺 Claw。</p>
-<p><strong>所有大厂都在抢同一个东西：AI Agent 的入口。</strong></p>
-<p>为什么入口这么重要？因为 AI Agent 不是一次性工具，它是长期陪伴的”数字员工”。谁控制了入口，谁就控制了用户的注意力、数据和消费。</p>
-<p>这跟十年前的移动互联网入口之争如出一辙。当年大家争的是”用户打开手机第一个用什么 APP”。现在争的是”用户跟 AI 对话的第一个界面是什么”。</p>
-<p>腾讯的优势很明显——<strong>微信。</strong> 13 亿用户，每天打开无数次。把 AI Agent 塞进微信，等于在最大的流量池里养鱼。</p>
-<h2 id="对普通用户和开发者的建议"><a href="#对普通用户和开发者的建议" class="headerlink" title="对普通用户和开发者的建议"></a>对普通用户和开发者的建议</h2><p><strong>如果你是普通用户：</strong> WorkBuddy 确实降低了 AI Agent 的使用门槛。如果你之前觉得 OpenClaw 部署太麻烦，可以先试试 WorkBuddy。直接去<a href="https://www.codebuddy.cn/work/">官网</a>下载安装，连上企业微信，体验一下让 AI 帮你处理发票、整理数据、写周报的感觉。</p>
-<p><strong>如果你是开发者：</strong> 关注 MCP 协议和 SkillHub 生态。无论最终哪个平台赢了，MCP 作为开放标准的地位越来越稳。你为 OpenClaw 写的 skills，可以无缝跑在 WorkBuddy 上。这意味着你的开发成果不会被锁死在某个平台里。</p>
-<p><strong>如果你是企业决策者：</strong> WorkBuddy 的沙箱安全机制、多模型切换、企业微信集成，确实比裸跑 OpenClaw 更适合企业环境。但它仍然是一个早期产品——紧急扩容 10 倍这件事本身就说明了它的成熟度。建议先在非核心业务上试用，观察稳定性。</p>
+<p>拆一下：QClaw 和 ClawBot 负责拉人——微信的流量管道直接灌进来。WorkBuddy 负责留人——企业级体验把人留住。Lighthouse 给开发者用，SkillHub 做技能市场。消费端、企业端、开发者，每个口子都堵上了。</p>
+<h2 id="大厂”捞虾”背后的真正战争"><a href="#大厂”捞虾”背后的真正战争" class="headerlink" title="大厂”捞虾”背后的真正战争"></a>大厂”捞虾”背后的真正战争</h2><p>腾讯不是唯一在抢这个位置的大厂。阿里推了企业级 AI Agent 平台”悟空”，百度直接在搜索 APP 里集成了 OpenClaw 给 7 亿用户用，字节和智谱升级模型支持 Agent 工作流，小米搞了 Miclaw Agent，华为弄了”鸿蒙版龙虾”小艺 Claw。</p>
+<p>一窝蜂地下场，抢的是同一样东西：<strong>AI Agent 的入口。</strong></p>
+<p>这一波里我最看好腾讯和百度。原因很简单——腾讯有微信，百度有搜索，这两个是真正的日活入口，13 亿用户每天打开无数次。把 AI Agent 塞进微信，等于在最大的流量池里养鱼。阿里的”悟空”和小米的 Miclaw，说实话我还没看到差异化在哪里，更像是怕错过就先占个坑。</p>
+<p>这跟十年前抢移动互联网入口是一回事。当年争的是”用户打开手机第一个用什么 APP”，现在争的是”用户跟 AI 对话的第一个界面是什么”。</p>
+<h2 id="值不值得现在就用？"><a href="#值不值得现在就用？" class="headerlink" title="值不值得现在就用？"></a>值不值得现在就用？</h2><p>我自己的体验是：发票处理技能确实开箱即用，比在 OpenClaw 上折腾 MCP 配置快多了；但报告生成跑到一半卡过一次，重启之后进度全丢。整体来说，<strong>处理结构化的、步骤少的任务已经可以用了，复杂长链路任务还不太稳。</strong></p>
+<p>如果你之前觉得 OpenClaw 部署太麻烦，WorkBuddy 确实降低了门槛——直接去<a href="https://www.codebuddy.cn/work/">官网</a>下载安装就行。开发者可以关注 MCP 协议和 SkillHub 生态，你给 OpenClaw 写的 skills 能无缝跑在 WorkBuddy 上，不会被锁死。企业用户的话，沙箱安全机制确实比裸跑 OpenClaw 靠谱，但上线当天紧急扩容 10 倍这件事本身就说明了它的成熟度——先在非核心业务上试水比较稳。</p>
 <h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>套壳还是自研？这个问题，其实可能问错了。</p>
 <p>更好的问题是：<strong>在 AI Agent 时代，”自研”还重要吗？</strong></p>
 <p>OpenClaw 是开源的。它的价值不在于代码本身，而在于它定义了一种新的交互范式——让 AI 从”聊天”变成”干活”。谁能把这个范式做得更好用、更安全、更适合中国用户，谁就能赢。</p>
@@ -680,7 +1243,7 @@
 <blockquote>
 <p>“龙虾不是一个产品，龙虾是一种概念。而且，龙虾不等于 OpenClaw。”</p>
 </blockquote>
-<p>不管你信不信这句话，有一件事是确定的：<strong>AI Agent 的全民化，已经不可逆了。</strong> 从腾讯总部门口排队的千人长队，到 WorkBuddy 上线当天暴涨的请求量，都在证明同一个事实——人们想要一个能帮自己干活的 AI，而且他们想要的是现在。</p>
+<p>不管你信不信这句话，有一件事挺清楚的：<strong>WorkBuddy 会活下来，但不是因为它比 OpenClaw 强，而是因为它背后站着微信。</strong> 在中国市场，渠道就是产品。腾讯总部门口那条千人长队，和上线当天暴涨的请求量，说的都是同一件事——人们想要一个能帮自己干活的 AI，而且他们想要的是现在。</p>
 <p>你用过 WorkBuddy 了吗？跟 OpenClaw 比体验如何？欢迎在评论区分享你的真实感受。</p>
 ]]></content>
       <categories>
@@ -983,8 +1546,7 @@
 <p>如果你已经在用 Claude Code 或者 Codex CLI，这个动作可能已经从你的肌肉记忆里消失了。</p>
 <p>2026 年的开发者工具市场正在发生一场静悄悄的革命：<strong>AI Agent 正在取代 IDE，成为开发者的主要工作界面。</strong></p>
 <p>这不是预测。这是正在发生的事情。</p>
-<h2 id="IDE-统治了-20-年，现在到头了？"><a href="#IDE-统治了-20-年，现在到头了？" class="headerlink" title="IDE 统治了 20 年，现在到头了？"></a>IDE 统治了 20 年，现在到头了？</h2><p>先回顾一下历史。</p>
-<p>从 Eclipse 到 IntelliJ，从 Sublime Text 到 VS Code，IDE 统治开发者工作流已经超过 20 年。核心逻辑很简单：<strong>把写代码需要的一切——编辑器、终端、调试器、文件管理器、版本控制——塞进一个窗口里。</strong></p>
+<h2 id="IDE-统治了-20-年，现在到头了？"><a href="#IDE-统治了-20-年，现在到头了？" class="headerlink" title="IDE 统治了 20 年，现在到头了？"></a>IDE 统治了 20 年，现在到头了？</h2><p>从 Eclipse 到 IntelliJ，从 Sublime Text 到 VS Code，IDE 统治开发者工作流已经超过 20 年了。核心逻辑很简单：<strong>把写代码需要的一切——编辑器、终端、调试器、文件管理器、版本控制——塞进一个窗口里。</strong></p>
 <p>这个逻辑成立的前提是：人类在写代码。</p>
 <p>IDE 的一切设计都围绕这个假设展开。语法高亮是为了让人读代码更快。自动补全是为了让人打字更少。文件树是为了让人导航更方便。调试器是为了让人找 bug 更容易。</p>
 <p>但如果写代码的不再是人呢？</p>
@@ -997,8 +1559,9 @@
 <p>Cursor 跨过了 10 亿美元 ARR。Copilot 有 470 万付费用户，90% 的 Fortune 100 公司在用。这个阵营不是在衰退，它在增长。</p>
 <h3 id="第二阵营：终端-Agent-派"><a href="#第二阵营：终端-Agent-派" class="headerlink" title="第二阵营：终端 Agent 派"></a>第二阵营：终端 Agent 派</h3><p>代表：Claude Code、OpenAI Codex CLI、OpenCode</p>
 <p>核心理念：<strong>AI 应该是一个自主 agent。你给它指令，指向你的代码库，然后让它干活。终端是界面。</strong></p>
-<p>Claude Code 是这个阵营的领头羊。根据 Pragmatic Engineer 2026 年的调查，在 AI agent 的使用者中，Claude Code 的使用率达到 71%，远超 GitHub Copilot 的 46% 和 Cursor 的 39%。</p>
-<p>Claude Code 的营收跑到了 25 亿美元的年化水平。在小公司里，75% 的开发者首选 Claude Code。</p>
+<p>这是我自己主力在用的方式，所以多说几句。</p>
+<p>Claude Code 是这个阵营的领头羊。Pragmatic Engineer 2026 年调查显示，在 AI agent 使用者中 Claude Code 使用率 71%，远超 Copilot 的 46% 和 Cursor 的 39%。营收跑到了 25 亿美元年化水平，小公司里 75% 的开发者首选它。</p>
+<p>我自己的感受是：去年年底第一次把一个预计两小时的重构任务扔给 Claude Code，20 分钟出来的结果比我预想的还干净——从那之后就回不去了。现在我打开 VS Code 基本只为了看 diff 和解决 merge conflict，真正的”写代码”几乎都在终端里完成。</p>
 <p>一条被广泛转发的推特说得很直白：</p>
 <blockquote>
 <p>“2026 年最好的两个选择：1. Claude Code + Opus 4.6。2. Codex CLI + GPT-5.3-Codex。就这样。”</p>
@@ -1007,10 +1570,8 @@
 <h3 id="第三阵营：云端自治派"><a href="#第三阵营：云端自治派" class="headerlink" title="第三阵营：云端自治派"></a>第三阵营：云端自治派</h3><p>代表：Devin、GitHub Copilot Coding Agent</p>
 <p>核心理念：<strong>AI 不只是帮你写代码，它应该像一个远程员工一样，接下任务，独立完成，提交 PR。你只需要 review。</strong></p>
 <p>你把一个 GitHub issue 分配给 Copilot Coding Agent，它自己读需求、写代码、创建 PR、响应 review 反馈、跑安全扫描。整个过程，你可以去喝咖啡。</p>
-<h2 id="真正的分水岭：从”打字”到”指挥”"><a href="#真正的分水岭：从”打字”到”指挥”" class="headerlink" title="真正的分水岭：从”打字”到”指挥”"></a>真正的分水岭：从”打字”到”指挥”</h2><p>这三个阵营之间的竞争，表面上看是产品形态的竞争。<strong>深层看，是对”开发者应该做什么”这个问题的不同回答。</strong></p>
-<p>IDE 增强派的回答是：开发者应该写代码，AI 让你写得更快。</p>
-<p>终端 Agent 派的回答是：开发者应该做决策，AI 负责执行。</p>
-<p>云端自治派的回答是：开发者应该做审查，AI 负责从头到尾。</p>
+<h2 id="真正的分水岭：从”打字”到”指挥”"><a href="#真正的分水岭：从”打字”到”指挥”" class="headerlink" title="真正的分水岭：从”打字”到”指挥”"></a>真正的分水岭：从”打字”到”指挥”</h2><p>这三个阵营争的不是产品形态，<strong>争的是”开发者应该把时间花在哪”这个根本问题。</strong></p>
+<p>IDE 增强派说：你还是得写代码，AI 让你写得更快。终端 Agent 派说：你做决策就行，写的事交给 AI。云端自治派更激进：你只需要 review，剩下的全包了。</p>
 <p>Steve Yegge——亚马逊和 Google 的老兵，以敏锐的技术洞察闻名——在 Pragmatic Engineer 播客上说了一句话：</p>
 <blockquote>
 <p>“IDE 正在进化成一个对话和监控界面，而不是代码编辑器。”</p>
@@ -1023,7 +1584,7 @@
 <li><strong>使用 agent 的人对 AI 的积极态度是不用的人的两倍</strong></li>
 <li><strong>Staff+ 级别的工程师是最重度的 agent 用户</strong></li>
 </ul>
-<p>还有一个有意思的现象：<strong>Claude Code 的增长和 Cursor 的增长并不冲突。</strong> Cursor 的使用率在过去 9 个月增长了 35%。Claude Code 从零起步到第一名。</p>
+<p>一个容易被忽略的事实：<strong>Claude Code 的增长和 Cursor 的增长并不冲突。</strong> Cursor 的使用率在过去 9 个月增长了 35%。Claude Code 从零起步到第一名。</p>
 <p>很多开发者的实际工作流是这样的：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">日常编码 → Cursor（快速、可视化、低成本）</span><br><span class="line">复杂任务 → Claude Code（自主、深度推理、多文件）</span><br><span class="line">后台任务 → Codex Agent（分配 issue，自动出 PR）</span><br></pre></td></tr></table></figure>
 
@@ -1038,15 +1599,15 @@
 </blockquote>
 <p>Business Insider 报道了一个有趣的发现：<strong>管理多个 AI agent 所需的技能，跟管理人类团队的技能高度重合。</strong> 频繁切换上下文、撰写高层级文档和指令、分配任务并追踪进度。</p>
 <p>有人管经验的人越来越擅长用 AI agent。这不是巧合。</p>
-<h2 id="这对你意味着什么"><a href="#这对你意味着什么" class="headerlink" title="这对你意味着什么"></a>这对你意味着什么</h2><p>如果你现在还只用一个 IDE，写代码从头到尾全靠自己，你不一定是在做错什么。但你可能在错过一些东西。</p>
-<p><strong>第一步：尝试终端 agent。</strong> 不需要放弃 VS Code。打开终端，装一个 Claude Code，把一个你本来打算花两小时做的重构任务交给它。看看它怎么做。审查结果。感受一下”指挥”和”动手”的区别。</p>
-<p><strong>第二步：建立分层工作流。</strong> 小改动、快速修复继续用 IDE。复杂任务、多文件重构、架构探索交给 agent。自动化任务（测试、文档、PR 生成）交给后台 agent。</p>
-<p><strong>第三步：投资”指挥能力”。</strong> 学会写好 CLAUDE.md。学会拆解任务。学会在多个 agent 之间切换而不丢失状态。这些技能在 2026 年的价值，远超”熟练掌握某个框架”。</p>
-<p><strong>第四步：保持开放。</strong> 六个月前不好用的工具，现在可能已经好用了。模型在进步，工具在迭代。你对某个工具的判断如果来自半年前的体验，大概率已经过时了。</p>
+<h2 id="我自己的工作流是怎么变的"><a href="#我自己的工作流是怎么变的" class="headerlink" title="我自己的工作流是怎么变的"></a>我自己的工作流是怎么变的</h2><p>说说我的实际转变，可能比抽象建议有用。</p>
+<p>一开始我只敢把小活儿交给 Claude Code——改个变量名、加个注释。后来有一次赶 deadline，把一个跨三个文件的重构直接扔给它，出来的结果干净得让我怀疑人生。从那之后，我的工作流变成了这样：</p>
+<p>小改动、快速 fix → 继续用 Cursor，手感好、响应快。复杂任务、多文件重构 → Claude Code，给它一段清晰的指令比自己动手快三倍。后台任务（测试、文档、PR）→ Codex Agent，分配完就不管了。</p>
+<p>最大的变化不是工具，是我花时间的地方变了。以前 80% 的时间在写代码，20% 在想怎么写。现在反过来了——80% 的时间在想清楚要做什么、怎么拆解任务、怎么写好 CLAUDE.md，20% 的时间在审查 agent 的输出。</p>
+<p>另外一个经验：<strong>别对半年前试过的工具下定论。</strong> 六个月前不好用的东西现在可能已经脱胎换骨了，模型和工具迭代的速度比你想象的快。</p>
 <h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>20 年前，有人说 IDE 会取代文本编辑器。结果是 IDE 变成了主流，但 Vim 和 Emacs 的用户依然存在，他们活得很好。</p>
 <p>今天，有人说 AI Agent 会取代 IDE。结局可能类似：<strong>Agent 会成为主流工作方式，但 IDE 不会消失——它会变成 agent 工作流中的一个组件。</strong></p>
 <p>真正改变的不是工具，是角色。</p>
-<p>写代码曾经是开发者的核心技能。现在，<strong>判断力才是。</strong> 判断该做什么，判断做得对不对，判断什么时候该让 agent 停下来。</p>
+<p>写代码曾经是开发者的核心技能。现在，<strong>判断力才是。</strong> 说难听点：如果你 2026 年还把”打字速度快”当技术能力，你可能正在练一项即将贬值的技能。真正值钱的是判断——判断该做什么，判断做得对不对，判断什么时候该让 agent 停下来。</p>
 <p>73% 的工程团队每天在用 AI 编程工具。你用了吗？你的工作流是怎样的？是纯 IDE、纯 Agent，还是混合模式？欢迎在评论区分享你的真实体验。</p>
 ]]></content>
       <categories>
@@ -20506,7 +21067,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#98;&#x2e;&#x63;&#x6f;&#x6d;">&#x67;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#98;&#x2e;&#x63;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#116;&#64;&#103;&#x69;&#116;&#x68;&#117;&#98;&#46;&#x63;&#111;&#109;">&#103;&#105;&#116;&#64;&#103;&#x69;&#116;&#x68;&#117;&#98;&#46;&#x63;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -22039,6 +22600,27 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
+    <title>Android 产生随机数</title>
+    <url>/2017/09/24/201709242415/</url>
+    <content><![CDATA[<p>##1.产生指定位数的随机数</p>
+<p>以产生6位数随机数为例</p>
+<p><code>int num = (int) ((Math.random() * 9 + 1) * 100000);</code></p>
+<p>产生其他位数随机数在最后面要乘的数即 <em>100000</em> 后加0即可</p>
+<p>##2.产生指定范围的随机数</p>
+<p>以产生[10,99]范围内的随机数为例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">int min=10;</span><br><span class="line">int max=99;</span><br><span class="line">Random random = new Random();</span><br><span class="line">int num = random.nextInt(max)%(max-min+1) + min;</span><br></pre></td></tr></table></figure>
+
+<p>end ~</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>随机数</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 透明度换算</title>
     <url>/2017/09/24/201709242416/</url>
     <content><![CDATA[<blockquote>
@@ -22145,27 +22727,6 @@ public static boolean isChinaPhoneLegal(String str)
         <tag>Android</tag>
         <tag>RGB</tag>
         <tag>ARGB</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 产生随机数</title>
-    <url>/2017/09/24/201709242415/</url>
-    <content><![CDATA[<p>##1.产生指定位数的随机数</p>
-<p>以产生6位数随机数为例</p>
-<p><code>int num = (int) ((Math.random() * 9 + 1) * 100000);</code></p>
-<p>产生其他位数随机数在最后面要乘的数即 <em>100000</em> 后加0即可</p>
-<p>##2.产生指定范围的随机数</p>
-<p>以产生[10,99]范围内的随机数为例</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">int min=10;</span><br><span class="line">int max=99;</span><br><span class="line">Random random = new Random();</span><br><span class="line">int num = random.nextInt(max)%(max-min+1) + min;</span><br></pre></td></tr></table></figure>
-
-<p>end ~</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>随机数</tag>
       </tags>
   </entry>
   <entry>

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="大家好，我是飞飞。 上周我在 GitHub Trending 上刷到一个项目，名字里带着 “harness”，5 万多 star。点进去一看，满屏都是 Skills、Hooks、Subagents 这些术语，我当时就懵了——这帮人到底在玩什么？ 后来我花了两天时间，把 Anthropic 的两篇技术博客、Claude Code 官方文档、加上社区里几十个项目翻了一遍，终于搞明白了。 Harnes">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Anthropic 的 Harness 到底是什么？一文看懂 AI 编程的「套娃」玩法">
+<meta property="og:url" content="https://www.vance.xin/2026/04/02/202604021430/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="大家好，我是飞飞。 上周我在 GitHub Trending 上刷到一个项目，名字里带着 “harness”，5 万多 star。点进去一看，满屏都是 Skills、Hooks、Subagents 这些术语，我当时就懵了——这帮人到底在玩什么？ 后来我花了两天时间，把 Anthropic 的两篇技术博客、Claude Code 官方文档、加上社区里几十个项目翻了一遍，终于搞明白了。 Harnes">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260402-anthropic-harness-guide.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260402-harness-architecture-diagram.webp">
+<meta property="article:published_time" content="2026-04-02T14:30:00.000Z">
+<meta property="article:modified_time" content="2026-04-07T10:38:34.423Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Harness">
+<meta property="article:tag" content="编程工具">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260402-anthropic-harness-guide.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/04/02/202604021430/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/04/02/202604021430/","path":"2026/04/02/202604021430/","title":"Anthropic 的 Harness 到底是什么？一文看懂 AI 编程的「套娃」玩法"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Anthropic 的 Harness 到底是什么？一文看懂 AI 编程的「套娃」玩法 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%90%9E%E6%87%82%E4%B8%80%E4%B8%AA%E9%97%AE%E9%A2%98%EF%BC%9AAI-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-Harness%EF%BC%9F"><span class="nav-text">先搞懂一个问题：AI 为什么需要 Harness？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Anthropic-%E7%9A%84-Harness-%E6%80%9D%E8%B7%AF%EF%BC%9A%E4%BB%8E%E4%B8%80%E7%AF%87%E8%AE%BA%E6%96%87%E5%88%B0%E4%B8%80%E5%A5%97%E4%BD%93%E7%B3%BB"><span class="nav-text">Anthropic 的 Harness 思路：从一篇论文到一套体系</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E7%AF%87%EF%BC%9A%E8%AE%A9-Agent-%E5%AD%A6%E4%BC%9A%E3%80%8C%E6%8E%A5%E5%8A%9B%E8%B5%9B%E8%B7%91%E3%80%8D"><span class="nav-text">第一篇：让 Agent 学会「接力赛跑」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E7%AF%87%EF%BC%9A%E8%AE%A9-AI-%E5%AD%A6%E4%BC%9A%E3%80%8C%E8%87%AA%E6%88%91%E6%89%B9%E8%AF%84%E3%80%8D"><span class="nav-text">第二篇：让 AI 学会「自我批评」</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%90%BD%E5%9C%B0%E5%88%B0-Claude-Code%EF%BC%9A%E4%B8%80%E5%A5%97%E5%AE%8C%E6%95%B4%E7%9A%84%E6%89%A9%E5%B1%95%E4%BD%93%E7%B3%BB"><span class="nav-text">落地到 Claude Code：一套完整的扩展体系</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CLAUDE-md%EF%BC%9A%E9%A1%B9%E7%9B%AE%E7%9A%84%E3%80%8C%E8%AF%B4%E6%98%8E%E4%B9%A6%E3%80%8D"><span class="nav-text">CLAUDE.md：项目的「说明书」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Skills%EF%BC%9A%E6%8C%89%E9%9C%80%E5%8A%A0%E8%BD%BD%E7%9A%84%E3%80%8C%E6%8A%80%E8%83%BD%E5%8C%85%E3%80%8D"><span class="nav-text">Skills：按需加载的「技能包」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hooks%EF%BC%9A%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E3%80%8C%E5%8D%A1%E5%8F%A3%E3%80%8D"><span class="nav-text">Hooks：自动化的「卡口」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Subagents%EF%BC%9A%E4%B8%93%E4%B8%9A%E7%9A%84%E3%80%8C%E5%88%86%E8%BA%AB%E6%9C%AF%E3%80%8D"><span class="nav-text">Subagents：专业的「分身术」</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Plugins%EF%BC%9A%E6%89%93%E5%8C%85%E5%88%86%E4%BA%AB%E7%9A%84%E3%80%8C%E6%8F%92%E4%BB%B6%E5%8C%85%E3%80%8D"><span class="nav-text">Plugins：打包分享的「插件包」</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%EF%BC%9A%E8%BF%99%E5%A5%97%E7%8E%A9%E6%B3%95%E5%88%B0%E5%BA%95%E6%9C%89%E5%A4%9A%E5%A4%A7%E6%8F%90%E5%8D%87%EF%BC%9F"><span class="nav-text">实战：这套玩法到底有多大提升？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B4%E8%AF%B4%E6%88%91%E8%87%AA%E5%B7%B1%E7%9A%84%E4%B8%8A%E6%89%8B%E8%B7%AF%E5%BE%84"><span class="nav-text">说说我自己的上手路径</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%90%8E%E8%AF%B4%E5%87%A0%E5%8F%A5%E6%8E%8F%E5%BF%83%E7%AA%9D%E7%9A%84"><span class="nav-text">最后说几句掏心窝的</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">255</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">427</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/04/02/202604021430/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Anthropic 的 Harness 到底是什么？一文看懂 AI 编程的「套娃」玩法 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Anthropic 的 Harness 到底是什么？一文看懂 AI 编程的「套娃」玩法
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-04-02 14:30:00" itemprop="dateCreated datePublished" datetime="2026-04-02T14:30:00+00:00">2026-04-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260402-anthropic-harness-guide.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>上周我在 GitHub Trending 上刷到一个项目，名字里带着 “harness”，5 万多 star。点进去一看，满屏都是 Skills、Hooks、Subagents 这些术语，我当时就懵了——这帮人到底在玩什么？</p>
+<p>后来我花了两天时间，把 Anthropic 的两篇技术博客、Claude Code 官方文档、加上社区里几十个项目翻了一遍，终于搞明白了。</p>
+<p><strong>Harness 这个词，翻译成人话就是：怎么给 AI 编程助手套一个工作流，让它别瞎搞。</strong></p>
+<p>今天把我理解的东西分享出来。</p>
+<h2 id="先搞懂一个问题：AI-为什么需要-Harness？"><a href="#先搞懂一个问题：AI-为什么需要-Harness？" class="headerlink" title="先搞懂一个问题：AI 为什么需要 Harness？"></a>先搞懂一个问题：AI 为什么需要 Harness？</h2><p>想象一个场景。</p>
+<p>你招了一个天才程序员，智商极高，代码写得又快又好。但有个问题——他每隔一段时间就会失忆，忘记之前做了什么。而且他容易兴奋，一上来就想把整个项目一口气写完，写到一半发现上下文不够了，代码就烂尾了。</p>
+<p>更要命的是，你让他自己检查代码质量，他每次都说：”写得挺好的啊，没问题。”</p>
+<p>这就是 AI 编程 Agent 面临的真实困境。</p>
+<p><strong>Harness 的本质，就是给这个天才程序员套一个工作流框架。</strong> 告诉他该怎么分步做事，什么时候该停下来检查，做完一步怎么把进度交接给下一步。</p>
+<p>Harness 这个英文词，本意是马具——缰绳、马鞍那套东西。你不会让一匹马在公路上裸奔，AI Agent 也一样。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260402-harness-architecture-diagram.webp" alt="harness-architecture"></p>
+<h2 id="Anthropic-的-Harness-思路：从一篇论文到一套体系"><a href="#Anthropic-的-Harness-思路：从一篇论文到一套体系" class="headerlink" title="Anthropic 的 Harness 思路：从一篇论文到一套体系"></a>Anthropic 的 Harness 思路：从一篇论文到一套体系</h2><p>Anthropic 在这个方向上发了两篇技术博客，我觉得思路特别值得学习。</p>
+<h3 id="第一篇：让-Agent-学会「接力赛跑」"><a href="#第一篇：让-Agent-学会「接力赛跑」" class="headerlink" title="第一篇：让 Agent 学会「接力赛跑」"></a>第一篇：让 Agent 学会「接力赛跑」</h3><p>第一篇叫《Effective Harnesses for Long-Running Agents》。</p>
+<p>核心问题很直接：AI 的上下文窗口是有限的，一个复杂项目不可能在一个窗口里写完。怎么办？</p>
+<p>Anthropic 的方案是设计两个角色：</p>
+<ul>
+<li><strong>初始化 Agent（Initializer）</strong>：拿到用户需求后，先把项目拆成一个详细的功能清单（200+ 个小功能），搭好项目脚手架，写好启动脚本，建好 Git 仓库。</li>
+<li><strong>编码 Agent（Coding Agent）</strong>：每次只做一个功能。做完提交代码，写好进度笔记，然后把接力棒交给下一个自己。</li>
+</ul>
+<p>这就像一场接力赛。每个运动员跑一段，到了交接区把棒递给下一个人。关键是那根「接力棒」——一个叫 <code>claude-progress.txt</code> 的进度文件，加上 Git 提交记录。</p>
+<p>如果你用过 Claude Code 做稍微复杂点的项目，下面这些场景你一定不陌生：</p>
+<p>Agent 一上来就想把整个项目一口气写完，写到一半上下文爆了，代码烂尾。Anthropic 的解法是——<strong>强制它每次只做一个功能</strong>，做完提交，再做下一个。</p>
+<p>做了三四个功能之后，Agent 突然说”项目已完成！”你一看，还有一大半没做呢。解法是维护一个 JSON 格式的功能清单，每个功能标记 <code>true</code> 或 <code>false</code>，<strong>没完成的白纸黑字摆在那儿，它想糊弄都糊弄不了</strong>。</p>
+<p>上一轮 Agent 写到一半上下文就断了，下一轮新 Agent 一脸懵，不知道从哪接。解法是每轮结束必须提交 Git、写进度笔记到 <code>claude-progress.txt</code>——<strong>相当于交接班必须写交接报告</strong>。</p>
+<h3 id="第二篇：让-AI-学会「自我批评」"><a href="#第二篇：让-AI-学会「自我批评」" class="headerlink" title="第二篇：让 AI 学会「自我批评」"></a>第二篇：让 AI 学会「自我批评」</h3><p>第二篇叫《Harness Design for Long-Running Apps》，更进了一步。</p>
+<p>Anthropic 发现了一个有趣的现象：<strong>AI 不擅长评价自己的作品</strong>。你让它写完代码再自己打分，它每次都说”还不错”。就像让学生自己批改考卷一样——分数永远虚高。</p>
+<p>怎么办？借鉴 GAN（生成对抗网络）的思路，搞一个「生成者 + 评估者」的对抗机制：</p>
+<ul>
+<li><strong>规划 Agent（Planner）</strong>：把一句话需求扩展成完整的产品规格书。</li>
+<li><strong>生成 Agent（Generator）</strong>：负责写代码，一个功能一个功能地实现。</li>
+<li><strong>评估 Agent（Evaluator）</strong>：用 Playwright 浏览器自动化工具，像真实用户一样点击、测试、截图，然后打分写报告。</li>
+</ul>
+<p>评估 Agent 不是随便打分，它有四个明确的评估维度：</p>
+<ol>
+<li><strong>设计质量</strong>：界面是不是有整体感，还是拼凑出来的？</li>
+<li><strong>原创性</strong>：有没有自己的设计决策，还是全是 AI 默认模板？</li>
+<li><strong>工艺水平</strong>：字体、间距、颜色搭配是否专业？</li>
+<li><strong>功能性</strong>：用户能不能顺畅地完成任务？</li>
+</ol>
+<p>Anthropic 用这套架构做了一个实验：让 AI 生成一个荷兰艺术博物馆网站。前 9 轮迭代，输出还是常规操作——黑色主题，整洁的卡片布局。但到了第 10 轮，AI 突然「开窍」了，把整个网站改成了一个 3D 空间体验：有棋盘格地板、画作挂在墙上、通过「门廊」在不同展厅之间导航。</p>
+<p>这种创造性的跳跃，在没有 Harness 的单次生成中从未出现过。</p>
+<h2 id="落地到-Claude-Code：一套完整的扩展体系"><a href="#落地到-Claude-Code：一套完整的扩展体系" class="headerlink" title="落地到 Claude Code：一套完整的扩展体系"></a>落地到 Claude Code：一套完整的扩展体系</h2><p>说完理论，来看 Claude Code 实际给我们提供了哪些工具。</p>
+<h3 id="CLAUDE-md：项目的「说明书」"><a href="#CLAUDE-md：项目的「说明书」" class="headerlink" title="CLAUDE.md：项目的「说明书」"></a>CLAUDE.md：项目的「说明书」</h3><p>每个项目根目录放一个 <code>CLAUDE.md</code> 文件，Claude Code 每次启动都会自动读取。</p>
+<p>我最开始用 Claude Code 的时候，压根不知道这东西的存在。直到有一次它把我 Hexo 博客的配置改得面目全非，我才意识到：不立规矩，它就按自己的理解来。</p>
+<p>后来我在 CLAUDE.md 里写清楚了项目架构、代码规范、哪些文件不能动，效果立竿见影。</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># CLAUDE.md</span></span><br><span class="line"><span class="section">## 代码规范</span></span><br><span class="line"><span class="bullet">-</span> 使用 TypeScript，严格模式</span><br><span class="line"><span class="bullet">-</span> 组件用函数式写法 + Hooks</span><br><span class="line"><span class="bullet">-</span> 测试用 Vitest</span><br><span class="line"></span><br><span class="line"><span class="section">## 禁止事项</span></span><br><span class="line"><span class="bullet">-</span> 不要删除现有测试</span><br><span class="line"><span class="bullet">-</span> 不要修改 CI 配置</span><br></pre></td></tr></table></figure>
+
+<p>有个建议：控制在 200 行以内。我见过有人写了 2000 行的 CLAUDE.md，结果 Claude 反而更懵了——信息太多等于没有信息。</p>
+<h3 id="Skills：按需加载的「技能包」"><a href="#Skills：按需加载的「技能包」" class="headerlink" title="Skills：按需加载的「技能包」"></a>Skills：按需加载的「技能包」</h3><p>Skills 是 Claude Code 最核心的扩展机制。</p>
+<p>每个 Skill 就是一个文件夹，里面放一个 <code>SKILL.md</code>，描述清楚：什么时候触发、该执行什么步骤、用到哪些工具。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">.claude/skills/</span><br><span class="line">├── deploy/</span><br><span class="line">│   └── SKILL.md</span><br><span class="line">├── code-review/</span><br><span class="line">│   └── SKILL.md</span><br><span class="line">└── write-test/</span><br><span class="line">    └── SKILL.md</span><br></pre></td></tr></table></figure>
+
+<p>你可以手动用 <code>/deploy</code> 斜杠命令调用，也可以让 Claude 自动判断——当你说”帮我部署一下”，它会自动匹配到 deploy 这个 Skill。</p>
+<p>有人打了一个很好的比方：<strong>CLAUDE.md 像厨房里的常用调料，永远摆在台面上。Skills 像食谱书，需要做某道菜的时候才翻开。</strong></p>
+<p>一个好的 Skill 应该像写给初级工程师的操作手册——步骤清晰、工具明确、预期结果可验证。</p>
+<h3 id="Hooks：自动化的「卡口」"><a href="#Hooks：自动化的「卡口」" class="headerlink" title="Hooks：自动化的「卡口」"></a>Hooks：自动化的「卡口」</h3><p>Hooks 是在特定事件发生时自动执行的脚本。我第一次用 Hooks 是因为一个很蠢的原因——Claude 写完代码从来不跑 Prettier，每次我 review 的时候格式都是乱的，烦得不行。</p>
+<p>后来加了一个 PostToolUse 的 Hook，三行配置，问题就彻底解决了：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;hooks&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;PostToolUse&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;matcher&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Write|Edit&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx prettier --write $FILE_PATH&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>除了格式化，常见的 Hooks 还有：</p>
+<ul>
+<li><code>PreToolUse</code>：执行命令前检查有没有 <code>rm -rf</code> 这种危险操作</li>
+<li><code>SessionStart</code>：会话启动时自动注入当前日期、环境变量</li>
+<li><code>Stop</code>：Claude 完成回复后自动跑 lint</li>
+</ul>
+<p><strong>Hooks 和 Skills 的区别在于：Hooks 是硬规矩，不可商量；Skills 是操作建议，可以灵活调整。</strong></p>
+<h3 id="Subagents：专业的「分身术」"><a href="#Subagents：专业的「分身术」" class="headerlink" title="Subagents：专业的「分身术」"></a>Subagents：专业的「分身术」</h3><p>Subagents 是 Claude Code 的子 Agent 机制。</p>
+<p>主 Agent 可以派出多个子 Agent 去做不同的事，每个子 Agent 有独立的上下文窗口和工具权限。做完之后只把结果汇报回来，不会污染主 Agent 的上下文。</p>
+<p>这跟 Anthropic Harness 论文里的「规划者-生成者-评估者」三角架构一脉相承。</p>
+<p>常见用法：</p>
+<ul>
+<li>派一个 Explore Agent 去读文档、搜代码</li>
+<li>派一个 Test Agent 去跑测试</li>
+<li>派一个 Review Agent 去检查代码质量</li>
+</ul>
+<h3 id="Plugins：打包分享的「插件包」"><a href="#Plugins：打包分享的「插件包」" class="headerlink" title="Plugins：打包分享的「插件包」"></a>Plugins：打包分享的「插件包」</h3><p>Plugins 是 2025 年底 Anthropic 推出的新机制，把 Skills、Hooks、Subagents、MCP Server 打包成一个可安装的插件。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 一条命令安装</span></span><br><span class="line">/plugin install anthropic/frontend-design</span><br></pre></td></tr></table></figure>
+
+<p>这意味着你可以把自己的 Harness 配置分享给团队，也可以直接装别人打磨好的工作流。GitHub 上的 <code>awesome-claude-code</code> 项目收录了几百个插件，光是 <code>everything-claude-code</code> 这一个仓库就有 5 万多 star——可见社区的热情有多高。</p>
+<h2 id="实战：这套玩法到底有多大提升？"><a href="#实战：这套玩法到底有多大提升？" class="headerlink" title="实战：这套玩法到底有多大提升？"></a>实战：这套玩法到底有多大提升？</h2><p>Anthropic 自己做了一个对比实验，用一句话提示词让 AI 生成一个复古游戏编辑器。</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>耗时</th>
+<th>花费</th>
+<th>效果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>裸跑（无 Harness）</td>
+<td>20 分钟</td>
+<td>$9</td>
+<td>界面粗糙，核心功能不能用</td>
+</tr>
+<tr>
+<td>完整 Harness</td>
+<td>6 小时</td>
+<td>$200</td>
+<td>16 个功能模块，核心功能正常运行</td>
+</tr>
+</tbody></table>
+<p>裸跑的版本，游戏编辑器的「玩游戏」功能完全不能用——角色出现在屏幕上，但不响应任何输入。</p>
+<p>Harness 版本不仅所有核心功能可用，还自动加上了 AI 辅助生成关卡、精灵动画系统、音效管理等高级功能。</p>
+<p>后来他们用 Opus 4.6 简化了 Harness（去掉了 Sprint 机制），用一句话生成了一个浏览器端的音乐制作软件（DAW），花了 4 小时、$124。最终的应用有编曲视图、混音器、音轨控制，甚至内置了一个 AI Agent 可以通过对话来作曲。</p>
+<h2 id="说说我自己的上手路径"><a href="#说说我自己的上手路径" class="headerlink" title="说说我自己的上手路径"></a>说说我自己的上手路径</h2><p>我知道看到这里信息量有点大。说说我自己是怎么一步步搭起来的，供你参考。</p>
+<p>最开始我就是裸用 Claude Code，连 CLAUDE.md 都没写。结果就是前面说的，它经常乱改我不想动的文件。<strong>写好 CLAUDE.md 是我做的第一件事，大概花了 20 分钟，效果立刻就有。</strong></p>
+<p>用了一两周之后，我发现每次写博客都要重复输入一大段提示词——搜资料、定结构、写正文、生成封面。于是我把这套流程抽成了一个 Skill，现在输入 <code>/writing-agent</code> 加一个选题就搞定了。</p>
+<p>后来又加了几个 Hooks。最有用的就是前面提到的 Prettier 自动格式化，还有一个是 <code>SessionStart</code> 时自动注入当前日期（写博客需要）。</p>
+<p>至于 Subagents 和 Plugins，我现在用得不多。<strong>老实说，不是每个人都需要把 Harness 搞得很复杂。找到卡你脖子的两三个点，精准解决就够了。</strong></p>
+<h2 id="最后说几句掏心窝的"><a href="#最后说几句掏心窝的" class="headerlink" title="最后说几句掏心窝的"></a>最后说几句掏心窝的</h2><p>说句可能得罪人的话：<strong>如果你花在调 Harness 上的时间比写代码还多，那你可能搞反了。</strong></p>
+<p>我在社区里见过不少人，CLAUDE.md 写了 2000 行，装了十几个插件，配了一堆 Hooks，结果 Claude 反而更懵了——规则太多，自相矛盾，它不知道该听哪个。</p>
+<p>Harness 的精髓不是把 Claude 武装到牙齿，而是<strong>找到那两三个真正卡你脖子的点，精准解决</strong>。</p>
+<p>对我来说，CLAUDE.md + 两三个常用 Skill + 一个格式化 Hook，就已经覆盖了 80% 的场景。剩下的 20%？模型自己在进步，Opus 4.6 已经不需要像 4.5 那样做 Sprint 分解了——很多之前需要 Harness 补救的问题，模型升级后就自动消失了。</p>
+<p>这也是 Anthropic 自己在博客里说的：<strong>每一个 Harness 组件，本质上都是在赌模型做不到某件事。这个赌注随时可能过期。</strong></p>
+<p>所以我的建议是：轻装上阵，按需添加，别一开始就搞顶配。</p>
+<p>你在用 Claude Code 吗？踩过什么坑，或者有什么特别好用的配置？评论区聊聊，我想看看大家都是怎么玩的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/Harness/" rel="tag"># Harness</a>
+              <a href="/tags/%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7/" rel="tag"># 编程工具</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/04/01/202604010730/" rel="prev" title="Claude Code 藏了个电子宠物系统：18 种生物、5 级稀有度、还会吐槽你的代码">
+                  <i class="fa fa-angle-left"></i> Claude Code 藏了个电子宠物系统：18 种生物、5 级稀有度、还会吐槽你的代码
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/04/02/202604021748/" rel="next" title="CLI 怎么就成了 AI Agent 时代的新宠？从 OpenCLI 到飞书 CLI，一场静悄悄的革命">
+                  CLI 怎么就成了 AI Agent 时代的新宠？从 OpenCLI 到飞书 CLI，一场静悄悄的革命 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">884k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">13:24</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

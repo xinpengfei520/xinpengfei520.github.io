@@ -170,7 +170,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">249</span>
+          <span class="site-state-item-count">255</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -181,7 +181,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">412</span>
+        <span class="site-state-item-count">427</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -233,6 +233,701 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191320/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2026/03/19/202603191320/" class="post-title-link" itemprop="url">Star数超越Linux！拆解OpenClaw的5层架构，看懂AI Agent的"操作系统"</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 13:20:00" itemprop="dateCreated datePublished" datetime="2026-03-19T13:20:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-architecture-deep-dive.webp" alt="cover"></p>
+<p>React 用了 13 年积累 24 万 Star。Linux 内核用了 40 年。OpenClaw 只用了 3 个月。</p>
+<p>很多人把 OpenClaw 的爆火归结为”赶上了风口”或者”龙虾 meme 太魔性”。但如果你去翻它的代码仓库——43 万行 TypeScript，40+ 消息平台集成，54 个内置技能，完整的事件驱动架构——你会发现，这东西绝不是一个”套壳聊天机器人”。</p>
+<p>黄仁勋在 GTC 2026 上说它是”个人 AI 的操作系统”。这话并不夸张。</p>
+<p>今天我们不聊怎么用 OpenClaw，聊一个更底层的问题：<strong>它的架构凭什么能撑住 24 万 Star 的期待？</strong></p>
+<h2 id="先看全貌：5-个组件，各司其职"><a href="#先看全貌：5-个组件，各司其职" class="headerlink" title="先看全貌：5 个组件，各司其职"></a>先看全貌：5 个组件，各司其职</h2><p>OpenClaw 的架构可以用一句话概括：<strong>Gateway 负责接入，Brain 负责思考，Skills 负责执行，Memory 负责记忆，Heartbeat 负责调度。</strong></p>
+<p>用一个比喻来理解：把 OpenClaw 想象成一个机场。</p>
+<ul>
+<li><strong>Gateway（塔台）</strong>：所有航班（消息）都经过这个中央调度中心，由它分配到正确的跑道</li>
+<li><strong>Brain（飞行员）</strong>：接到指令后，决定怎么飞、走哪条航线</li>
+<li><strong>Skills（机械臂）</strong>：在地面上真正搬运行李、加油、检修的执行单元</li>
+<li><strong>Memory（黑匣子）</strong>：记录所有飞行数据，下次起飞时作为参考</li>
+<li><strong>Heartbeat（值班表）</strong>：按时间表触发定时任务，比如凌晨 3 点自动检查航班状态</li>
+</ul>
+<p>这 5 个组件的职责完全隔离。换消息平台不影响 Agent 逻辑，换大模型不影响消息路由，换工具不影响记忆系统。<strong>这种分层设计，是 OpenClaw 能从一个”周末项目”长成”操作系统”的根本原因。</strong></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2026/03/19/202603191320/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191240/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2026/03/19/202603191240/" class="post-title-link" itemprop="url">社群没人说话？用OpenClaw接入Telegram/Discord，打造24小时AI客服</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 12:40:00" itemprop="dateCreated datePublished" datetime="2026-03-19T12:40:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-telegram-discord-bot.webp" alt="cover"></p>
+<p>凌晨 2 点，你的 Discord 服务器里弹出一条消息：”这个项目怎么安装？文档在哪？”</p>
+<p>你睡了。没人回。</p>
+<p>第二天早上你醒来，发现那个人已经退群了。</p>
+<p>这个场景你熟悉吗？如果你运营过任何一个技术社群、开源项目、或者小型创业社区，你一定经历过：<strong>问题来了没人答，新人来了没人接，活跃度越来越低，群慢慢就”死”了。</strong></p>
+<p>问题不在于没有内容，而在于没有”响应”。人类不可能 24 小时在线。但 AI 可以。</p>
+<p>今天这篇文章，我手把手教你用 OpenClaw 接入 Telegram 和 Discord，搭一个 24 小时在线的 AI 助手。它能回答常见问题、引导新人、整理讨论记录，甚至在你睡觉的时候替你”撑场子”。</p>
+<h2 id="为什么-OpenClaw-是最适合做社群客服的工具"><a href="#为什么-OpenClaw-是最适合做社群客服的工具" class="headerlink" title="为什么 OpenClaw 是最适合做社群客服的工具"></a>为什么 OpenClaw 是最适合做社群客服的工具</h2><p>市面上做 AI 客服的工具很多。为什么偏偏选 OpenClaw？</p>
+<p><strong>第一，它原生支持群聊。</strong> 大多数 AI 助手只能做 1 对 1 私聊。OpenClaw 天然支持在 Telegram 群组和 Discord 频道里工作，能看到群里的消息，被 @ 时自动回复，或者在后台静默监听、需要时主动介入。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2026/03/19/202603191240/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191200/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2026/03/19/202603191200/" class="post-title-link" itemprop="url">我用OpenClaw搭了一条内容流水线，1人干3人的活（附完整SOP）</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 12:00:00" itemprop="dateCreated datePublished" datetime="2026-03-19T12:00:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-content-pipeline-sop.webp" alt="cover"></p>
+<p>每天早上 7 点，我的手机会收到一条 Telegram 消息。</p>
+<p>不是闹钟，不是新闻推送，是我的 OpenClaw 发来的”今日选题报告”：它已经在凌晨 3 点扫完了 Twitter、ProductHunt、Hacker News 和 5 个行业 RSS 源，筛选出 3 个与我领域相关的热点话题，每个话题附带摘要、热度评分和初步大纲。</p>
+<p>我只需要在地铁上花 5 分钟，选一个话题，回复一个数字。</p>
+<p>到了中午，初稿写好了。配图生成了。SEO 标签打好了。我打开文档，花 30 分钟修改润色，点击发布。</p>
+<p>这套流程，以前需要我一个人花 4-5 个小时。现在压缩到了 40 分钟。</p>
+<p>我不是什么技术大佬。我只是一个自媒体博主，用 OpenClaw 的 Skills 和定时任务，搭了一条”内容流水线”。今天把整个 SOP 分享出来，你也可以照着做。</p>
+<h2 id="为什么内容创作最适合用-OpenClaw-自动化"><a href="#为什么内容创作最适合用-OpenClaw-自动化" class="headerlink" title="为什么内容创作最适合用 OpenClaw 自动化"></a>为什么内容创作最适合用 OpenClaw 自动化</h2><p>先说一个很多创作者不愿意承认的事实：<strong>内容创作 80% 的时间花在了”不需要创造力”的环节上。</strong></p>
+<p>选题调研——要翻遍各个平台看热点，至少 1 小时。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2026/03/19/202603191200/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191156/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2026/03/19/202603191156/" class="post-title-link" itemprop="url">最懂 AI 编程的团队怎么用 Cursor？12 条实战技巧拆解</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 11:56:00" itemprop="dateCreated datePublished" datetime="2026-03-19T11:56:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><img src="https://image.vance.xin/blog-cover/20260319-cursor-team-12-ai-coding-tips.webp" alt="cover"></p>
+<p>你装了 Cursor，打开一个项目，在聊天框里敲了一个提示词，得到了一段”看起来还行”的代码。然后你心想：就这？</p>
+<p>如果你只把 Cursor 当成一个”会聊天的 VS Code”，你大概只用到了它 20% 的能力。</p>
+<p>Cursor 在 12 个月内做到了 <strong>10 亿美元年化收入</strong>，是历史上最快达到这个数字的开发工具。超过 50% 的财富 500 强公司在用它。NVIDIA 黄仁勋说：”我最喜欢的企业 AI 服务就是 Cursor。我们 4 万名工程师现在全部有 AI 辅助。”</p>
+<p>但同样是用 Cursor，有人效率翻了 3 倍，有人只比 VS Code 快一点点。差距在哪？<strong>在技巧，不在工具本身。</strong></p>
+<p>Cursor 官方博客发布了一篇 Agent Best Practices 指南，社区也积累了大量实战经验。今天我把这些技巧整理成 12 条，从基础设置到高级用法，每一条都带具体操作步骤。</p>
+<h2 id="基础篇：4-条设置技巧"><a href="#基础篇：4-条设置技巧" class="headerlink" title="基础篇：4 条设置技巧"></a>基础篇：4 条设置技巧</h2><h3 id="1-给每个项目写一份-cursorrules"><a href="#1-给每个项目写一份-cursorrules" class="headerlink" title="1. 给每个项目写一份 .cursorrules"></a>1. 给每个项目写一份 .cursorrules</h3><p>这是<strong>投入产出比最高</strong>的一条技巧。</p>
+<p>在项目根目录创建 <code>.cursorrules</code> 文件，告诉 Cursor 你的技术栈、代码风格和项目约定。没有这个文件，Cursor 生成的是通用代码。有了它，每一次补全都符合你的项目规范。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2026/03/19/202603191156/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191152/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2026/03/19/202603191152/" class="post-title-link" itemprop="url">告别 Premiere！用 Claude Code 写代码生成视频的完整教程</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 11:52:00" itemprop="dateCreated datePublished" datetime="2026-03-19T11:52:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><img src="https://image.vance.xin/blog-cover/20260319-claude-code-remotion-skills-video-generation.webp" alt="cover"></p>
+<p>你有没有遇到过这种情况：产品做好了，代码跑通了，但需要一个 30 秒的演示视频——结果在 Premiere 里拖了一下午，最后做出来的东西还不如 PPT 动画。</p>
+<p>或者更扎心的：老板让你做一个产品发布视频，你对着 After Effects 的界面发呆，心想”我是写代码的，不是做视频的”。</p>
+<p>现在有一个新选择：<strong>用 Claude Code 写代码生成视频。</strong></p>
+<p>不是 Sora 那种 AI 生成实拍画面，而是用 React 组件定义每一帧动画，让 Claude Code 帮你写代码，然后渲染成 MP4。效果是什么？专业级的动态图形（Motion Graphics）——产品演示、数据可视化、YouTube 开场动画、社交媒体短视频。</p>
+<p>这背后的工具组合是 <strong>Remotion + Claude Code Skills</strong>。2026 年 1 月 20 日发布后，演示视频在 X 上 48 小时内获得 600 万播放。8 周后，skills.sh 上的安装量突破 <strong>15 万次</strong>，成为排名第五的技能，也是非平台公司开发的第一名。</p>
+<p>今天这篇文章，我从原理讲到实战，手把手教你用这套组合做视频。</p>
+<h2 id="Remotion-是什么：React-写视频"><a href="#Remotion-是什么：React-写视频" class="headerlink" title="Remotion 是什么：React 写视频"></a>Remotion 是什么：React 写视频</h2><p>先搞清楚 Remotion 到底是什么。</p>
+<p>一句话：<strong>Remotion 是一个用 React 写视频的框架。</strong> 你不是在时间线上拖素材，而是用代码描述每一帧画面该长什么样。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2026/03/19/202603191152/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191120/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2026/03/19/202603191120/" class="post-title-link" itemprop="url">一个退休程序员，1小时原型，3个月干翻React：OpenClaw凭什么？</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-19 11:20:00" itemprop="dateCreated datePublished" datetime="2026-03-19T11:20:00+00:00">2026-03-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-rebellion-spirit.webp" alt="cover"></p>
+<p>React 用了 13 年，积累了 24 万 Star。Linux 内核用了 40 年，Star 数还没追上。</p>
+<p>而一只”龙虾”，只用了 3 个月。</p>
+<p>2026 年 3 月，OpenClaw 的 GitHub Star 数登顶历史第一，超越了 React、Linux、TensorFlow 这些已经成为行业基石的项目。更魔幻的是，它不是某个大厂的战略级产品发布，而是一个奥地利退休程序员的”周末项目”。</p>
+<p>在 OpenAI、Google、Anthropic 这些巨头用几十亿美金筑起护城河的时代，一个个人开发者凭什么能撕开一道口子？</p>
+<p>答案藏在一个很简单的道理里：<strong>大厂在比谁更聪明，但用户只想要一个能干活的助手。</strong></p>
+<h2 id="巨头们的困局：被自己的成功困住了"><a href="#巨头们的困局：被自己的成功困住了" class="headerlink" title="巨头们的困局：被自己的成功困住了"></a>巨头们的困局：被自己的成功困住了</h2><p>先说一个事实：ChatGPT 诞生快 4 年了，大多数人的使用方式还是打开聊天框，问一个问题，等一个回答。</p>
+<p>不是模型不够强。GPT-4、Claude Opus、Gemini Ultra，推理能力一个比一个强。但它们都被关在同一个笼子里——<strong>对话框</strong>。</p>
+<p>你让 ChatGPT 帮你整理邮件，它给你一篇教程。你让 Claude 帮你安排日程，它输出一段建议。你让 Gemini 帮你分析竞品，它给你一份报告的文字稿。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2026/03/19/202603191120/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
     <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/19/202603191045/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -269,7 +964,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -384,7 +1079,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -509,7 +1204,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -629,7 +1324,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
+      <time title="修改时间：2026-04-07 10:38:34" itemprop="dateModified" datetime="2026-04-07T10:38:34+00:00">2026-04-07</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -700,700 +1395,8 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181542/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2026/03/18/202603181542/" class="post-title-link" itemprop="url">OpenClaw 进阶指南：ima-skills 来了，让 AI 帮你管笔记只需一句话</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2026-03-18 15:42:00" itemprop="dateCreated datePublished" datetime="2026-03-18T15:42:00+00:00">2026-03-18</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>4.8k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>4 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260318-openclaw-ima-skills-guide.webp" alt="cover"></p>
-<p>你每天产生多少条笔记？</p>
-<p>会议纪要、灵感碎片、待办事项、读书摘录……这些东西散落在各个 App 里，找起来要命。你明明记了一条重要笔记，但就是不记得存在哪个笔记本里了。</p>
-<p>现在，你可以对你的 OpenClaw 说一句：**”帮我找一下上周关于项目排期的笔记”**。</p>
-<p>几秒钟后，它把笔记标题、摘要、修改时间整理好了，问你要不要看正文。</p>
-<p>这就是 <strong>ima-skills</strong>——一个把 IMA 笔记和 OpenClaw 打通的 Skill。今天这篇文章，教你怎么安装、配置，以及怎么玩出花来。</p>
-<h2 id="先搞清楚：OpenClaw-的-Skills-是什么？"><a href="#先搞清楚：OpenClaw-的-Skills-是什么？" class="headerlink" title="先搞清楚：OpenClaw 的 Skills 是什么？"></a>先搞清楚：OpenClaw 的 Skills 是什么？</h2><p>如果你刚接触 OpenClaw，可能对 Skills 这个概念还不太熟。</p>
-<p><strong>Skills 是 OpenClaw 的”技能插件”。</strong> 每个 Skill 就是一个 Markdown 文件（<code>SKILL.md</code>），里面写了 AI 应该怎么执行某类任务——调用什么 API、传什么参数、返回什么结果。</p>
-<p>打个比方：OpenClaw 本身就像一个聪明但什么都不会的新员工。Skills 就是你给它的”操作手册”——装了 Gmail Skill，它就会处理邮件；装了 Obsidian Skill，它就会管理你的知识库；装了 ima-skills，它就会操作你的 IMA 笔记。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2026/03/18/202603181542/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181534/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2026/03/18/202603181534/" class="post-title-link" itemprop="url">Android Gradle Plugin 9.0 来了！Kotlin 内置、DSL 重构，这次迁移有多痛？</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2026-03-18 15:34:00" itemprop="dateCreated datePublished" datetime="2026-03-18T15:34:00+00:00">2026-03-18</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>5k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>5 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260318-android-gradle-plugin-9-agp.webp" alt="cover"></p>
-<p>你打开 Android Studio，看到一条升级提示：<strong>AGP 9.0 可用</strong>。</p>
-<p>你手一抖点了升级。</p>
-<p>然后你的项目爆了 47 个编译错误。<code>BaseExtension</code> 找不到了，<code>applicationVariants</code> 不能用了，Kotlin 插件冲突了，Hilt 不兼容了……</p>
-<p>你花了整整一天才把项目跑起来。</p>
-<p>恭喜你，你刚刚体验了 Android 开发史上最大的一次构建系统重构。</p>
-<p>Reddit 上有人发帖说：**”AGP 9.0 发布了，简直是灾难。这是我的完整迁移指南，希望你不用受这个罪。”** 帖子下面一片惨叫。</p>
-<p>但冷静下来看，AGP 9.0 确实是 Google 这几年来做的最重要的一次底层升级。<strong>痛，但有意义。</strong></p>
-<h2 id="AGP-9-0-到底改了什么？"><a href="#AGP-9-0-到底改了什么？" class="headerlink" title="AGP 9.0 到底改了什么？"></a>AGP 9.0 到底改了什么？</h2><p>一句话总结：<strong>Google 把积攒了好几个大版本的”技术债”一次性清掉了。</strong></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2026/03/18/202603181534/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181511/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2026/03/18/202603181511/" class="post-title-link" itemprop="url">OpenClaw 踩坑记：我劝你用最好的模型，笨模型相当于招了个笨助理</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2026-03-18 15:11:00" itemprop="dateCreated datePublished" datetime="2026-03-18T15:11:00+00:00">2026-03-18</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>3.6k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>3 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260318-openclaw-model-quality-matters.webp" alt="cover"></p>
-<p>上周一个朋友跟我吐槽。</p>
-<p>他看了我之前写的 OpenClaw 教程，兴冲冲地装了一套。配好了 WhatsApp，接上了 API Key，准备体验传说中的”AI 贾维斯”。</p>
-<p>但他为了省钱，选了最便宜的模型——Haiku。</p>
-<p>结果呢？让它帮忙写个 Python 脚本，写出来的代码跑不通。让它改 Bug，越改越多。让它分析一个文件，它幻觉出了三个不存在的函数。最后他花了两个小时”教”AI 做一件本来 20 分钟就能搞定的事。</p>
-<p>他跟我说：”这玩意儿就像我招了个实习生，还是那种上班第一天就敢重构你代码的实习生。”</p>
-<p>我说：<strong>不是工具的问题，是你给它装了个笨脑子。</strong></p>
-<h2 id="OpenClaw-是什么？30-秒搞清楚"><a href="#OpenClaw-是什么？30-秒搞清楚" class="headerlink" title="OpenClaw 是什么？30 秒搞清楚"></a>OpenClaw 是什么？30 秒搞清楚</h2><p>如果你还不了解 OpenClaw，先快速补课。</p>
-<p>OpenClaw 是 2026 年最火的开源 AI 项目——GitHub 上超过 <strong>25 万颗 Star</strong>，打破了 React 保持了十年的增长纪录。它的创始人是奥地利开发者 Peter Steinberger（PSPDFKit 的创始人），原名叫 “Clawdbot”，因为 Anthropic 的商标投诉改了两次名，最终定名 OpenClaw。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2026/03/18/202603181511/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181505/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2026/03/18/202603181505/" class="post-title-link" itemprop="url">你的手机会自己点外卖了！Google Gemini Screen Automation 到底有多猛？</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2026-03-18 15:05:00" itemprop="dateCreated datePublished" datetime="2026-03-18T15:05:00+00:00">2026-03-18</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>3.7k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>3 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260318-google-gemini-screen-automation-android.webp" alt="cover"></p>
-<p>想象一个场景。</p>
-<p>你正在开会，突然想起今晚得加班，来不及做饭。你掏出手机，对着 Gemini 说了一句：”帮我在 Uber Eats 上点一份辣鸡肉三明治。”</p>
-<p>然后你把手机放下，继续开会。</p>
-<p>几秒钟后，你的手机自己打开了 Uber Eats，搜索附近的餐厅，找到了 Popeye’s，点进去，选好了辣鸡肉三明治，加到购物车，然后通知你：”已经准备好了，请确认下单。”</p>
-<p><strong>你全程没有碰过屏幕。</strong></p>
-<p>这不是科幻电影。这是 Google 在 2026 年 3 月刚刚上线的 <strong>Gemini Screen Automation</strong>——一个让 AI 直接操控你手机上的 App 来完成任务的功能。</p>
-<h2 id="这到底是个什么东西？"><a href="#这到底是个什么东西？" class="headerlink" title="这到底是个什么东西？"></a>这到底是个什么东西？</h2><p>简单说：<strong>Gemini 现在可以替你操作手机了。</strong></p>
-<p>不是回答问题，不是推荐餐厅，不是给你一个链接让你自己去点——而是真的打开 App、浏览菜单、选择商品、添加到购物车。像一个隐形的助手坐在你旁边，替你完成那些需要十几次点击才能搞定的重复操作。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2026/03/18/202603181505/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181458/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2026/03/18/202603181458/" class="post-title-link" itemprop="url">别再被资深同事疯狂 Review 了！提交 PR 前让 Claude 帮你做一次深度'体检'</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2026-03-18 14:58:00" itemprop="dateCreated datePublished" datetime="2026-03-18T14:58:00+00:00">2026-03-18</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>4.3k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>4 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260318-claude-code-review-pr-checkup.webp" alt="cover"></p>
-<p>你花了三天写完一个功能，信心满满地提交了 PR。</p>
-<p>然后你的 Tech Lead 留了 47 条评论。</p>
-<p>变量命名不规范、边界条件没处理、这段逻辑有竞态风险、那个 SQL 查询可以优化、错误处理不够健壮、单元测试覆盖率不够……</p>
-<p>你看着那一片红色的评论气泡，心态崩了。不是代码写得太差，是你在提交之前，没有人帮你”过一遍”。</p>
-<p><strong>但现在有了。</strong></p>
-<p>2026 年 3 月 9 日，Anthropic 正式发布了 <strong>Claude Code Review</strong>——一个多 Agent 系统，专门在你提交 PR 的时候帮你做深度代码审查。更重要的是，就算你用不了企业版，你也可以用 Claude Code 在本地做一次”自检”，把那 47 条评论在提交之前就消灭掉。</p>
-<h2 id="Claude-Code-Review-到底是什么？"><a href="#Claude-Code-Review-到底是什么？" class="headerlink" title="Claude Code Review 到底是什么？"></a>Claude Code Review 到底是什么？</h2><p>简单说：<strong>它是一个 AI 代码审查团队。</strong></p>
-<p>不是一个模型看一遍你的代码，而是一个多 Agent 系统——多个 AI Agent 同时工作，每个 Agent 负责审查你代码的不同方面。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2026/03/18/202603181458/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/03/18/202603181445/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2026/03/18/202603181445/" class="post-title-link" itemprop="url">连查出 Firefox 22 个漏洞！初级开发如何用 Claude Opus 4.6 写出大神级代码？</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2026-03-18 14:45:00" itemprop="dateCreated datePublished" datetime="2026-03-18T14:45:00+00:00">2026-03-18</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-03-30 12:37:58" itemprop="dateModified" datetime="2026-03-30T12:37:58+00:00">2026-03-30</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E9%98%85%E8%AF%BB/" itemprop="url" rel="index"><span itemprop="name">阅读</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>3.9k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>4 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260318-claude-opus-firefox-vulnerabilities-coding.webp" alt="cover"></p>
-<p>两周。22 个安全漏洞。14 个高危。</p>
-<p>这不是某个顶级安全团队的年度报告，而是 <strong>Claude Opus 4.6 一个 AI 模型在 Firefox 代码库里的成绩单</strong>。</p>
-<p>2026 年 2 月，Anthropic 与 Mozilla 合作，把 Opus 4.6 指向了 Firefox 的代码库。这是全世界被审计最多的开源项目之一——几十年来无数安全研究员反复翻过，持续做模糊测试，由顶尖工程师维护。</p>
-<p>结果？Opus 4.6 扫描了近 <strong>6,000 个 C++ 文件</strong>，向 Mozilla 提交了 <strong>112 份漏洞报告</strong>，其中 22 个被确认为安全漏洞（CVE）。14 个高危漏洞，占 2025 年 Firefox 全部高危漏洞的<strong>近五分之一</strong>。</p>
-<p>更夸张的是，它找到第一个漏洞只用了 <strong>20 分钟</strong>。</p>
-<p>这件事让我想了很久。如果一个 AI 模型能在最安全的浏览器里找到这么多漏洞，那它用来帮你写代码、审代码的时候，到底能做到什么程度？</p>
-<h2 id="它到底是怎么找到这些漏洞的？"><a href="#它到底是怎么找到这些漏洞的？" class="headerlink" title="它到底是怎么找到这些漏洞的？"></a>它到底是怎么找到这些漏洞的？</h2><p>Anthropic 的前沿红队负责人 Logan Graham 解释了他们为什么选 Firefox 做测试：</p>
-<blockquote>
-<p>“我们选 Firefox 是因为它是世界上被测试最充分、最安全的开源项目之一。如果 Claude 能在这里发现未知的高危 Bug，那说明了这项能力正在走向何方。”</p>
-</blockquote>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2026/03/18/202603181445/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
-    <a class="extend prev" rel="prev" title="上一页" aria-label="上一页" href="/page/8/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><span class="page-number current">9</span><a class="page-number" href="/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/page/25/">25</a><a class="extend next" rel="next" title="下一页" aria-label="下一页" href="/page/10/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" title="上一页" aria-label="上一页" href="/page/8/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><span class="page-number current">9</span><a class="page-number" href="/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/page/26/">26</a><a class="extend next" rel="next" title="下一页" aria-label="下一页" href="/page/10/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 </div>
@@ -1418,13 +1421,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">861k</span>
+    <span title="站点总字数">884k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">13:03</span>
+    <span title="站点阅读时长">13:24</span>
   </span>
 </div>
 <div class="busuanzi-count">

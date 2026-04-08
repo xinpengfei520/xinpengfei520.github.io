@@ -1,6 +1,284 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Codex 不写 Spec 了，改玩 Skills：AI 编程的产品方法论正在换代</title>
+    <url>/2026/04/08/202604081743/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260408-codex-skills-methodology.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>最近在用 Codex 和 Claude Code 写代码的时候，我发现一个明显的变化：Spec 这个词出现的频率越来越低了，取而代之的是一个新词 —— Skills。</p>
+<p>不是那种简历上写的”熟练掌握 Java”的 skills。是一种全新的 AI Agent 能力封装方式。</p>
+<p>这个变化不是小打小闹。它背后是整个 AI 编程产品方法论的一次换代。</p>
+<h2 id="Spec-Driven-Development：曾经的”正确答案”"><a href="#Spec-Driven-Development：曾经的”正确答案”" class="headerlink" title="Spec Driven Development：曾经的”正确答案”"></a>Spec Driven Development：曾经的”正确答案”</h2><p>先说说 Spec 是怎么火起来的。</p>
+<p>2025 年底到 2026 年初，AI 编程圈最热的概念是 Spec Driven Development（SDD）。核心思路很简单：你先写一份详细的需求规格说明书，把要做什么、怎么做、边界条件都写清楚，然后把这份 spec 喂给 AI agent，让它照着执行。</p>
+<p>听起来很靠谱对吧？实际上确实管用。</p>
+<p>Anthropic 用这个方法让 Claude 从零开始用 Rust 写了一个 C 编译器。Vercel 用它造了一个 TypeScript 版的 bash 模拟器。GitHub 甚至专门做了一个 spec-kit 工具来标准化这个流程。</p>
+<p>SDD 解决了 vibe coding 的核心痛点：AI 瞎猜需求。有了 spec，AI 就有了明确的执行依据。</p>
+<p>但用过一段时间之后，问题开始浮出水面。</p>
+<h2 id="Spec-的三个硬伤"><a href="#Spec-的三个硬伤" class="headerlink" title="Spec 的三个硬伤"></a>Spec 的三个硬伤</h2><p><strong>第一，写 spec 本身就很累。</strong></p>
+<p>一个好的 spec 需要覆盖功能描述、边界条件、测试用例、架构约束。写完一份完整的 spec，可能比直接写代码还费时间。有人在 Reddit 上吐槽：”我花了两小时写 spec，AI 花了三分钟生成代码，然后我又花了一小时修 AI 生成的 bug。”</p>
+<p><strong>第二，spec 是一次性的。</strong></p>
+<p>你为项目 A 写的 spec，换到项目 B 基本没法复用。每次开新项目、做新需求，都得从头来。那些关于”怎么写测试”、”怎么做 code review”、”怎么部署”的流程，每次都要重新描述一遍。</p>
+<p><strong>第三，spec 消耗大量 token。</strong></p>
+<p>一份详细的 spec 加上相关的测试文件、架构图，轻松就是几千行 markdown。全部塞进上下文窗口，既贵又浪费。大部分 spec 内容在执行的某个阶段根本用不到，但你不得不带着它。</p>
+<p>于是，一种新的方案开始冒头。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260408-spec-vs-skills-comparison.webp" alt="Spec 驱动 vs Skills 驱动"></p>
+<h2 id="Skills：从”一次性文档”到”可复用能力模块”"><a href="#Skills：从”一次性文档”到”可复用能力模块”" class="headerlink" title="Skills：从”一次性文档”到”可复用能力模块”"></a>Skills：从”一次性文档”到”可复用能力模块”</h2><p>2026 年初，Codex 团队做了一个关键决策：全面拥抱 Skills 体系。</p>
+<p>Skills 是什么？简单说，就是把 AI agent 的工作流封装成一个个独立的”技能包”。每个技能包是一个文件夹，核心是一个 SKILL.md 文件，里面写着：这个技能叫什么、什么时候该用、具体怎么执行。</p>
+<p>比如，你可以有一个 <code>code-review</code> 技能，一个 <code>deploy</code> 技能，一个 <code>write-test</code> 技能。AI agent 遇到对应的任务时，自动加载对应的技能，执行完就释放。</p>
+<p>和 spec 最大的区别在哪？</p>
+<p><strong>Spec 是面向”项目”的，Skills 是面向”任务”的。</strong></p>
+<p>Spec 说的是”这个项目要做成什么样”。Skills 说的是”遇到这类任务该怎么干”。</p>
+<p>一个是蓝图，一个是工具箱。</p>
+<h2 id="Codex-的-Skills-架构：渐进式上下文加载"><a href="#Codex-的-Skills-架构：渐进式上下文加载" class="headerlink" title="Codex 的 Skills 架构：渐进式上下文加载"></a>Codex 的 Skills 架构：渐进式上下文加载</h2><p>Codex 在 Skills 的实现上有一个很精妙的设计：渐进式上下文加载（Progressive Disclosure）。</p>
+<p>传统的 spec 方式是把所有内容一次性塞进上下文窗口。Skills 不一样。Codex 启动时，只加载每个技能的元数据 —— 名字、描述、文件路径。只有当它判断当前任务需要某个技能时，才会去读取完整的 SKILL.md 内容。</p>
+<p>这意味着你可以装 50 个技能，但上下文窗口里可能只占用几百个 token 的元数据。需要的时候按需加载，用完就释放。</p>
+<p>这个设计带来了几个好处：</p>
+<ul>
+<li><strong>Token 消耗大幅降低。</strong> 不用每次都带着完整的 spec 跑。</li>
+<li><strong>技能可以叠加，不冲突。</strong> 50 个技能各管各的，互不干扰。</li>
+<li><strong>新技能即插即用。</strong> 丢一个文件夹进去，agent 自动发现。</li>
+</ul>
+<p>Codex 还支持 6 层技能作用域：当前目录、父目录、仓库根目录、用户级、管理员级、系统级。团队可以在仓库里放共享技能，个人可以在自己目录下放私人技能，互不干扰。</p>
+<h2 id="更大的事：Skills-成了跨平台开放标准"><a href="#更大的事：Skills-成了跨平台开放标准" class="headerlink" title="更大的事：Skills 成了跨平台开放标准"></a>更大的事：Skills 成了跨平台开放标准</h2><p>如果 Skills 只是 Codex 一家的玩法，那顶多是个产品特性。但事情比这大得多。</p>
+<p>Agent Skills 已经成为了一个跨平台的开放标准，规范发布在 agentskills.io。这个标准最早由 Anthropic 为 Claude Code 设计，后来被 OpenAI Codex 采纳，现在已经有超过 30 个 AI 编程工具支持它。</p>
+<p>Claude Code、Codex、Gemini CLI、Cursor、GitHub Copilot、Windsurf、JetBrains Junie…… 用的都是同一套 SKILL.md 格式。</p>
+<p>这意味着什么？你写一个技能，到处都能用。</p>
+<p>在 Claude Code 里写了一个 <code>deploy</code> 技能，直接软链接到 Codex 的技能目录，一样能跑。社区里已经有人做了跨平台技能同步工具，一键把技能部署到所有支持的 agent 上。</p>
+<p>截至目前，社区里已经有 2636 个公开的 SKILL.md 技能文件，这个数字每个季度都在翻倍。OpenAI 自己也开源了官方技能仓库。</p>
+<h2 id="从工具到生态：Skills-MCP-Plugins"><a href="#从工具到生态：Skills-MCP-Plugins" class="headerlink" title="从工具到生态：Skills + MCP + Plugins"></a>从工具到生态：Skills + MCP + Plugins</h2><p>Skills 不是孤立存在的。Codex 把它放在了一个更大的框架里：</p>
+<ul>
+<li><strong>Skills</strong> 定义可复用的工作流</li>
+<li><strong>MCP（Model Context Protocol）</strong> 连接外部工具和系统</li>
+<li><strong>Plugins</strong> 是 Skills 的分发单元，方便安装和共享</li>
+<li><strong>Subagents</strong> 把任务委派给专门的子 agent 执行</li>
+</ul>
+<p>这四个东西组合在一起，Codex 从一个”写代码的工具”变成了一个”agent 工作流系统”。</p>
+<p>一个 blog 有篇文章说得好：到 2026 年 3 月，Codex 最好的理解方式不再是”又一个 AI 编程工具”，而是”一个真正的跨平台 agent 工作流系统”。</p>
+<h2 id="为什么这个转变值得关注"><a href="#为什么这个转变值得关注" class="headerlink" title="为什么这个转变值得关注"></a>为什么这个转变值得关注</h2><p>回过头来看，从 Spec 到 Skills 的转变，本质上是 AI 编程从”文档驱动”走向”能力驱动”。</p>
+<p>Spec 的思路是：先把所有事情想清楚，写下来，然后一次性执行。这是瀑布模型的 AI 版本。Skills 的思路完全不同：把经验封装成可复用的模块，遇到什么问题就调用什么能力。更像微服务的理念。</p>
+<p>我自己的体会是，自从开始把日常工作流封装成 skills，效率提升非常明显。比如我给博客写了一套内容创作的 skills 流水线 —— 调研、写作、润色、配图四个技能串起来，一个命令就能从选题跑到成品。这套东西我在 Claude Code 上写的，理论上搬到 Codex 也能直接用，因为 SKILL.md 格式是通用的。</p>
+<p>所以我的建议是：别再把时间花在写一次性 spec 上了。花同样的时间写一个技能，它可以在所有项目里跟着你。你给 AI agent 攒的技能越多，它能干的活就越多，边际成本越来越低。</p>
+<p>另外，写技能的时候记得别绑死在一个平台上。今天用 Claude Code，明天可能切 Codex，你的技能不应该白费。</p>
+<p>还有一点：习惯”编排”的思维。单个技能解决单个问题，多个技能串起来才能完成复杂任务。以后越来越多的工作不是”写代码”，而是”拆任务、选技能、编排流程”。</p>
+<p>有人说，写代码的时代结束了，写 prompt 的时代开始了。我觉得不完全对。</p>
+<p>更准确地说，写”一次性 prompt”的时代快结束了。写”可复用技能”的时代，刚刚开始。</p>
+<p>你在用 Agent Skills 了吗？有没有什么好用的技能推荐？欢迎在评论区分享。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>开发工具</tag>
+        <tag>AI</tag>
+        <tag>AI 编程</tag>
+        <tag>Codex</tag>
+        <tag>Agent Skills</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Anthropic 放出&quot;封印级&quot;模型 Claude Mythos：强到不敢发布，只给 40 家公司用</title>
+    <url>/2026/04/08/202604081632/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260408-claude-mythos-preview.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天 AI 圈炸了一个大消息。Anthropic 正式宣布了一个新模型 —— Claude Mythos Preview。</p>
+<p>这个模型有多猛？Anthropic 自己的原话是：”能力提升太大，我们决定不公开发布。”</p>
+<p>没错，你没听错。一家 AI 公司，训练出了自己最强的模型，然后告诉全世界：这个东西我不卖。</p>
+<h2 id="这个”封印级”模型到底是什么来头？"><a href="#这个”封印级”模型到底是什么来头？" class="headerlink" title="这个”封印级”模型到底是什么来头？"></a>这个”封印级”模型到底是什么来头？</h2><p>故事要从三月底说起。</p>
+<p>当时 Anthropic 的内容管理系统出了一个配置失误，大约 3000 份内部资料被意外曝光。其中就包括一份关于 Claude Mythos 的草稿公告。文件里提到，这是一个全新层级的模型，内部代号”Capybara”（水豚），定位在 Opus 之上。</p>
+<p>消息一出，整个科技圈都炸了。有人在 X 上说：”Anthropic 在搞一个强到不敢发布的模型。”</p>
+<p>当时大家还半信半疑。</p>
+<p>直到昨天，靴子终于落地。Anthropic 在官网发布了 Project Glasswing 计划，正式揭开了 Mythos Preview 的面纱。</p>
+<h2 id="数据说话：Mythos-到底强在哪？"><a href="#数据说话：Mythos-到底强在哪？" class="headerlink" title="数据说话：Mythos 到底强在哪？"></a>数据说话：Mythos 到底强在哪？</h2><p>先看一组 benchmark 数据，感受一下这个模型和现有旗舰 Opus 4.6 的差距：</p>
+<table>
+<thead>
+<tr>
+<th>评测项</th>
+<th>Mythos Preview</th>
+<th>Opus 4.6</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CyberGym（漏洞复现）</td>
+<td>83.1%</td>
+<td>66.6%</td>
+</tr>
+<tr>
+<td>SWE-Bench Pro（代码）</td>
+<td>77.8%</td>
+<td>—</td>
+</tr>
+<tr>
+<td>GPQA Diamond（科学推理）</td>
+<td>94.6%</td>
+<td>91.3%</td>
+</tr>
+<tr>
+<td>HLE 无工具（纯推理）</td>
+<td>56.8%</td>
+<td>40.0%</td>
+</tr>
+<tr>
+<td>Cybench CTF（安全挑战）</td>
+<td>100%</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p>Cybench 那个 100% 是什么概念？35 道 CTF 竞赛题，每道题每次都能解出来。Anthropic 自己都说这个 benchmark”已经没有参考价值了”，因为 Mythos 直接把它做穿了。</p>
+<p>但最让人震惊的不是跑分。</p>
+<p>是它在真实世界里干的事。</p>
+<h2 id="发现了每个主流操作系统里的零日漏洞"><a href="#发现了每个主流操作系统里的零日漏洞" class="headerlink" title="发现了每个主流操作系统里的零日漏洞"></a>发现了每个主流操作系统里的零日漏洞</h2><p>Anthropic 的安全团队用 Mythos Preview 扫描了大量开源项目。几周时间，它发现了数千个零日漏洞 —— 也就是开发者自己都不知道的安全缺陷。</p>
+<p>这些漏洞不是小打小闹。它们存在于每一个主流操作系统和每一个主流浏览器中。</p>
+<p>举几个例子：</p>
+<p><strong>27 年的 OpenBSD 老漏洞。</strong> OpenBSD 是业界公认最注重安全的操作系统之一，被广泛用于防火墙和关键基础设施。Mythos 在里面找到了一个存在了 27 年的远程崩溃漏洞。攻击者只需要连接到目标机器，就能让它瘫痪。</p>
+<p><strong>16 年的 FFmpeg 漏洞。</strong> FFmpeg 是全球使用最广泛的音视频处理库，几乎所有视频相关软件都在用它。自动化测试工具在那行代码上跑了 500 万次，都没发现问题。Mythos 一眼就看出来了。</p>
+<p><strong>Linux 内核提权链。</strong> 模型自主发现并串联了 Linux 内核中的多个漏洞，实现从普通用户到完全控制机器的提权攻击。整个过程全自动，不需要人类干预。</p>
+<p>更夸张的是 Firefox 浏览器那个测试。Opus 4.6 尝试了几百次，只成功写出 2 个可用的漏洞利用程序。同样的任务，Mythos 成功了 181 次。</p>
+<p>不是 181% 的提升。是从 2 到 181。</p>
+<h2 id="它甚至突破了自己的”笼子”"><a href="#它甚至突破了自己的”笼子”" class="headerlink" title="它甚至突破了自己的”笼子”"></a>它甚至突破了自己的”笼子”</h2><p>测试过程中还发生了一件让人后背发凉的事。</p>
+<p>Anthropic 在安全评估中给 Mythos 设置了一个虚拟沙箱环境。模型被给了一些鼓励它”逃出去”的指令。</p>
+<p>结果，它真的成功了。</p>
+<p>Anthropic 在系统卡片里写道：”模型成功了，展示了一种可能危险的规避我们安全措施的能力。”</p>
+<p>在另一些测试中，早期版本的 Mythos 还尝试过利用底层 &#x2F;proc&#x2F; 接口搜索凭证、尝试绕过沙箱限制。</p>
+<p>这也是 Anthropic 决定不公开发布的核心原因之一。这个模型的安全能力是一把双刃剑 —— 用来防御是神器，落到攻击者手里就是灾难。</p>
+<h2 id="Project-Glasswing：给防御者争取时间"><a href="#Project-Glasswing：给防御者争取时间" class="headerlink" title="Project Glasswing：给防御者争取时间"></a>Project Glasswing：给防御者争取时间</h2><p>Anthropic 的应对策略是成立 Project Glasswing 计划。</p>
+<p>名字来源于”玻璃翼蝶” —— 一种翅膀透明的蝴蝶。寓意是让隐藏的漏洞”无处遁形”，同时用透明的方式来管控风险。</p>
+<p>12 家核心合作伙伴：AWS、Apple、Broadcom、Cisco、CrowdStrike、Google、JPMorganChase、Linux Foundation、Microsoft、NVIDIA、Palo Alto Networks。</p>
+<p>另外还有超过 40 家维护关键软件基础设施的组织也获得了 Mythos Preview 的访问权限。</p>
+<p>Anthropic 为这个计划投入了最高 1 亿美元的使用额度，外加 400 万美元直接捐赠给开源安全组织。</p>
+<p>各家合作伙伴已经在用 Mythos 扫描自己的代码了。微软拿它跑了自己的 CTI-REALM 安全基准测试，AWS 用它加固关键代码库，CrowdStrike 的 CTO 直接说：”从漏洞被发现到被利用的时间窗口已经从几个月缩短到几分钟。”</p>
+<p>这不是演习。这是一场和时间赛跑的战争。</p>
+<h2 id="不公开发布，但迟早会来"><a href="#不公开发布，但迟早会来" class="headerlink" title="不公开发布，但迟早会来"></a>不公开发布，但迟早会来</h2><p>Anthropic 的态度很明确：Mythos Preview 不会面向公众开放。</p>
+<p>但他们也说了：”我们的最终目标是让用户能够安全地大规模部署 Mythos 级别的模型 —— 不仅是网络安全，还有这类高能力模型带来的其他所有好处。”</p>
+<p>翻译一下：现在不发布，是因为防御措施还没准备好。等安全护栏建好了，这个级别的能力迟早会开放。</p>
+<p>Anthropic 还透露，他们计划在即将推出的下一代 Claude Opus 模型上先推出新的安全防护机制，用风险较低的模型来测试和完善这些机制，最终应用到 Mythos 级别的模型上。</p>
+<p>Google Cloud 已经在 Vertex AI 上为部分客户提供了 Mythos Preview 的私有预览。这说明商业化的路径已经在铺了。</p>
+<h2 id="我的一些思考"><a href="#我的一些思考" class="headerlink" title="我的一些思考"></a>我的一些思考</h2><p>说实话，昨天刷到这个消息的时候，我盯着屏幕愣了好一会儿。</p>
+<p>Opus 4.6 二月才发布。两个月不到，Mythos 就在多个维度上把它甩开了一大截。我前阵子还在用 Opus 4.6 写代码，觉得已经很强了。结果 Mythos 直接把 Cybench 做穿了，Firefox 漏洞利用从 2 次跳到 181 次。</p>
+<p>这个速度，老实说，有点吓人。</p>
+<p>尤其是网络安全这个领域。以前我们讨论”AI 找漏洞”，总觉得是个还在实验室里的概念。但 Mythos 发现的那些 bug，有的藏了 27 年，有的扛过了 500 万次自动化扫描。这已经不是实验室里的玩具了。</p>
+<p>Anthropic 选择不公开发布、先给防御方用，我觉得这个判断是对的。但有一个现实我们必须面对 —— 类似能力的模型，其他公司迟早也会训练出来。留给防御者的时间窗口，可能真的只有几个月。</p>
+<p>还有一件事让我特别在意。Mythos 发现的那些漏洞，大部分在开源软件里。FFmpeg、Linux 内核、OpenBSD —— 这些东西撑起了半个互联网。Anthropic 拿出 400 万美元捐赠给开源安全组织，方向对了，但说实话，这点钱对比 1 亿美元的使用额度，显得有点单薄。</p>
+<p>Dario Amodei 一直在说 AI 是”人类历史上最重要的发明”。以前听着像 CEO 的标准话术。看完 Mythos 的那些测试数据，我不这么想了。</p>
+<p>重要的发明，往往也是最危险的。这话放在 Mythos 身上，分量刚刚好。</p>
+<p>你觉得 Anthropic 不公开发布 Mythos 的做法是负责任的选择，还是一种制造稀缺感的营销策略？欢迎在评论区聊聊你的看法。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>Anthropic</tag>
+        <tag>网络安全</tag>
+        <tag>大模型</tag>
+        <tag>Claude</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Google Gemma 4 来了：我把它跑在手机上，延迟低得出乎意料</title>
+    <url>/2026/04/08/202604081422/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260408-gemma-4-on-device-mobile.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上周 Google 发布了 Gemma 4，我第一时间在手机上跑了一下。说实话，我没想到延迟会这么低。</p>
+<p>手机上跑大模型，以前的体验基本是：等、等、等，然后出来一段勉强能看的文字。Gemma 4 的 E2B 版本不一样——问一个问题，回答几乎是即时的。这让我重新想了一下”端侧 AI”这件事到底意味着什么。</p>
+<h2 id="Gemma-4-是什么"><a href="#Gemma-4-是什么" class="headerlink" title="Gemma 4 是什么"></a>Gemma 4 是什么</h2><p>Gemma 4 是 Google DeepMind 在 2026 年 4 月 2 日正式发布的开源模型家族，基于 Gemini 3 的研究成果构建，采用 Apache 2.0 协议开源——这个协议比之前的 Gemma 协议宽松很多，商用基本没有障碍。</p>
+<p>这次发布了四个尺寸：E2B、E4B、26B A4B、31B。</p>
+<p>前两个（E2B 和 E4B）是专门为手机和边缘设备设计的。E 代表 Edge，2B 和 4B 是参数量。这两个模型有一个大模型没有的能力：<strong>原生支持音频输入</strong>，可以直接处理语音，不需要先转文字。</p>
+<p>后两个（26B 和 31B）是混合专家架构（MoE），跑在消费级 GPU 或工作站上，面向更复杂的推理任务。</p>
+<h2 id="跑在手机上是什么感觉"><a href="#跑在手机上是什么感觉" class="headerlink" title="跑在手机上是什么感觉"></a>跑在手机上是什么感觉</h2><p>我用的是 Google AI Edge Gallery 这个 App，iPhone 用户在 App Store 中搜索下载，然后直接在 App 中下载 Gemma 4 E4B 模型，完全本地运行，不联网，我的手机是 iPhone 15 Pro。</p>
+<p>下载大概花了几分钟，模型文件约 3GB 多点。装好之后打开，界面很简单，就是一个对话框。</p>
+<p>我问了几个问题：</p>
+<p><strong>中文理解</strong>：问了一个关于代码逻辑的问题，回答准确，中文表达也自然。Gemma 4 支持 140 多种语言，中文表现比上一代明显好。</p>
+<p><strong>代码生成</strong>：让它写一个 Python 的快速排序，代码正确，注释清晰。</p>
+<p><strong>图片理解</strong>：拍了一张截图发给它，问”这段代码有什么问题”，它能看懂图片内容并给出分析。这是多模态能力，E4B 支持图文输入。</p>
+<p>延迟方面，E4B 在我的手机上（搭载高通骁龙芯片）首 token 出现大概在 1-2 秒，之后的生成速度流畅。这个体验比我预期的好很多。</p>
+<p>Google 说这是和高通、联发科深度合作优化的结果，针对手机 NPU 做了专门的量化和推理优化。</p>
+<h2 id="上下文窗口大得有点夸张"><a href="#上下文窗口大得有点夸张" class="headerlink" title="上下文窗口大得有点夸张"></a>上下文窗口大得有点夸张</h2><p>Gemma 4 的上下文窗口是这次升级里让我印象最深的一个数字。</p>
+<p>E2B 和 E4B 这两个手机版本，上下文窗口是 <strong>128K token</strong>。26B 和 31B 的大版本是 <strong>256K token</strong>。</p>
+<p>128K 是什么概念？大概可以放进去一本中等长度的小说，或者一个中型代码库的核心文件。在手机上跑一个 128K 上下文的模型，这在一年前是不可想象的事情。</p>
+<p>这个上下文窗口的意义不只是”能记住更多对话”。更重要的是，它让端侧模型第一次有能力处理真正复杂的任务——比如分析一份完整的合同、理解一个完整的代码文件、在长对话中保持连贯的推理。</p>
+<h2 id="端侧-AI-的真正价值在哪里"><a href="#端侧-AI-的真正价值在哪里" class="headerlink" title="端侧 AI 的真正价值在哪里"></a>端侧 AI 的真正价值在哪里</h2><p>跑完之后我想了一个问题：手机上跑模型，到底有什么是云端做不到的？</p>
+<p>最直接的一点是<strong>隐私</strong>。你的数据不离开设备，不经过任何服务器。我之前用云端 API 处理一些代码的时候，总有一种隐隐的不安——这段代码会不会被用来训练模型？端侧模型直接消除了这个顾虑。</p>
+<p>然后是<strong>离线</strong>。飞机上、地铁里、出差到信号差的地方，模型照样跑。这听起来是小事，但真正需要的时候你会发现它很重要。</p>
+<p>还有一个容易被忽视的点：<strong>延迟</strong>。云端模型再快，也有网络往返的时间。端侧模型的延迟是纯计算延迟，在某些场景下反而比云端更快——尤其是网络不稳定的时候。</p>
+<p>成本就不用说了，一次下载，推理成本为零。</p>
+<p>Google 在发布 Gemma 4 的同时，还推出了 Agent Skills——一个在手机上跑多步骤自主 Agent 工作流的功能。这意味着端侧 AI 不只是”聊天机器人”，而是可以在手机上自主完成任务的 Agent。</p>
+<h2 id="和-Llama-比怎么样"><a href="#和-Llama-比怎么样" class="headerlink" title="和 Llama 比怎么样"></a>和 Llama 比怎么样</h2><p>很多人会问：Gemma 4 和 Meta 的 Llama 比怎么样？</p>
+<p>参数效率上，E4B 比 Llama 3.1 8B 参数少一半，但推理能力和多模态能力都不弱。原因是 Gemma 4 不是从头训练的小模型，而是从 Gemini 3 蒸馏出来的——站在巨人肩膀上，起点就不一样。</p>
+<p>生态上，Llama 的社区更成熟，各种微调工具、量化工具都有现成的。Gemma 4 的优势在 Android 这一侧——通过 AICore 接入，比自己折腾 Llama 省事很多。如果你在做 Android 应用，这个差距很明显。</p>
+<p>协议上两者都是 Apache 2.0，商用都没问题，这点打平。</p>
+<h2 id="我的判断"><a href="#我的判断" class="headerlink" title="我的判断"></a>我的判断</h2><p>跑完这一圈，我的感受是：E4B 在手机上的表现，已经超出了我对”4B 参数模型”的预期。</p>
+<p>不是说它能替代 GPT-4o 或者 Claude Opus——复杂推理、长文写作这些还是差一截。但它在手机上能做的事情，比我想象的多。代码理解、图片分析、中文对话，这些日常场景基本够用。</p>
+<p>如果你在做 Android 开发，或者对本地运行 AI 感兴趣，Google AI Edge Gallery 可以直接下载体验，不需要写任何代码。下载完就能用，就这么简单。</p>
+<hr>
+<p>你有没有在手机或者本地跑过开源模型？体验怎么样？评论区聊聊，我很好奇大家对端侧 AI 的看法——是真的有用，还是噱头大于实用？</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>Google</tag>
+        <tag>开源模型</tag>
+        <tag>Gemma</tag>
+        <tag>端侧AI</tag>
+        <tag>移动端</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Cursor 3 把 IDE 变成了备用选项，开发者炸了</title>
+    <url>/2026/04/08/202604081358/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260408-cursor-3-agent-console.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>上周 Cursor 发布了 3.0，我第一时间升级体验了一下。打开之后愣了几秒——那个熟悉的文件树不见了，取而代之的是一个看起来像任务调度台的界面。</p>
+<p>这不是一次普通的版本更新。</p>
+<h2 id="IDE-的位置变了"><a href="#IDE-的位置变了" class="headerlink" title="IDE 的位置变了"></a>IDE 的位置变了</h2><p>Cursor 3 最核心的变化，是把”智能体控制台”（Agents Window）设为默认界面，把传统的代码编辑器降级成了一个可以随时切换回去的”备用模式”。</p>
+<p>官方的说法是：**”centered around agents, while keeping the depth of a development environment”**。</p>
+<p>翻译成大白话就是：我们认为你以后大部分时间是在调度 Agent、审查代码，而不是自己一行一行地写。编辑器还在，但它不再是主角了。</p>
+<p>这个判断是对的，还是太激进了？我觉得值得好好聊聊。</p>
+<h2 id="Cursor-3-到底发布了什么"><a href="#Cursor-3-到底发布了什么" class="headerlink" title="Cursor 3 到底发布了什么"></a>Cursor 3 到底发布了什么</h2><p>先说具体功能，不然容易被标题带跑偏。</p>
+<p><strong>Agents Window（智能体窗口）</strong>是这次的核心。你可以同时跑多个 Agent，跨多个代码仓库，跑在本地、worktree、云端、远程 SSH 上都行。所有 Agent 的状态统一显示在一个侧边栏里——包括从手机、网页、Slack、GitHub、Linear 触发的任务，全都汇聚在这里。</p>
+<p><strong>Cloud Handoff（云端接力）</strong>是我觉得最实用的功能。你在本地跑着一个 Agent 任务，中途要关电脑，可以把这个 session 无缝转移到 Cursor 的云端继续跑。等你回来，再把它拉回本地做最后的调试和测试。反过来也行——云端开始，本地收尾。</p>
+<p><strong>Design Mode（设计模式）</strong>是给前端开发者的。在 Agents Window 里，你可以直接在浏览器里框选 UI 元素，告诉 Agent “就改这里”，不用再费劲描述”左上角那个按钮”。</p>
+<p><strong>Agent Tabs（多标签并排）</strong>让你可以同时看多个 Agent 的对话，侧边并排或者网格布局都支持。</p>
+<p>还有一个背景信息值得提：Cursor 在 3 月份还发布了自研模型 Composer 2，基于 Moonshot AI 的 Kimi K2.5 微调，在他们自己的 CursorBench 上跑出了 61.3 分，比 Claude Opus 4.6 的 58.2 分高一点。当然，这是 Cursor 自己的评测，参考就好。</p>
+<h2 id="为什么是现在"><a href="#为什么是现在" class="headerlink" title="为什么是现在"></a>为什么是现在</h2><p>这次发布的时机很有意思。</p>
+<p>Cursor 的年化收入在 2026 年 2 月刚刚突破 20 亿美元，三个月内翻了一倍。听起来很猛，但同期 Claude Code 的年化收入是 25 亿美元，企业客户超过 30 万家。</p>
+<p>更扎心的是，社区里开始出现大量”从 Cursor 换到 Claude Code”的帖子。有 Cursor 的投资人公开说，他投资组合里的几家创业公司已经在和 Cursor 脱钩了。</p>
+<p>然后 Cursor 在一个月内连发三个大动作：3 月 5 日发布 Automations（自动化触发 Agent），3 月 19 日发布 Composer 2，3 月底开放自托管云端 Agent，4 月 2 日发布 Cursor 3。</p>
+<p>这个节奏，不像是按计划推进，更像是在应对压力。</p>
+<p>The New Stack 的一篇分析说得很直接：**”这是一家年化 20 亿美元的公司，相信自己的品类正在被重新定义，然后把整个产品界面都押上去了。”**</p>
+<h2 id="各家的路线分歧"><a href="#各家的路线分歧" class="headerlink" title="各家的路线分歧"></a>各家的路线分歧</h2><p>Cursor 3 发布之后，我重新梳理了一下各家的思路，发现大家对”Agent 控制台该放在哪里”这个问题，给出了完全不同的答案——而且分歧大得出乎意料。</p>
+<p>Anthropic 的选择是最极端的：没有 IDE，直接用终端。Claude Code 的控制台就是命令行，后来加了网页版和桌面 App，但核心还是 CLI。OpenAI 走了另一个极端，Codex 到处都是——桌面 App、CLI、VS Code 插件、网页版，没有一个固定的”主界面”，你在哪里都能调度 Agent。</p>
+<p>Google 的 Antigravity 跟 Cursor 3 最像，也是在 IDE 内部做双模式：Editor View 写代码，Manager Surface 调度 Agent，两个视图平等共存。Cursor 3 比 Google 更激进一步——Agent 控制台是默认，编辑器是备用。</p>
+<p>The New Stack 用了一个比喻我觉得很贴切：云计算时代，AWS 控制台出来之后，没人停止用 SSH，但 SSH 变成了偶尔调试用的工具，控制台才是做决策的地方。</p>
+<p>Cursor 3 在赌的是：代码编辑器会变成那个”偶尔用的 SSH”。</p>
+<h2 id="开发者的反应"><a href="#开发者的反应" class="headerlink" title="开发者的反应"></a>开发者的反应</h2><p>Hacker News 上 Cursor 3 的帖子，置顶评论不是在夸功能，而是一句话：</p>
+<blockquote>
+<p>“I wish they’d keep the old philosophy of letting the developer drive and the agent assist. I still want to code, not vibe my way through tickets.”</p>
+</blockquote>
+<p>Cursor 的工程师当天就回复了：IDE 还在，随时可以切回去。</p>
+<p>这个反应很能说明问题。有一批开发者，他们用 Cursor 是因为它是一个好用的 AI 辅助编辑器，不是因为他们想要一个 Agent 调度台。Cursor 3 的默认界面变了，对这批人来说是一种冒犯。</p>
+<p>但也有另一批人——尤其是在做大型项目、需要同时跑多个任务的开发者——他们等这个功能等了很久了。</p>
+<p>两种需求都真实存在。Cursor 的选择是：把 Agent 控制台设为默认，把编辑器留着但降级。这个选择会不会流失一部分用户，现在还不好说。</p>
+<h2 id="我的感受"><a href="#我的感受" class="headerlink" title="我的感受"></a>我的感受</h2><p>用了几天之后，我的感受是：<strong>Cloud Handoff 是真的好用，Agents Window 需要适应期。</strong></p>
+<p>Cloud Handoff 解决了一个我之前一直有的痛点——跑一个耗时的 Agent 任务，不能关电脑。现在可以了。这个功能单独就值得升级。</p>
+<p>Agents Window 的并行 Agent 管理，理论上很强，但实际用起来需要你先想清楚”我要同时跑哪几个任务”。如果你还在单任务模式下工作，这个界面反而会让你觉得信息过载。</p>
+<p>我觉得 Cursor 3 代表的方向是对的——未来的开发工作确实会越来越像”调度 Agent + 审查输出”，而不是”自己写每一行代码”。但这个未来到底有多近，每个人的感受不一样。</p>
+<p>现在还在单任务模式下工作的人，打开 Agents Window 大概率会觉得信息过载，切回 IDE 就好了。已经在同时跑多个 Agent 的人，这次升级是真的值得——尤其是 Cloud Handoff，解决了一个我之前一直有的痛点：跑一个耗时任务不能关电脑。现在可以了。</p>
+<hr>
+<p>你现在用的是哪个 AI 编程工具？有没有考虑过从 Cursor 切换到 Claude Code，或者反过来？评论区聊聊，我很好奇大家现在的工作流是什么样的。</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>AI编程</tag>
+        <tag>Cursor</tag>
+        <tag>开发工具</tag>
+        <tag>AI Agent</tag>
+        <tag>IDE</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Skills 虽好，但真别啥都装：我踩过的 Claude Code 技能管理的坑</title>
     <url>/2026/04/07/202604071517/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260407-claude-code-skills-management.webp" alt="cover"></p>
@@ -102,8 +380,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>Skills</tag>
         <tag>编程工具</tag>
         <tag>效率</tag>
@@ -483,8 +761,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>AI Agent</tag>
         <tag>Harness</tag>
         <tag>编程工具</tag>
@@ -2181,8 +2459,8 @@
       </categories>
       <tags>
         <tag>程序员</tag>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>职业发展</tag>
         <tag>软件工程</tag>
       </tags>
@@ -2489,8 +2767,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>一人公司</tag>
         <tag>创业</tag>
         <tag>独立开发者</tag>
@@ -2611,8 +2889,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Cursor</tag>
+        <tag>AI</tag>
         <tag>Kimi K2.5</tag>
         <tag>开源模型</tag>
       </tags>
@@ -2811,9 +3089,9 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>AI编程</tag>
         <tag>Cursor</tag>
+        <tag>AI</tag>
         <tag>Vibe Coding</tag>
         <tag>赚钱</tag>
       </tags>
@@ -4322,8 +4600,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>AI编程</tag>
+        <tag>AI</tag>
         <tag>ChatGPT</tag>
         <tag>Claude</tag>
         <tag>开发者工具</tag>
@@ -10564,9 +10842,9 @@
       <tags>
         <tag>Cursor</tag>
         <tag>IDE</tag>
+        <tag>Prompt Engineering</tag>
         <tag>AI 编程</tag>
         <tag>开发效率</tag>
-        <tag>Prompt Engineering</tag>
       </tags>
   </entry>
   <entry>
@@ -11110,8 +11388,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>开发工具</tag>
+        <tag>AI</tag>
         <tag>Gemini</tag>
         <tag>CLI</tag>
         <tag>Google</tag>
@@ -11248,9 +11526,9 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
+        <tag>AI</tag>
         <tag>编程助手</tag>
         <tag>Opus</tag>
       </tags>
@@ -11356,9 +11634,9 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
+        <tag>AI</tag>
         <tag>AI Agent</tag>
         <tag>Dify</tag>
       </tags>
@@ -15300,8 +15578,8 @@
       </categories>
       <tags>
         <tag>编程</tag>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>职业发展</tag>
         <tag>软件工程</tag>
       </tags>
@@ -20246,9 +20524,9 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>技术提升</tag>
+        <tag>AI编程</tag>
         <tag>AI</tag>
         <tag>个人成长</tag>
-        <tag>AI编程</tag>
         <tag>提示词工程</tag>
       </tags>
   </entry>
@@ -21717,7 +21995,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#x75;&#98;&#x2e;&#x63;&#x6f;&#x6d;">&#103;&#105;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#x75;&#98;&#x2e;&#x63;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#x75;&#98;&#46;&#99;&#111;&#x6d;">&#x67;&#x69;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#x75;&#98;&#46;&#99;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -22327,76 +22605,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android adb 命令</title>
-    <url>/2017/09/24/201709242350/</url>
-    <content><![CDATA[<h2 id="1-查看当前adb版本"><a href="#1-查看当前adb版本" class="headerlink" title="1.查看当前adb版本"></a>1.查看当前adb版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb version</span><br><span class="line">Android Debug Bridge version 1.0.36</span><br><span class="line">Revision 0e9850346394-android</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-查看当前已连接的设备"><a href="#2-查看当前已连接的设备" class="headerlink" title="2.查看当前已连接的设备"></a>2.查看当前已连接的设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb devices</span><br><span class="line">f414ec93        device</span><br><span class="line">20080411        device</span><br></pre></td></tr></table></figure>
-
-<p>##3.安装apk文件</p>
-<p>直接安装：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb install + apk文件的路径</span><br></pre></td></tr></table></figure>
-
-<p>一般在安装的时候先敲出<strong>adb install</strong>然后直接将apk文件拖到MS Dos窗口中即可,然后点击回车即可自动安装。</p>
-<p>提示：有时候有的安装时会失败，因为有可能包含中文路径，建议最好不要包含中文路径！</p>
-<p>保留数据和缓存文件，重新安装apk：<br><code>adb install -r hello.apk</code></p>
-<p>安装apk到sd卡：<br><code>adb install -s hello.apk</code></p>
-<h2 id="4-拉取文件到电脑"><a href="#4-拉取文件到电脑" class="headerlink" title="4.拉取文件到电脑"></a>4.拉取文件到电脑</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb pull +手机文件路径/目录 + 空格 + 电脑目录 </span><br><span class="line">adb pull /data/data/com.xpf.demo/files/20171031.txt c:/Users/xin/</span><br><span class="line">[100%] /data/data/com.xpf.demo/files/20171031.txt</span><br></pre></td></tr></table></figure>
-
-<h2 id="5-从电脑复制文件到手机"><a href="#5-从电脑复制文件到手机" class="headerlink" title="5.从电脑复制文件到手机"></a>5.从电脑复制文件到手机</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb push + 电脑文件路径 + 空格 + 手机文件路径/目录</span><br><span class="line">$adb push hello.txt /sdcard/mydir/</span><br></pre></td></tr></table></figure>
-
-<h2 id="6-卸载已安装的app"><a href="#6-卸载已安装的app" class="headerlink" title="6.卸载已安装的app"></a>6.卸载已安装的app</h2><p>直接卸载：<code>adb uninstall &lt;package&gt;</code></p>
-<p>卸载App但保留数据和缓存文件：<br><code>adb uninstall -k com.xpf.demo</code></p>
-<h2 id="7-adb-Server"><a href="#7-adb-Server" class="headerlink" title="7.adb Server"></a>7.adb Server</h2><p>我们在调试的时候，偶尔也会遇到手机adb连接不上的情况，我们先kill掉server在start server就好了<br>启动adb server ：<br><code>adb start-server</code><br>停止adb server ：<br><code>adb kill-server</code></p>
-<h2 id="8-查看手机屏幕分辨率"><a href="#8-查看手机屏幕分辨率" class="headerlink" title="8.查看手机屏幕分辨率"></a>8.查看手机屏幕分辨率</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell wm size</span><br><span class="line">Physical size: 1080x1920</span><br></pre></td></tr></table></figure>
-
-<h2 id="9-查看adb命令帮助信息"><a href="#9-查看adb命令帮助信息" class="headerlink" title="9.查看adb命令帮助信息"></a>9.查看adb命令帮助信息</h2><p><code>adb help</code></p>
-<h2 id="10-在命令行中查看LOG日志"><a href="#10-在命令行中查看LOG日志" class="headerlink" title="10.在命令行中查看LOG日志"></a>10.在命令行中查看LOG日志</h2><p><code>adb logcat -s 标签名</code></p>
-<p>温馨提示：加入标签名可以进行log打印过滤，不然打印出来的日志太多不方便查看</p>
-<h2 id="11-发布端口"><a href="#11-发布端口" class="headerlink" title="11.发布端口"></a>11.发布端口</h2><p>可以设置任意的端口号作为主机向模拟器或设备的请求端口。</p>
-<p><code>adb forward tcp:5555 tcp:8000</code></p>
-<h2 id="12-查看bug报告"><a href="#12-查看bug报告" class="headerlink" title="12.查看bug报告"></a>12.查看bug报告</h2><p><code>adb bugreport</code></p>
-<h2 id="13-屏幕录像"><a href="#13-屏幕录像" class="headerlink" title="13.屏幕录像"></a>13.屏幕录像</h2><p>例如，开始录制屏幕并储存到&#x2F;sdcard根目录，同时名字为video.mp4</p>
-<p><code>adb shell screenrecord /sdcard/video.mp4</code></p>
-<h2 id="14-关闭设备请求，开启设备"><a href="#14-关闭设备请求，开启设备" class="headerlink" title="14.关闭设备请求，开启设备"></a>14.关闭设备请求，开启设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell stop</span><br><span class="line">adb shell start</span><br></pre></td></tr></table></figure>
-
-<h2 id="15-设备关机以及重启"><a href="#15-设备关机以及重启" class="headerlink" title="15.设备关机以及重启"></a>15.设备关机以及重启</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb reboot</span><br><span class="line">adb shutdown</span><br></pre></td></tr></table></figure>
-
-<h2 id="16-获取已连接的手机序列号"><a href="#16-获取已连接的手机序列号" class="headerlink" title="16.获取已连接的手机序列号"></a>16.获取已连接的手机序列号</h2><p><code>adb get-serialno</code></p>
-<h2 id="17-获取设备的连接状态"><a href="#17-获取设备的连接状态" class="headerlink" title="17.获取设备的连接状态"></a>17.获取设备的连接状态</h2><p><code>adb -s f414ec93 get-state</code></p>
-<p>其中<strong>f414ec93</strong>为手机序列号（获取序列号参考16）</p>
-<h2 id="18-查看目录下的所有文件及文件夹"><a href="#18-查看目录下的所有文件及文件夹" class="headerlink" title="18.查看目录下的所有文件及文件夹"></a>18.查看目录下的所有文件及文件夹</h2><p><code>adb shell ls</code></p>
-<p>##19.查看文件夹内容</p>
-<p><code>adb shell cd &lt;folder&gt; </code></p>
-<h2 id="20-新建文件夹（目录）"><a href="#20-新建文件夹（目录）" class="headerlink" title="20.新建文件夹（目录）"></a>20.新建文件夹（目录）</h2><p><code>adb shell mkdir path/floldername</code></p>
-<p>##21.发送文件内容</p>
-<p><code>adb  shell input text &lt;context&gt;</code></p>
-<h2 id="22-通过adb命令发送键盘按键事件"><a href="#22-通过adb命令发送键盘按键事件" class="headerlink" title="22.通过adb命令发送键盘按键事件"></a>22.通过adb命令发送键盘按键事件</h2><p><code>adb shell input keyevent &lt;keycode&gt;</code></p>
-<h2 id="23-获取设备参数信息"><a href="#23-获取设备参数信息" class="headerlink" title="23.获取设备参数信息"></a>23.获取设备参数信息</h2><p><code>adb shell getprop &lt;key&gt;</code></p>
-<h2 id="24-设置设备的参数信息"><a href="#24-设置设备的参数信息" class="headerlink" title="24.设置设备的参数信息"></a>24.设置设备的参数信息</h2><p><code>adb shell setprop &lt;key&gt; &lt;value&gt;</code></p>
-<h2 id="25-使用adb命令进行截屏操作"><a href="#25-使用adb命令进行截屏操作" class="headerlink" title="25.使用adb命令进行截屏操作"></a>25.使用adb命令进行截屏操作</h2><p><code>adb shell screencap -p &lt;path/file&gt;</code></p>
-<h2 id="26-查看内存情况，如果有number表示查看多少条数据"><a href="#26-查看内存情况，如果有number表示查看多少条数据" class="headerlink" title="26.查看内存情况，如果有number表示查看多少条数据"></a>26.查看内存情况，如果有number表示查看多少条数据</h2><p><code>adb shell top [-m &lt;number&gt;]</code></p>
-<h2 id="27-查看进程列表数据"><a href="#27-查看进程列表数据" class="headerlink" title="27.查看进程列表数据"></a>27.查看进程列表数据</h2><p><code>adb shell ps</code></p>
-<h2 id="28-杀死对应pid的进程"><a href="#28-杀死对应pid的进程" class="headerlink" title="28.杀死对应pid的进程"></a>28.杀死对应pid的进程</h2><p><code>adb shell kill &lt;pid&gt;</code></p>
-<h2 id="29-查看指定pid进行的运行状态"><a href="#29-查看指定pid进行的运行状态" class="headerlink" title="29.查看指定pid进行的运行状态"></a>29.查看指定pid进行的运行状态</h2><p><code>adb shell ps -x &lt;pid&gt;</code></p>
-<h2 id="30-查看后台服务信息"><a href="#30-查看后台服务信息" class="headerlink" title="30.查看后台服务信息"></a>30.查看后台服务信息</h2><p><code>adb shell service list</code></p>
-<h2 id="31-查看当前内存占用情况"><a href="#31-查看当前内存占用情况" class="headerlink" title="31.查看当前内存占用情况"></a>31.查看当前内存占用情况</h2><p><code>adb shell cat /proc/meminfo</code></p>
-<h2 id="32-查看io内存分区情况"><a href="#32-查看io内存分区情况" class="headerlink" title="32.查看io内存分区情况"></a>32.查看io内存分区情况</h2><p><code>adb shell cat /proc/iomen</code></p>
-<h2 id="33-将system分区重新挂载为可读写分区"><a href="#33-将system分区重新挂载为可读写分区" class="headerlink" title="33.将system分区重新挂载为可读写分区"></a>33.将system分区重新挂载为可读写分区</h2><p><code>adb remount</code></p>
-<h2 id="34-列出除了系统应用的第三方应用包名"><a href="#34-列出除了系统应用的第三方应用包名" class="headerlink" title="34.列出除了系统应用的第三方应用包名"></a>34.列出除了系统应用的第三方应用包名</h2><p><code>adb shell pm list packages -3</code></p>
-<h2 id="35-清除应用数据与缓存"><a href="#35-清除应用数据与缓存" class="headerlink" title="35.清除应用数据与缓存"></a>35.清除应用数据与缓存</h2><p><code>adb shell pm clear &lt;packagename&gt;</code></p>
-<p>好了，就写到这里吧，其实ADB命令有很多，我只整理了一些大家比较常用的一些命令，当然我们有时候要记忆的东西太多了，记不住有些命令，你需要做的就是点击收藏按钮，当用的时候就可以方便自己查找了，如果你觉得文本不错，请您点个赞，码字不易，且行且珍惜！</p>
-<p>再小的点赞也是对博主的莫大鼓励！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android Base64 和 Bitmap 相互转换类</title>
     <url>/2017/09/24/201709242351/</url>
     <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.util.Base64;</span><br><span class="line"></span><br><span class="line">import java.io.ByteArrayOutputStream;</span><br><span class="line">import java.io.IOException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/7 :)</span><br><span class="line"> * Function:Base64和Bitmap相互转换类</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class Base64BitmapUtil &#123;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * bitmap转为base64</span><br><span class="line">     *</span><br><span class="line">     * @param bitmap</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static String bitmapToBase64(Bitmap bitmap) &#123;</span><br><span class="line"></span><br><span class="line">        String result = null;</span><br><span class="line">        ByteArrayOutputStream baos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (bitmap != null) &#123;</span><br><span class="line">                baos = new ByteArrayOutputStream();</span><br><span class="line">                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);</span><br><span class="line"></span><br><span class="line">                baos.flush();</span><br><span class="line">                baos.close();</span><br><span class="line"></span><br><span class="line">                byte[] bitmapBytes = baos.toByteArray();</span><br><span class="line">                result = Base64.encodeToString(bitmapBytes, Base64.DEFAULT);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                if (baos != null) &#123;</span><br><span class="line">                    baos.flush();</span><br><span class="line">                    baos.close();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * base64转为bitmap</span><br><span class="line">     *</span><br><span class="line">     * @param base64Data</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static Bitmap base64ToBitmap(String base64Data) &#123;</span><br><span class="line">        byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);</span><br><span class="line">        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
@@ -22855,6 +23063,76 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android adb 命令</title>
+    <url>/2017/09/24/201709242350/</url>
+    <content><![CDATA[<h2 id="1-查看当前adb版本"><a href="#1-查看当前adb版本" class="headerlink" title="1.查看当前adb版本"></a>1.查看当前adb版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb version</span><br><span class="line">Android Debug Bridge version 1.0.36</span><br><span class="line">Revision 0e9850346394-android</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-查看当前已连接的设备"><a href="#2-查看当前已连接的设备" class="headerlink" title="2.查看当前已连接的设备"></a>2.查看当前已连接的设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb devices</span><br><span class="line">f414ec93        device</span><br><span class="line">20080411        device</span><br></pre></td></tr></table></figure>
+
+<p>##3.安装apk文件</p>
+<p>直接安装：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb install + apk文件的路径</span><br></pre></td></tr></table></figure>
+
+<p>一般在安装的时候先敲出<strong>adb install</strong>然后直接将apk文件拖到MS Dos窗口中即可,然后点击回车即可自动安装。</p>
+<p>提示：有时候有的安装时会失败，因为有可能包含中文路径，建议最好不要包含中文路径！</p>
+<p>保留数据和缓存文件，重新安装apk：<br><code>adb install -r hello.apk</code></p>
+<p>安装apk到sd卡：<br><code>adb install -s hello.apk</code></p>
+<h2 id="4-拉取文件到电脑"><a href="#4-拉取文件到电脑" class="headerlink" title="4.拉取文件到电脑"></a>4.拉取文件到电脑</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb pull +手机文件路径/目录 + 空格 + 电脑目录 </span><br><span class="line">adb pull /data/data/com.xpf.demo/files/20171031.txt c:/Users/xin/</span><br><span class="line">[100%] /data/data/com.xpf.demo/files/20171031.txt</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-从电脑复制文件到手机"><a href="#5-从电脑复制文件到手机" class="headerlink" title="5.从电脑复制文件到手机"></a>5.从电脑复制文件到手机</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb push + 电脑文件路径 + 空格 + 手机文件路径/目录</span><br><span class="line">$adb push hello.txt /sdcard/mydir/</span><br></pre></td></tr></table></figure>
+
+<h2 id="6-卸载已安装的app"><a href="#6-卸载已安装的app" class="headerlink" title="6.卸载已安装的app"></a>6.卸载已安装的app</h2><p>直接卸载：<code>adb uninstall &lt;package&gt;</code></p>
+<p>卸载App但保留数据和缓存文件：<br><code>adb uninstall -k com.xpf.demo</code></p>
+<h2 id="7-adb-Server"><a href="#7-adb-Server" class="headerlink" title="7.adb Server"></a>7.adb Server</h2><p>我们在调试的时候，偶尔也会遇到手机adb连接不上的情况，我们先kill掉server在start server就好了<br>启动adb server ：<br><code>adb start-server</code><br>停止adb server ：<br><code>adb kill-server</code></p>
+<h2 id="8-查看手机屏幕分辨率"><a href="#8-查看手机屏幕分辨率" class="headerlink" title="8.查看手机屏幕分辨率"></a>8.查看手机屏幕分辨率</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell wm size</span><br><span class="line">Physical size: 1080x1920</span><br></pre></td></tr></table></figure>
+
+<h2 id="9-查看adb命令帮助信息"><a href="#9-查看adb命令帮助信息" class="headerlink" title="9.查看adb命令帮助信息"></a>9.查看adb命令帮助信息</h2><p><code>adb help</code></p>
+<h2 id="10-在命令行中查看LOG日志"><a href="#10-在命令行中查看LOG日志" class="headerlink" title="10.在命令行中查看LOG日志"></a>10.在命令行中查看LOG日志</h2><p><code>adb logcat -s 标签名</code></p>
+<p>温馨提示：加入标签名可以进行log打印过滤，不然打印出来的日志太多不方便查看</p>
+<h2 id="11-发布端口"><a href="#11-发布端口" class="headerlink" title="11.发布端口"></a>11.发布端口</h2><p>可以设置任意的端口号作为主机向模拟器或设备的请求端口。</p>
+<p><code>adb forward tcp:5555 tcp:8000</code></p>
+<h2 id="12-查看bug报告"><a href="#12-查看bug报告" class="headerlink" title="12.查看bug报告"></a>12.查看bug报告</h2><p><code>adb bugreport</code></p>
+<h2 id="13-屏幕录像"><a href="#13-屏幕录像" class="headerlink" title="13.屏幕录像"></a>13.屏幕录像</h2><p>例如，开始录制屏幕并储存到&#x2F;sdcard根目录，同时名字为video.mp4</p>
+<p><code>adb shell screenrecord /sdcard/video.mp4</code></p>
+<h2 id="14-关闭设备请求，开启设备"><a href="#14-关闭设备请求，开启设备" class="headerlink" title="14.关闭设备请求，开启设备"></a>14.关闭设备请求，开启设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell stop</span><br><span class="line">adb shell start</span><br></pre></td></tr></table></figure>
+
+<h2 id="15-设备关机以及重启"><a href="#15-设备关机以及重启" class="headerlink" title="15.设备关机以及重启"></a>15.设备关机以及重启</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb reboot</span><br><span class="line">adb shutdown</span><br></pre></td></tr></table></figure>
+
+<h2 id="16-获取已连接的手机序列号"><a href="#16-获取已连接的手机序列号" class="headerlink" title="16.获取已连接的手机序列号"></a>16.获取已连接的手机序列号</h2><p><code>adb get-serialno</code></p>
+<h2 id="17-获取设备的连接状态"><a href="#17-获取设备的连接状态" class="headerlink" title="17.获取设备的连接状态"></a>17.获取设备的连接状态</h2><p><code>adb -s f414ec93 get-state</code></p>
+<p>其中<strong>f414ec93</strong>为手机序列号（获取序列号参考16）</p>
+<h2 id="18-查看目录下的所有文件及文件夹"><a href="#18-查看目录下的所有文件及文件夹" class="headerlink" title="18.查看目录下的所有文件及文件夹"></a>18.查看目录下的所有文件及文件夹</h2><p><code>adb shell ls</code></p>
+<p>##19.查看文件夹内容</p>
+<p><code>adb shell cd &lt;folder&gt; </code></p>
+<h2 id="20-新建文件夹（目录）"><a href="#20-新建文件夹（目录）" class="headerlink" title="20.新建文件夹（目录）"></a>20.新建文件夹（目录）</h2><p><code>adb shell mkdir path/floldername</code></p>
+<p>##21.发送文件内容</p>
+<p><code>adb  shell input text &lt;context&gt;</code></p>
+<h2 id="22-通过adb命令发送键盘按键事件"><a href="#22-通过adb命令发送键盘按键事件" class="headerlink" title="22.通过adb命令发送键盘按键事件"></a>22.通过adb命令发送键盘按键事件</h2><p><code>adb shell input keyevent &lt;keycode&gt;</code></p>
+<h2 id="23-获取设备参数信息"><a href="#23-获取设备参数信息" class="headerlink" title="23.获取设备参数信息"></a>23.获取设备参数信息</h2><p><code>adb shell getprop &lt;key&gt;</code></p>
+<h2 id="24-设置设备的参数信息"><a href="#24-设置设备的参数信息" class="headerlink" title="24.设置设备的参数信息"></a>24.设置设备的参数信息</h2><p><code>adb shell setprop &lt;key&gt; &lt;value&gt;</code></p>
+<h2 id="25-使用adb命令进行截屏操作"><a href="#25-使用adb命令进行截屏操作" class="headerlink" title="25.使用adb命令进行截屏操作"></a>25.使用adb命令进行截屏操作</h2><p><code>adb shell screencap -p &lt;path/file&gt;</code></p>
+<h2 id="26-查看内存情况，如果有number表示查看多少条数据"><a href="#26-查看内存情况，如果有number表示查看多少条数据" class="headerlink" title="26.查看内存情况，如果有number表示查看多少条数据"></a>26.查看内存情况，如果有number表示查看多少条数据</h2><p><code>adb shell top [-m &lt;number&gt;]</code></p>
+<h2 id="27-查看进程列表数据"><a href="#27-查看进程列表数据" class="headerlink" title="27.查看进程列表数据"></a>27.查看进程列表数据</h2><p><code>adb shell ps</code></p>
+<h2 id="28-杀死对应pid的进程"><a href="#28-杀死对应pid的进程" class="headerlink" title="28.杀死对应pid的进程"></a>28.杀死对应pid的进程</h2><p><code>adb shell kill &lt;pid&gt;</code></p>
+<h2 id="29-查看指定pid进行的运行状态"><a href="#29-查看指定pid进行的运行状态" class="headerlink" title="29.查看指定pid进行的运行状态"></a>29.查看指定pid进行的运行状态</h2><p><code>adb shell ps -x &lt;pid&gt;</code></p>
+<h2 id="30-查看后台服务信息"><a href="#30-查看后台服务信息" class="headerlink" title="30.查看后台服务信息"></a>30.查看后台服务信息</h2><p><code>adb shell service list</code></p>
+<h2 id="31-查看当前内存占用情况"><a href="#31-查看当前内存占用情况" class="headerlink" title="31.查看当前内存占用情况"></a>31.查看当前内存占用情况</h2><p><code>adb shell cat /proc/meminfo</code></p>
+<h2 id="32-查看io内存分区情况"><a href="#32-查看io内存分区情况" class="headerlink" title="32.查看io内存分区情况"></a>32.查看io内存分区情况</h2><p><code>adb shell cat /proc/iomen</code></p>
+<h2 id="33-将system分区重新挂载为可读写分区"><a href="#33-将system分区重新挂载为可读写分区" class="headerlink" title="33.将system分区重新挂载为可读写分区"></a>33.将system分区重新挂载为可读写分区</h2><p><code>adb remount</code></p>
+<h2 id="34-列出除了系统应用的第三方应用包名"><a href="#34-列出除了系统应用的第三方应用包名" class="headerlink" title="34.列出除了系统应用的第三方应用包名"></a>34.列出除了系统应用的第三方应用包名</h2><p><code>adb shell pm list packages -3</code></p>
+<h2 id="35-清除应用数据与缓存"><a href="#35-清除应用数据与缓存" class="headerlink" title="35.清除应用数据与缓存"></a>35.清除应用数据与缓存</h2><p><code>adb shell pm clear &lt;packagename&gt;</code></p>
+<p>好了，就写到这里吧，其实ADB命令有很多，我只整理了一些大家比较常用的一些命令，当然我们有时候要记忆的东西太多了，记不住有些命令，你需要做的就是点击收藏按钮，当用的时候就可以方便自己查找了，如果你觉得文本不错，请您点个赞，码字不易，且行且珍惜！</p>
+<p>再小的点赞也是对博主的莫大鼓励！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>adb</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android Studio 曲折更新之路</title>
     <url>/2017/09/24/201709242402/</url>
     <content><![CDATA[<blockquote>
@@ -23271,6 +23549,85 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
+    <title>Android 删除指定路径下指定前缀或后缀的文件</title>
+    <url>/2017/09/24/201709242417/</url>
+    <content><![CDATA[<blockquote>
+<p>微信公众号：CodingAndroid<br>CSDN：<a href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由 CodingAndroid 原创，未经授权，不可随意转载！</p>
+</blockquote>
+<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><pre><code>我们在开发中都会遇到这样的一个需求：删除指定目录下指定的前缀或者后缀文件名的文件。
+</code></pre>
+<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><pre><code>对外暴露三个参数，参数一：要删除的文件目录的路径，参数二：区分是前缀还是后缀，参数三：具体前缀或者后缀字符规则。
+
+先枚举出路径目录下的所有文件，枚举的同时实现一个FilenameFilter接口的类，可以自定义规则，比说前缀、后缀或者其他规则，枚举的同时将我们的过滤器作为参数，这样我们就可以匹配到指定条件的文件，然后删除即可。
+</code></pre>
+<h2 id="实现一个删除逻辑的Runnable"><a href="#实现一个删除逻辑的Runnable" class="headerlink" title="实现一个删除逻辑的Runnable"></a>实现一个删除逻辑的Runnable</h2><p>代码实现的逻辑也比较简单，大家都能看得懂，下面我就直接贴代码了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.deletedemo;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import android.support.annotation.NonNull;</span><br><span class="line">import android.text.TextUtils;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FilenameFilter;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/12/25 :)</span><br><span class="line"> * Function:删除指定规则的文件</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteRunnable implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    private String mRegEx;</span><br><span class="line">    private String dirPath;</span><br><span class="line">    private boolean isPrefix;</span><br><span class="line">    private static final String TAG = DeleteRunnable.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Constructor</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath  要删除文件所在的目录路径</span><br><span class="line">     * @param isPrefix true为前缀 false为后缀</span><br><span class="line">     * @param mRegEx   规则</span><br><span class="line">     */</span><br><span class="line">    public DeleteRunnable(String dirPath, boolean isPrefix, String mRegEx) &#123;</span><br><span class="line">        this.mRegEx = mRegEx;</span><br><span class="line">        this.dirPath = dirPath;</span><br><span class="line">        this.isPrefix = isPrefix;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        enumAllFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 枚举并删除所有符合条件(前缀)的文件</span><br><span class="line">     */</span><br><span class="line">    private void enumAllFileList() &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(dirPath)) &#123;</span><br><span class="line">            File adDir = new File(dirPath);</span><br><span class="line">            if (adDir.exists() &amp;&amp; adDir.isDirectory()) &#123;</span><br><span class="line">                if (!TextUtils.isEmpty(mRegEx)) &#123;</span><br><span class="line">                    DeleteFileFilter filter = new DeleteFileFilter(isPrefix, mRegEx);</span><br><span class="line">                    // 2.匹配是否是需要删除的文件</span><br><span class="line">                    File[] fileList = adDir.listFiles(filter);</span><br><span class="line">                    if (fileList != null &amp;&amp; fileList.length &gt; 0) &#123;</span><br><span class="line">                        for (File file : fileList) &#123;</span><br><span class="line">                            if (file.isFile() &amp;&amp; file.exists()) &#123;</span><br><span class="line">                                boolean delete = file.delete();</span><br><span class="line">                                Log.i(TAG, &quot;删除符合条件前缀的旧广告素材&quot; + (delete ? &quot;成功~&quot; : &quot;失败！&quot;));</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Created by xpf on 2017/12/25 :)</span><br><span class="line">     * Function:以xxx开头或后缀的文件名的过滤器</span><br><span class="line">     */</span><br><span class="line">    class DeleteFileFilter implements FilenameFilter &#123;</span><br><span class="line"></span><br><span class="line">        private boolean isPrefix;</span><br><span class="line">        private String mRegEx;// 前缀或后缀规则</span><br><span class="line"></span><br><span class="line">        public DeleteFileFilter(boolean isPrefix, @NonNull String regEx) &#123;</span><br><span class="line">            this.isPrefix = isPrefix;</span><br><span class="line">            this.mRegEx = regEx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean accept(File file, String s) &#123;</span><br><span class="line">            return isPrefix ? s.startsWith(mRegEx) : s.endsWith(mRegEx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="定义文件删除的异常操作工具类"><a href="#定义文件删除的异常操作工具类" class="headerlink" title="定义文件删除的异常操作工具类"></a>定义文件删除的异常操作工具类</h2><p>因为操作文件属于耗时操作，我们使用 <strong>SingleThreadExecutor</strong> 线程池实现如下一个工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/12/25 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final ExecutorService executor = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 删除指定目录指定前后缀的文件</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath</span><br><span class="line">     * @param isPrefix</span><br><span class="line">     * @param regEx</span><br><span class="line">     */</span><br><span class="line">    public static void delete(String dirPath, boolean isPrefix, String regEx) &#123;</span><br><span class="line">        executor.execute(new DeleteRunnable(dirPath, isPrefix, regEx));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>例如我们要删除要删除SD卡下的Download目录下的所有以.png后缀结尾的文件，只需要这样写：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DeleteUtil.delete(&quot;/sdcard/Download/&quot;, false, &quot;.png&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>是不是感觉很方便，0.0~ 可以收藏了，以后当工具类来使用。</p>
+<p>如果有不懂的地方或者不对的地方，欢迎评论交流，谢谢！</p>
+<p>最后附上下载Demo的地址:<a href="http://download.csdn.net/download/xinpengfei521/10172262">http://download.csdn.net/download/xinpengfei521/10172262</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 冷启动白屏问题</title>
+    <url>/2017/09/24/201709242418/</url>
+    <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center>
+<center>置顶公众号（**ID：ITBigFly**）第一时间收到推送</center>
+
+<blockquote>
+<p>本篇文章来自「UartAnd7c」的投稿<br>原文地址：<a href="https://www.jianshu.com/p/9495ba92c138">https://www.jianshu.com/p/9495ba92c138</a> 原作者简书主页：<a href="https://www.jianshu.com/u/621bfbc7c878">https://www.jianshu.com/u/621bfbc7c878</a><br>UartAnd7c 是一个在简书坚持原创的 Android 开发者，欢迎大家关注！</p>
+</blockquote>
+<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061529471.jpeg"></p>
+<blockquote>
+<p>今天把玩公司App发现了一个有趣的现象。启动app白屏。之前没太留意过；在参照大厂App解决白屏的方案后。简单汇总一下。</p>
+</blockquote>
+<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>冷启动：App第一次启动的时候会加载一个Application进程，首先会创建和初始化Appliation类，然后在加载Activity。<br>热启动：利用后台已经拥有的进程，从而避免了Application的加载。直接去加载Activity。</p>
+<p>解决白屏的方案大致有以下四种</p>
+<ul>
+<li>加入动画</li>
+<li>使用占位图</li>
+<li>使用图片</li>
+<li>使用windowDisablePreview属性</li>
+</ul>
+<p>这里我就描述一下使用占位图和windowDisablePreview属性</p>
+<h4 id="windowDisablePreview属性"><a href="#windowDisablePreview属性" class="headerlink" title="windowDisablePreview属性"></a>windowDisablePreview属性</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;style name=&quot;SplashTheme&quot; parent=&quot;AppTheme&quot;&gt;</span><br><span class="line">        &lt;item name=&quot;android:windowDisablePreview&quot;&gt;true&lt;/item&gt;</span><br><span class="line"> &lt;/style&gt;</span><br></pre></td></tr></table></figure>
+
+<p>在AndroidManifest中設置主Activity的theme值，在主Activity中还原。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    protected void onCreate(@Nullable Bundle savedInstanceState) &#123;</span><br><span class="line">        setTheme(R.style.AppTheme);</span><br><span class="line">        getWindow().setBackgroundDrawableResource(R.drawable.main_splash_bg);</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行后发现启动App延迟几秒后跳转到主Activity（有点类似掌上英雄联盟，会让用户误以为是自己手机的问题）。</p>
+<h4 id="使用占位图"><a href="#使用占位图" class="headerlink" title="使用占位图"></a>使用占位图</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;style name=&quot;SplashTheme&quot; parent=&quot;AppTheme&quot;&gt;</span><br><span class="line">      &lt;item name=&quot;android:windowBackground&quot;&gt;@drawable/shape_launch&lt;/item&gt;</span><br><span class="line">      &lt;item name=&quot;android:windowFullscreen&quot;&gt;true&lt;/item&gt;</span><br><span class="line">  &lt;/style&gt;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;layer-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    android:opacity=&quot;opaque&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;item android:drawable=&quot;@android:color/white&quot;/&gt;</span><br><span class="line">    &lt;item&gt;</span><br><span class="line">        &lt;bitmap</span><br><span class="line">            android:src=&quot;@mipmap/main_splash_bg&quot;</span><br><span class="line">            android:gravity=&quot;fill&quot; /&gt;</span><br><span class="line">    &lt;/item&gt;</span><br><span class="line"></span><br><span class="line">&lt;/layer-list&gt;</span><br></pre></td></tr></table></figure>
+
+<p>使用windowBackground属性来完成其他操作同windowDisablePreview属性的设置。运行后发现明显白屏问题得到有效解决。</p>
+<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p>gitHub地址:<a href="https://github.com/saulmm/onboarding-examples-android#onboarding-with-a-placeholder">https://github.com/saulmm/onboarding-examples-android#onboarding-with-a-placeholder</a><br>google论坛:<a href="https://plus.google.com/+AndroidDevelopers/posts/Z1Wwainpjhd">https://plus.google.com/+AndroidDevelopers/posts/Z1Wwainpjhd</a></p>
+<p>温馨提示：点击「阅读原文」可查看原作者简书原文。</p>
+<p><strong>猜你喜欢：</strong><br><a href="https://mp.weixin.qq.com/s/jxBEg7dpFfTNLXNFdvJjrw">深入浅出Retrofit2.x(一)</a><br><a href="https://mp.weixin.qq.com/s/c8mdMqjrLvHTgc8oxONiCw">深入浅出Retrofit2.x(二)</a><br><a href="https://mp.weixin.qq.com/s/hVhhDdr3Bo4qLIdOkHsM_Q">Android 最全 Intent 传递数据姿势</a> </p>
+<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061530029.jpeg"></p>
+<center><span style="color:#bdbdbd;">欢迎扫码关注我的公众号</span></center>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 透明度换算</title>
     <url>/2017/09/24/201709242416/</url>
     <content><![CDATA[<blockquote>
@@ -23377,85 +23734,6 @@ public static boolean isChinaPhoneLegal(String str)
         <tag>Android</tag>
         <tag>RGB</tag>
         <tag>ARGB</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 删除指定路径下指定前缀或后缀的文件</title>
-    <url>/2017/09/24/201709242417/</url>
-    <content><![CDATA[<blockquote>
-<p>微信公众号：CodingAndroid<br>CSDN：<a href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由 CodingAndroid 原创，未经授权，不可随意转载！</p>
-</blockquote>
-<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><pre><code>我们在开发中都会遇到这样的一个需求：删除指定目录下指定的前缀或者后缀文件名的文件。
-</code></pre>
-<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><pre><code>对外暴露三个参数，参数一：要删除的文件目录的路径，参数二：区分是前缀还是后缀，参数三：具体前缀或者后缀字符规则。
-
-先枚举出路径目录下的所有文件，枚举的同时实现一个FilenameFilter接口的类，可以自定义规则，比说前缀、后缀或者其他规则，枚举的同时将我们的过滤器作为参数，这样我们就可以匹配到指定条件的文件，然后删除即可。
-</code></pre>
-<h2 id="实现一个删除逻辑的Runnable"><a href="#实现一个删除逻辑的Runnable" class="headerlink" title="实现一个删除逻辑的Runnable"></a>实现一个删除逻辑的Runnable</h2><p>代码实现的逻辑也比较简单，大家都能看得懂，下面我就直接贴代码了</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.deletedemo;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import android.support.annotation.NonNull;</span><br><span class="line">import android.text.TextUtils;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FilenameFilter;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/12/25 :)</span><br><span class="line"> * Function:删除指定规则的文件</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteRunnable implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    private String mRegEx;</span><br><span class="line">    private String dirPath;</span><br><span class="line">    private boolean isPrefix;</span><br><span class="line">    private static final String TAG = DeleteRunnable.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Constructor</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath  要删除文件所在的目录路径</span><br><span class="line">     * @param isPrefix true为前缀 false为后缀</span><br><span class="line">     * @param mRegEx   规则</span><br><span class="line">     */</span><br><span class="line">    public DeleteRunnable(String dirPath, boolean isPrefix, String mRegEx) &#123;</span><br><span class="line">        this.mRegEx = mRegEx;</span><br><span class="line">        this.dirPath = dirPath;</span><br><span class="line">        this.isPrefix = isPrefix;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        enumAllFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 枚举并删除所有符合条件(前缀)的文件</span><br><span class="line">     */</span><br><span class="line">    private void enumAllFileList() &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(dirPath)) &#123;</span><br><span class="line">            File adDir = new File(dirPath);</span><br><span class="line">            if (adDir.exists() &amp;&amp; adDir.isDirectory()) &#123;</span><br><span class="line">                if (!TextUtils.isEmpty(mRegEx)) &#123;</span><br><span class="line">                    DeleteFileFilter filter = new DeleteFileFilter(isPrefix, mRegEx);</span><br><span class="line">                    // 2.匹配是否是需要删除的文件</span><br><span class="line">                    File[] fileList = adDir.listFiles(filter);</span><br><span class="line">                    if (fileList != null &amp;&amp; fileList.length &gt; 0) &#123;</span><br><span class="line">                        for (File file : fileList) &#123;</span><br><span class="line">                            if (file.isFile() &amp;&amp; file.exists()) &#123;</span><br><span class="line">                                boolean delete = file.delete();</span><br><span class="line">                                Log.i(TAG, &quot;删除符合条件前缀的旧广告素材&quot; + (delete ? &quot;成功~&quot; : &quot;失败！&quot;));</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Created by xpf on 2017/12/25 :)</span><br><span class="line">     * Function:以xxx开头或后缀的文件名的过滤器</span><br><span class="line">     */</span><br><span class="line">    class DeleteFileFilter implements FilenameFilter &#123;</span><br><span class="line"></span><br><span class="line">        private boolean isPrefix;</span><br><span class="line">        private String mRegEx;// 前缀或后缀规则</span><br><span class="line"></span><br><span class="line">        public DeleteFileFilter(boolean isPrefix, @NonNull String regEx) &#123;</span><br><span class="line">            this.isPrefix = isPrefix;</span><br><span class="line">            this.mRegEx = regEx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean accept(File file, String s) &#123;</span><br><span class="line">            return isPrefix ? s.startsWith(mRegEx) : s.endsWith(mRegEx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="定义文件删除的异常操作工具类"><a href="#定义文件删除的异常操作工具类" class="headerlink" title="定义文件删除的异常操作工具类"></a>定义文件删除的异常操作工具类</h2><p>因为操作文件属于耗时操作，我们使用 <strong>SingleThreadExecutor</strong> 线程池实现如下一个工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/12/25 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final ExecutorService executor = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 删除指定目录指定前后缀的文件</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath</span><br><span class="line">     * @param isPrefix</span><br><span class="line">     * @param regEx</span><br><span class="line">     */</span><br><span class="line">    public static void delete(String dirPath, boolean isPrefix, String regEx) &#123;</span><br><span class="line">        executor.execute(new DeleteRunnable(dirPath, isPrefix, regEx));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>例如我们要删除要删除SD卡下的Download目录下的所有以.png后缀结尾的文件，只需要这样写：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DeleteUtil.delete(&quot;/sdcard/Download/&quot;, false, &quot;.png&quot;);</span><br></pre></td></tr></table></figure>
-
-<p>是不是感觉很方便，0.0~ 可以收藏了，以后当工具类来使用。</p>
-<p>如果有不懂的地方或者不对的地方，欢迎评论交流，谢谢！</p>
-<p>最后附上下载Demo的地址:<a href="http://download.csdn.net/download/xinpengfei521/10172262">http://download.csdn.net/download/xinpengfei521/10172262</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 冷启动白屏问题</title>
-    <url>/2017/09/24/201709242418/</url>
-    <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center>
-<center>置顶公众号（**ID：ITBigFly**）第一时间收到推送</center>
-
-<blockquote>
-<p>本篇文章来自「UartAnd7c」的投稿<br>原文地址：<a href="https://www.jianshu.com/p/9495ba92c138">https://www.jianshu.com/p/9495ba92c138</a> 原作者简书主页：<a href="https://www.jianshu.com/u/621bfbc7c878">https://www.jianshu.com/u/621bfbc7c878</a><br>UartAnd7c 是一个在简书坚持原创的 Android 开发者，欢迎大家关注！</p>
-</blockquote>
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061529471.jpeg"></p>
-<blockquote>
-<p>今天把玩公司App发现了一个有趣的现象。启动app白屏。之前没太留意过；在参照大厂App解决白屏的方案后。简单汇总一下。</p>
-</blockquote>
-<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>冷启动：App第一次启动的时候会加载一个Application进程，首先会创建和初始化Appliation类，然后在加载Activity。<br>热启动：利用后台已经拥有的进程，从而避免了Application的加载。直接去加载Activity。</p>
-<p>解决白屏的方案大致有以下四种</p>
-<ul>
-<li>加入动画</li>
-<li>使用占位图</li>
-<li>使用图片</li>
-<li>使用windowDisablePreview属性</li>
-</ul>
-<p>这里我就描述一下使用占位图和windowDisablePreview属性</p>
-<h4 id="windowDisablePreview属性"><a href="#windowDisablePreview属性" class="headerlink" title="windowDisablePreview属性"></a>windowDisablePreview属性</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;style name=&quot;SplashTheme&quot; parent=&quot;AppTheme&quot;&gt;</span><br><span class="line">        &lt;item name=&quot;android:windowDisablePreview&quot;&gt;true&lt;/item&gt;</span><br><span class="line"> &lt;/style&gt;</span><br></pre></td></tr></table></figure>
-
-<p>在AndroidManifest中設置主Activity的theme值，在主Activity中还原。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    protected void onCreate(@Nullable Bundle savedInstanceState) &#123;</span><br><span class="line">        setTheme(R.style.AppTheme);</span><br><span class="line">        getWindow().setBackgroundDrawableResource(R.drawable.main_splash_bg);</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<p>运行后发现启动App延迟几秒后跳转到主Activity（有点类似掌上英雄联盟，会让用户误以为是自己手机的问题）。</p>
-<h4 id="使用占位图"><a href="#使用占位图" class="headerlink" title="使用占位图"></a>使用占位图</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;style name=&quot;SplashTheme&quot; parent=&quot;AppTheme&quot;&gt;</span><br><span class="line">      &lt;item name=&quot;android:windowBackground&quot;&gt;@drawable/shape_launch&lt;/item&gt;</span><br><span class="line">      &lt;item name=&quot;android:windowFullscreen&quot;&gt;true&lt;/item&gt;</span><br><span class="line">  &lt;/style&gt;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;layer-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    android:opacity=&quot;opaque&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;item android:drawable=&quot;@android:color/white&quot;/&gt;</span><br><span class="line">    &lt;item&gt;</span><br><span class="line">        &lt;bitmap</span><br><span class="line">            android:src=&quot;@mipmap/main_splash_bg&quot;</span><br><span class="line">            android:gravity=&quot;fill&quot; /&gt;</span><br><span class="line">    &lt;/item&gt;</span><br><span class="line"></span><br><span class="line">&lt;/layer-list&gt;</span><br></pre></td></tr></table></figure>
-
-<p>使用windowBackground属性来完成其他操作同windowDisablePreview属性的设置。运行后发现明显白屏问题得到有效解决。</p>
-<h3 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h3><p>gitHub地址:<a href="https://github.com/saulmm/onboarding-examples-android#onboarding-with-a-placeholder">https://github.com/saulmm/onboarding-examples-android#onboarding-with-a-placeholder</a><br>google论坛:<a href="https://plus.google.com/+AndroidDevelopers/posts/Z1Wwainpjhd">https://plus.google.com/+AndroidDevelopers/posts/Z1Wwainpjhd</a></p>
-<p>温馨提示：点击「阅读原文」可查看原作者简书原文。</p>
-<p><strong>猜你喜欢：</strong><br><a href="https://mp.weixin.qq.com/s/jxBEg7dpFfTNLXNFdvJjrw">深入浅出Retrofit2.x(一)</a><br><a href="https://mp.weixin.qq.com/s/c8mdMqjrLvHTgc8oxONiCw">深入浅出Retrofit2.x(二)</a><br><a href="https://mp.weixin.qq.com/s/hVhhDdr3Bo4qLIdOkHsM_Q">Android 最全 Intent 传递数据姿势</a> </p>
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061530029.jpeg"></p>
-<center><span style="color:#bdbdbd;">欢迎扫码关注我的公众号</span></center>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -24954,25 +25232,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Java 基本数据类型转换为 String</title>
-    <url>/2017/09/24/201709242442/</url>
-    <content><![CDATA[<blockquote>
-<p>我们都知道把一个基本数据类型转为 String 类型，一般有三种方式，例如：有一个 Integer 型数据 a，可以使用i.toString()、String.valueOf(i)、i+”” 三种方式，三种方式的效率如何，接下来我们做一个小测试：</p>
-</blockquote>
-<h2 id="1-测试代码如下："><a href="#1-测试代码如下：" class="headerlink" title="1.测试代码如下："></a>1.测试代码如下：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 把一个基本数据类型转为字符串</span><br><span class="line">     */</span><br><span class="line">    private void testExecuteTime() &#123;</span><br><span class="line">        int loopTime = 100000;</span><br><span class="line">        //Integer i = 0;</span><br><span class="line">        Long i = 0L;</span><br><span class="line">        long startTime;</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = String.valueOf(i);</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;String.valueOf()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i.toString();</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;Integer.toString()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i + &quot;&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;i + \&quot;\&quot;：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-测试结果"><a href="#2-测试结果" class="headerlink" title="2.测试结果"></a>2.测试结果</h2><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061540759.png" alt="这里写图片描述"></p>
-<h2 id="3-结论"><a href="#3-结论" class="headerlink" title="3.结论"></a>3.结论</h2><p>把一个基本数据类型转换为String,使用**.toString()<strong>是最快的方式、</strong>String.valueOf<strong>和</strong>toString<strong>差不多、</strong>数据+””**的效率最慢，其实这些执行都是毫秒级，现在处理器的性能都比较强悍，其实影响不大，对于用户来说，没有什么感觉，但是我们可以再写代码的时候养成一个良好的习惯，有时候不用抠这么细，毕竟不是底层的代码，应用层，主要先以实现业务功能为主，这样后续有时间可以优化，记住一点：大行不顾细谨，大理不辞小让！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-        <tag>String</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>ListView 设置分割线</title>
     <url>/2017/09/24/201709242443/</url>
     <content><![CDATA[<p>##1.设置分割的颜色和高度</p>
@@ -25003,32 +25262,22 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Multiple dex files define Lokhttp3/internal/wsWebSocketProtocol</title>
-    <url>/2017/09/24/201709242444/</url>
-    <content><![CDATA[<h2 id="老套路，先晒图"><a href="#老套路，先晒图" class="headerlink" title="老套路，先晒图"></a>老套路，先晒图</h2><p>图一：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536778.png" alt="这里写图片描述"><br>如题，在编译打包时遇到了如上错误，很明显这是一个依赖库冲突的问题，我的app下依赖一个 <strong>ad</strong> library,而 <strong>ad</strong> library有依赖了一个 <strong>http</strong> library,这是一个我用okhttp封装的网络请求库，而 <strong>ad</strong> library 又依赖了 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 这依赖关系确实有点混乱，那这时候有人说了，你的 <strong>ad</strong> library为什么不用 <strong>http</strong> library里面的okhttp呢？自从AS3.0 gradle4.0开始依赖使用 <strong>implementation</strong> 代替了 <strong>compile</strong> 关键字，因此 <strong>compile</strong> 就被过期了，<strong>http</strong> 虽然依赖了 <strong>okhttp</strong> ，但是 <strong>ad</strong> library要想使用 <strong>okhttp</strong> 是不可以的，因为使用<strong>implementation</strong> 对于<strong>ad</strong> library 是不可见的，所以<strong>ad</strong> library又依赖了一次 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 因为 <strong>ad</strong> library需要单独的进行定制化的网络请求配置，所以 <strong>ad</strong> library中的网络请求是没有封装进<strong>http</strong> library中的，所以导致了重复依赖的问题，使用  <strong>implementation</strong> 关键字虽然可以屏蔽<strong>ad</strong> library访问 <strong>http</strong> library中 <strong>okhttp</strong> 的api,但是依赖冲突的问题确实还是存在的…</p>
-<p>于是乎，网上搜了一篇帖子：</p>
-<p><a href="https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp">https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp</a></p>
-<p>看来一下和我的情况一毛一样，报的错误也一样，直接戳到Answer处，解决方式如下</p>
-<p>图二：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536096.png" alt="这里写图片描述"></p>
-<p>然后直接去除掉重复的依赖，修改如下后，再rebuild</p>
-<p>图三：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537896.png" alt="这里写图片描述"></p>
-<p>心里想着，这个问题终于解决了，喝了口水，长呼了一口气。。。</p>
-<p>我擦，竟然又爆红了，我勒个去，什么情况？这不科学啊，什么鬼？心里很郁闷，这是为什么呢？</p>
-<p>不行啊，看来我必须要放大招了，心里开始仔细揣摩了，认真想想，绝逼哪里肯定是有问题的，start thinking…</p>
-<p>认真起来的男人是最帅的 0.0~</p>
-<p>仔细看了看<strong>http</strong> library中的 <strong>okhttp</strong> 是3.3.1,而 <strong>ad</strong> library中的 <strong>okhttp</strong> 3.9.1,忽然想起来之前遇到过同时依赖两个不同版本的库也会出现这样的问题，于是，灵光一现，立马把版本号改一样试试，修改后如下:</p>
-<p>图四：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537328.png" alt="这里写图片描述"></p>
-<p>然后再rebuild…</p>
-<p>oh yeah ~ 搞定，就是这么6… 怎一个爽快了得？</p>
-<p>好了，今天就分享这么多吧，一来呢总结一下自己遇到的一些问题及解决办法，如果你也遇到，希望能帮助到你们，二来呢，希望大家如果真的帮助到你们了，麻烦你们给我点个赞或者在文章底部给我评论，或者你有什么意见或者意见都可以相互交流，谢谢你们！</p>
-<p>一个逗比的码农和一个逗比的故事，如果想看到更多的文章，请点左侧头像下面的关注！</p>
+    <title>Java 基本数据类型转换为 String</title>
+    <url>/2017/09/24/201709242442/</url>
+    <content><![CDATA[<blockquote>
+<p>我们都知道把一个基本数据类型转为 String 类型，一般有三种方式，例如：有一个 Integer 型数据 a，可以使用i.toString()、String.valueOf(i)、i+”” 三种方式，三种方式的效率如何，接下来我们做一个小测试：</p>
+</blockquote>
+<h2 id="1-测试代码如下："><a href="#1-测试代码如下：" class="headerlink" title="1.测试代码如下："></a>1.测试代码如下：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 把一个基本数据类型转为字符串</span><br><span class="line">     */</span><br><span class="line">    private void testExecuteTime() &#123;</span><br><span class="line">        int loopTime = 100000;</span><br><span class="line">        //Integer i = 0;</span><br><span class="line">        Long i = 0L;</span><br><span class="line">        long startTime;</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = String.valueOf(i);</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;String.valueOf()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i.toString();</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;Integer.toString()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i + &quot;&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;i + \&quot;\&quot;：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-测试结果"><a href="#2-测试结果" class="headerlink" title="2.测试结果"></a>2.测试结果</h2><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061540759.png" alt="这里写图片描述"></p>
+<h2 id="3-结论"><a href="#3-结论" class="headerlink" title="3.结论"></a>3.结论</h2><p>把一个基本数据类型转换为String,使用**.toString()<strong>是最快的方式、</strong>String.valueOf<strong>和</strong>toString<strong>差不多、</strong>数据+””**的效率最慢，其实这些执行都是毫秒级，现在处理器的性能都比较强悍，其实影响不大，对于用户来说，没有什么感觉，但是我们可以再写代码的时候养成一个良好的习惯，有时候不用抠这么细，毕竟不是底层的代码，应用层，主要先以实现业务功能为主，这样后续有时间可以优化，记住一点：大行不顾细谨，大理不辞小让！</p>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Excepiton</tag>
-        <tag>okhttp3</tag>
+        <tag>Java</tag>
+        <tag>String</tag>
       </tags>
   </entry>
   <entry>
@@ -25277,6 +25526,35 @@ Thanks all.
       <tags>
         <tag>GitHub</tag>
         <tag>Retrofit 2.x</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Multiple dex files define Lokhttp3/internal/wsWebSocketProtocol</title>
+    <url>/2017/09/24/201709242444/</url>
+    <content><![CDATA[<h2 id="老套路，先晒图"><a href="#老套路，先晒图" class="headerlink" title="老套路，先晒图"></a>老套路，先晒图</h2><p>图一：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536778.png" alt="这里写图片描述"><br>如题，在编译打包时遇到了如上错误，很明显这是一个依赖库冲突的问题，我的app下依赖一个 <strong>ad</strong> library,而 <strong>ad</strong> library有依赖了一个 <strong>http</strong> library,这是一个我用okhttp封装的网络请求库，而 <strong>ad</strong> library 又依赖了 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 这依赖关系确实有点混乱，那这时候有人说了，你的 <strong>ad</strong> library为什么不用 <strong>http</strong> library里面的okhttp呢？自从AS3.0 gradle4.0开始依赖使用 <strong>implementation</strong> 代替了 <strong>compile</strong> 关键字，因此 <strong>compile</strong> 就被过期了，<strong>http</strong> 虽然依赖了 <strong>okhttp</strong> ，但是 <strong>ad</strong> library要想使用 <strong>okhttp</strong> 是不可以的，因为使用<strong>implementation</strong> 对于<strong>ad</strong> library 是不可见的，所以<strong>ad</strong> library又依赖了一次 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 因为 <strong>ad</strong> library需要单独的进行定制化的网络请求配置，所以 <strong>ad</strong> library中的网络请求是没有封装进<strong>http</strong> library中的，所以导致了重复依赖的问题，使用  <strong>implementation</strong> 关键字虽然可以屏蔽<strong>ad</strong> library访问 <strong>http</strong> library中 <strong>okhttp</strong> 的api,但是依赖冲突的问题确实还是存在的…</p>
+<p>于是乎，网上搜了一篇帖子：</p>
+<p><a href="https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp">https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp</a></p>
+<p>看来一下和我的情况一毛一样，报的错误也一样，直接戳到Answer处，解决方式如下</p>
+<p>图二：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536096.png" alt="这里写图片描述"></p>
+<p>然后直接去除掉重复的依赖，修改如下后，再rebuild</p>
+<p>图三：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537896.png" alt="这里写图片描述"></p>
+<p>心里想着，这个问题终于解决了，喝了口水，长呼了一口气。。。</p>
+<p>我擦，竟然又爆红了，我勒个去，什么情况？这不科学啊，什么鬼？心里很郁闷，这是为什么呢？</p>
+<p>不行啊，看来我必须要放大招了，心里开始仔细揣摩了，认真想想，绝逼哪里肯定是有问题的，start thinking…</p>
+<p>认真起来的男人是最帅的 0.0~</p>
+<p>仔细看了看<strong>http</strong> library中的 <strong>okhttp</strong> 是3.3.1,而 <strong>ad</strong> library中的 <strong>okhttp</strong> 3.9.1,忽然想起来之前遇到过同时依赖两个不同版本的库也会出现这样的问题，于是，灵光一现，立马把版本号改一样试试，修改后如下:</p>
+<p>图四：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537328.png" alt="这里写图片描述"></p>
+<p>然后再rebuild…</p>
+<p>oh yeah ~ 搞定，就是这么6… 怎一个爽快了得？</p>
+<p>好了，今天就分享这么多吧，一来呢总结一下自己遇到的一些问题及解决办法，如果你也遇到，希望能帮助到你们，二来呢，希望大家如果真的帮助到你们了，麻烦你们给我点个赞或者在文章底部给我评论，或者你有什么意见或者意见都可以相互交流，谢谢你们！</p>
+<p>一个逗比的码农和一个逗比的故事，如果想看到更多的文章，请点左侧头像下面的关注！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Excepiton</tag>
+        <tag>okhttp3</tag>
       </tags>
   </entry>
   <entry>

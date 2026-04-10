@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="哈喽，我是飞飞。 上个周末，我盯着账单坐了好一会儿。 这个月光 Claude API 和 OpenAI 的调用费，加起来比我预想的多不少。我已经刻意克制了——不跑没必要的任务，能用免费额度就不动 API。但账单还是比上个月涨了。 我就想：能不能搭一套完全不烧钱的本地 AI 开发环境？ 然后我花了半小时，用 Ollama + Claude Code + gemma4:e4b，把一个计算器跑起来了。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="零费用本地跑 AI：我用 Ollama + gemma4:e4b 写了个计算器，踩了这些坑">
+<meta property="og:url" content="https://www.vance.xin/2026/04/09/202604091756/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="哈喽，我是飞飞。 上个周末，我盯着账单坐了好一会儿。 这个月光 Claude API 和 OpenAI 的调用费，加起来比我预想的多不少。我已经刻意克制了——不跑没必要的任务，能用免费额度就不动 API。但账单还是比上个月涨了。 我就想：能不能搭一套完全不烧钱的本地 AI 开发环境？ 然后我花了半小时，用 Ollama + Claude Code + gemma4:e4b，把一个计算器跑起来了。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260409-202604091756.webp">
+<meta property="og:image" content="https://image.vance.xin/blog-diagram/20260409-202604091756-flow.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260409-ollama-gemma4-calculator.webp">
+<meta property="article:published_time" content="2026-04-09T17:56:47.000Z">
+<meta property="article:modified_time" content="2026-04-10T08:56:22.160Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Ollama">
+<meta property="article:tag" content="ClaudeCode">
+<meta property="article:tag" content="gemma4">
+<meta property="article:tag" content="本地AI">
+<meta property="article:tag" content="开发实战">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260409-202604091756.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/04/09/202604091756/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/04/09/202604091756/","path":"2026/04/09/202604091756/","title":"零费用本地跑 AI：我用 Ollama + gemma4:e4b 写了个计算器，踩了这些坑"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>零费用本地跑 AI：我用 Ollama + gemma4:e4b 写了个计算器，踩了这些坑 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89-Ollama"><span class="nav-text">为什么选 Ollama</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%80%89-gemma4-e4b"><span class="nav-text">为什么选 gemma4:e4b</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A-Claude-Code-%E6%8E%A5%E4%B8%8A%E6%9C%AC%E5%9C%B0%E6%A8%A1%E5%9E%8B"><span class="nav-text">把 Claude Code 接上本地模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E8%AE%A1%E7%AE%97%E5%99%A8%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="nav-text">开发计算器的过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E6%A8%A1%E5%9E%8B-vs-%E4%BA%91%E7%AB%AF%EF%BC%9A%E7%9C%9F%E5%AE%9E%E6%84%9F%E5%8F%97"><span class="nav-text">本地模型 vs 云端：真实感受</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%A0%E4%B8%AA%E5%AE%9E%E7%94%A8%E9%85%8D%E7%BD%AE%E5%BB%BA%E8%AE%AE"><span class="nav-text">几个实用配置建议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">263</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">441</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/04/09/202604091756/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="零费用本地跑 AI：我用 Ollama + gemma4:e4b 写了个计算器，踩了这些坑 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          零费用本地跑 AI：我用 Ollama + gemma4:e4b 写了个计算器，踩了这些坑
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-04-09 17:56:47" itemprop="dateCreated datePublished" datetime="2026-04-09T17:56:47+00:00">2026-04-09</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260409-202604091756.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上个周末，我盯着账单坐了好一会儿。</p>
+<p>这个月光 Claude API 和 OpenAI 的调用费，加起来比我预想的多不少。我已经刻意克制了——不跑没必要的任务，能用免费额度就不动 API。但账单还是比上个月涨了。</p>
+<p>我就想：能不能搭一套完全不烧钱的本地 AI 开发环境？</p>
+<p>然后我花了半小时，用 Ollama + Claude Code + gemma4:e4b，把一个计算器跑起来了。</p>
+<p><img src="https://image.vance.xin/blog-diagram/20260409-202604091756-flow.webp" alt="本地AI开发流程"></p>
+<h2 id="为什么选-Ollama"><a href="#为什么选-Ollama" class="headerlink" title="为什么选 Ollama"></a>为什么选 Ollama</h2><p>我之前用过 LM Studio，界面好看，但总感觉太「重」。</p>
+<p>Ollama 的设计哲学更接近 Docker——一个命令拉模型，一个命令跑起来，REST API 直接暴露在 11434 端口。你甚至不需要打开任何 UI。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 安装完之后，拉一个模型就这一行</span></span><br><span class="line">ollama pull gemma4:e4b</span><br><span class="line"></span><br><span class="line"><span class="comment"># 跑起来</span></span><br><span class="line">ollama run gemma4:e4b</span><br></pre></td></tr></table></figure>
+
+<p>跑起来之后，Ollama 在本地开了个 API 接口，同时兼容 OpenAI 和 Anthropic 两种格式。也就是说，你原有的代码不用动，把 base_url 从 api.openai.com 换成 localhost:11434，就切过来了。</p>
+<p>我之前以为切换本地模型要改很多代码。实际上换了那一行，项目照样跑，没有任何报错。</p>
+<h2 id="为什么选-gemma4-e4b"><a href="#为什么选-gemma4-e4b" class="headerlink" title="为什么选 gemma4:e4b"></a>为什么选 gemma4:e4b</h2><p>其实我一开始想跑 gemma4 的 26B 版本，但我的 MacBook Pro 撑不住。</p>
+<p>我在 Ollama 的模型库里翻了一圈，最后卡在 e4b 这个名字上——E 代表 effective parameters，推理时只激活 4.5B 有效参数，比同量级的模型显存占用小很多，我的 MacBook Pro 能撑住。</p>
+<p>更关键的是两点：它支持函数调用，上下文窗口 128K。没有函数调用，Claude Code 就是个聋子，读文件、写代码、执行命令这些工具它都调不了；128K 的上下文窗口意味着我写了两百行代码之后，模型不会突然「失忆」，忘了开头在干什么。Apache 2.0 协议我倒不怎么在意，主要是不想被 license 限制折腾。</p>
+<h2 id="把-Claude-Code-接上本地模型"><a href="#把-Claude-Code-接上本地模型" class="headerlink" title="把 Claude Code 接上本地模型"></a>把 Claude Code 接上本地模型</h2><p>这一步出乎意料地简单。</p>
+<p>Ollama v0.14.0 之后加了对 Anthropic Messages API 的兼容，官方直接提供了对接 Claude Code 的文档。我只需要设置两个环境变量：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> ANTHROPIC_AUTH_TOKEN=ollama</span><br><span class="line"><span class="built_in">export</span> ANTHROPIC_BASE_URL=http://localhost:11434</span><br></pre></td></tr></table></figure>
+
+<p>然后正常启动 Claude Code，指定模型名：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --model gemma4:e4b</span><br></pre></td></tr></table></figure>
+
+<p>Claude Code 的界面就起来了，后面接的是我本地的 gemma4:e4b，一行 API 调用费都没有。</p>
+<p>我当时在终端里盯着那个交互界面，有点不敢相信这真的在本地跑。</p>
+<h2 id="开发计算器的过程"><a href="#开发计算器的过程" class="headerlink" title="开发计算器的过程"></a>开发计算器的过程</h2><p>我选计算器不是因为它有多厉害，而是因为它足够小。</p>
+<p>本地模型的能力终究有限，我不想在一个复杂项目上撞墙。计算器让我把精力放在工具链本身——搭环境、调参数、理解模型的行为边界——而不是陷入业务逻辑的泥坑里。</p>
+<p>我的提示词很简单：</p>
+<blockquote>
+<p>帮我开发一个简单的计算器，支持加减乘除等功能。</p>
+</blockquote>
+<p>第一次输出还不错，基本结构都有，大概长这样：</p>
+<p><img src="https://image.vance.xin/aigc/image/20260409-ollama-gemma4-calculator.webp" alt="计算器"></p>
+<p>我一看，这不就是 iPhone 上的系统计算器嘛，你俩长得挺像的。</p>
+<p>测试的时候，有点问题，然后我让它优化，加上输入校验，避免 eval 的安全问题。</p>
+<p>这里出现了第一次卡顿。</p>
+<p>模型生成到一半停住了，然后重新开始输出前面已经写过的内容。我等了大概 40 秒，发现它在兜圈子。</p>
+<p>我后来查了一下，这是小模型在 Claude Code 场景下的常见问题——上下文一长，它就容易找不到方向。降低 temperature、缩短单次上下文可以缓解，但不能完全解决。</p>
+<p>我选择了一个折中方案：把任务拆得更细，每次只让它做一件事。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">第一步：只写解析表达式的函数</span><br><span class="line">第二步：只写输入校验</span><br><span class="line">第三步：只整合主循环</span><br></pre></td></tr></table></figure>
+
+<p>这种方式下，gemma4:e4b 的表现稳定多了。最终计算器顺利跑起来，支持括号嵌套、错误提示、循环输入，代码大概 60 行。</p>
+<h2 id="本地模型-vs-云端：真实感受"><a href="#本地模型-vs-云端：真实感受" class="headerlink" title="本地模型 vs 云端：真实感受"></a>本地模型 vs 云端：真实感受</h2><p>跑完之后我打开了那张账单，API 那一栏还是 ¥0。</p>
+<p>这种感觉比「省钱」更准确。它让我意识到，之前那些「算了别试了，要花钱」的念头，其实根本没必要。实验性的项目、学一个新工具、跑个草稿——这些场景，本地模型完全够用，而且不用在意每次调用消耗了多少 token。</p>
+<p>另一件触动我的事是高铁那次。我上高铁想用 Claude Code 处理点东西，结果没信号，直接废掉了。那时候我意识到自己对云端有多依赖——它断了，工作也断了。本地模型不依赖网络，这不是什么锦上添花的特性，是真实的差异。</p>
+<p>但要说局限，也是真实的。</p>
+<p>gemma4:e4b 在我的 M1 MacBook Pro 上大概每秒 20-40 个 token，云端 Claude 快多了。复杂任务它容易卡壳，调试起来也麻烦——出了问题，你不知道是模型能力不够，还是参数没配对，还是 Claude Code 的上下文管理出了问题。</p>
+<p>20-40 token&#x2F;s 的速度，说实话，真正要写好代码的时候我还是会切回云端——但这已经比我预期的强太多了。我之前以为本地模型只适合玩玩，现在改变主意了：只要任务不超过它的能力边界，它比云端更好用，因为它不会在你最需要的时候突然断网。我现在的分法很简单——实验、学习、小任务给本地；需要真正写好代码的复杂任务，切云端。</p>
+<h2 id="几个实用配置建议"><a href="#几个实用配置建议" class="headerlink" title="几个实用配置建议"></a>几个实用配置建议</h2><p>踩过的坑，记一下：</p>
+<p><strong>1. 上下文窗口要手动配置</strong></p>
+<p>Ollama 默认的上下文窗口不一定是满的。我最开始没配，Claude Code 跑着跑着就出现奇怪行为——模型开始重复生成已经写过的函数。加了这一行之后，稳定多了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PARAMETER num_ctx 32768</span><br></pre></td></tr></table></figure>
+
+<p>至少 32K，Claude Code 才能正常理解上下文。</p>
+<p><strong>2. 把 temperature 调低</strong></p>
+<p>我最开始没动 temperature，gemma4:e4b 在写输入校验那段时，突然开始给我加一个完全没要求的「历史记录」功能，自顾自地发散。调到 0.8 之后，它老实多了，只做我要求的那件事。代码生成场景推荐 0.7-0.85。</p>
+<p><strong>3. 每次只让它做一件事</strong></p>
+<p>这是帮我最大的一条。模型卡壳的根本原因，是我的 prompt 太大了——一次让它处理校验、安全、输出格式、错误提示，它就开始兜圈子。拆成四个 prompt 之后，每个都跑得很干净。我用 Claude Code 最大的价值，其实是它帮我拆任务，而不是指望本地模型一步到位。</p>
+<p><strong>4. 先从小项目开始</strong></p>
+<p>不是建议，是我自己的顺序。计算器跑通了，你对这套工具链的脾气就摸清了。下一个项目可以稍微大一点，但不要一上来就搭复杂系统——本地小模型不是不行，是你得先搞清楚它的边界在哪。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>我之前每次想「本地跑模型」，脑子里浮现的是：CUDA、驱动、兼容性报错、Stack Overflow、半天配不好。最后一般以「算了，直接用 API」收场。</p>
+<p>这次花了一个下午，环境搭好了，计算器跑起来了，账单是 ¥0。</p>
+<p>不是说本地模型已经很强了——该卡的地方还是会卡。但工具链成熟程度超出我的预期。两个环境变量，Claude Code 就接上本地模型了。这在一年前根本不是这个体验。</p>
+<p>后来我又打开了那张账单。Claude API 那一栏还是 ¥0。我在那里盯了两秒，觉得有点爽。</p>
+<p>我现在最想知道的是：有没有人在 Windows 上用 Ollama 跑 Claude Code，速度差多少？还有就是 gemma4 的 12B 版本——我的 Pro 跑不动，但如果有人测过和 e4b 的实际差距，评论区说一声。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Ollama/" rel="tag"># Ollama</a>
+              <a href="/tags/ClaudeCode/" rel="tag"># ClaudeCode</a>
+              <a href="/tags/gemma4/" rel="tag"># gemma4</a>
+              <a href="/tags/%E6%9C%AC%E5%9C%B0AI/" rel="tag"># 本地AI</a>
+              <a href="/tags/%E5%BC%80%E5%8F%91%E5%AE%9E%E6%88%98/" rel="tag"># 开发实战</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/04/09/202604091719/" rel="prev" title="用 Claude Code 写一篇文章，我省了一半的钱">
+                  <i class="fa fa-angle-left"></i> 用 Claude Code 写一篇文章，我省了一半的钱
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">907k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">13:45</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

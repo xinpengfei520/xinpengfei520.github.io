@@ -170,7 +170,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">259</span>
+          <span class="site-state-item-count">263</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -181,7 +181,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">431</span>
+        <span class="site-state-item-count">441</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -233,6 +233,469 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242429/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2017/09/24/201709242429/" class="post-title-link" itemprop="url">Android 实现多语言 so easy</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>9.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>8 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <blockquote>
+<p>CSDN：<a target="_blank" rel="noopener" href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由作者原创，未经授权，不可随意转载！</p>
+</blockquote>
+<p>&#160; &#160;&#160; &#160;最近，我们公司的业务已经拓展到了香港，我们都知道香港使用的是繁体中文，因此，我们的 APP 要可以设置繁体语言，这不我们要紧跟国际的步伐，实现多语言，产品定给我们的需求主要以实现简体中文、繁体中文、英文三种语言切换即可，具体的业务逻辑是：当用户第一次进入 APP 时，App 的语言跟随当前系统语言，当用户设置了某种语言之后就切换为用户设置的语言，不管系统之后设置成哪种语言，都不会影响用户设置的语言，如果用户一直没有设置语言选项，只要系统语言改变时，APP 的语言也要跟随系统语言设置改变。</p>
+<p>&#160; &#160;&#160; &#160;说明：本文以实现简体中文、繁体中文和英语为例进行简要讲解。</p>
+<h2 id="1-实现思路"><a href="#1-实现思路" class="headerlink" title="1.实现思路"></a>1.实现思路</h2><p>&#160; &#160;&#160; &#160;我们可以预先使用SharedPreference 来保存一个语言类型的值，当用户第一次进入 APP 时，我们通过 Key 取出这个值，第一次肯定是取不到的，这时我们将 App 的语言设置为当前系统默认值即可；当用户通设置多语言时，我们将这个语言对应的值通过SharedPreference 保存到本地即可，然后此时重启 APP，设置为用户设置的语言即可，以后每次进入 App 时只需取出保存用户设置的语言设置即可，一般设置语言写在程序的入口 <strong>Application</strong> 的 <strong>onCreate()</strong> 方法里。</p>
+<h2 id="2-自定义SharedPreference工具类"><a href="#2-自定义SharedPreference工具类" class="headerlink" title="2.自定义SharedPreference工具类"></a>2.自定义SharedPreference工具类</h2><p>&#160; &#160;&#160; &#160;作用：用于保存当前设置语言的类型，此文以 SharedPreference 保存为例，当然使用数据库或者其他保存方式也是可以的。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String APP_SP = &quot;app_sp&quot;;</span><br><span class="line">    private static final String TAG = SpUtil.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instance = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstance() &#123;</span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(APP_SP, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instance;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line">        if (value == null) &#123;</span><br><span class="line">            Log.e(TAG, &quot;value==null保存失败&quot;);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 读取String类型数据</span><br><span class="line">     *</span><br><span class="line">     * @param key</span><br><span class="line">     * @param defValue</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 读取boolean类型数据</span><br><span class="line">     *</span><br><span class="line">     * @param key</span><br><span class="line">     * @param defValue</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 读取boolean类型数据</span><br><span class="line">     *</span><br><span class="line">     * @param key</span><br><span class="line">     * @param defValue</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 清除所有保存的数据(xxx.xml仍然存在，但是内部没有数据)</span><br><span class="line">     */</span><br><span class="line">    public void clearAll() &#123;</span><br><span class="line">        mSp.edit().clear().commit();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-自定义LocaleUtil工具类"><a href="#3-自定义LocaleUtil工具类" class="headerlink" title="3.自定义LocaleUtil工具类"></a>3.自定义LocaleUtil工具类</h2><p>&#160; &#160;&#160; &#160;作用：用于设置保存语言及获取当前语言，重启 APP 等操作</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/24/201709242429/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242430/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2017/09/24/201709242430/" class="post-title-link" itemprop="url">Android 追加换行写入内容到 txt 文件中</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>实现思路为：使用 Context.MODE_APPEND 属性将每次内容的写入到上次内容的尾部，然后在每次写入内容完成之后写入一个回车换行符**fos.write(“\r\n”.getBytes());**即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/10/31 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class FileHelper &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public FileHelper(Context mContext) &#123;</span><br><span class="line">        this.mContext = mContext;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件保存的方法，写入到文件中，所以是输出流</span><br><span class="line">     */</span><br><span class="line">    public void save(String adNum, String time) &#123;</span><br><span class="line">        String content = &quot;广告位编号：&quot; + adNum + &quot;，播放时长：&quot; + time;</span><br><span class="line">        FileOutputStream fos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            // Context.MODE_PRIVATE私有权限，Context.MODE_APPEND追加写入到已有内容的后面</span><br><span class="line">            fos = mContext.openFileOutput(getFileName(), Context.MODE_APPEND);</span><br><span class="line">            fos.write(content.getBytes());</span><br><span class="line">            fos.write(&quot;\r\n&quot;.getBytes());//写入换行</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (fos != null) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    fos.close();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件读取的方法</span><br><span class="line">     */</span><br><span class="line">    public String read(String filename) throws IOException &#123;</span><br><span class="line">        FileInputStream fis = mContext.openFileInput(filename);</span><br><span class="line">        byte[] buff = new byte[1024];</span><br><span class="line">        StringBuilder sb = new StringBuilder(&quot;&quot;);</span><br><span class="line">        int len = 0;</span><br><span class="line">        while ((len = fis.read(buff)) &gt; 0) &#123;</span><br><span class="line">            sb.append(new String(buff, 0, len));</span><br><span class="line">        &#125;</span><br><span class="line">        fis.close();</span><br><span class="line">        return sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get file name such as 20171031.txt</span><br><span class="line">     *</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private String getFileName() &#123;</span><br><span class="line">        return TimeUtil.getCurrentDay() + &quot;.txt&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>转载请注明出处，谢谢！</p>
+
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/24/201709242430/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242431/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2017/09/24/201709242431/" class="post-title-link" itemprop="url">CentOS7.x 搭建 GitLab 教程</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>今天闲来无事，想起之前买了一个阿里云 ECS，一直闲置着没用，一时兴起就想搭个自己的 GitLab 玩玩，GitLab 官网也提供了安装教程，很简单，照着步骤一步步基本没什么问题，可能安装的过程中有一些坑需要自己去解决。</p>
+<h2 id="1-安装-GitLab"><a href="#1-安装-GitLab" class="headerlink" title="1.安装 GitLab"></a>1.安装 GitLab</h2><p>打开 GitLab 官网 <a target="_blank" rel="noopener" href="https://www.gitlab.com.cn/installation/#centos-7">https://www.gitlab.com.cn/installation/#centos-7</a></p>
+<p>根据自己的系统选择，我们选择 CentOS7</p>
+<p><img src="https://img-blog.csdn.net/20180519142033865?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="图1"></p>
+<p>首先，安装并配置必要的依赖关系，确保打开防火墙的 SSH 和 HTTP 的访问，如果没有，需要您输入下面命令打开</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install -y curl policycoreutils-python openssh-server</span><br><span class="line">sudo systemctl enable sshd</span><br><span class="line">sudo systemctl start sshd</span><br><span class="line">sudo firewall-cmd --permanent --add-service=http</span><br><span class="line">sudo systemctl reload firewalld</span><br></pre></td></tr></table></figure>
+
+<p>接下来安装 Postfix 发送邮件通知服务，或者如果您想使用其他方式（SMTP）来发送电子邮件，请跳过此步骤，并在安装了 GitLab 之后配置一个外部SMTP服务器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install postfix</span><br><span class="line">sudo systemctl enable postfix</span><br><span class="line">sudo systemctl start postfix</span><br></pre></td></tr></table></figure>
+
+<p>添加 GitLab 包仓库并安装包</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/24/201709242431/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242432/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content=" | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2017/09/24/201709242432/" class="post-title-link" itemprop="url">CentOS7 安装 MySQL 8.0)</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>659</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>个人服务器搭建一个 MySQL 数据库，来读写一些简单的接口数据处理。</p>
+<p>废话不多说，直接撸起。</p>
+<p>1.切换到用户目录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd ~</span><br></pre></td></tr></table></figure>
+
+<p>2.下载 rpm 包</p>
+<p>在官网找到对应的 MySQL 的源，我们选择 <strong>mysql80-community-release-el7-1.noarch.rpm</strong> 社区免费正式发布版8.0</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget https://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
+
+<p>3.安装 rpm 包</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm -ivh mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
+
+<p>4.修改 MySQL 的repo源，使MySQL8.0可用</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/09/24/201709242432/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
     <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242433/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -269,7 +732,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -385,7 +848,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -503,7 +966,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -621,7 +1084,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -738,7 +1201,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -858,7 +1321,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
+      <time title="修改时间：2026-04-10 08:56:22" itemprop="dateModified" datetime="2026-04-10T08:56:22+00:00">2026-04-10</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -925,475 +1388,8 @@
 
 
 
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242439/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/09/24/201709242439/" class="post-title-link" itemprop="url">Java内存管理与垃圾回收</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>1.2k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="一、内存简介"><a href="#一、内存简介" class="headerlink" title="一、内存简介"></a>一、内存简介</h2><p>根据《Java虚拟机规范（第2版）》的规定，Java虚拟机所管理的内存将会包括以下几个运行时数据区域，如下图所示：</p>
-<p>经常人把Java内存区分为堆内存（Heap）和栈内存（Stack），这种分法比较粗糙，Java内存区域的划分实际上远比这复杂。这种划分方式的流行是因为大多数程序员最关注的、与对象内存分配关系最密切的内存区域是这两块。<br>通常所说的堆（Heap），此内存区域的唯一目的就是存放对象实例，几乎所有的对象实例都在这里分配内存。这一点在Java虚拟机规范中的描述是：所有的对象实例以及数组都要在堆上分配。<br>通常所说的栈（Stack），是指虚拟机栈。虚拟机栈描述的是Java方法执行的内存模型：每个方法被执行的时候都会同时创建一个栈帧（Stack Frame）用于存储局部变量表、操作栈、动态链接、方法出口等信息。每一个方法被调用直至执行完成的过程，就对应着一个栈帧在虚拟机栈中从入栈到出栈的过程。局部变量表存放了编译期可知长度的各种基本数据类型（boolean、byte、char、short、int、float、long、double）、对象引用（reference类型，它不等同于对象本身，是对象在堆内存的首地址）。因此局部变量表所需的内存空间在编译期间完成分配，当进入一个方法时，这个方法需要在帧中分配多大的局部变量空间是完全确定的，在方法运行期间不会改变局部变量表的大小。 方法执行完，自动释放。<br>方法区（Method Area）用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据。</p>
-<h2 id="二、垃圾回收机制"><a href="#二、垃圾回收机制" class="headerlink" title="二、垃圾回收机制"></a>二、垃圾回收机制</h2><p>垃圾回收（Garbage Collection，GC）：在程序的运行环境中，JVM（Java虚拟机）提供了一个系统级的垃圾回收器线程，它负责自动回收那些无用对象所占用的堆内存。这种内存回收的过程被称为垃圾回收。</p>
-<p>Java语言中，内存回收任务由JVM来担当。<br>Java的垃圾回收机制是JVM提供的能力，由单独的系统级垃圾回收线程在空闲时间以不定时的方式动态回收无任何引用的对象占据的堆内存空间。</p>
-<p>（1）程序只能决定一个对象不再被任何引用变量引用，使得它成为可以被回收的垃圾。<br>类比：决定什么样的东西扔掉</p>
-<p>（2）不能决定垃圾回收的时间。垃圾回收器作为低优先级线程独立运行。在任何时候，程序都无法迫使垃圾回收器立即执行垃圾会后操作。<br>类比：居民把无用物品放在指定的地方，清洁工人会把它收拾走。但垃圾被收走的时间，居民是不知道的，也无需了解。</p>
-<p>（3）程序中可调用System.gc()或Runtime.gc()方法提示垃圾回收器尽快执行垃圾回收操作，但是不能保证调用后垃圾回收器会立即执行垃圾回收。<br>类比：小区垃圾成堆时，居民打电话给环保局，催促清洁工尽快来处理垃圾。但是清洁工不一定立即就来了，也有可能很长时间后再来。</p>
-
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/24/201709242439/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242440/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/09/24/201709242440/" class="post-title-link" itemprop="url">Java输入日期计算是这年的第几天</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>1.7k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>2 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <h2 id="1-思路"><a href="#1-思路" class="headerlink" title="1.思路"></a>1.思路</h2><ol>
-<li>通过年份区分出是闰年还是平年，平年 2 月 28 年，闰年 2 月 29 天；</li>
-<li>1、3、5、7、8、10、12 月份 31 天其余月份均为 30 天；</li>
-<li>然后将每个月的天数相加即可，注意如果输入的是 12 月份，则是从 11 月份往前累加到1月份，1月份加的是输入的天数；</li>
-</ol>
-<h2 id="2-实现"><a href="#2-实现" class="headerlink" title="2.实现"></a>2.实现</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line">import java.util.Scanner;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2018/6/22 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line">public class CalculateUtils &#123;</span><br><span class="line"></span><br><span class="line">    /*平年二月28天*/</span><br><span class="line">    private static final int DAYS_28 = 28;</span><br><span class="line">    /*闰年二月29天*/</span><br><span class="line">    private static final int DAYS_29 = 29;</span><br><span class="line">    /*除了31天的月份其他均为30天*/</span><br><span class="line">    private static final int DAYS_30 = 30;</span><br><span class="line">    /*1、3、5、7、8、10、12月份31天*/</span><br><span class="line">    private static final int DAYS_31 = 31;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Scanner input = new Scanner(System.in);</span><br><span class="line">        System.out.println(&quot;Please input year:&quot;);</span><br><span class="line">        int year = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input month:&quot;);</span><br><span class="line">        int month = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input day:&quot;);</span><br><span class="line">        int day = input.nextInt();</span><br><span class="line"></span><br><span class="line">        int daysInYear = getDaysInYear(year, month, day);</span><br><span class="line">        System.out.println(&quot;daysInYear:&quot; + daysInYear);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get days in this year</span><br><span class="line">     *</span><br><span class="line">     * @param year</span><br><span class="line">     * @param month</span><br><span class="line">     * @param day</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static int getDaysInYear(int year, int month, int day) &#123;</span><br><span class="line">        int totalDays = 0;</span><br><span class="line"></span><br><span class="line">        switch (month) &#123;</span><br><span class="line">            // 12 月份加的是11月份的天数，依次类推</span><br><span class="line">            case 12:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 11:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 10:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 9:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 8:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 7:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 6:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 5:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 4:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 3:</span><br><span class="line">                // 判断是否是闰年</span><br><span class="line">                if (((year / 4 == 0) &amp;&amp; (year / 100 != 0)) || (year / 400 == 0)) &#123;</span><br><span class="line">                    totalDays += DAYS_29;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    totalDays += DAYS_28;</span><br><span class="line">                &#125;</span><br><span class="line">            case 2:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 1: // 如果是1月份就加上输入的天数</span><br><span class="line">                totalDays += day;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return totalDays;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="3-思考"><a href="#3-思考" class="headerlink" title="3.思考"></a>3.思考</h2><p>因为只有2月份的天数和输入的 day 天数是不固定的，其他月份的天数是固定的，而固定的天数是可以通过输入的月份算出来，这样我们就可以这样计算：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2 月份的天数 + 输入的天数 + 计算出来的固定天数</span><br></pre></td></tr></table></figure>
-
-<p>如果大家还有其他的更好的优化的都可以在下面评论。</p>
-
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/24/201709242440/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242441/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/09/24/201709242441/" class="post-title-link" itemprop="url">Java 中 equals 与 == 区别</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>1.3k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>**&#x3D;&#x3D;**是运算符而equals是比较方法。</p>
-<p>##1、&#x3D;&#x3D;运算符</p>
-<p>（1）基本数据类型比较值:只要两个变量的值相等，即为true<br>注意：当基本数据类型使用“&#x3D;&#x3D;”进行比较时，符号两边的数据必须类型兼容（类型相同或可自动类型转换），否则编译出错；</p>
-<p>（2）引用类型比较引用：比较两个对象的地址值，两个引用变量指向同一个对象的堆空间时，才为true</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Person p1=new Person();   </span><br><span class="line">Person p2=new Person();</span><br><span class="line">if(p1==p2)   //false</span><br><span class="line">p1=p2;//如果有这样的赋值语句后  if(p1==p2)   //true</span><br></pre></td></tr></table></figure>
-
-<p>注意：当引用类型使用“&#x3D;&#x3D;”进行比较时，符号两边的数据类型必须兼容（类型相同或有父子类关系），否则编译出错；</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Person p=new Person();</span><br><span class="line">String str=&quot;hello&quot;;</span><br><span class="line">if(p==str)//错误，p和String类型不兼容，Person和String类型无父子类关系</span><br><span class="line">Student stu = new Student();//Student extends Person</span><br><span class="line">if(p==stu)//编译通过</span><br></pre></td></tr></table></figure>
-
-<p>##2、equals方法</p>
-<p>（1）equals()：所有类都继承了Object，也就获得了equals()方法。<br>（2）自定义类可以重写equals方法<br>注意：如果一个类型没有重写过equals方法，那么调用equals等价于&#x3D;&#x3D;</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public class Test &#123;</span><br><span class="line">	public static void main(String[] args) &#123;</span><br><span class="line">		Person p1=new Person();</span><br><span class="line">		Person p2=new Person();</span><br><span class="line">		if(p1==p2)&#123;</span><br><span class="line">			</span><br><span class="line">		&#125;</span><br><span class="line">		if(p1.equals(p2))&#123;</span><br><span class="line">			//因为这里Person类没重写equals方法，那么p1.equals(p2)等价于p1==p2</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">class Person&#123;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/24/201709242441/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2017/09/24/201709242443/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="飞飞的AI实验室">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="飞飞的AI实验室">
-      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content=" | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2017/09/24/201709242443/" class="post-title-link" itemprop="url">ListView 设置分割线</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2017-09-24 23:47:57" itemprop="dateCreated datePublished" datetime="2017-09-24T23:47:57+00:00">2017-09-24</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar-check"></i>
-      </span>
-      <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-04-08 10:45:57" itemprop="dateModified" datetime="2026-04-08T10:45:57+00:00">2026-04-08</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-        </span>
-    </span>
-
-  
-    <span class="post-meta-break"></span>
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>1k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>##1.设置分割的颜色和高度</p>
-<p><strong>divider</strong>设置分割线的颜色属性；</p>
-<p><strong>dividerHeight</strong>设置分割线的高度；</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;ListView</span><br><span class="line">       android:id=&quot;@+id/listView&quot;</span><br><span class="line">       android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">       android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">       android:layout_marginLeft=&quot;@dimen/margin_14dp&quot;</span><br><span class="line">       android:layout_marginRight=&quot;@dimen/margin_14dp&quot;</span><br><span class="line">       android:layout_marginTop=&quot;@dimen/margin_8dp&quot;</span><br><span class="line">       android:divider=&quot;@color/transparent&quot;</span><br><span class="line">       android:dividerHeight=&quot;8dp&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>##2.去掉分割线</p>
-<p>1.在代码中设置：setDriver(null)；</p>
-<p>2.或者在布局文件中设置：android:divider&#x3D;”@null”；</p>
-<p>3.如果没有背景也可将divider设置为透明也可以实现隐藏分割线的效果，但是这种方式分割线还是存在的，并且占了一定的高度，只是隐藏显示了而已；</p>
-<p>更多关于<strong>ListView</strong>的文章请参考：</p>
-<p><a target="_blank" rel="noopener" href="http://blog.csdn.net/bdmh/article/details/39522071">http://blog.csdn.net/bdmh/article/details/39522071</a></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/09/24/201709242443/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
   <nav class="pagination">
-    <a class="extend prev" rel="prev" title="上一页" aria-label="上一页" href="/page/24/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/24/">24</a><span class="page-number current">25</span><a class="page-number" href="/page/26/">26</a><a class="extend next" rel="next" title="下一页" aria-label="下一页" href="/page/26/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" title="上一页" aria-label="上一页" href="/page/24/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/24/">24</a><span class="page-number current">25</span><a class="page-number" href="/page/26/">26</a><a class="page-number" href="/page/27/">27</a><a class="extend next" rel="next" title="下一页" aria-label="下一页" href="/page/26/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 </div>
@@ -1418,13 +1414,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">894k</span>
+    <span title="站点总字数">907k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">13:33</span>
+    <span title="站点阅读时长">13:45</span>
   </span>
 </div>
 <div class="busuanzi-count">

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="上周接手了一个同事离职留下的项目。Python 后端，三万多行代码，分布在 60 多个文件里。 README 写了半页，最近一次更新是去年 8 月。设计文档在飞书的某个不知道哪层的文件夹里，打开一看，跟现在的代码已经对不上了。Slack 里倒是有一些讨论记录，但散落在三四个频道里，搜半天搜不出完整的决策链。 我花了两天时间，才把核心模块之间的调用关系理清楚。两天。 后来在 GitHub Trend">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Graphify：一条命令，把代码+文档+讨论拉成一张知识图谱">
+<meta property="og:url" content="https://www.vance.xin/2026/04/13/202604131400/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="上周接手了一个同事离职留下的项目。Python 后端，三万多行代码，分布在 60 多个文件里。 README 写了半页，最近一次更新是去年 8 月。设计文档在飞书的某个不知道哪层的文件夹里，打开一看，跟现在的代码已经对不上了。Slack 里倒是有一些讨论记录，但散落在三四个频道里，搜半天搜不出完整的决策链。 我花了两天时间，才把核心模块之间的调用关系理清楚。两天。 后来在 GitHub Trend">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-04-13T14:00:00.000Z">
+<meta property="article:modified_time" content="2026-04-13T09:52:47.344Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="开发效率">
+<meta property="article:tag" content="AI工具">
+<meta property="article:tag" content="Graphify">
+<meta property="article:tag" content="知识图谱">
+<meta property="article:tag" content="代码理解">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/04/13/202604131400/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/04/13/202604131400/","path":"2026/04/13/202604131400/","title":"Graphify：一条命令，把代码+文档+讨论拉成一张知识图谱"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Graphify：一条命令，把代码+文档+讨论拉成一张知识图谱 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E8%A7%A3%E5%86%B3%E7%9A%84%E6%98%AF%E4%B8%80%E4%B8%AA%E7%9C%9F%E5%AE%9E%E7%9A%84%E7%97%9B"><span class="nav-text">它解决的是一个真实的痛</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E5%AE%9E%E9%99%85%E8%B7%91%E4%BA%86%E4%B8%80%E4%B8%8B"><span class="nav-text">我实际跑了一下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A9%E6%88%91%E6%84%8F%E5%A4%96%E7%9A%84%E5%87%A0%E4%B8%AA%E7%82%B9"><span class="nav-text">让我意外的几个点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E4%B8%8A%E6%80%8E%E4%B9%88%E5%AE%9E%E7%8E%B0%E7%9A%84"><span class="nav-text">技术上怎么实现的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E8%83%BD%E6%8E%A5%E5%87%A0%E4%B9%8E%E6%89%80%E6%9C%89-AI-%E7%BC%96%E7%A8%8B%E5%B7%A5%E5%85%B7"><span class="nav-text">它能接几乎所有 AI 编程工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%A0%E4%B8%AA%E5%80%BC%E5%BE%97%E4%B8%80%E6%8F%90%E7%9A%84%E5%8A%9F%E8%83%BD"><span class="nav-text">几个值得一提的功能</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E9%98%B6%E6%AE%B5%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-text">现阶段的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E5%88%A4%E6%96%AD"><span class="nav-text">我的判断</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">269</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">461</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/04/13/202604131400/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Graphify：一条命令，把代码+文档+讨论拉成一张知识图谱 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Graphify：一条命令，把代码+文档+讨论拉成一张知识图谱
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-04-13 14:00:00 / 修改时间：09:52:47" itemprop="dateCreated datePublished" datetime="2026-04-13T14:00:00+00:00">2026-04-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>上周接手了一个同事离职留下的项目。Python 后端，三万多行代码，分布在 60 多个文件里。</p>
+<p>README 写了半页，最近一次更新是去年 8 月。设计文档在飞书的某个不知道哪层的文件夹里，打开一看，跟现在的代码已经对不上了。Slack 里倒是有一些讨论记录，但散落在三四个频道里，搜半天搜不出完整的决策链。</p>
+<p>我花了两天时间，才把核心模块之间的调用关系理清楚。两天。</p>
+<p>后来在 GitHub Trending 上刷到了 Graphify，10 天涨了 2 万多星。我以为又是一个 demo 级的项目，随手点进去看了看，结果试了一下就没停下来。</p>
+<h2 id="它解决的是一个真实的痛"><a href="#它解决的是一个真实的痛" class="headerlink" title="它解决的是一个真实的痛"></a>它解决的是一个真实的痛</h2><p>复杂项目最头疼的地方，往往不在代码本身——代码再烂，花时间总能读懂。真正要命的是知识碎片化。</p>
+<p>代码在 GitHub，设计文档在 Notion 或飞书，技术讨论在 Slack 或微信群，架构图在某个 Draw.io 文件里，上次技术评审的录屏不知道存哪了。每种信息用不同的格式存在不同的地方，想搞清楚一个模块为什么这么设计，你得同时打开四五个工具来回跳。</p>
+<p>新人接手项目要拼图。就算是自己写的代码，两周不看也要拼图。</p>
+<p>Graphify 干的事情说起来很简单：你给它指一个目录，它把里面的代码、文档、PDF、图片、甚至视频全部吃进去，然后吐出一张可交互的知识图谱。代码里的函数调用关系、模块依赖、文档里提到的概念、讨论中出现的设计决策——全部变成图上的节点和边。</p>
+<h2 id="我实际跑了一下"><a href="#我实际跑了一下" class="headerlink" title="我实际跑了一下"></a>我实际跑了一下</h2><p>先装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pip install graphifyy</span><br><span class="line">graphify install</span><br></pre></td></tr></table></figure>
+
+<p>注意 PyPI 上的包名是 <code>graphifyy</code>，两个 y。</p>
+<p>然后对着项目目录跑：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">graphify .</span><br></pre></td></tr></table></figure>
+
+<p>等了大概三分钟（我的项目大概 60 个文件），它生成了三个东西：</p>
+<p><strong>graph.html</strong> — 一个可以在浏览器里直接打开的交互式图谱。节点可以点击、搜索、按社区过滤。我点了一下核心的 <code>OrderService</code> 节点，它的上下游依赖一目了然：哪些模块在调用它，它又依赖了哪些底层服务。之前我花了半天才理清楚的调用链，图上拖拽几下就看明白了。</p>
+<p><strong>graph.json</strong> — 持久化的图数据。下次文件改了不用全量重跑，<code>graphify . --update</code> 会用 SHA256 哈希比对，只处理变更的文件。</p>
+<p><strong>GRAPH_REPORT.md</strong> — 一份纯文本的架构摘要。它会告诉你图里哪些节点是中心节点、哪些模块之间有意想不到的连接、建议你进一步问什么问题。这份报告的定位是给 AI 助手看的——让 Claude 或 Copilot 在帮你写代码之前，先读一遍这个报告，就能拿到项目级的理解。</p>
+<h2 id="让我意外的几个点"><a href="#让我意外的几个点" class="headerlink" title="让我意外的几个点"></a>让我意外的几个点</h2><p><strong>它不只吃代码。</strong> 我试着把之前那份飞书文档导出成 PDF 丢进去，又把 Slack 里的几段关键讨论截图扔进去。Graphify 把 PDF 里的概念提取出来了，截图也通过视觉模型分析了。最后图上出现了”限流策略”这个节点——这个概念只在讨论截图里出现过，代码里没有任何变量叫这个名字，但它确实是整个模块设计的核心约束。</p>
+<p><strong>置信标签。</strong> 图上的每条边都标了来源：EXTRACTED 表示从代码里直接提取的（比如 import 语句、函数调用），这些是确定的事实；INFERRED 表示模型推断的，附带一个 0 到 1 的置信度分数；AMBIGUOUS 直接标红，提示你这里需要人工确认。</p>
+<p>我一开始没在意这个设计。后来发现它帮了大忙——有一条边把 <code>PaymentService</code> 和 <code>NotificationService</code> 连在一起，标的是 INFERRED，置信度 0.4。我看了一下，发现确实有个间接依赖，但不是直接调用，而是通过消息队列。如果没有这个置信标签，我可能直接把它当成事实了。</p>
+<p><strong>代码不出本地。</strong> 代码解析用的是 Tree-sitter，纯本地 AST 提取，不走网络。只有文档、图片这些需要语义理解的材料才会送到 LLM API。我之前用其他 AI 代码分析工具，最头疼的就是要把整个仓库传上去——公司的私有代码，传一次心里就咯噔一下。Graphify 这个分层设计至少让代码本身不离开机器。</p>
+<h2 id="技术上怎么实现的"><a href="#技术上怎么实现的" class="headerlink" title="技术上怎么实现的"></a>技术上怎么实现的</h2><p>我好奇它跑的时候到底在干什么，看了一下日志和源码。</p>
+<p>跑起来之后最先动的是 Tree-sitter。它对代码做 AST 解析，支持 23 种语言，Python、Go、Rust、Java 这些都有。提取出来的东西包括类定义、函数签名、import 关系、调用图。整个过程纯本地，不需要任何 API，跑完之后代码层面的关系就已经有了。</p>
+<p>如果目录里有视频或音频文件，faster-whisper 会在本地做转录。我没试这一步，不过文档说音频也不出本地。</p>
+<p>剩下的文档、PDF、图片、转录文本就得靠 LLM 了。Graphify 会把这些材料送给 Claude 或 GPT-4，让模型提取概念和语义关系。这一步是并行跑的，多个子 agent 同时处理不同文件，所以速度还行。</p>
+<p>最后用 NetworkX 把所有结果合成一张图，再用 Leiden 算法做社区检测——简单说就是把关系紧密的节点自动聚成一簇。整个链路不用向量数据库，不用 embedding，纯粹基于图的拓扑结构来分群。</p>
+<h2 id="它能接几乎所有-AI-编程工具"><a href="#它能接几乎所有-AI-编程工具" class="headerlink" title="它能接几乎所有 AI 编程工具"></a>它能接几乎所有 AI 编程工具</h2><p>Graphify 不只是一个独立工具，它设计成了 AI 编程助手的”知识层”。支持的平台列表有点长：</p>
+<p>Claude Code、OpenAI Codex、Cursor、Gemini CLI、GitHub Copilot CLI、Aider、OpenCode……总共 12 个。</p>
+<p>装到 Claude Code 里是这样的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">graphify claude install</span><br></pre></td></tr></table></figure>
+
+<p>它会自动在项目里生成 CLAUDE.md 和一个 PreToolUse hook。之后 Claude 在帮你写代码之前，会先读 GRAPH_REPORT.md 拿到全局理解。官方给的数据是，对大仓库来说，用图谱比直接读源文件省 71.5 倍 token。</p>
+<p>我自己实际感受没有那么夸张，但确实有帮助——Claude 不再需要我一个文件一个文件地喂上下文了，它直接从图里知道哪些模块相关。</p>
+<h2 id="几个值得一提的功能"><a href="#几个值得一提的功能" class="headerlink" title="几个值得一提的功能"></a>几个值得一提的功能</h2><p><strong>增量更新。</strong> 文件改了之后跑 <code>graphify . --update</code>，只处理变化的部分。日常开发不需要每次全量重建。</p>
+<p><strong>Watch 模式。</strong> <code>graphify . --watch</code> 会监听文件变化，自动同步图谱。适合边开发边看图。</p>
+<p><strong>多种导出格式。</strong> 除了 HTML 和 JSON，还能导出到 Obsidian vault（<code>--obsidian</code>）、Neo4j（<code>--neo4j</code>）、SVG（<code>--svg</code>）、GraphML（<code>--graphml</code>，Gephi 和 yEd 能直接打开）。</p>
+<p><strong>添加外部资源。</strong> 可以把论文、视频、网页 URL 加进图里：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graphify add https://arxiv.org/abs/1706.03762</span><br><span class="line">graphify add &lt;视频URL&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>查询。</strong> 直接在命令行问问题：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graphify query <span class="string">&quot;attention 和 optimizer 之间有什么关系？&quot;</span></span><br><span class="line">graphify path <span class="string">&quot;NodeA&quot;</span> <span class="string">&quot;NodeB&quot;</span>  <span class="comment"># 查两个节点之间的最短路径</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="现阶段的问题"><a href="#现阶段的问题" class="headerlink" title="现阶段的问题"></a>现阶段的问题</h2><p>说说不好的。</p>
+<p>这个项目 4 月 3 号才创建，到今天刚 10 天。虽然迭代很快（10 天发了 10 个版本），但还是很早期。</p>
+<p>我遇到过 GRAPH_REPORT.md 生成出来是空白的情况。Kevin Kinnett 的评测里也提到了同样的问题。</p>
+<p>对于中等规模的项目（几十个文件），直接用 IDE 的全局搜索可能比走图谱更快。图谱的优势在大型项目和多人协作场景下更明显。</p>
+<p>还有一个现实问题：语义提取那一步要调 LLM API，有成本。文件多的话，跑一次的 API 费用不算便宜。</p>
+<h2 id="我的判断"><a href="#我的判断" class="headerlink" title="我的判断"></a>我的判断</h2><p>回到开头那个场景——接手同事项目花了两天理调用关系。如果当时有 Graphify，我大概率半小时内就能拿到一张全局依赖图。省不省两天不好说，但至少那种”打开代码不知道从哪看起”的茫然感会少很多。</p>
+<p>置信标签是我觉得这个工具最值得借鉴的设计。我之前用过几个知识图谱类工具，生成出来的关系全部是一视同仁的实线，你分不清哪些是铁板钉钉的 import 关系，哪些是模型猜的。Graphify 直接把”我不确定”标出来，用的时候心里有数。</p>
+<p>但它确实太新了。10 天的项目，我不会拿它来做任何 critical 的事情。更适合的场景是接手新项目、做架构梳理的时候跑一次，拿到一个粗略的全局视图。等它稳定几个月再说。</p>
+<p>如果你手上正好有一个”接手别人代码”的苦差事，装上跑一次试试。三分钟的事，看看那张图能不能帮你少翻几十个文件。</p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/safishamsi/graphify">https://github.com/safishamsi/graphify</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%BC%80%E5%8F%91%E6%95%88%E7%8E%87/" rel="tag"># 开发效率</a>
+              <a href="/tags/AI%E5%B7%A5%E5%85%B7/" rel="tag"># AI工具</a>
+              <a href="/tags/Graphify/" rel="tag"># Graphify</a>
+              <a href="/tags/%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/" rel="tag"># 知识图谱</a>
+              <a href="/tags/%E4%BB%A3%E7%A0%81%E7%90%86%E8%A7%A3/" rel="tag"># 代码理解</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/04/12/202604121555/" rel="prev" title="Karpathy 的 LLM Wiki：让 AI 帮你把读过的文章变成复利">
+                  <i class="fa fa-angle-left"></i> Karpathy 的 LLM Wiki：让 AI 帮你把读过的文章变成复利
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">930k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">14:05</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

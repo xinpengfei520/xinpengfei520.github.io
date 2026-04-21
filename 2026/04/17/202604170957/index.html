@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="大家好，我是飞飞。 昨天晚上 Anthropic 把 Opus 4.7 发出来了。4 月 16 号，模型 ID claude-opus-4-7，价格跟 4.6 一样，$5&#x2F;$25 每百万 token。 我前一天还写了篇文章说 Opus 4.7 还没发布 Figma 就先跌了 6%。没想到文章发出去一天，模型真的来了。 发布之后我从昨晚跑到今天早上，Claude Code 里连着开了大概">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Opus 4.7 发布 12 小时，我跑了 6 小时的实测都在这">
+<meta property="og:url" content="https://www.vance.xin/2026/04/17/202604170957/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="大家好，我是飞飞。 昨天晚上 Anthropic 把 Opus 4.7 发出来了。4 月 16 号，模型 ID claude-opus-4-7，价格跟 4.6 一样，$5&#x2F;$25 每百万 token。 我前一天还写了篇文章说 Opus 4.7 还没发布 Figma 就先跌了 6%。没想到文章发出去一天，模型真的来了。 发布之后我从昨晚跑到今天早上，Claude Code 里连着开了大概">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260417-20260417-claude-opus-47-hands-on-testing.webp">
+<meta property="og:image" content="https://image.vance.xin/images/20260417-opus-47-claudedevs-rate-limit-reset-tweet.webp">
+<meta property="og:image" content="https://image.vance.xin/images/20260417-opus-47-plan-usage-limits-reset.webp">
+<meta property="og:image" content="https://image.vance.xin/images/20260417-opus-47-benchmark-comparison-anthropic.webp">
+<meta property="article:published_time" content="2026-04-17T09:57:00.000Z">
+<meta property="article:modified_time" content="2026-04-21T02:46:01.120Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="Opus 4.7">
+<meta property="article:tag" content="实测">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260417-20260417-claude-opus-47-hands-on-testing.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/04/17/202604170957/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/04/17/202604170957/","path":"2026/04/17/202604170957/","title":"Opus 4.7 发布 12 小时，我跑了 6 小时的实测都在这"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Opus 4.7 发布 12 小时，我跑了 6 小时的实测都在这 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E8%AF%B4%E5%9D%8F%E6%B6%88%E6%81%AF%EF%BC%9Atoken-%E6%B6%A8%E4%BA%86"><span class="nav-text">先说坏消息：token 涨了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%86-Anthropic-%E4%BB%8A%E6%97%A9%E7%BB%99%E6%89%80%E6%9C%89%E4%BA%BA%E7%99%BD%E5%AB%96%E4%BA%86%E4%B8%80%E8%BD%AE"><span class="nav-text">但 Anthropic 今早给所有人白嫖了一轮</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%9F%E6%AD%A3%E8%AE%A9%E6%88%91%E5%9D%90%E7%9B%B4%E7%9A%84%E6%98%AF%E8%BF%99%E4%B8%AA-bug"><span class="nav-text">真正让我坐直的是这个 bug</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ultrareview-%E4%B8%8D%E6%98%AF-review-%E7%9A%84%E5%8D%87%E7%BA%A7%E7%89%88"><span class="nav-text">&#x2F;ultrareview 不是 &#x2F;review 的升级版</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#xhigh-%E8%BF%99%E4%B8%AA%E6%96%B0%E6%A1%A3%E4%BD%8D%E6%98%AF%E7%9C%9F%E7%9A%84%E6%9C%89%E7%94%A8"><span class="nav-text">xhigh 这个新档位是真的有用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#task-budgets%EF%BC%9AClaude-%E7%BB%88%E4%BA%8E%E7%9F%A5%E9%81%93%E7%9C%81%E7%9D%80%E8%8A%B1"><span class="nav-text">task budgets：Claude 终于知道省着花</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%86%E8%A7%89%E7%9C%9F%E7%9A%84%E8%B7%B3%E4%BA%86%E4%B8%80%E4%B8%AA%E6%A1%A3"><span class="nav-text">视觉真的跳了一个档</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%96%B0%E5%9D%91%EF%BC%9A%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%8F%98%E2%80%9D%E5%AD%97%E9%9D%A2%E2%80%9D%E4%BA%86"><span class="nav-text">一个新坑：提示词变”字面”了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%B0%E5%BA%95%E5%88%87%E4%B8%8D%E5%88%87%EF%BC%9F"><span class="nav-text">到底切不切？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">285</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">488</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/04/17/202604170957/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Opus 4.7 发布 12 小时，我跑了 6 小时的实测都在这 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Opus 4.7 发布 12 小时，我跑了 6 小时的实测都在这
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-04-17 09:57:00" itemprop="dateCreated datePublished" datetime="2026-04-17T09:57:00+00:00">2026-04-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-04-21 02:46:01" itemprop="dateModified" datetime="2026-04-21T02:46:01+00:00">2026-04-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260417-20260417-claude-opus-47-hands-on-testing.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>昨天晚上 Anthropic 把 Opus 4.7 发出来了。4 月 16 号，模型 ID <code>claude-opus-4-7</code>，价格跟 4.6 一样，$5&#x2F;$25 每百万 token。</p>
+<p>我前一天还写了篇文章说 Opus 4.7 还没发布 Figma 就先跌了 6%。没想到文章发出去一天，模型真的来了。</p>
+<p>发布之后我从昨晚跑到今天早上，Claude Code 里连着开了大概 6 个小时。把最近手头在卡的几个活儿——一个反复修不好的并发 bug、一个需要看截图改布局的前端、一个跨四个文件的重构——全部让 4.7 跑了一遍。</p>
+<p>该说的都在下面。</p>
+<h2 id="先说坏消息：token-涨了"><a href="#先说坏消息：token-涨了" class="headerlink" title="先说坏消息：token 涨了"></a>先说坏消息：token 涨了</h2><p>这是 Anthropic 自己在发布公告里承认的：4.7 换了新的 tokenizer，同样的输入，token 数可能会到 4.6 的 1.0 到 1.35 倍。</p>
+<p>我不信，拿了一段 800 行的 TypeScript 代码，分别用 4.6 和 4.7 的接口跑了下 <code>count_tokens</code>。</p>
+<p>4.6：6,124 token。4.7：7,388 token。涨了 20.6%。</p>
+<p>这还没完。因为 4.7 在 xhigh 以上的 effort level 下，会思考得更深，也就意味着输出 token 也比 4.6 同 effort 多。我跑同一个”修复这个测试”的任务，4.6 的 max 大概产出 4k 输出 token，4.7 的 xhigh 就已经到 5.5k 了。</p>
+<p>也就是说，同样的活儿，4.7 的单次调用大概比 4.6 贵 25% 到 40%。</p>
+<p>看到账单那一下我是有点不爽的。但跑了几轮之后我发现——确实贵得有点道理。</p>
+<h2 id="但-Anthropic-今早给所有人白嫖了一轮"><a href="#但-Anthropic-今早给所有人白嫖了一轮" class="headerlink" title="但 Anthropic 今早给所有人白嫖了一轮"></a>但 Anthropic 今早给所有人白嫖了一轮</h2><p>我正准备写这段吐槽的时候，刷到 @ClaudeDevs 凌晨 4 点发的一条推。</p>
+<p><img src="https://image.vance.xin/images/20260417-opus-47-claudedevs-rate-limit-reset-tweet.webp" alt="ClaudeDevs 宣布修复 Opus 4.7 长上下文请求的速率限制 bug 并重置额度"></p>
+<p>翻译过来是：Opus 4.7 的长上下文请求里有个 bug，订阅用户的速率限制没正确调整。他们修了 bug，顺手把所有人的 5 小时限额和每周限额都重置了一次。</p>
+<p>我马上打开 Claude Code 看了一眼：</p>
+<p><img src="https://image.vance.xin/images/20260417-opus-47-plan-usage-limits-reset.webp" alt="Claude Code 的 Plan usage limits，5 小时和每周限额被清零"></p>
+<p>Current session 5% used，Weekly limits 两个槽都是 0%。我昨晚跑了 9 小时，不可能才 5%——这就是清零过的痕迹。</p>
+<p>发布当天凌晨发现 bug、4 点修好、顺便给所有人重置限额。这种响应速度的公司，换成别家，我估计得等周一。</p>
+<p>算是对 tokenizer 涨价的一点心理补偿吧。</p>
+<h2 id="真正让我坐直的是这个-bug"><a href="#真正让我坐直的是这个-bug" class="headerlink" title="真正让我坐直的是这个 bug"></a>真正让我坐直的是这个 bug</h2><p>我手上有一个困了两个礼拜的并发 bug。是一个内部的事件分发器，在高并发的时候偶尔会丢事件，但又不稳定复现，本地怎么都跑不出来。</p>
+<p>我之前拿 Opus 4.6 改过三次。第一次它给了我一个 lock，跑了两天还是丢。第二次换了个 <code>sync.Map</code>，好了点但还是偶发。第三次它给我加了一层 retry，相当于把问题从”丢事件”变成了”重复事件”。三次都不行，我就放下了，等周末自己啃。</p>
+<p>昨晚 4.7 出来我第一反应就是拿这个 bug 试。<code>/model claude-opus-4-7</code>，<code>/effort xhigh</code>，把整个目录加进 context，原始 prompt 跟给 4.6 的一模一样：”找到为什么会丢事件，然后改。”</p>
+<p>它跑了 11 分钟。</p>
+<p>比 4.6 慢了差不多一倍。但过程里它做了一件 4.6 从来没做过的事——它没有直接改代码，它先写了一个压力测试。一个用 <code>goroutine</code> 跑 10,000 次事件分发、然后统计丢失率的 test。跑起来，本地就复现出来了，丢失率 0.8%。</p>
+<p>然后它改代码。改完再跑测试，丢失率 0%。</p>
+<p>改完之后它自己翻回去看了一下注释，加了一段解释：问题不在 lock 上，是在 channel 的 buffer 大小和消费者退出时的竞争条件——之前的代码在 consumer 退出前会关掉 channel，但 producer 还在往里塞。</p>
+<p>我看了五分钟才反应过来这是什么意思，然后发现它是对的。</p>
+<p>4.6 跑了三次没找到的 bug，4.7 跑一次找到了，还顺手写了个可以复现的压测。SWE-bench 涨那 6.8 分，从 80.8 涨到 87.6，看数字好像也就那样。但实际落到我这个 bug 上，就是两个礼拜没合的 PR 今天早上终于合了。</p>
+<h2 id="ultrareview-不是-review-的升级版"><a href="#ultrareview-不是-review-的升级版" class="headerlink" title="&#x2F;ultrareview 不是 &#x2F;review 的升级版"></a>&#x2F;ultrareview 不是 &#x2F;review 的升级版</h2><p>Claude Code 这次多了一个 <code>/ultrareview</code> 命令，Pro 和 Max 用户送 3 次免费体验。</p>
+<p>我之前用 <code>/review</code> 审过自己的 PR，通常给我几条建议，有用的大概一半，剩下的是泛泛的”考虑加个日志”、”注意错误处理”。</p>
+<p><code>/ultrareview</code> 体感完全不是一个东西。</p>
+<p>我拿了一个 400 行的 diff 跑——一个新加的 OAuth 回调处理。<code>/review</code> 给了我 6 条建议，3 条有用。<code>/ultrareview</code> 跑了 8 分钟，给了我 19 条，分成 critical &#x2F; high &#x2F; medium 三级。其中 critical 的 2 条：一个是 state 参数没做 CSRF 验证（我确实忘了），一个是 token 在 log 里打出来了（debug 代码忘删）。</p>
+<p>更让我意外的是它读了我的测试文件，指出了一个 edge case 没被覆盖——refresh token 过期后用户第二次点击登录的情况。我测了，确实是 bug。</p>
+<p>免费的 3 次我一个早上就用完了。现在在琢磨要不要一直开着。</p>
+<h2 id="xhigh-这个新档位是真的有用"><a href="#xhigh-这个新档位是真的有用" class="headerlink" title="xhigh 这个新档位是真的有用"></a>xhigh 这个新档位是真的有用</h2><p>Opus 4.7 在 high 和 max 中间加了一档 effort level 叫 xhigh。</p>
+<p>之前在 high 和 max 之间总是纠结：high 对某些复杂任务不够用，但 max 又慢又贵，尤其是跑 agent 的时候等半天。</p>
+<p>xhigh 的定位就是补这个空档。Claude Code 里现在所有 plan 都默认 xhigh。</p>
+<p>我拿一个中等复杂度的重构任务测了三档：</p>
+<ul>
+<li>4.6 max：87 秒，质量不错</li>
+<li>4.7 high：45 秒，漏了两个边界 case</li>
+<li>4.7 xhigh：62 秒，质量对齐 4.6 max</li>
+<li>4.7 max：124 秒，质量好一点点，但多花了一倍时间</li>
+</ul>
+<p>xhigh 确实是那个甜蜜点。Hex 的 CTO 公开说”低强度的 4.7 大约等于中等强度的 4.6”，我自己测下来比较接近的说法是”xhigh 4.7 约等于 max 4.6，但快了 30%”。</p>
+<p>只有在涉及全局架构调整、或者跑多 agent 协调的场景下，我才会切 max。</p>
+<h2 id="task-budgets：Claude-终于知道省着花"><a href="#task-budgets：Claude-终于知道省着花" class="headerlink" title="task budgets：Claude 终于知道省着花"></a>task budgets：Claude 终于知道省着花</h2><p>这是一个更底层的变化。API 加了一个 <code>task_budget</code> 参数，可以告诉 Claude”这整个任务你最多可以用 XX token”。</p>
+<p>跟 <code>max_tokens</code> 不一样。<code>max_tokens</code> 是硬顶——到了就截断，很粗暴。<code>task_budget</code> 是建议——Claude 自己会规划，先花多少在搜文件，剩多少留给修代码，再留多少做验证。</p>
+<p>我跑了个长 agent 任务，把 <code>task_budget</code> 设成 50k。它第一步读文件用了 8k，中间搜索和推理 28k，最后验证 11k，总共 47k。没超。</p>
+<p>之前跑长任务我都得盯着，生怕它跑飞。现在至少有个护栏。</p>
+<p>说白了这功能是给公司买单的人用的——老板设个预算，Claude 自觉省着花。但我一个人写代码的也用得上，跑深夜的后台任务至少不会醒来发现账单炸了。</p>
+<h2 id="视觉真的跳了一个档"><a href="#视觉真的跳了一个档" class="headerlink" title="视觉真的跳了一个档"></a>视觉真的跳了一个档</h2><p>Opus 4.7 的图片分辨率上限从 768 像素涨到 2,576 像素，面积涨了大概 11 倍。Anthropic 自己的 XBOW 视觉任务分从 54.5% 直接跳到 98.5%。</p>
+<p>我试了一下把 Figma 里的一整屏设计稿——真的是一整屏，包含几十个组件的 dashboard——直接截图丢给它，让它看着截图实现。</p>
+<p>4.6 时代我得切成 6 张截图分开喂。4.7 一张能吃下，小到组件上的 class 名都看得清。</p>
+<p>具体到开发场景：可以把完整的 Grafana 仪表板截图让它分析、可以把设计稿整屏喂进去做前端、可以把 PDF 里的架构图直接读进来。之前做这些都要切图，现在一次性解决。</p>
+<p>我还没大规模用这个，但从实测效果看，前端和做数据分析的人应该最爱这个升级。</p>
+<h2 id="一个新坑：提示词变”字面”了"><a href="#一个新坑：提示词变”字面”了" class="headerlink" title="一个新坑：提示词变”字面”了"></a>一个新坑：提示词变”字面”了</h2><p>这个 Anthropic 没大声讲，但我跑的时候踩了。</p>
+<p>4.6 的提示词很宽松。我写”帮我优化一下这个函数”，它会自己判断——优化什么？性能？可读性？错误处理？它会综合判断选一个方向。</p>
+<p>4.7 更字面。同样的 prompt 它会反问我：你要哪种优化？给它一个模糊的指令，它就老老实实按字面理解去做，不再”猜”你的意图。</p>
+<p>这是好事还是坏事，看角度。对新手可能是坏事——以前模糊 prompt 也能出对活儿，现在必须写清楚。对我来说是好事——以前跑长任务最怕它自己”脑补”走偏，现在它更守规矩。</p>
+<p>不过以前那些写得比较随意的 prompt，切到 4.7 之后可能要重新调一遍。我自己的 CLAUDE.md 里有几条就得改得更具体。</p>
+<h2 id="到底切不切？"><a href="#到底切不切？" class="headerlink" title="到底切不切？"></a>到底切不切？</h2><p>讲这么多，最后还是得回到这个问题。</p>
+<p>Cognition 发的说法是”Opus 4.7 可以连贯工作数小时，能啃硬问题”。Factory 测的数据是任务成功率提高 10-15%。CodeRabbit 说它”找的真 bug 更多，可操作反馈更多”。</p>
+<p>也顺带把 Anthropic 自己放的对比图甩在这里：</p>
+<p><img src="https://image.vance.xin/images/20260417-opus-47-benchmark-comparison-anthropic.webp" alt="Opus 4.7 与 4.6、GPT-5.4、Gemini 3.1 Pro、Mythos Preview 的 12 项基准对比"></p>
+<p>这张表能读出两层意思。第一层是 Opus 4.7 在 agentic coding、MCP 工具调用、财务分析这几个纵列上确实领先——SWE-bench Pro 64.3 比 GPT-5.4 的 57.7 高出快 7 分。第二层比较诚实的是 Mythos Preview 那一列——基本上每个维度都还更高，只是你暂时用不到。Anthropic 这次没藏着掖着，直接把差距写在公告里。</p>
+<p>这些都是 early-access 伙伴的话加官方数据，听听就好。但我跑了 6 小时之后的结论是：</p>
+<p>如果你每天在 Claude Code 里跑长任务、跑多文件重构、跑 agent 工作流，切。6.8 分 SWE-bench、10% 任务成功率，单看数字都不够亮，但累积起来就是”少修一个 bug、少回一次来”的差别。</p>
+<p>如果你只是偶尔用一下做做 chat、问问代码，Sonnet 4.6 够了，便宜五倍。Opus 4.7 的钱花在”跑 2 小时不跑偏”这件事上，你不跑长任务就享受不到。</p>
+<p>如果你在 Claude 的价格政策上卡预算了——那个新 tokenizer 让同样的工作贵 25%-40%，加上 xhigh 是默认，账单肯定会涨。Anthropic 给了 task budgets 这个工具，但你得自己学着用。</p>
+<hr>
+<p>昨晚 10 点那会儿，我手里还攥着那个修不好的并发 bug。今天早上 9 点发现它已经躺在 merged PR 里了。这种感觉是写过代码的人才懂的——不是技术的飞跃，是某个具体的麻烦终于被摘掉的松弛感。</p>
+<p>发布公告里 Anthropic 把 Opus 4.7 定位为”直接升级 4.6”。但我这一天跑下来的感觉，是 Opus 4.6 那种”能用但偶尔掉链子”的状态终于补齐了——至少在我关心的那几个场景里。</p>
+<p>你切了吗？跑什么活儿的时候觉得最明显？评论区聊聊。</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://www.anthropic.com/news/claude-opus-4-7">Introducing Claude Opus 4.7</a></li>
+<li><a target="_blank" rel="noopener" href="https://thenextweb.com/news/anthropic-claude-opus-4-7-coding-agentic-benchmarks-release">Claude Opus 4.7 on SWE-bench and agentic reasoning</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.coderabbit.ai/blog/claude-opus-4-7-for-ai-code-review">What Claude Opus 4.7 means for AI code review</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.vellum.ai/blog/claude-opus-4-7-benchmarks-explained">Claude Opus 4.7 Benchmarks Explained - Vellum AI</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+              <a href="/tags/Opus-4-7/" rel="tag"># Opus 4.7</a>
+              <a href="/tags/%E5%AE%9E%E6%B5%8B/" rel="tag"># 实测</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/04/16/202604161858/" rel="prev" title="更新完 Antigravity，我的终端配置全没了">
+                  <i class="fa fa-angle-left"></i> 更新完 Antigravity，我的终端配置全没了
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/04/17/202604171743/" rel="next" title="DeepSeek 悄悄上线专家模式：V4 前夜的最后一块铺垫">
+                  DeepSeek 悄悄上线专家模式：V4 前夜的最后一块铺垫 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">986k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">14:56</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

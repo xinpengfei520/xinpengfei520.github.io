@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="大家好，我是飞飞。 周末晚上我打开 Claude Code 的 usage 看板，被自己吓了一跳：上周累计 28M tokens。 我自己是 Claude Max 5x $100&#x2F;月的订阅。Max 的好处是按 5 小时窗口给配额，不计 token 总量，听上去用不完。但我连着两天跑完整的博客 pipeline（researcher → writer → polisher → artis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude 1M 上下文一周烧了我 28M token，6 个我每天都在用的省钱手法">
+<meta property="og:url" content="https://www.vance.xin/2026/04/29/202604292325/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="大家好，我是飞飞。 周末晚上我打开 Claude Code 的 usage 看板，被自己吓了一跳：上周累计 28M tokens。 我自己是 Claude Max 5x $100&#x2F;月的订阅。Max 的好处是按 5 小时窗口给配额，不计 token 总量，听上去用不完。但我连着两天跑完整的博客 pipeline（researcher → writer → polisher → artis">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260429-20260429-claude-1m-context-token-saving.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260429-20260429-token-saving-four-layers.webp">
+<meta property="article:published_time" content="2026-04-29T23:25:00.000Z">
+<meta property="article:modified_time" content="2026-05-08T14:00:27.110Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI 编程">
+<meta property="article:tag" content="Prompt Caching">
+<meta property="article:tag" content="token">
+<meta property="article:tag" content="成本">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260429-20260429-claude-1m-context-token-saving.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/04/29/202604292325/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/04/29/202604292325/","path":"2026/04/29/202604292325/","title":"Claude 1M 上下文一周烧了我 28M token，6 个我每天都在用的省钱手法"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Claude 1M 上下文一周烧了我 28M token，6 个我每天都在用的省钱手法 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E5%91%A8%E6%88%91%E8%B7%91%E4%BA%86%E4%B8%80%E9%81%8D%E8%B4%A6%E5%8D%95"><span class="nav-text">上周我跑了一遍账单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Prompt-caching-%E6%98%AF%E8%BF%99%E5%A5%97%E6%89%8B%E6%B3%95%E9%87%8C%E6%9D%A0%E6%9D%86%E6%9C%80%E5%A4%A7%E7%9A%84%E4%B8%80%E6%9D%A1"><span class="nav-text">Prompt caching 是这套手法里杠杆最大的一条</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#compact-%E6%88%91%E4%B8%8D%E5%86%8D%E7%AD%89%E5%88%B0%E4%B8%8A%E4%B8%8B%E6%96%87%E6%BB%A1%E4%BA%86%E6%89%8D%E6%8C%89"><span class="nav-text">&#x2F;compact 我不再等到上下文满了才按</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%A2%E7%B4%A2%E4%BB%BB%E5%8A%A1%E6%88%91%E7%8E%B0%E5%9C%A8%E5%85%A8%E9%83%A8%E4%B8%A2%E7%BB%99-sub-agent"><span class="nav-text">探索任务我现在全部丢给 sub-agent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CLAUDE-md-%E6%AF%8F%E4%B8%80%E8%A1%8C%E9%83%BD%E5%9C%A8%E6%AF%8F%E8%BD%AE%E9%87%8D%E8%AF%BB"><span class="nav-text">CLAUDE.md 每一行都在每轮重读</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#small-fast-model-%E6%88%91%E5%88%87%E5%88%B0%E4%BA%86-Haiku-4-5"><span class="nav-text">small_fast_model 我切到了 Haiku 4.5</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#thinking-effort-high-%E6%88%91%E7%8E%B0%E5%9C%A8%E5%8F%AA%E5%AF%B9%E7%9C%9F%E9%97%AE%E9%A2%98%E6%89%93%E5%BC%80"><span class="nav-text">thinking_effort&#x3D;high 我现在只对真问题打开</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E5%91%A8%E7%9C%81%E4%B8%8B%E6%9D%A5%E7%9A%84%E9%92%B1%E5%A4%A7%E6%A6%82%E5%A4%9F%E5%A4%9A%E8%B7%91%E4%B8%A4%E5%A4%A9"><span class="nav-text">这周省下来的钱大概够多跑两天</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MCP-server-%E5%92%8C-sub-agent-%E8%87%AA%E5%B7%B1%E7%9A%84%E5%BC%80%E9%94%80%E6%88%91%E8%BF%98%E6%B2%A1%E6%8B%86%E5%AE%8C%E8%B4%A6%E6%9C%AC"><span class="nav-text">MCP server 和 sub-agent 自己的开销我还没拆完账本</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">302</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">523</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/04/29/202604292325/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Claude 1M 上下文一周烧了我 28M token，6 个我每天都在用的省钱手法 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Claude 1M 上下文一周烧了我 28M token，6 个我每天都在用的省钱手法
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-04-29 23:25:00" itemprop="dateCreated datePublished" datetime="2026-04-29T23:25:00+00:00">2026-04-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-05-08 14:00:27" itemprop="dateModified" datetime="2026-05-08T14:00:27+00:00">2026-05-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260429-20260429-claude-1m-context-token-saving.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>周末晚上我打开 Claude Code 的 usage 看板，被自己吓了一跳：上周累计 28M tokens。</p>
+<p>我自己是 Claude Max 5x $100&#x2F;月的订阅。Max 的好处是按 5 小时窗口给配额，不计 token 总量，听上去用不完。但我连着两天跑完整的博客 pipeline（researcher → writer → polisher → artist → distributor 一条龙），从早上 9 点到晚上 11 点几乎不停。第二天下午 3 点开始撞到 5 小时窗口的限流：每条新消息要等 90 秒才回。</p>
+<p>这件事让我开始正经盯每个 prompt 的 token 消耗。一周下来摸出来 6 个手法，今天这篇是把它们摆出来给你看。</p>
+<p>声明前置：我不是 Anthropic 内部员工，也没法读到他们的计费源码。下面所有的数字都是我自己 usage 看板上读出来的实测数据，能复现，但样本只有我一个人。如果你的工作流和我不一样，效果会有差异。</p>
+<h2 id="上周我跑了一遍账单"><a href="#上周我跑了一遍账单" class="headerlink" title="上周我跑了一遍账单"></a>上周我跑了一遍账单</h2><p>先把基线摆出来。</p>
+<p>我的工作流主力是 Claude Code，模型默认 Sonnet 4.6。开了 1M 上下文的长上下文档位（按 Anthropic 现在的定价，超过 200K 的部分输入是 $6&#x2F;M、输出是 $22.50&#x2F;M，比标准档贵 50%）。每天大概 6 到 12 个会话，每个会话从几千 token 到几十万 token 不等。</p>
+<p>上周这种节奏下，我看到的几个数字：</p>
+<ul>
+<li><strong>总输入</strong>：约 26.4M tokens，其中缓存命中（cache read）占 19.2M，约 73%。</li>
+<li><strong>总输出</strong>：约 1.8M tokens。</li>
+<li><strong>如果按 API 现价裸算</strong>（不考虑 Max 订阅打包）：26.4M 输入 × $3 + 1.8M 输出 × $15 大概是 $106。</li>
+<li><strong>走缓存的实际成本</strong>：cache read 是 $0.30&#x2F;M，cache write 是 $3.75&#x2F;M。所以实际可计费输入 ≈ 7.2M × $3 + 19.2M × $0.30 + 缓存写入费用，估算下来真实成本约 $33。</li>
+</ul>
+<p>73% 的缓存命中率不是天上掉下来的。它是我把 6 个手法摞在一起跑出来的结果。下面挨个拆开讲。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260429-20260429-token-saving-four-layers.webp" alt="6 个省钱手法分布在 Claude Code 请求的四个层"></p>
+<h2 id="Prompt-caching-是这套手法里杠杆最大的一条"><a href="#Prompt-caching-是这套手法里杠杆最大的一条" class="headerlink" title="Prompt caching 是这套手法里杠杆最大的一条"></a>Prompt caching 是这套手法里杠杆最大的一条</h2><p>如果今天你的工作流里只能加一件事，加这个。</p>
+<p>Claude 的 prompt caching 机制是这样：你在 system prompt 或者前置消息里标记某段内容为 <code>cache_control: ephemeral</code>，Anthropic 就会把这段 prefix 缓存 5 分钟。下一次请求里只要这段 prefix 一字不差，就走缓存读取，价格降到 $0.30&#x2F;M（标准输入是 $3&#x2F;M）。第一次写入是 $3.75&#x2F;M（贵 25%），但只要 5 分钟内被命中至少一次就回本。</p>
+<p>Claude Code 自带这套机制。它会自动把 CLAUDE.md、加载进来的 skills、对话历史的稳定部分标记为 cacheable。但前提是这些内容确实稳定。</p>
+<p>我做的几件事：</p>
+<ul>
+<li><strong>把 CLAUDE.md 当 cache 优化的对象写</strong>。任何会随会话变化的字段（”今天的任务是 X”）都不写进 CLAUDE.md，写进会话开头的临时消息。CLAUDE.md 只放真正长期不变的项目结构、命令、约束。</li>
+<li><strong>常驻 skill 永远显式 load</strong>。我的 6 个 content skill 每次会话都加载，等于成了缓存的一部分。如果哪次我只用 1 个 skill，整个 prefix 哈希变了，缓存读全废。所以我现在宁可全部加载浪费一点首次写入费用，也不让缓存碎掉。</li>
+<li><strong>不要在 system prompt 里塞时间戳</strong>。”Today is 2026-04-29”这种字段一变，缓存当场失效。把时间留给 user message 处理。</li>
+</ul>
+<p>我看到的实测数据：缓存命中率从我没专门优化前的 ~30% 涨到现在的 73%。按上周那个账面，光这一条就把账单从 $106 压到 $33 量级。</p>
+<h2 id="compact-我不再等到上下文满了才按"><a href="#compact-我不再等到上下文满了才按" class="headerlink" title="&#x2F;compact 我不再等到上下文满了才按"></a>&#x2F;compact 我不再等到上下文满了才按</h2><p>Claude Code 的 <code>/compact</code> 命令把当前会话历史压缩成一段摘要，腾出上下文空间。很多人（包括过去的我）的习惯是看到右下角红条快满了才按。</p>
+<p>这个时机是错的。</p>
+<p>原因：长会话里，每次新轮次的请求都把前面所有历史回放一遍。如果你已经积累了 80K token 的对话，你接下来每条消息的输入都至少 80K。等 1M 满了再 compact，意味着你最后那段对话每条都按 1M 计费。</p>
+<p>我现在的规则是：<strong>上下文用到 40% 就开始考虑 compact，到 60% 必 compact</strong>。</p>
+<p>每次 <code>/compact</code> 本身是一次 LLM 调用，大概烧 3K 到 8K token（取决于历史长度）。但它能让接下来 30 到 50 轮对话的输入维度从 600K 压到 30K。算账上看是大赚的。</p>
+<p>判断什么时候 compact 的实际信号：</p>
+<ul>
+<li>当前任务和前面的话题已经不再直接相关。</li>
+<li>我在同一个文件上反复修改同一段代码（说明前面的修改记录是噪声）。</li>
+<li>我准备开一个新的探索（比如让 Claude 读一遍另一个目录）。</li>
+</ul>
+<p>这三种情况一出现就 compact。代价是有时候 compact 会丢一些细节，需要我重新提一下背景。但比起按 1M context 烧钱，这点不便完全可以接受。</p>
+<h2 id="探索任务我现在全部丢给-sub-agent"><a href="#探索任务我现在全部丢给-sub-agent" class="headerlink" title="探索任务我现在全部丢给 sub-agent"></a>探索任务我现在全部丢给 sub-agent</h2><p>这一条是我在跑 &#x2F;ultraview 那篇文章的实测里学到的。</p>
+<p>主会话的 context 是宝贵的。每多一个文件读、每多一次 grep，都把这个会话的历史变长，下一轮请求的输入就变长。如果你只是想知道”这个项目里 RPA 任务相关的代码在哪几个目录”，让主会话去跑 <code>find</code> + 读 5 个文件不划算。</p>
+<p>正确做法是把这种探索任务丢给 sub-agent。Claude Code 的 Task tool 可以拉起一个新的会话（用 general-purpose 或 Explore 子代理），它有自己独立的 context window，跑完之后只把结果摘要返回给主会话。</p>
+<p>实际数据感受：让 Explore 子代理去找”RPA 任务相关的代码”，子代理会跑 10 几个 grep 和 read 调用，自己烧掉大概 30K token，但返回给我主会话的只有 800 字左右的总结。如果同样的事让主会话亲手做，我的主 context 会多出 30K 的污染，接下来每轮请求都得带着这 30K 算钱。</p>
+<p>我现在的判断标准：<strong>任何一个我不打算自己读全文的探索任务，都丢 sub-agent</strong>。包括”看一下 X 的相关代码”、”统计 Y 在项目里出现多少次”、”调研 Z 库的最新 API”。</p>
+<p>副作用是 sub-agent 偶尔会理解偏，需要我再次澄清。但这件事一年我可能撞 5 次，省下来的 token 是天天在省。</p>
+<h2 id="CLAUDE-md-每一行都在每轮重读"><a href="#CLAUDE-md-每一行都在每轮重读" class="headerlink" title="CLAUDE.md 每一行都在每轮重读"></a>CLAUDE.md 每一行都在每轮重读</h2><p>这条听起来废话但很多人不在意：你 CLAUDE.md 里写了什么，每一轮请求都把它当作 prefix 重新发一遍。</p>
+<p>我两个月前的 CLAUDE.md 是 12KB。里面塞了项目背景、各种命令、最佳实践、过往踩坑、为什么选这个架构……写得像一篇博客。我自己看着挺爽，每次告诉 Claude “去看 CLAUDE.md” 它都能秒答任何项目相关的问题。</p>
+<p>但 12KB 是 3K token。每轮都 3K。一个 50 轮对话的会话光 CLAUDE.md 就重复发了 150K token。</p>
+<p>我上周做的事是把 CLAUDE.md 砍到 4KB。砍掉的内容分两个去向。</p>
+<p>一部分搬进了 skill 文件。每个 skill 有自己的 SKILL.md，按需加载。”我的博客 pipeline 怎么跑”这种内容现在在 content-director 的 SKILL.md 里，没触发就不读。</p>
+<p>剩下的部分直接删了。”为什么选 Hexo 不选 Astro”这种历史决策记录，对当前工作没帮助，留着也是占 token。</p>
+<p>砍完之后我观察到的副作用是 Claude 偶尔会问一些过去能直接答的问题。频率大概一周三五次。每次回答它一句话就行，比起每天省下来的 token 完全划算。</p>
+<h2 id="small-fast-model-我切到了-Haiku-4-5"><a href="#small-fast-model-我切到了-Haiku-4-5" class="headerlink" title="small_fast_model 我切到了 Haiku 4.5"></a>small_fast_model 我切到了 Haiku 4.5</h2><p>Claude Code 的请求路由里有一个”快速辅助模型”槽位，处理一些低权重的小任务（比如生成搜索关键词、写 commit message 草稿）。默认是 Sonnet 走双角色。</p>
+<p>我把它切成了 Haiku 4.5：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-haiku-4-5</span><br><span class="line"><span class="built_in">export</span> CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-4-6</span><br></pre></td></tr></table></figure>
+
+<p>Haiku 4.5 输入是 $1&#x2F;M、输出是 $5&#x2F;M。Sonnet 4.6 是 $3&#x2F;M、$15&#x2F;M。差三倍。</p>
+<p>这一条我没法精确测算省了多少，因为 Claude Code 的内部路由不是完全暴露的。但凭手感，做完这个切换之后，5 小时窗口的限流被撞到的次数明显少了。</p>
+<p>注意：是切 small_fast_model，不是切主模型。主模型仍然是 Sonnet 4.6。Haiku 处理的是那种”给我一个文件名候选”、”这段错误日志的关键词是什么”这种轻量请求。</p>
+<h2 id="thinking-effort-high-我现在只对真问题打开"><a href="#thinking-effort-high-我现在只对真问题打开" class="headerlink" title="thinking_effort&#x3D;high 我现在只对真问题打开"></a>thinking_effort&#x3D;high 我现在只对真问题打开</h2><p>Claude Code 支持 <code>--thinking-effort</code> 参数（或者在会话里 <code>/thinking high</code>），打开后模型在回答前会先做一段”思考”。这段思考也算 token，且是按输出计费。</p>
+<p>过去我习惯打开 thinking_effort&#x3D;high 当万能开关，觉得”反正多想一会儿不亏”。但 Anthropic 的计费里，思考 token 跟普通输出一个价。一个有 thinking 的复杂回答，输出可能从 800 token 涨到 3500 token。乘以一天几十次，账上就多了。</p>
+<p>我现在的规则：</p>
+<ul>
+<li>默认 thinking_effort&#x3D;medium。这是大部分任务的最优解。</li>
+<li>只有真在做架构决策、复杂调试、跨多文件的影响分析时切 high 或 max。</li>
+<li>写 commit message、改 typo、生成测试样例这种，关到 low 甚至 minimal。</li>
+</ul>
+<p>这条不是 prompt caching 那种几倍杠杆的省，但它解决的是”我以为 thinking 是免费的”这个错觉。一旦你认识到 thinking 也是 token，就不会无脑全打开了。</p>
+<h2 id="这周省下来的钱大概够多跑两天"><a href="#这周省下来的钱大概够多跑两天" class="headerlink" title="这周省下来的钱大概够多跑两天"></a>这周省下来的钱大概够多跑两天</h2><p>把六条加起来回看上周。</p>
+<p>修改前我估算如果不优化跑同样的工作量，账单大概在 $100 量级。修改后看到的实际命中价是 $33 量级。我的 Max 5x $100&#x2F;月已经覆盖了，不会真到 API 计费。但更直接的体验是：5 小时窗口的限流我撞到的次数从一周 6 次降到 2 次。换句话说，我可以在 Max 5x 的额度里多干两天活。</p>
+<p>如果你是按 API 计费的开发者（没开 Max 订阅，直接拿 API key 跑 Claude Code），上面这套手法理论上能把账单压到原来的 1&#x2F;3。但你的实际数字必然和我不一样，因为工作流里”什么内容是稳定的”这件事每个人差别很大。</p>
+<p>唯一一条我建议无脑就开的是 prompt caching。它的杠杆远超其他，且几乎没有副作用。</p>
+<h2 id="MCP-server-和-sub-agent-自己的开销我还没拆完账本"><a href="#MCP-server-和-sub-agent-自己的开销我还没拆完账本" class="headerlink" title="MCP server 和 sub-agent 自己的开销我还没拆完账本"></a>MCP server 和 sub-agent 自己的开销我还没拆完账本</h2><p>写到这里我想留两个真实没解决的点。</p>
+<p>最先想搞清楚的是 MCP server 的开销。MCP 协议每次 turn 都要把工具 schema 注入到请求里，schema 大的 server 一旦多挂几个，prefix 会被撑得很大。我目前挂了 6 个 MCP server（brave-search、fetch、obsidian-cli 等），但我还没专门测过关掉某几个之后命中率和总开销的变化。下周想做一个对照。</p>
+<p>另一个没拆开的账本是 sub-agent 自己烧的那部分。我目前的算法是按”主会话 context 干净”这个角度看的，sub-agent 内部那一段的消耗没单独算。理论上一个 30K token 的 sub-agent 调用要算 30K。我直觉上还是合算，但没拆过详细账。</p>
+<p>评论区想问两个具体问题。</p>
+<p>你自己跑 Claude Code 一周大概烧多少 token？是 Max 订阅还是 API 计费？</p>
+<p>另外，你有没有什么我这篇没写到的省 token 手法？尤其是 MCP server 这块，如果你做过对照测试，特别想听你的结果。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-%E7%BC%96%E7%A8%8B/" rel="tag"># AI 编程</a>
+              <a href="/tags/Prompt-Caching/" rel="tag"># Prompt Caching</a>
+              <a href="/tags/token/" rel="tag"># token</a>
+              <a href="/tags/%E6%88%90%E6%9C%AC/" rel="tag"># 成本</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/04/26/202604262259/" rel="prev" title="Claude 桌面客户端有个开发者模式，把国产大模型直接接进 Cowork 界面">
+                  <i class="fa fa-angle-left"></i> Claude 桌面客户端有个开发者模式，把国产大模型直接接进 Cowork 界面
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/04/30/202604300952/" rel="next" title="Anthropic 把 Claude Code 日均成本估算从 $6 改成 $13，官方说&quot;这不算涨价&quot;">
+                  Anthropic 把 Claude Code 日均成本估算从 $6 改成 $13，官方说"这不算涨价" <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:05</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

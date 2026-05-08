@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="大家好，我是飞飞。 今天下午 2 点多，我手机又响了。 这周第四条 AI 大新闻。周一那天 GitHub 把 Copilot 停了注册、Anthropic 把 Claude Code 从 Pro 里拿走；周四我写了 &#x2F;ultraview 实测；今天凌晨 GPT-5.5 发布；下午 DeepSeek V4 落地。 我今天上午那篇 GPT-5.5 的文章结尾留了一个问题，说 OpenAI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DeepSeek V4 憋了一年半终于端出来，这一次改的是给昇腾跑的底座">
+<meta property="og:url" content="https://www.vance.xin/2026/04/24/202604241828/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="大家好，我是飞飞。 今天下午 2 点多，我手机又响了。 这周第四条 AI 大新闻。周一那天 GitHub 把 Copilot 停了注册、Anthropic 把 Claude Code 从 Pro 里拿走；周四我写了 &#x2F;ultraview 实测；今天凌晨 GPT-5.5 发布；下午 DeepSeek V4 落地。 我今天上午那篇 GPT-5.5 的文章结尾留了一个问题，说 OpenAI">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260424-20260424-deepseek-v4-ascend-foundation.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260424-20260424-deepseek-v4-three-layer-stack.webp">
+<meta property="article:published_time" content="2026-04-24T18:28:00.000Z">
+<meta property="article:modified_time" content="2026-05-08T14:00:27.109Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI 编程">
+<meta property="article:tag" content="DeepSeek">
+<meta property="article:tag" content="昇腾">
+<meta property="article:tag" content="国产化">
+<meta property="article:tag" content="算力">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260424-20260424-deepseek-v4-ascend-foundation.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/04/24/202604241828/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/04/24/202604241828/","path":"2026/04/24/202604241828/","title":"DeepSeek V4 憋了一年半终于端出来，这一次改的是给昇腾跑的底座"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>DeepSeek V4 憋了一年半终于端出来，这一次改的是给昇腾跑的底座 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%8A%8A%E4%BB%8A%E5%A4%A9%E8%BF%99%E6%AC%A1%E5%8F%91%E5%B8%83%E7%9A%84%E5%85%B3%E9%94%AE%E6%95%B0%E5%AD%97%E5%88%97%E5%87%BA%E6%9D%A5"><span class="nav-text">先把今天这次发布的关键数字列出来</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%A8%E4%BB%B7-8-%E5%80%8D%E8%BF%98%E6%98%AF%E4%BE%BF%E5%AE%9C%EF%BC%8C%E4%BD%86%E6%AF%94%E4%BE%BF%E5%AE%9C%E6%9B%B4%E9%87%8D%E8%A6%81%E7%9A%84%E6%98%AF%E5%AE%98%E6%96%B9%E4%B8%BA%E4%BB%80%E4%B9%88%E6%B6%A8"><span class="nav-text">涨价 8 倍还是便宜，但比便宜更重要的是官方为什么涨</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E6%98%87%E8%85%BE%E6%94%B9%E7%9A%84%E6%A8%A1%E5%9E%8B%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7"><span class="nav-text">为昇腾改的模型长什么样</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%8A%8A%E5%AE%83%E6%8E%A5%E5%88%B0-Claude-Code-%E9%87%8C%E8%AF%95%E4%BA%86%E4%B8%80%E4%B8%8B%E4%B8%AD%E6%96%87%E5%86%99%E4%BD%9C"><span class="nav-text">我把它接到 Claude Code 里试了一下中文写作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E4%B8%80%E4%B8%AA-Claude-Max-5x-%E7%94%A8%E6%88%B7%E8%BF%99%E5%91%A8%E7%9A%84%E5%86%B3%E7%AD%96"><span class="nav-text">对一个 Claude Max 5x 用户这周的决策</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%99%BE%E4%B8%87%E4%B8%8A%E4%B8%8B%E6%96%87%E6%99%AE%E6%83%A0%E5%8C%96%E8%BF%99%E4%BB%B6%E4%BA%8B%E5%80%BC%E5%BE%97%E5%8D%95%E7%8B%AC%E8%AE%B0%E4%B8%80%E7%AC%94"><span class="nav-text">百万上下文普惠化这件事值得单独记一笔</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%98%87%E8%85%BE-950-%E4%B8%8B%E5%8D%8A%E5%B9%B4%E7%9A%84%E4%BA%A7%E8%83%BD%E6%89%8D%E6%98%AF%E8%BF%99%E6%AC%A1%E4%BC%8F%E7%AC%94%E7%9A%84%E5%85%91%E7%8E%B0%E7%82%B9"><span class="nav-text">昇腾 950 下半年的产能才是这次伏笔的兑现点</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">302</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">523</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/04/24/202604241828/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="DeepSeek V4 憋了一年半终于端出来，这一次改的是给昇腾跑的底座 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DeepSeek V4 憋了一年半终于端出来，这一次改的是给昇腾跑的底座
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-04-24 18:28:00" itemprop="dateCreated datePublished" datetime="2026-04-24T18:28:00+00:00">2026-04-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-05-08 14:00:27" itemprop="dateModified" datetime="2026-05-08T14:00:27+00:00">2026-05-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260424-20260424-deepseek-v4-ascend-foundation.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>今天下午 2 点多，我手机又响了。</p>
+<p>这周第四条 AI 大新闻。周一那天 GitHub 把 Copilot 停了注册、Anthropic 把 Claude Code 从 Pro 里拿走；周四我写了 &#x2F;ultraview 实测；今天凌晨 GPT-5.5 发布；下午 DeepSeek V4 落地。</p>
+<p>我今天上午那篇 GPT-5.5 的文章结尾留了一个问题，说 OpenAI 的 API 什么时候开才是该盯的事。不到半天时间，DeepSeek V4 把 API 直接开了。</p>
+<p>跑分我晚点再说。让我今天想停下来单独写一篇的，是发布稿里那几行关于底层技术栈的话。V4-Pro 能不能跟 Opus 4.7 打五五开这种问题其实没那么重要。</p>
+<p>如果我没读错，这次 V4 真正的主线是一件事：把模型改成了能跑在昇腾上的样子。</p>
+<h2 id="先把今天这次发布的关键数字列出来"><a href="#先把今天这次发布的关键数字列出来" class="headerlink" title="先把今天这次发布的关键数字列出来"></a>先把今天这次发布的关键数字列出来</h2><p>4 月 24 日上午，DeepSeek 在官方公众号放出了 V4 预览版，两个尺寸：</p>
+<ul>
+<li><strong>V4-Pro</strong>：总参数 1.6T（1.6 万亿），对比 V3.2 的 671B 翻了将近 2.5 倍。输入 ¥12&#x2F;百万 token，输出 ¥24&#x2F;百万 token，换算成美元是 $1.74&#x2F;$3.48。</li>
+<li><strong>V4-Flash</strong>：参数更小、激活更小，输入 ¥1、输出 ¥2&#x2F;百万 token，约 $0.14&#x2F;$0.28。</li>
+<li><strong>上下文</strong>：两个版本都标配 1M（百万）token。官网默认就是 V4，点开就能聊。</li>
+<li><strong>架构</strong>：混合模型。思考和非思考合一，通过 <code>reasoning_effort=high/max</code> 控制。R2 这次没出，官方的意思是在这套混合架构里它的意义已经不明确。</li>
+<li><strong>定价提示</strong>：官方在定价页加了一行小字，说 Pro 的价格受限于高端算力是暂时的，等下半年昇腾 950 超节点上市后会大幅下调。</li>
+</ul>
+<p>API 侧的兼容做得很直接，同时支持 OpenAI ChatCompletions 接口和 Anthropic 接口。</p>
+<p>老的 <code>deepseek-chat</code> 和 <code>deepseek-reasoner</code> 两个别名三个月后（2026-07-24）停用，现在先指向 V4-Flash 的非思考模式和思考模式。</p>
+<p>跑分我放一个数字就行：V4-Pro 在 LMArena 代码榜目前排第三，第一是 GLM-5.1。</p>
+<p>官方坦诚和最前沿闭源旗舰的能力差距还有 3 到 6 个月。</p>
+<p>这些加起来没有爆炸感。接下来的三节才是我今天反复读了几遍的部分。</p>
+<h2 id="涨价-8-倍还是便宜，但比便宜更重要的是官方为什么涨"><a href="#涨价-8-倍还是便宜，但比便宜更重要的是官方为什么涨" class="headerlink" title="涨价 8 倍还是便宜，但比便宜更重要的是官方为什么涨"></a>涨价 8 倍还是便宜，但比便宜更重要的是官方为什么涨</h2><p>DeepSeek 历史上最出名的标签是”价格屠夫”。V3.2 输出是 ¥3&#x2F;百万 token，今天 V4-Pro 涨到 ¥24，差不多 8 倍。</p>
+<p>但放到全世界看，Opus 4.7 是 $5&#x2F;$25，GPT-5.5 昨天刚宣布的是 $5&#x2F;$30。V4-Pro 的输出价折合 $3.48，依然比两家海外头部便宜 60% 左右。</p>
+<p>“涨 8 倍还是便宜”这事本身不是新闻。我在意的是官方给涨价配的那段解释。</p>
+<p>官方原话的关键点有两个：一个是参数翻了 2.5 倍、Agent 消耗的 token 量又在暴增，算力账确实撑不住了；另一个是说”高端算力供给有限”，等昇腾 950 批量之后会往下调。</p>
+<p>第二点才是全文最有信号的一句。</p>
+<p>它的潜台词其实是：V4-Pro 现在 ¥24 这个价定的是限流，不是真实成本。</p>
+<p>当下卡不够用，DeepSeek 只能用价格把需求往回压一点。等昇腾到货，这个数会重算。</p>
+<p>这个逻辑和昨天我写 GPT-5.5 时 Sam Altman 那句”token 效率更高，所以单价涨了账单不一定贵”完全是同一个剧本的两个版本。</p>
+<p>一家在分子上动手（把单价抬高），一家在分母上动手（把国产算力补齐）。</p>
+<p>两家今天都在说同一件事：2026 年这一代 AI 编程扁平月费的账算不动了。</p>
+<h2 id="为昇腾改的模型长什么样"><a href="#为昇腾改的模型长什么样" class="headerlink" title="为昇腾改的模型长什么样"></a>为昇腾改的模型长什么样</h2><p>这一段是我今天多花了半小时反复读的部分。</p>
+<p>先说最容易被忽略的一个词：MXFP4。</p>
+<p>V4 训练还是在英伟达 FP8 上做的，但把后训练和推理换成了 MXFP4 这种开放低精度格式。</p>
+<p>这个动作等价于把自己从 NVIDIA 的 FP8 生态里解绑了一半，因为 MXFP4 是华为昇腾、寒武纪、壁仞这些国产卡能原生支持的格式。</p>
+<p>推理不绑 CUDA 生态，是适配国产卡的前提。</p>
+<p>再看底层算子这一层。V4 不再完全依赖 CUDA，用的是 TileLang 这个 DSL。</p>
+<p>TileLang 是北大去年开源的瓦片式张量语言，写出来的算子能编译到不同硬件上。</p>
+<p>DeepSeek 把 TileLang 塞进 V4 的核心算子里，等于把”硬件可迁移”这件事做进了架构本身。</p>
+<p>最后是 MegaMoE 这个融合内核。它是为了减少专家并行里的通信等待设计的。</p>
+<p>官方明写了：目前已经在华为昇腾上跑通。这是三件事里最直接的一个国产卡信号。</p>
+<p>三个点放一起再看就清楚了。</p>
+<p>V4 的架构设计本身就是以”能在昇腾上跑起来”为约束条件的，不是架构先做完再补一层适配层。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260424-20260424-deepseek-v4-three-layer-stack.webp" alt="V4 为国产卡改的三层底座"></p>
+<p>这条路径和当年 Meta 给自家 TPU 写 JAX 不是一回事。DeepSeek 不造卡，它是在替国产芯片厂商把上层生态先铺出来。</p>
+<p>等昇腾 950 真到货那天，至少不用再从零造上层栈。</p>
+<p>Fine-grained EP 这个工程优化也顺便公布了，英伟达和华为的卡上都测过，推理速度提升 1.50 到 1.73 倍。</p>
+<p>这块属于锦上添花，但对上游算力账很有意义。</p>
+<h2 id="我把它接到-Claude-Code-里试了一下中文写作"><a href="#我把它接到-Claude-Code-里试了一下中文写作" class="headerlink" title="我把它接到 Claude Code 里试了一下中文写作"></a>我把它接到 Claude Code 里试了一下中文写作</h2><p>今天下午看到卡兹克已经把 V4-Pro 接到他的 Claude Code 里测过 3 个小时，他的结论很直接：Agent coding 场景下还有适配问题，skill 调用不自然，CLAUDE.md 约束有些不生效。</p>
+<p>我自己在 DeepSeek 官网开了一个会话，没挂 Claude Code，用一个我已经跑了一个月的中文博客写作 prompt，让它把今早 GPT-5.5 那篇文章的一个小节重写成”冷科技”风格。</p>
+<p>几个我关心的点：</p>
+<ul>
+<li><strong>写作感觉</strong>：这是今天我最意外的一块。V4 写中文是目前我用过的开源模型里最少”翻译腔”的。</li>
+</ul>
+<p>“这玩意儿”、”涨 8 倍还是便宜”这种口语化表达它是敢用的，不像 Qwen 或 MiniMax 那种开口就是”让我们来一起探讨”。</p>
+<ul>
+<li><strong>上下文</strong>：我贴了一个 8000 字的上下文进去，它没压缩、没遗漏。这次 1M 上下文确实不是宣传数字。</li>
+<li><strong>审美</strong>：中文审美过关，用词不生硬，节奏控制合理。这块卡兹克的结论也一致：直出修改度大概 45%（Opus 4.6 是 30%，Opus 4.7 是 60%）。</li>
+</ul>
+<p>但限制也很清楚：</p>
+<ul>
+<li><strong>没多模态</strong>。不能读图，不能处理截图。这周 Opus 4.7 最大的升级就是多模态，GPT-5.5 也早就是多模态了。V4 在这块落后了一整代。</li>
+<li><strong>Agent 场景下工具调用不稳</strong>。卡兹克实测里那个没遵守 CLAUDE.md 里域名确认约束的 case，我在我的 skill 里也看到了类似的征兆。不如 GLM-5.1 和 MiMo-V2.5-Pro 贴合 Claude Code。</li>
+</ul>
+<p>所以我对它的定位有数了：内容创作可以用，Agent coding 别用。</p>
+<h2 id="对一个-Claude-Max-5x-用户这周的决策"><a href="#对一个-Claude-Max-5x-用户这周的决策" class="headerlink" title="对一个 Claude Max 5x 用户这周的决策"></a>对一个 Claude Max 5x 用户这周的决策</h2><p>这周我已经把决策改了两次。</p>
+<p>周一 Pro 的 Claude Code 砍掉那一轮，我判断自己 $100&#x2F;月的 Max 5x 短期不动；昨天 GPT-5.5 出来，我判断两周里不切 Codex、但把 10 个高频 prompt 跑一遍对照；今天 V4 出来，我的判断是这样的：</p>
+<p>写中文博客、写公众号、写小红书这类场景，我会把主力从 Claude 切到 DeepSeek V4 官网。</p>
+<p>开源模型里写中文这块，V4 是目前最顺手的一个。官网免费。</p>
+<p>写代码这条线不动。Claude Code + Sonnet 4.6 的组合我已经摸了一个月，V4 在 Agent 场景的工具调用稳定性不够，切过去的成本高于收益。</p>
+<p>API 走量这块我会观察。现在 Pro 涨到 ¥24&#x2F;百万 token 的输出，和 Opus 4.7 的 $25 只差不到 60%。</p>
+<p>等下半年昇腾 950 真把 Pro 价格打下来，这块我会重新测。</p>
+<p>坦白说，V4 这次没有让我做出”现在就切 Claude Max”的决定。</p>
+<p>但它打破了一件事：开源模型第一次在”写中文写得像中文”这个点上全面过线。这在去年都是不可想象的。</p>
+<h2 id="百万上下文普惠化这件事值得单独记一笔"><a href="#百万上下文普惠化这件事值得单独记一笔" class="headerlink" title="百万上下文普惠化这件事值得单独记一笔"></a>百万上下文普惠化这件事值得单独记一笔</h2><p>V4 官方那句”1M 上下文成为所有服务标配”我想单独拎出来说一下。</p>
+<p>今天开始，不管你是在官网免费聊天，还是调 V4-Flash 的 API（¥2&#x2F;百万 token 输出），你都能拿到 1M 上下文。</p>
+<p>对比海外模型，GPT-5.5 Plus 订阅里是 400K，Opus 4.7 API 是 200K，Gemini 3.1 Pro 是 1M 但 API 不便宜。</p>
+<p>这意味着长文档处理、整本书分析、跨文件代码审查这些场景，第一次有了一个定价上打得过大多数人的选项。</p>
+<p>KV Cache 压到原来 1&#x2F;10、计算量压到 1&#x2F;4，这两个数字就是让百万上下文能普惠化的根本原因。</p>
+<p>V4 在架构上用了 Hybrid Attention（把压缩稀疏和重度压缩稀疏两种注意力结合起来）和 DSA 稀疏注意力两招，效果确实做出来了。</p>
+<p>这块我觉得过半年再看，可能才是 V4 真正的长尾价值。比 Agent coding 的指标重要，比对标 Opus 的跑分重要。</p>
+<p>百万上下文从奢侈品变成基础设施这件事，改的是整个开发者的工作方式。</p>
+<h2 id="昇腾-950-下半年的产能才是这次伏笔的兑现点"><a href="#昇腾-950-下半年的产能才是这次伏笔的兑现点" class="headerlink" title="昇腾 950 下半年的产能才是这次伏笔的兑现点"></a>昇腾 950 下半年的产能才是这次伏笔的兑现点</h2><p>写到这里我想留一个我自己真的还没看清楚的点。</p>
+<p>官方说昇腾 950 超节点下半年批量之后，Pro 会大幅降价。”下半年”是一个很大的窗口。</p>
+<p>如果到 Q4 昇腾真批量了，V4-Pro 降到原来 V3.2 的价位（比如输出 ¥3），那国内做 Agent 的人就真没理由不切 DeepSeek。</p>
+<p>整个开源生态的重心会再往国产卡这边移一次。</p>
+<p>但如果到 Q4 昇腾 950 的产能又没跟上，V4-Pro 长期卡在 ¥24 的价位，那这次 V4 的”为昇腾改的底座”就会变成一个做了但没兑现的伏笔。</p>
+<p>我手头的信息不够判断哪边概率更大。</p>
+<p>所以今天这篇文章我不敢下”这是国产化拐点”的结论，只能说 V4 把子弹上了膛。</p>
+<p>评论区我想问两类人。</p>
+<p>一类是在国内做 Agent 产品、每个月烧几十万到几百万 token 的：V4-Pro 这个价位你会切吗？你的 Agent 栈切 DeepSeek 要改多少代码？</p>
+<p>一类是做中文内容创作、月订阅 ChatGPT Plus 或者 Claude Pro 的：你会把写作主力切到 DeepSeek 官网吗？写中文这事上你测过它和 Claude&#x2F;GPT 的差距吗？</p>
+<p>我今晚会把 10 个我常用的中文写作 prompt 在 V4 官网跑一遍。如果 8 个以上过线，我大概率会把 ChatGPT Plus 那个账号先停一个月。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-%E7%BC%96%E7%A8%8B/" rel="tag"># AI 编程</a>
+              <a href="/tags/DeepSeek/" rel="tag"># DeepSeek</a>
+              <a href="/tags/%E6%98%87%E8%85%BE/" rel="tag"># 昇腾</a>
+              <a href="/tags/%E5%9B%BD%E4%BA%A7%E5%8C%96/" rel="tag"># 国产化</a>
+              <a href="/tags/%E7%AE%97%E5%8A%9B/" rel="tag"># 算力</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/04/24/202604241030/" rel="prev" title="GPT-5.5 发布当天，Tibo 两天前那句 &quot;we have the compute&quot; 被兑现了">
+                  <i class="fa fa-angle-left"></i> GPT-5.5 发布当天，Tibo 两天前那句 "we have the compute" 被兑现了
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/04/25/202604250010/" rel="next" title="MiMo-V2.5-Pro 实测两天，我把它排在 GLM-5.1 和 Kimi K2.6 之间">
+                  MiMo-V2.5-Pro 实测两天，我把它排在 GLM-5.1 和 Kimi K2.6 之间 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:05</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

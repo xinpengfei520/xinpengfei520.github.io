@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="大家好，我是飞飞。 今天有人在群里转了一段 Anthropic 内测中的 Insights 功能的工程 spec 给我。Insights 是 Anthropic 给 Claude Console 上的 Managed Agents 用户做的”跨 session 分析”工具，目前还在测试阶段，主流媒体没正式覆盖。 但我读完那段 spec 之后觉得它比 5 月 6 日 Code with Claud">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Anthropic 内测的 Insights 功能里，藏着一份值得抄的 LLM 反幻觉 spec">
+<meta property="og:url" content="https://www.vance.xin/2026/05/07/202605072118/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="大家好，我是飞飞。 今天有人在群里转了一段 Anthropic 内测中的 Insights 功能的工程 spec 给我。Insights 是 Anthropic 给 Claude Console 上的 Managed Agents 用户做的”跨 session 分析”工具，目前还在测试阶段，主流媒体没正式覆盖。 但我读完那段 spec 之后觉得它比 5 月 6 日 Code with Claud">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260507-20260507-anthropic-insights-anti-hallucination-spec.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260507-20260507-insights-map-reduce-architecture.webp">
+<meta property="article:published_time" content="2026-05-07T21:18:00.000Z">
+<meta property="article:modified_time" content="2026-05-08T14:00:27.111Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="Managed Agents">
+<meta property="article:tag" content="Claude Console">
+<meta property="article:tag" content="LLM 工程">
+<meta property="article:tag" content="反幻觉">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260507-20260507-anthropic-insights-anti-hallucination-spec.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/05/07/202605072118/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/05/07/202605072118/","path":"2026/05/07/202605072118/","title":"Anthropic 内测的 Insights 功能里，藏着一份值得抄的 LLM 反幻觉 spec"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Anthropic 内测的 Insights 功能里，藏着一份值得抄的 LLM 反幻觉 spec | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%8A%8A-Insights-%E8%BF%99%E4%B8%AA%E5%8A%9F%E8%83%BD%E7%9A%84%E6%9C%BA%E5%88%B6%E6%8F%8F%E5%AE%8C"><span class="nav-text">先把 Insights 这个功能的机制描完</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E5%A5%97%E8%AE%BE%E8%AE%A1%E9%87%8C%E7%9A%84-4-%E4%B8%AA%E5%85%B3%E9%94%AE%E5%8F%8D%E5%B9%BB%E8%A7%89%E5%86%B3%E7%AD%96"><span class="nav-text">这套设计里的 4 个关键反幻觉决策</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%8A-token-%E6%95%B0%E5%92%8C%E9%94%99%E8%AF%AF%E6%95%B0%E4%BB%8E%E4%BA%8B%E4%BB%B6%E6%B5%81%E7%9B%B4%E6%8E%A5%E7%AE%97%EF%BC%8C%E6%A8%A1%E5%9E%8B%E4%B8%8D%E7%A2%B0"><span class="nav-text">把 token 数和错误数从事件流直接算，模型不碰</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E8%B7%AF%E5%B9%B6%E8%A1%8C-summarize-1-%E6%AC%A1%E7%BB%BC%E5%90%88%E8%B0%83%E7%94%A8%EF%BC%8C%E7%BB%8F%E5%85%B8-map-reduce"><span class="nav-text">4 路并行 summarize + 1 次综合调用，经典 map-reduce</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AF%8F%E4%B8%AA%E8%A2%AB%E5%BC%95%E7%94%A8%E7%9A%84-session-ID-%E9%83%BD%E8%A6%81%E5%92%8C%E8%BE%93%E5%85%A5%E6%A0%A1%E9%AA%8C"><span class="nav-text">每个被引用的 session ID 都要和输入校验</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Summary-%E5%92%8C-finding-%E9%83%BD%E7%BC%93%E5%AD%98%EF%BC%8C%E6%A8%A1%E5%9E%8B%E9%83%A8%E5%88%86%E8%B4%B5%E4%BB%A3%E7%A0%81%E9%83%A8%E5%88%86%E4%BE%BF%E5%AE%9C"><span class="nav-text">Summary 和 finding 都缓存，模型部分贵代码部分便宜</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A-Insights-%E6%94%BE%E8%BF%9B-5-6-%E5%A4%A7%E4%BC%9A%E7%9A%84%E5%85%A8%E6%99%AF%E9%87%8C"><span class="nav-text">把 Insights 放进 5&#x2F;6 大会的全景里</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%87%AA%E5%B7%B1%E5%86%99-LLM-%E5%BA%94%E7%94%A8%E7%9A%84%E5%BC%80%E5%8F%91%E8%80%85%E6%84%8F%E5%91%B3%E7%9D%80%E4%BB%80%E4%B9%88"><span class="nav-text">对自己写 LLM 应用的开发者意味着什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%98%E6%B2%A1%E7%A1%AE%E8%AE%A4%E7%9A%84%E5%87%A0%E4%BB%B6%E4%BA%8B"><span class="nav-text">还没确认的几件事</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">302</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">523</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/05/07/202605072118/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Anthropic 内测的 Insights 功能里，藏着一份值得抄的 LLM 反幻觉 spec | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Anthropic 内测的 Insights 功能里，藏着一份值得抄的 LLM 反幻觉 spec
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-05-07 21:18:00" itemprop="dateCreated datePublished" datetime="2026-05-07T21:18:00+00:00">2026-05-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-05-08 14:00:27" itemprop="dateModified" datetime="2026-05-08T14:00:27+00:00">2026-05-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260507-20260507-anthropic-insights-anti-hallucination-spec.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>今天有人在群里转了一段 Anthropic 内测中的 Insights 功能的工程 spec 给我。Insights 是 Anthropic 给 Claude Console 上的 Managed Agents 用户做的”跨 session 分析”工具，目前还在测试阶段，主流媒体没正式覆盖。</p>
+<p>但我读完那段 spec 之后觉得它比 5 月 6 日 Code with Claude 大会上发布的那几个旗舰功能（Dreaming、Outcomes、Multiagent Orchestration）都更值得写一篇。</p>
+<p>理由：<strong>这是我最近半年看到的 LLM 应用层最干净的一份”反幻觉架构”spec</strong>。普通开发者写自己的 LLM 应用如果遇到”跨数据点做 cross-record 分析”这类需求，几乎可以照着这套架构抄。</p>
+<p>下面把这段 spec 拆开讲，重点不在新闻本身，在它的设计哲学。</p>
+<h2 id="先把-Insights-这个功能的机制描完"><a href="#先把-Insights-这个功能的机制描完" class="headerlink" title="先把 Insights 这个功能的机制描完"></a>先把 Insights 这个功能的机制描完</h2><p>把用户给我的那段 spec 翻译成中文摆出来，再讲解读。</p>
+<p>整个流程从<strong>抓 session</strong> 开始。Anthropic 抓你这个 Managed Agent 最近最多 100 个 session。</p>
+<p>抓完之后进入<strong>并行 summarize</strong>。每条 transcript 单独发给模型（4 路并行），上下文里带上你这个 agent 的 system prompt。模型为每个 session 写一份 summary，字段包括 task（这个 session 在干啥）、actions（agent 做了哪些动作）、issues（有什么问题）、assessment（整体评价）。再额外打一个 0 到 100 的 quality score。</p>
+<p>跟 summarize 同步进行的是<strong>硬数据计算</strong>。token 消耗、cache 命中、tool 调用错误数这些数字<strong>不让模型算</strong>，而是直接从原始事件流里数。</p>
+<p>所有 summary 和硬数据备齐之后，做<strong>单次跨 session 综合</strong>。把它们一起塞给模型，模型做一次跨 session 调用，产出几类输出：</p>
+<ul>
+<li>recurring errors（反复出现的错误）</li>
+<li>usage patterns（使用模式）</li>
+<li>efficiency outliers（效率异常的 session）</li>
+<li>wins（做得特别好的 session）</li>
+<li>error category buckets（错误归类桶）</li>
+<li>use-case clusters（场景聚类）</li>
+</ul>
+<p>每个被引用的 session ID 都要和输入对照过校验，<strong>模型说的”参考 session #abc”必须真实存在于输入列表里</strong>。</p>
+<p>最后两件事是工程层的兜底。<strong>summary 和 finding 都缓存存盘</strong>，下次刷新页面直接秒开。<strong>数字归数字、文字归文字</strong>：用户在 UI 上看到的所有数字（counts、percentages、per-cluster token 统计）都从原始事件流算的；模型只负责写文字描述（prose）和决定”这个 session 应该归到哪个 bucket”（bucket membership）。</p>
+<p>简单一句话总结这套架构：<strong>LLM 只做语言任务和分类任务，所有数字 &#x2F; 引用 &#x2F; 真实性校验由代码兜底</strong>。</p>
+<h2 id="这套设计里的-4-个关键反幻觉决策"><a href="#这套设计里的-4-个关键反幻觉决策" class="headerlink" title="这套设计里的 4 个关键反幻觉决策"></a>这套设计里的 4 个关键反幻觉决策</h2><p>读完上面那段，最值得抄的是 4 个具体决策。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260507-20260507-insights-map-reduce-architecture.webp" alt="Insights map-reduce 架构与反幻觉检查点"></p>
+<h3 id="把-token-数和错误数从事件流直接算，模型不碰"><a href="#把-token-数和错误数从事件流直接算，模型不碰" class="headerlink" title="把 token 数和错误数从事件流直接算，模型不碰"></a>把 token 数和错误数从事件流直接算，模型不碰</h3><p>这是最反 LLM 第一反应的设计。</p>
+<p>按”自然”做法，我们会让模型在 summarize 的时候顺手输出”这个 session 用了多少 token、出了几次 tool error”。模型见过这些数字，写一个数出来好像没问题。</p>
+<p>但 LLM 数数是出名的不靠谱。10 万 token 的 session 让它告诉你具体消耗了多少 token，它会给你一个看起来合理但和真实事件流对不上的数字。</p>
+<p>Anthropic 把数数这件事完全从模型职责里拿掉，让代码从原始事件流里数。模型只负责描述发生了什么，不负责数发生了多少次。</p>
+<p><strong>抄走原则</strong>：你自己的 LLM 应用里，凡是有”具体数值需要从原始数据计算出来”的地方，全部用代码算，不让模型碰。模型只输出 prose 和 categorical 字段。</p>
+<h3 id="4-路并行-summarize-1-次综合调用，经典-map-reduce"><a href="#4-路并行-summarize-1-次综合调用，经典-map-reduce" class="headerlink" title="4 路并行 summarize + 1 次综合调用，经典 map-reduce"></a>4 路并行 summarize + 1 次综合调用，经典 map-reduce</h3><p>100 个 session 不能直接塞进一次模型调用。哪怕模型 context 够大，做 100 个 session 的 cross-correlation 也会让模型质量崩。</p>
+<p>Anthropic 选了经典的 map-reduce 架构：100 路 → 4 路并行（每路 summarize）→ 1 路综合（cross-session findings）。</p>
+<p>这个设计巧的点在于，<strong>summarize 阶段是平行任务</strong>（每个 session 互不影响），<strong>综合阶段是串行任务</strong>（需要看全所有 summary 找 pattern）。这两个阶段对模型能力的要求不一样：summarize 要可靠+便宜，综合要 reasoning 强+一次能装下 100 份 summary。</p>
+<p>理论上 summarize 可以用更便宜的小模型（Sonnet 或 Haiku），综合用 Opus。spec 里没明说但架构允许这种 cost optimization。</p>
+<p><strong>抄走原则</strong>：跨数据点的 LLM 任务尽量拆成 map（每条独立处理）+ reduce（一次综合）。map 阶段并行 + 用便宜模型；reduce 阶段串行 + 用强模型。</p>
+<h3 id="每个被引用的-session-ID-都要和输入校验"><a href="#每个被引用的-session-ID-都要和输入校验" class="headerlink" title="每个被引用的 session ID 都要和输入校验"></a>每个被引用的 session ID 都要和输入校验</h3><p>这是我最喜欢的一条。</p>
+<p>模型在 cross-session findings 阶段会引用具体的 session ID 来举证：”以下三个 session 出现了相同的错误模式：#abc、#def、#ghi”。</p>
+<p>但模型可能幻觉出一个不存在的 session ID（特别是当真实 ID 是 hash 字符串那种没有语义的 ID 时）。</p>
+<p>Anthropic 的解法是：<strong>每个被引用的 session ID 都和输入列表对照校验，对不上的引用直接扔掉或重生成</strong>。</p>
+<p>这一条解决了 LLM 应用最常见的”言之凿凿但来源是假的”问题。在 RAG、引用生成、cross-document 分析这类场景里，没有 ID 校验环节就等于让模型凭空捏造来源。</p>
+<p><strong>抄走原则</strong>：但凡 LLM 输出里包含”引用 X”的字段，都要在输出后做校验：X 必须存在于输入里。校验不通过的就拒绝接受，让模型重生成或者直接砍掉那条 finding。</p>
+<h3 id="Summary-和-finding-都缓存，模型部分贵代码部分便宜"><a href="#Summary-和-finding-都缓存，模型部分贵代码部分便宜" class="headerlink" title="Summary 和 finding 都缓存，模型部分贵代码部分便宜"></a>Summary 和 finding 都缓存，模型部分贵代码部分便宜</h3><p>这条不是”反幻觉”而是”反成本 + 反延迟”，但和反幻觉是配套的。</p>
+<p>如果每次用户打开 Insights 页面都重新跑一遍 100 个 session 的 summarize + 综合，单次成本会很高（按 100 个 session × 平均 transcript 长度算，光 input 就是几百万 token），延迟也会到分钟级。</p>
+<p>Anthropic 把 summary + finding 都缓存。下次打开页面直接读缓存。</p>
+<p>更妙的一点：因为数字不是模型算的而是代码从事件流算的，<strong>数字部分可以单独刷新</strong>而不重跑 summarize。这意味着用户看到的 token 消耗、percentage 等数据可以是”昨天的 prose 解读 + 今天的硬数据”。</p>
+<p><strong>抄走原则</strong>：LLM 输出里”模型算的部分”和”代码算的部分”要分开存、分开刷新。代码算的便宜+实时，模型算的贵+缓存复用。</p>
+<h2 id="把-Insights-放进-5-6-大会的全景里"><a href="#把-Insights-放进-5-6-大会的全景里" class="headerlink" title="把 Insights 放进 5&#x2F;6 大会的全景里"></a>把 Insights 放进 5&#x2F;6 大会的全景里</h2><p>5 月 6 日 Anthropic 在 Code with Claude 大会上发了 Dreaming、Outcomes、Multiagent Orchestration 三个面向 Managed Agents 的功能。Dreaming 也是抓最多 100 个 past session 找 pattern。</p>
+<p>那 Insights 和 Dreaming 什么关系？</p>
+<p>我现在的判断（基于 spec + 公开报道交叉对比）：</p>
+<p>Dreaming 是<strong>给 agent 自己用</strong>的。它跑完之后产出一份新的 memory store，以后这个 agent 跑新任务的时候会带着这份 memory 去做。</p>
+<p>Insights 是<strong>给开发者用</strong>的。它跑完之后展示一份分析仪表板，给开发者看 agent 表现得怎么样、哪里反复犯错、哪些 session 最高效。</p>
+<p>这两个东西底层基础设施可能共享（都是 100 session、都做 cross-session pattern mining），但产品定位不同。Dreaming 让 agent 改进自己，Insights 让开发者改进 agent 的设计（system prompt、tools、skills 配置）。</p>
+<p>放在一起看，这是 Anthropic 在 Managed Agents 这个产品上做”双向反馈环”：agent 通过 Dreaming 自我改进，开发者通过 Insights 看到改进的方向。两条线一起上，agent 才会真正变得”越用越好”。</p>
+<p>而且仔细看 Insights 的 spec，它的输出明显是要喂回到 Outcomes 和 Multiagent Orchestration 那两个工具里的：</p>
+<ul>
+<li>“recurring errors” → 直接进 Outcomes 的 rubric，做 retry 逻辑</li>
+<li>“use-case clusters” → 决定 Multiagent Orchestration 里哪些 sub-agent 要拆出去</li>
+<li>“efficiency outliers” → 提示开发者哪些 session 应该被研究</li>
+</ul>
+<p>所以 Insights 不能只看成孤立功能。它在 Anthropic Managed Agents 这一整套自我改进基础设施里扮演的是”分析层”。</p>
+<h2 id="对自己写-LLM-应用的开发者意味着什么"><a href="#对自己写-LLM-应用的开发者意味着什么" class="headerlink" title="对自己写 LLM 应用的开发者意味着什么"></a>对自己写 LLM 应用的开发者意味着什么</h2><p>我自己虽然不在 Managed Agents 上写复杂 agent 系统，但有几个工作流可以直接抄这套设计。</p>
+<p>我有一个 content-polisher skill，每次跑都会输出一份”AI 味检测结果”。如果我把过去 30 天的 polisher 结果拿来做 cross-session 分析，应该可以看出我的写作里反复出现的 AI 味模式（顽固的”不是 X 是 Y”、循环出现的破折号问题等）。</p>
+<p>如果按 Insights 这套架构抄，我会这么做：</p>
+<p>每次 polisher 跑完留下原始 event log（不只是最终评分）。这是事件流。</p>
+<p>跑跨 session 分析时，先用便宜模型（Haiku）map 阶段把每篇文章的检测结果总结成 200 字以内的 summary。</p>
+<p>reduce 阶段用 Sonnet 或 Opus 做一次综合，输出”反复出现的 3 类 AI 味模式 + 每篇文章引用 ID + 数字部分单独算”。</p>
+<p>所有引用的文章 ID 必须和真实 ID 列表校验。</p>
+<p>结果缓存，下次只跑增量（只 summarize 新增文章）。</p>
+<p>如果跑得通，这个东西可以直接接到 content-training skill 里，让它自动生成新的 WRITING_LESSONS 条目。</p>
+<p>这是我打算下周空了试试的具体应用。</p>
+<h2 id="还没确认的几件事"><a href="#还没确认的几件事" class="headerlink" title="还没确认的几件事"></a>还没确认的几件事</h2><p>最后几个我没确认但值得继续追的点。</p>
+<p>Insights 是不是已经向部分用户开放了？我看到的 spec 是内部细节文档，公开报道里没找到 launch 公告。Dreaming 已经是 research preview，Insights 可能是更早期的内部 alpha。</p>
+<p>这个功能的定价模式还不清楚。100 个 session 的 transcript 加起来 token 量很大，如果按标准 API 价计费，跑一次成本可能在 $5 到 $20 之间。Anthropic 会不会把这个成本打包进 Managed Agents 订阅里，还是单独计费？</p>
+<p>Insights 输出的 finding 能否反向喂回到 agent 的 system prompt 里？如果可以，那就是真正的闭环：开发者看 finding → 改 system prompt → agent 行为变化 → 下一轮 Insights 看出改进了没。这个闭环成立的话，Managed Agents 的产品形态会比现在这套已有的明显进一步。</p>
+<p>评论区想问两件事。</p>
+<p>如果你也在 Managed Agents 上跑 agent，你已经能看到 Insights 这个 tab 了吗？UI 长什么样？欢迎截图。</p>
+<p>另外，你自己写 LLM 应用的时候有没有用过类似的”数字归代码、prose 归模型”分工？我想听具体的案例和坑。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/Managed-Agents/" rel="tag"># Managed Agents</a>
+              <a href="/tags/Claude-Console/" rel="tag"># Claude Console</a>
+              <a href="/tags/LLM-%E5%B7%A5%E7%A8%8B/" rel="tag"># LLM 工程</a>
+              <a href="/tags/%E5%8F%8D%E5%B9%BB%E8%A7%89/" rel="tag"># 反幻觉</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/05/07/202605072015/" rel="prev" title="我上周赌 Anthropic 会涨价加限制，今天它租下 Musk 的 22 万块 GPU 把限速翻倍了">
+                  <i class="fa fa-angle-left"></i> 我上周赌 Anthropic 会涨价加限制，今天它租下 Musk 的 22 万块 GPU 把限速翻倍了
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/05/08/202605081052/" rel="next" title="我装了 26 个 Claude Code skill，今天才发现其中 22 个的描述从未真正被加载">
+                  我装了 26 个 Claude Code skill，今天才发现其中 22 个的描述从未真正被加载 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:05</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

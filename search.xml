@@ -1,6 +1,1008 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>11 天前我教大家在 Claude Desktop 里接 DeepSeek V4，今天 Anthropic 把这条路堵了</title>
+    <url>/2026/05/08/202605081410/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260508-20260508-claude-desktop-third-party-block.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>4 月 26 日我写了一篇《Claude 桌面客户端有个开发者模式，把国产大模型直接接进 Cowork 界面》。文章里详细列了 7 家国产模型的 Anthropic 兼容端点，给出 5 步配置流程，结尾还专门留了一段”风险提示”：</p>
+<blockquote>
+<p>这个开关原本是给企业 MDM 部署用的。一旦个人用户大规模拿它薅免费 UI 的羊毛，Anthropic 完全有可能在某个版本里加一道账号校验。所以现在用着的人最好做好备份方案的心理准备。</p>
+</blockquote>
+<p>那时候我赌的是”6 个月内”。</p>
+<p>5 月 7 日，11 天之后，Anthropic 把这条路堵了。</p>
+<p>不是加账号校验。是更直接的招：在 Claude Desktop 1.6259.1 版本里，给 Gateway 模式加了模型 ID 白名单。系统会校验你接入端点返回的模型名，<strong>只允许以 “claude” 或 “anthropic” 开头的条目通过</strong>。DeepSeek V4、GPT、Grok 这些第三方模型直接不能用了。</p>
+<p>同一天 Claude Code CLI 2.1.129 也跟着收紧。Gateway 的 <code>/v1/models</code> 模型发现功能从 2.1.126-2.1.128 的默认自动开启，改成了需要手动设环境变量 <code>CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1</code> 才会生效。</p>
+<p>11 天，把我那篇教程从”实用攻略”打成”文物”。</p>
+<p>下面写一下这次封堵的具体技术细节、绕过方法目前能撑多久、以及我对自己那次时间预测赌错的反思。</p>
+<h2 id="5-月-7-日具体改了什么"><a href="#5-月-7-日具体改了什么" class="headerlink" title="5 月 7 日具体改了什么"></a>5 月 7 日具体改了什么</h2><p>把硬动作摆出来。</p>
+<p><strong>Claude Desktop 1.6259.1</strong>：</p>
+<p>Gateway 模式（也就是 4&#x2F;26 那篇文章里讲的 “Configure Third-Party Inference”）加了模型 ID 白名单。从客户端代码层校验后端 <code>/v1/models</code> 接口返回的每个模型条目，名字必须以 <code>claude</code> 或 <code>anthropic</code> 开头才能通过。</p>
+<p>之前你接 DeepSeek V4 的端点（<code>https://api.deepseek.com/anthropic</code>）返回的模型名是 <code>deepseek-v4-pro</code>、<code>deepseek-v4-flash</code> 这种。1.6259.1 之后这些名字直接被过滤掉，Cowork 主界面打开来”模型选择”是空的，根本进不去会话。</p>
+<p>我自己亲眼验证了一下：在 1.6259.1 之前我接的 DeepSeek 工作流好好的，今天升级之后整个 Gateway 模式直接卡住，登录页那行”继续使用本地网关”按下去之后界面是灰的。</p>
+<p>Ollama 的 GitHub issue #16025 已经有人报告同样的问题：<code>ollama launch claude-desktop</code> 之前能把 Claude Desktop 切到 3P gateway 模式并写入有效配置，1.6259.1 升级之后直接 break 了。</p>
+<p><strong>Claude Code CLI 2.1.129</strong>：</p>
+<p>这一边的改动更隐蔽。Claude Code CLI 在 2.1.126-2.1.128 这三个版本里，如果你设了 <code>ANTHROPIC_BASE_URL</code> 指向第三方网关，运行 <code>/model</code> 命令时它会自动调用网关的 <code>/v1/models</code> 端点拉模型列表。这是一个让接 GLM、Kimi、MiMo 这些国产模型超方便的功能。</p>
+<p>2.1.129 把这个行为改成 opt-in：你必须显式设环境变量 <code>CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1</code> 才会拉。</p>
+<p>同时官方 changelog 还专门加了一句：”Third-party deployments (Bedrock, Vertex, Foundry, or ANTHROPIC_BASE_URL gateway) no longer see spinner tips pointing at first-party Anthropic surfaces.” 翻译过来：第三方部署用户不会再看到指向 Anthropic 自家产品的提示。</p>
+<p>这是把第三方部署这条路从”被引导着用”降级到”你自己摸索着用”。</p>
+<p>两边合起来看，5 月 7 日是 Anthropic 把第三方接入做了一次系统级收紧。Desktop 端是”封堵”，CLI 端是”摩擦提升”。</p>
+<h2 id="模型-ID-白名单这条规则有多硬"><a href="#模型-ID-白名单这条规则有多硬" class="headerlink" title="模型 ID 白名单这条规则有多硬"></a>模型 ID 白名单这条规则有多硬</h2><p>这条规则的实际边界值得仔细看。</p>
+<p>校验逻辑很简单：客户端请求网关的 <code>/v1/models</code>，拿到返回的模型清单，对每条 <code>id</code> 字段做一个前缀检查。前缀必须是 <code>claude</code> 或 <code>anthropic</code>（大小写不敏感）。不符合的条目直接从 model picker 里抹掉。</p>
+<p>注意它校验的是 <code>/v1/models</code> 返回值，不是请求体里的 <code>model</code> 字段。这意味着：</p>
+<ul>
+<li>如果你的网关返回模型 ID 叫 <code>deepseek-v4-pro</code>，整个条目被过滤。Desktop 这边连选都选不到。</li>
+<li>如果你的网关返回模型 ID 叫 <code>claude-pretend-pro</code>，能选到。请求发出后用什么模型实际处理这件事 Anthropic 不管。</li>
+<li>这是一个”前端可见性”层面的控制，不是端到端的协议校验。</li>
+</ul>
+<p>这条边界让”绕过”成了一个简单的字符串变换问题。</p>
+<h2 id="现在的绕过方法-这条路能撑多久"><a href="#现在的绕过方法-这条路能撑多久" class="headerlink" title="现在的绕过方法 + 这条路能撑多久"></a>现在的绕过方法 + 这条路能撑多久</h2><p>社区今天已经跑通的绕过方案是：在你和 Claude Desktop 之间加一层本地代理。</p>
+<p>代理拦截 Claude Desktop 发到 <code>/v1/models</code> 的请求，向真实第三方网关查询，拿回模型列表后做一次字符串映射：把 <code>deepseek-v4-pro</code> 改写成 <code>claude-deepseek-v4-pro</code>、<code>gpt-5.5</code> 改写成 <code>claude-gpt-5.5</code> 这种。Desktop 看到合法前缀，让它进 model picker。</p>
+<p>发请求时再做反向映射：用户选了 <code>claude-deepseek-v4-pro</code>，代理把请求体里的 model 字段改回 <code>deepseek-v4-pro</code>，发给真实网关。</p>
+<p>技术上不复杂，几十行 Python 或 Node.js 就能写出来。Linux.do 这两天已经有人贴出了完整代码。</p>
+<p>但这条路能撑多久我个人不乐观。</p>
+<p>有几个方向 Anthropic 可以继续收紧：</p>
+<p>校验从前缀升级到完整模型名白名单。Anthropic 维护一个官方模型 ID 列表（<code>claude-opus-4-7</code>、<code>claude-sonnet-4-6</code> 等具体型号），不在列表里的全部过滤。</p>
+<p>校验从客户端层下沉到协议层。让响应内容做某种签名校验，没有 Anthropic 私钥签的模型 ID 通不过。这个工程量大但技术上可行。</p>
+<p>加账号校验。让 Gateway 模式必须用一个有效的 Anthropic 账号才能进，企业 MDM 的话用 organization token 鉴权。这是我 4&#x2F;26 文章里赌的方向，今天看 Anthropic 没走这条路是因为前两条更便宜。</p>
+<p>我个人估计这条”代理改 ID”的路撑 1 到 2 个月之间。如果你今天为了应急装代理用，要做好 6 月内重新找方案的心理准备。</p>
+<h2 id="把这次封堵放进-4-月以来的连续动作里看"><a href="#把这次封堵放进-4-月以来的连续动作里看" class="headerlink" title="把这次封堵放进 4 月以来的连续动作里看"></a>把这次封堵放进 4 月以来的连续动作里看</h2><p>5&#x2F;7 这次收紧不是孤立事件。把它放进 Anthropic 4 月以来的动作链里就清晰了。</p>
+<p><strong>4 月 4 日</strong>：Anthropic 把 Claude Pro 和 Max 订阅从 OpenClaw 等第三方 AI agent 框架上断开。订阅用户用第三方 agent 必须切到额外的 “extra usage” 计费。</p>
+<p><strong>4 月 23 日左右</strong>：Pro 用户登录 Anthropic 官网发现 Claude Code 从 $20 套餐里被拿掉。Anthropic 当时回应是”对 2% 新用户的 A&#x2F;B 测试”。</p>
+<p><strong>4 月 30 日</strong>：Claude Code 官方文档悄悄把开发者日均成本估算从 $6 改成 $13。</p>
+<p><strong>5 月 6 日</strong>：Code with Claude 大会上宣布拿下 SpaceX Colossus 1 全部算力 + Pro&#x2F;Max 限速翻倍 + 取消高峰限流。表面是给用户更多容量。</p>
+<p><strong>5 月 7 日</strong>：Claude Desktop 1.6259.1 + Claude Code CLI 2.1.129 同时收紧第三方接入。</p>
+<p>把这五条线串起来看，Anthropic 在做的事情很一致：<strong>给真正付费的 Anthropic 用户更多容量，把”用 Anthropic UI 跑别家模型”和”用别家工具跑 Anthropic 订阅”两条灰色路径都堵掉</strong>。</p>
+<p>5&#x2F;6 给容量是为了让付费用户没有”想跑更多就只能找便宜替代”的动力。</p>
+<p>5&#x2F;7 堵接入是为了让”用 Claude Desktop UI 但跑国产模型”这条路走不通，强迫想要 Claude UI 的人付 Anthropic 钱。</p>
+<p>这是同一套策略的两个动作，给糖和打人配套出现。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260508-20260508-anthropic-tightening-timeline.webp" alt="Anthropic 一个月内五个连续动作时间线"></p>
+<h2 id="我-4-月-26-日那篇文章里赌错了时间但赌对了方向"><a href="#我-4-月-26-日那篇文章里赌错了时间但赌对了方向" class="headerlink" title="我 4 月 26 日那篇文章里赌错了时间但赌对了方向"></a>我 4 月 26 日那篇文章里赌错了时间但赌对了方向</h2><p>回到我自己那篇文章的预测。</p>
+<p>我当时写的原话是：”Anthropic 完全有可能在某个版本里加一道账号校验。所以现在用着的人最好做好备份方案的心理准备。”</p>
+<p>赌对的部分：方向。我承认这条路 Anthropic 不会让一直开着，且这件事会通过版本更新落地。</p>
+<p>赌错的部分：</p>
+<p>时间。我当时心里的赌注是 6 个月。实际是 11 天。</p>
+<p>具体方法。我赌的是”账号校验”。实际是更轻量的”模型 ID 白名单”。账号校验需要做企业 MDM 鉴权这一套，工程成本高。模型 ID 白名单只是 client 端加几行字符串过滤，工程成本几乎为零。</p>
+<p>这是我连续第二次低估 Anthropic 的决策速度。上一次是 4&#x2F;30 那篇文章里我赌”5 月内 Anthropic 涨价或加限制三选一”，结果它选了第四条路（5&#x2F;6 拿 SpaceX 算力反向给容量）。这次又赌错时间。</p>
+<p>两次的共同点是：<strong>我把 Anthropic 当成”决策慢、节奏稳”的成熟公司在算，实际上它现在的节奏更像创业公司</strong>。每件事的决策周期是周级，不是月级。这是我以后做这类预测要先调整的基础假设。</p>
+<h2 id="对中国开发者的实际影响"><a href="#对中国开发者的实际影响" class="headerlink" title="对中国开发者的实际影响"></a>对中国开发者的实际影响</h2><p>写到这里给具体建议。</p>
+<p><strong>如果你已经在 Claude Desktop 1.6259.1 之前的版本里跑通了第三方接入</strong>：先别升级。Claude Desktop 默认有自动更新，需要手动关掉（Settings → Updates）。在 1.6259.0 这个版本里你之前的工作流都还能用。</p>
+<p><strong>如果你今天升级到了 1.6259.1</strong>：第三方接入这条路目前直接断了。短期方案是用本地代理改 ID 绕过，但如前面所说这条路撑不了几个月。</p>
+<p><strong>如果你打算继续用 Claude Desktop UI</strong>：目前看只剩两条路。要么订阅 Claude Pro&#x2F;Max 用 Anthropic 的官方模型；要么放弃 Claude Desktop UI，切到 Cherry Studio、Chatbox 这类支持任意 Anthropic 兼容端点的客户端。后者牺牲一些 UI 手感但完全自由。</p>
+<p><strong>如果你主要用 Claude Code CLI</strong>：2.1.129 的影响比较小。<code>ANTHROPIC_BASE_URL</code> 接 DeepSeek&#x2F;MiMo&#x2F;GLM 这条路还能走，只是 <code>/model</code> picker 里看不到自动列出来的模型，得手动设 <code>ANTHROPIC_DEFAULT_*_MODEL</code> 或者打开那个新的 opt-in 环境变量。</p>
+<p><strong>长期看</strong>：这件事让 Cherry Studio、Chatbox 这类不依赖 Anthropic UI 的客户端价值反而上升了。它们和 Anthropic 之间没有”主客关系”，Anthropic 没有动机也没有能力封它们的接入路径。如果你不是非用 Claude Desktop 的 Cowork UI 不可，这是更稳的方案。</p>
+<p>我自己今天做的处理：Claude Desktop 暂停升级（手动锁在 1.6259.0），主力工作流回归 Cherry Studio + 各家国产模型。Claude Max 5x 订阅继续用 Claude Code CLI，因为 CLI 这边收紧的是”画饼工具”不是核心通道。</p>
+<p>评论区想问两件事。</p>
+<p>如果你也跟着我那篇 4&#x2F;26 教程接了第三方模型，你今天发现被封了吗？现在的应对方案是什么？</p>
+<p>另外一个我自己很想知道的：你觉得 Anthropic 接下来会把这次模型 ID 白名单升级到完整名单白名单或者协议层签名吗？我赌会，时间窗口在 6 月底前。</p>
+]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>Anthropic</tag>
+        <tag>DeepSeek</tag>
+        <tag>Claude Desktop</tag>
+        <tag>国产大模型</tag>
+        <tag>第三方接入</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>我装了 26 个 Claude Code skill，今天才发现其中 22 个的描述从未真正被加载</title>
+    <url>/2026/05/08/202605081052/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260508-20260508-claude-code-skill-budget.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>今早起来打开 Claude Code，启动栏蹦出来一行黄色 warning：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Skill listing will be truncated</span><br><span class="line">22 descriptions dropped (full descriptions kept for most-used skills) (1.8%/1% of context): xlsx, docx, pptx, +19 more</span><br><span class="line">run /skills to disable some, or raise skillListingBudgetFraction (currently 1%) in settings.json</span><br><span class="line">Opting in would cost ~4k tokens for skills every session and uses rate limits faster</span><br></pre></td></tr></table></figure>
+
+<p>我第一反应是又出 bug 了。第二反应是我装了多少个 skill。</p>
+<p>跑 <code>ls ~/.claude/skills/</code> 加上项目里的 <code>.claude/skills/</code>，结果是 <strong>26 个</strong>。其中 22 个的 description 默认就没被加载到 Claude 看得到的列表里。</p>
+<p>也就是说我以为自己装了 26 个工具的 Claude Code，实际上 Claude 一启动只看到完整描述的是其中 4 个，剩下 22 个连”它能干什么”这件事 Claude 都不知道。</p>
+<p>跑 <code>/doctor</code> 看完之后我意识到这是一个很多人不知道但每天都在影响实际效果的细节。这篇把它讲清楚。</p>
+<h2 id="这条-warning-到底在说什么"><a href="#这条-warning-到底在说什么" class="headerlink" title="这条 warning 到底在说什么"></a>这条 warning 到底在说什么</h2><p>先把机制摆出来。</p>
+<p>Claude Code 在 2.1.129 这个版本之后改了 skill listing 的策略。</p>
+<p>更早的版本（2.1.86）是按字符数硬截：每个 skill 的 description 字段最多保留前 250 字符，多的部分丢掉。2.1.105 把这个限制抬到 1,536 字符。这个机制的问题是：作者把重要的 trigger 关键词写在 description 后半段，这部分会被默默丢掉，作者完全不知道。</p>
+<p>2.1.129 换了思路。<strong>不再按字符数截，而是按 context 总占比限</strong>。Claude Code 在 settings.json 里加了一个字段 <code>skillListingBudgetFraction</code>，默认值 1%。</p>
+<p>这个 1% 是相对总 context 而言的预算上限。Claude Code 启动时把所有 skill 的 description 加起来算总长度，如果占总 context 超过 1%，就启动一个”丢弃机制”：保留<strong>最常用的几个</strong>的完整 description，剩下的 skill 只保留名字，description 直接丢掉。</p>
+<p>我那条 warning 上的 1.8%&#x2F;1% 就是说：我所有 skill 的 description 加起来占了 1.8% 的 context，超出 1% 预算 0.8 个百分点，于是触发丢弃，丢了 22 个 skill 的描述。</p>
+<p>被丢掉的 skill 不是不能用，名字还在 Claude 看得到的列表里。但 Claude 看不到它们的 description，所以<strong>不知道这些 skill 是干什么的、什么场景应该触发它们</strong>。结果就是这些 skill 几乎不会被自动唤起，除非你在 prompt 里显式说”用 xlsx skill 处理这个文件”。</p>
+<h2 id="跑-doctor-看具体哪些被丢了"><a href="#跑-doctor-看具体哪些被丢了" class="headerlink" title="跑 &#x2F;doctor 看具体哪些被丢了"></a>跑 &#x2F;doctor 看具体哪些被丢了</h2><p><code>/doctor</code> 是 Claude Code 自带的诊断命令，按官方 troubleshooting 文档的描述，它一次性检查 installation、settings、MCP 配置、context usage 这几件事。</p>
+<p>跑 <code>/doctor</code> 之后，输出里会专门有一个 Skills 区块，告诉你：</p>
+<ul>
+<li>总共找到几个 skill</li>
+<li>每个 skill 的 description 字符数</li>
+<li>哪些 skill 的 description 因为 budget 限制被丢了</li>
+<li>给出建议（跑 &#x2F;skills 还是抬高 fraction）</li>
+</ul>
+<p>我自己跑下来的实际数据：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">项目级（MyHexoBlog/.claude/skills/）：8 个</span><br><span class="line">  content-artist</span><br><span class="line">  content-director</span><br><span class="line">  content-distributor</span><br><span class="line">  content-polisher</span><br><span class="line">  content-publisher</span><br><span class="line">  content-researcher</span><br><span class="line">  content-training</span><br><span class="line">  content-writer</span><br><span class="line"></span><br><span class="line">用户级（~/.claude/skills/）：18 个</span><br><span class="line">  clay-ralph</span><br><span class="line">  defuddle</span><br><span class="line">  docx</span><br><span class="line">  find-skills</span><br><span class="line">  frontend-design</span><br><span class="line">  git-commit</span><br><span class="line">  huashu-design</span><br><span class="line">  json-canvas</span><br><span class="line">  layout-creator</span><br><span class="line">  layout-creator-workspace</span><br><span class="line">  mcp-builder</span><br><span class="line">  obsidian-bases</span><br><span class="line">  obsidian-cli</span><br><span class="line">  obsidian-markdown</span><br><span class="line">  pdf</span><br><span class="line">  pptx</span><br><span class="line">  skill-creator</span><br><span class="line">  xlsx</span><br></pre></td></tr></table></figure>
+
+<p>26 个里被丢了 22 个。意味着 Claude 启动时只看得到 4 个 skill 的完整 description（根据 warning 提示是”most-used skills”，所以应该是我最近用得最多的几个 content-* skill）。</p>
+<p>剩下 22 个的 description 全没了。其中包括我经常会用到的 obsidian-cli（写作流水线里几乎每篇文章都用到）、git-commit（这个最高频）、frontend-design（偶尔用）、pdf、xlsx 这些。</p>
+<p>GitHub 上 Issue #56448 里有人报告 2.1.129 升级之后 dropped count 跳到 47，但 2.1.128 是 0。Anthropic 还在调这套机制，不一定每个版本都精确。</p>
+<h2 id="三条处理路径"><a href="#三条处理路径" class="headerlink" title="三条处理路径"></a>三条处理路径</h2><p>收到这条 warning 之后有 3 个选择，每个 trade-off 不一样。</p>
+<p><strong>第一条：跑 <code>/skills</code> 命令禁用一些不常用的 skill</strong>。这是 warning 上推荐的做法。<code>/skills</code> 可以让你交互式选择哪些 skill 启用、哪些禁用。被禁用的 skill 完全不进 listing，自然不占 budget。这条路的好处是不增加 token 消耗。坏处是被禁用的 skill 你显式调也调不到，必须重新启用。</p>
+<p>**第二条：抬高 <code>skillListingBudgetFraction</code>**。在 <code>~/.claude/settings.json</code> 里加：</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;skillListingBudgetFraction&quot;</span><span class="punctuation">:</span> <span class="number">0.02</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>把 1% 抬到 2%。所有 description 都会被加载。代价 warning 写得很直白：每个会话多消耗约 4k token，rate limit 用得更快。</p>
+<p>如果你像我一样开的是 Claude Max 5x，4k token&#x2F;session 在 200K context 里只占 2%，但累积到一周可能多消耗几十万 token。如果你按 API 计费，这条路要好好算账。</p>
+<p><strong>第三条：治本，删掉冗余 skill 或精简 description</strong>。</p>
+<p>我看了下我那 26 个 skill 里，有几个是早期试着装但其实没怎么用的（比如 layout-creator-workspace、json-canvas）。还有几个 description 写得过长（content-director 的 description 就拖了一长串”何时触发”的例子）。</p>
+<p>把没在用的删掉、把长的精简下来，应该能让 1.8% 自然降回 1% 以下。</p>
+<p>我个人倾向第三条 + 第一条组合：定期清理 + 长期不用的禁用。第二条留作”真要用到所有 skill 但短期”的备选。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260508-20260508-skill-budget-decision-tree.webp" alt="三条处理路径决策树"></p>
+<h2 id="这件事和昨天那篇-token-saving-的逻辑是同一条"><a href="#这件事和昨天那篇-token-saving-的逻辑是同一条" class="headerlink" title="这件事和昨天那篇 token saving 的逻辑是同一条"></a>这件事和昨天那篇 token saving 的逻辑是同一条</h2><p>我昨晚写过一篇《Claude 1M 上下文一周烧了我 28M token》，里面专门有一节讲 CLAUDE.md 精简的逻辑：你在 CLAUDE.md 里写了什么，每一轮请求都把它当作 prefix 重新发一遍。12KB 的 CLAUDE.md 是 3K token，50 轮对话就是 150K token 重复发送。</p>
+<p>skill listing 也是同一回事。</p>
+<p>每个 skill 的 description 在 Claude Code 启动时进入 system prompt，整个会话期间这段内容会跟着每一次 API 请求被发出去。如果你装了 50 个 skill，每个 description 平均 500 字符，总长度就是 25KB（约 6K token）。一个 50 轮的会话就是 300K token 重复发送。</p>
+<p>Anthropic 把这件事抬到 settings 层做 budget 控制，本质上是承认了”skill 越多越好”的假设是错的。每多一个 skill 就是每轮请求的固定成本。</p>
+<p>这套机制和 prompt caching 是配套的。被加载的 skill description 进 cache prefix，cache hit 时只按 $0.30&#x2F;M 计费。但被丢掉的 skill description 根本进不了 cache，所以那 22 个 skill 即使你把 budget 抬高到 2% 让它们都进去，也是命中 cache 之后才省钱，第一次写入还是按 $3.75&#x2F;M 写的。</p>
+<p>简单总结一句：<strong>skill 多到一定程度反而帮倒忙</strong>。每个 skill 的 description 都是每轮请求的固定成本，超过 budget 还会被默默丢掉，看起来装着但其实没在用。</p>
+<h2 id="我自己今天做的具体动作"><a href="#我自己今天做的具体动作" class="headerlink" title="我自己今天做的具体动作"></a>我自己今天做的具体动作</h2><p>读完这条 warning + 跑了 &#x2F;doctor 之后，我做了三件事。</p>
+<p>最先做的是把项目级和用户级 skill 各自做了一遍 review。</p>
+<p>项目级（MyHexoBlog 的 .claude&#x2F;skills&#x2F;）8 个全部保留，因为这些 content-* skill 是这个博客创作 pipeline 必需的。</p>
+<p>用户级 18 个里，我决定把 layout-creator-workspace、json-canvas、obsidian-bases 三个临时禁用。这三个分别是为某个一次性任务装的，最近 3 个月都没用过。禁用之后 ~&#x2F;.claude&#x2F;settings.json 里加 disabled 列表。</p>
+<p>接下来把 content-director 那个我自己写的 SKILL.md 的 description 字段从 3 行精简到 1 行。原来的描述里把”何时触发”的例子写得很全（”帮我写一篇”、”写一篇关于 xxx”、”创建新文章”等等），现在只保留一句核心定位 + 一组关键 trigger。</p>
+<p>最后那一步是关于 settings 的判断：我在 ~&#x2F;.claude&#x2F;settings.json 里<strong>没有抬高 skillListingBudgetFraction</strong>。理由是治本之后再看是否还触发 warning，没必要先付这 4k token&#x2F;session 的固定开销。</p>
+<p>跑完上面三步重启 Claude Code，warning 没再出现。说明 26 个 skill 经过精简之后总长度已经回到 1% 预算之内了。</p>
+<h2 id="还想问的几件事"><a href="#还想问的几件事" class="headerlink" title="还想问的几件事"></a>还想问的几件事</h2><p>最后留几个我自己没完全想明白的点。</p>
+<p><code>/skills</code> 这个命令的 UI 在 2.1.133 上看起来还很基础。它能显示每个 skill 的 description 长度吗？能显示哪些被丢了吗？能直接在 UI 里编辑 description 吗？我目前的体验是只能 enable&#x2F;disable，看不到 description 详情，得回到 SKILL.md 文件去改。</p>
+<p>如果 Anthropic 把”按使用频率自动调整 budget”做进 Claude Code 里，那 description 长度的优化就不是用户自己的责任了。这条机制理论上完全可以做：每个 skill 在过去 30 天的调用次数 → 自动给最常用的留 full description、给从没用过的只留名字。</p>
+<p>skillListingBudgetFraction 默认 1% 是怎么定的？为什么不是 0.5% 或者 2%？官方文档目前没解释这个数字背后的考量。我猜是按”装 20 个左右普通 description 的 skill 不会触发”这个目标定的，但具体是不是这样我不确定。</p>
+<p>评论区想问两件事。</p>
+<p>跑 <code>/doctor</code> 看一眼你的 skill 状态，告诉我你装了多少个、丢了多少个？我猜大部分人在 30+ 这个量级会自然撞上这个 warning。</p>
+<p>另外，你倾向哪条处理路径？我自己选了治本，但如果你是按 API 计费、又对 skill 调用稳定性要求很高的开发者，可能更应该抬高 budget。想听具体场景下的取舍。</p>
+]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>上下文管理</tag>
+        <tag>skill</tag>
+        <tag>token</tag>
+        <tag>doctor</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Anthropic 内测的 Insights 功能里，藏着一份值得抄的 LLM 反幻觉 spec</title>
+    <url>/2026/05/07/202605072118/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260507-20260507-anthropic-insights-anti-hallucination-spec.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>今天有人在群里转了一段 Anthropic 内测中的 Insights 功能的工程 spec 给我。Insights 是 Anthropic 给 Claude Console 上的 Managed Agents 用户做的”跨 session 分析”工具，目前还在测试阶段，主流媒体没正式覆盖。</p>
+<p>但我读完那段 spec 之后觉得它比 5 月 6 日 Code with Claude 大会上发布的那几个旗舰功能（Dreaming、Outcomes、Multiagent Orchestration）都更值得写一篇。</p>
+<p>理由：<strong>这是我最近半年看到的 LLM 应用层最干净的一份”反幻觉架构”spec</strong>。普通开发者写自己的 LLM 应用如果遇到”跨数据点做 cross-record 分析”这类需求，几乎可以照着这套架构抄。</p>
+<p>下面把这段 spec 拆开讲，重点不在新闻本身，在它的设计哲学。</p>
+<h2 id="先把-Insights-这个功能的机制描完"><a href="#先把-Insights-这个功能的机制描完" class="headerlink" title="先把 Insights 这个功能的机制描完"></a>先把 Insights 这个功能的机制描完</h2><p>把用户给我的那段 spec 翻译成中文摆出来，再讲解读。</p>
+<p>整个流程从<strong>抓 session</strong> 开始。Anthropic 抓你这个 Managed Agent 最近最多 100 个 session。</p>
+<p>抓完之后进入<strong>并行 summarize</strong>。每条 transcript 单独发给模型（4 路并行），上下文里带上你这个 agent 的 system prompt。模型为每个 session 写一份 summary，字段包括 task（这个 session 在干啥）、actions（agent 做了哪些动作）、issues（有什么问题）、assessment（整体评价）。再额外打一个 0 到 100 的 quality score。</p>
+<p>跟 summarize 同步进行的是<strong>硬数据计算</strong>。token 消耗、cache 命中、tool 调用错误数这些数字<strong>不让模型算</strong>，而是直接从原始事件流里数。</p>
+<p>所有 summary 和硬数据备齐之后，做<strong>单次跨 session 综合</strong>。把它们一起塞给模型，模型做一次跨 session 调用，产出几类输出：</p>
+<ul>
+<li>recurring errors（反复出现的错误）</li>
+<li>usage patterns（使用模式）</li>
+<li>efficiency outliers（效率异常的 session）</li>
+<li>wins（做得特别好的 session）</li>
+<li>error category buckets（错误归类桶）</li>
+<li>use-case clusters（场景聚类）</li>
+</ul>
+<p>每个被引用的 session ID 都要和输入对照过校验，<strong>模型说的”参考 session #abc”必须真实存在于输入列表里</strong>。</p>
+<p>最后两件事是工程层的兜底。<strong>summary 和 finding 都缓存存盘</strong>，下次刷新页面直接秒开。<strong>数字归数字、文字归文字</strong>：用户在 UI 上看到的所有数字（counts、percentages、per-cluster token 统计）都从原始事件流算的；模型只负责写文字描述（prose）和决定”这个 session 应该归到哪个 bucket”（bucket membership）。</p>
+<p>简单一句话总结这套架构：<strong>LLM 只做语言任务和分类任务，所有数字 &#x2F; 引用 &#x2F; 真实性校验由代码兜底</strong>。</p>
+<h2 id="这套设计里的-4-个关键反幻觉决策"><a href="#这套设计里的-4-个关键反幻觉决策" class="headerlink" title="这套设计里的 4 个关键反幻觉决策"></a>这套设计里的 4 个关键反幻觉决策</h2><p>读完上面那段，最值得抄的是 4 个具体决策。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260507-20260507-insights-map-reduce-architecture.webp" alt="Insights map-reduce 架构与反幻觉检查点"></p>
+<h3 id="把-token-数和错误数从事件流直接算，模型不碰"><a href="#把-token-数和错误数从事件流直接算，模型不碰" class="headerlink" title="把 token 数和错误数从事件流直接算，模型不碰"></a>把 token 数和错误数从事件流直接算，模型不碰</h3><p>这是最反 LLM 第一反应的设计。</p>
+<p>按”自然”做法，我们会让模型在 summarize 的时候顺手输出”这个 session 用了多少 token、出了几次 tool error”。模型见过这些数字，写一个数出来好像没问题。</p>
+<p>但 LLM 数数是出名的不靠谱。10 万 token 的 session 让它告诉你具体消耗了多少 token，它会给你一个看起来合理但和真实事件流对不上的数字。</p>
+<p>Anthropic 把数数这件事完全从模型职责里拿掉，让代码从原始事件流里数。模型只负责描述发生了什么，不负责数发生了多少次。</p>
+<p><strong>抄走原则</strong>：你自己的 LLM 应用里，凡是有”具体数值需要从原始数据计算出来”的地方，全部用代码算，不让模型碰。模型只输出 prose 和 categorical 字段。</p>
+<h3 id="4-路并行-summarize-1-次综合调用，经典-map-reduce"><a href="#4-路并行-summarize-1-次综合调用，经典-map-reduce" class="headerlink" title="4 路并行 summarize + 1 次综合调用，经典 map-reduce"></a>4 路并行 summarize + 1 次综合调用，经典 map-reduce</h3><p>100 个 session 不能直接塞进一次模型调用。哪怕模型 context 够大，做 100 个 session 的 cross-correlation 也会让模型质量崩。</p>
+<p>Anthropic 选了经典的 map-reduce 架构：100 路 → 4 路并行（每路 summarize）→ 1 路综合（cross-session findings）。</p>
+<p>这个设计巧的点在于，<strong>summarize 阶段是平行任务</strong>（每个 session 互不影响），<strong>综合阶段是串行任务</strong>（需要看全所有 summary 找 pattern）。这两个阶段对模型能力的要求不一样：summarize 要可靠+便宜，综合要 reasoning 强+一次能装下 100 份 summary。</p>
+<p>理论上 summarize 可以用更便宜的小模型（Sonnet 或 Haiku），综合用 Opus。spec 里没明说但架构允许这种 cost optimization。</p>
+<p><strong>抄走原则</strong>：跨数据点的 LLM 任务尽量拆成 map（每条独立处理）+ reduce（一次综合）。map 阶段并行 + 用便宜模型；reduce 阶段串行 + 用强模型。</p>
+<h3 id="每个被引用的-session-ID-都要和输入校验"><a href="#每个被引用的-session-ID-都要和输入校验" class="headerlink" title="每个被引用的 session ID 都要和输入校验"></a>每个被引用的 session ID 都要和输入校验</h3><p>这是我最喜欢的一条。</p>
+<p>模型在 cross-session findings 阶段会引用具体的 session ID 来举证：”以下三个 session 出现了相同的错误模式：#abc、#def、#ghi”。</p>
+<p>但模型可能幻觉出一个不存在的 session ID（特别是当真实 ID 是 hash 字符串那种没有语义的 ID 时）。</p>
+<p>Anthropic 的解法是：<strong>每个被引用的 session ID 都和输入列表对照校验，对不上的引用直接扔掉或重生成</strong>。</p>
+<p>这一条解决了 LLM 应用最常见的”言之凿凿但来源是假的”问题。在 RAG、引用生成、cross-document 分析这类场景里，没有 ID 校验环节就等于让模型凭空捏造来源。</p>
+<p><strong>抄走原则</strong>：但凡 LLM 输出里包含”引用 X”的字段，都要在输出后做校验：X 必须存在于输入里。校验不通过的就拒绝接受，让模型重生成或者直接砍掉那条 finding。</p>
+<h3 id="Summary-和-finding-都缓存，模型部分贵代码部分便宜"><a href="#Summary-和-finding-都缓存，模型部分贵代码部分便宜" class="headerlink" title="Summary 和 finding 都缓存，模型部分贵代码部分便宜"></a>Summary 和 finding 都缓存，模型部分贵代码部分便宜</h3><p>这条不是”反幻觉”而是”反成本 + 反延迟”，但和反幻觉是配套的。</p>
+<p>如果每次用户打开 Insights 页面都重新跑一遍 100 个 session 的 summarize + 综合，单次成本会很高（按 100 个 session × 平均 transcript 长度算，光 input 就是几百万 token），延迟也会到分钟级。</p>
+<p>Anthropic 把 summary + finding 都缓存。下次打开页面直接读缓存。</p>
+<p>更妙的一点：因为数字不是模型算的而是代码从事件流算的，<strong>数字部分可以单独刷新</strong>而不重跑 summarize。这意味着用户看到的 token 消耗、percentage 等数据可以是”昨天的 prose 解读 + 今天的硬数据”。</p>
+<p><strong>抄走原则</strong>：LLM 输出里”模型算的部分”和”代码算的部分”要分开存、分开刷新。代码算的便宜+实时，模型算的贵+缓存复用。</p>
+<h2 id="把-Insights-放进-5-6-大会的全景里"><a href="#把-Insights-放进-5-6-大会的全景里" class="headerlink" title="把 Insights 放进 5&#x2F;6 大会的全景里"></a>把 Insights 放进 5&#x2F;6 大会的全景里</h2><p>5 月 6 日 Anthropic 在 Code with Claude 大会上发了 Dreaming、Outcomes、Multiagent Orchestration 三个面向 Managed Agents 的功能。Dreaming 也是抓最多 100 个 past session 找 pattern。</p>
+<p>那 Insights 和 Dreaming 什么关系？</p>
+<p>我现在的判断（基于 spec + 公开报道交叉对比）：</p>
+<p>Dreaming 是<strong>给 agent 自己用</strong>的。它跑完之后产出一份新的 memory store，以后这个 agent 跑新任务的时候会带着这份 memory 去做。</p>
+<p>Insights 是<strong>给开发者用</strong>的。它跑完之后展示一份分析仪表板，给开发者看 agent 表现得怎么样、哪里反复犯错、哪些 session 最高效。</p>
+<p>这两个东西底层基础设施可能共享（都是 100 session、都做 cross-session pattern mining），但产品定位不同。Dreaming 让 agent 改进自己，Insights 让开发者改进 agent 的设计（system prompt、tools、skills 配置）。</p>
+<p>放在一起看，这是 Anthropic 在 Managed Agents 这个产品上做”双向反馈环”：agent 通过 Dreaming 自我改进，开发者通过 Insights 看到改进的方向。两条线一起上，agent 才会真正变得”越用越好”。</p>
+<p>而且仔细看 Insights 的 spec，它的输出明显是要喂回到 Outcomes 和 Multiagent Orchestration 那两个工具里的：</p>
+<ul>
+<li>“recurring errors” → 直接进 Outcomes 的 rubric，做 retry 逻辑</li>
+<li>“use-case clusters” → 决定 Multiagent Orchestration 里哪些 sub-agent 要拆出去</li>
+<li>“efficiency outliers” → 提示开发者哪些 session 应该被研究</li>
+</ul>
+<p>所以 Insights 不能只看成孤立功能。它在 Anthropic Managed Agents 这一整套自我改进基础设施里扮演的是”分析层”。</p>
+<h2 id="对自己写-LLM-应用的开发者意味着什么"><a href="#对自己写-LLM-应用的开发者意味着什么" class="headerlink" title="对自己写 LLM 应用的开发者意味着什么"></a>对自己写 LLM 应用的开发者意味着什么</h2><p>我自己虽然不在 Managed Agents 上写复杂 agent 系统，但有几个工作流可以直接抄这套设计。</p>
+<p>我有一个 content-polisher skill，每次跑都会输出一份”AI 味检测结果”。如果我把过去 30 天的 polisher 结果拿来做 cross-session 分析，应该可以看出我的写作里反复出现的 AI 味模式（顽固的”不是 X 是 Y”、循环出现的破折号问题等）。</p>
+<p>如果按 Insights 这套架构抄，我会这么做：</p>
+<p>每次 polisher 跑完留下原始 event log（不只是最终评分）。这是事件流。</p>
+<p>跑跨 session 分析时，先用便宜模型（Haiku）map 阶段把每篇文章的检测结果总结成 200 字以内的 summary。</p>
+<p>reduce 阶段用 Sonnet 或 Opus 做一次综合，输出”反复出现的 3 类 AI 味模式 + 每篇文章引用 ID + 数字部分单独算”。</p>
+<p>所有引用的文章 ID 必须和真实 ID 列表校验。</p>
+<p>结果缓存，下次只跑增量（只 summarize 新增文章）。</p>
+<p>如果跑得通，这个东西可以直接接到 content-training skill 里，让它自动生成新的 WRITING_LESSONS 条目。</p>
+<p>这是我打算下周空了试试的具体应用。</p>
+<h2 id="还没确认的几件事"><a href="#还没确认的几件事" class="headerlink" title="还没确认的几件事"></a>还没确认的几件事</h2><p>最后几个我没确认但值得继续追的点。</p>
+<p>Insights 是不是已经向部分用户开放了？我看到的 spec 是内部细节文档，公开报道里没找到 launch 公告。Dreaming 已经是 research preview，Insights 可能是更早期的内部 alpha。</p>
+<p>这个功能的定价模式还不清楚。100 个 session 的 transcript 加起来 token 量很大，如果按标准 API 价计费，跑一次成本可能在 $5 到 $20 之间。Anthropic 会不会把这个成本打包进 Managed Agents 订阅里，还是单独计费？</p>
+<p>Insights 输出的 finding 能否反向喂回到 agent 的 system prompt 里？如果可以，那就是真正的闭环：开发者看 finding → 改 system prompt → agent 行为变化 → 下一轮 Insights 看出改进了没。这个闭环成立的话，Managed Agents 的产品形态会比现在这套已有的明显进一步。</p>
+<p>评论区想问两件事。</p>
+<p>如果你也在 Managed Agents 上跑 agent，你已经能看到 Insights 这个 tab 了吗？UI 长什么样？欢迎截图。</p>
+<p>另外，你自己写 LLM 应用的时候有没有用过类似的”数字归代码、prose 归模型”分工？我想听具体的案例和坑。</p>
+]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>Anthropic</tag>
+        <tag>Managed Agents</tag>
+        <tag>Claude Console</tag>
+        <tag>LLM 工程</tag>
+        <tag>反幻觉</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>我上周赌 Anthropic 会涨价加限制，今天它租下 Musk 的 22 万块 GPU 把限速翻倍了</title>
+    <url>/2026/05/07/202605072015/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260507-20260507-anthropic-spacex-colossus-deal.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>我先把这篇文章最重要的一件事说出来：上周我赌错了。</p>
+<p>4 月 30 日那篇《Anthropic 把 Claude Code 日均成本估算从 $6 改成 $13》的文章里，我在结尾给了一个赌注：”Avasare 那句话出来之后，Anthropic 接下来三个月要么砍掉 Pro 一档的 Claude Code、要么涨价、要么在 Max 5x 上加更严的’使用强度’限制。三选一。我个人倾向认为是后两者的组合。”</p>
+<p>5 月 6 日，Anthropic 在 Code with Claude 开发者大会上选了第四条路：租下 SpaceX 旗下 Colossus 1 数据中心的全部算力，22 万块 NVIDIA GPU、超 300 兆瓦电力，月内全部到账。同一天宣布 Claude Code 五小时限速翻倍、Pro 和 Max 取消高峰限流、Opus API 速率大幅上调。</p>
+<p>不是涨价。不是加限制。是反过来给了所有现有付费用户一倍的容量。</p>
+<p>下面写一下我对这件事的看法，以及我赌错的那一段判断逻辑究竟漏掉了什么。</p>
+<h2 id="5-月-6-日具体改了什么"><a href="#5-月-6-日具体改了什么" class="headerlink" title="5 月 6 日具体改了什么"></a>5 月 6 日具体改了什么</h2><p>把硬动作先列出来，免得后面跑题。</p>
+<p>Dario Amodei 5 月 6 日在 Code with Claude 大会上当场宣布的三件事，<strong>当天即生效</strong>：</p>
+<ul>
+<li><strong>Claude Code 五小时窗口限速翻倍</strong>：覆盖 Pro、Max、Team、按座位计费的 Enterprise 全部档位。</li>
+<li><strong>取消 Pro 和 Max 的高峰时段限流</strong>：以前白天峰值期间会被收紧的额度，现在拉平。</li>
+<li><strong>Claude Opus API 速率大幅提升</strong>：9to5Google 拿到的数字是 Tier 1 用户输入每分钟 token 数提升 1500%、输出每分钟 token 数提升 900%。其他 Tier 也有类似量级的放宽。</li>
+</ul>
+<p>这套组合对应的算力来源是这样一套基础设施叠加：</p>
+<ul>
+<li><strong>SpaceX Colossus 1</strong>：Memphis 数据中心的全部算力。300+ 兆瓦电力、22 万+ NVIDIA GPU（包括 H100、H200、以及下一代 GB200 加速器）。月内交付。</li>
+<li><strong>Amazon $25B 5GW 协议</strong>（4 月签的）：算力的主基座，并将延伸到亚洲和欧洲，专门给金融、医疗、政府这种受监管行业做 in-region inference。</li>
+<li><strong>Google、Microsoft、Broadcom 等的算力协议</strong>：跨多家公布。</li>
+<li><strong>轨道算力的兴趣</strong>：Anthropic 公开表态愿意和 SpaceX 一起搞”multiple gigawatts of orbital AI compute capacity”。SpaceX 自己最近向 FCC 申请了百万颗卫星建轨道数据中心。这一项目前没有签约。</li>
+</ul>
+<p>把 SpaceX 和 Amazon 这两笔加起来看，Anthropic 是把 5 GW + 300 MW 的新增算力同时塞进自己的供给曲线。这是过去半年所有大模型公司里最激进的一次扩张。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260507-20260507-anthropic-compute-supply-stack.webp" alt="Anthropic 算力供给堆叠全景"></p>
+<h2 id="我赌错在了哪里"><a href="#我赌错在了哪里" class="headerlink" title="我赌错在了哪里"></a>我赌错在了哪里</h2><p>回头看 4 月 30 日那篇文章的逻辑，我赌”涨价或加限制”建立在两条假设上。</p>
+<p>一条是订阅制本质上是固定价格、变动成本。当使用强度暴涨时，价格不动只剩两条路：动价格、或者动可用量。</p>
+<p>另一条是 Anthropic 的 Head of Growth 那句”current plans weren’t built for this”已经把”现有方案撑不住”的判断直接抛出来了。一家公司不会无缘无故抛这句话。</p>
+<p>这两条逻辑本身没错。错在我漏掉了第三个变量：<strong>算力供给本身可以爆发式扩张</strong>。</p>
+<p>我在写那篇文章的时候，潜意识把”算力”当成了一个慢变量。Amazon 的 $25B 协议在 2026 年 2 月签，但 5GW 上线”需要时间”。Google 和 Microsoft 的协议落地节奏也不是月度的。基于这种慢变量假设，订阅制只能用价格或限额来匹配需求。</p>
+<p>但 SpaceX 这一笔不一样。Colossus 1 是已建成、已通电、且 Musk 自己用不充分的算力。Anthropic 把它整租下来等于买了一个现成的 300 MW，而且月内就能交付。这种”几乎现货”的算力供给我没算进我的赌注里。</p>
+<p>PCMag 的报道里有一句让我看明白这件事的话：”Anthropic is taking over ‘all of the compute capacity’ at xAI’s Colossus 1 supercomputer, amid reports that Elon Musk’s startup is struggling to efficiently harness its GPUs.” Musk 的 xAI 自己用不动这堆 GPU 是已经被 reported 出来的事。Anthropic 接手相当于把一个本来产能闲置的算力池一次性吃满。</p>
+<p>我承认这件事没有出现在我赌注的”假设空间”里。这是我赌错的关键。</p>
+<h2 id="这件事最有戏剧性的一笔是-Musk-自己"><a href="#这件事最有戏剧性的一笔是-Musk-自己" class="headerlink" title="这件事最有戏剧性的一笔是 Musk 自己"></a>这件事最有戏剧性的一笔是 Musk 自己</h2><p>Musk 公开骂过 Anthropic 不止一次。Ars Technica 那篇报道的原话是 “Musk has publicly attacked Anthropic on multiple occasions”。</p>
+<p>但 5 月 6 日那天 Musk 在 X 上的发言彻底翻转：</p>
+<blockquote>
+<p>I spent a lot of time last week with senior members of the Anthropic team to understand what they do to ensure Claude is good for humanity and was impressed.</p>
+</blockquote>
+<p>紧接着他补了一条带刺的：</p>
+<blockquote>
+<p>We reserve the right to reclaim the compute if their AI engages in actions that harm humanity.</p>
+</blockquote>
+<p>这句”我们保留撤回算力的权利”是这次合作里最 Musk 的一笔。它技术上不影响 Anthropic 拿到的合同义务（一旦合同签完算力交付方就要按约履约），但它把”商业合作”包了一层”我可以随时翻脸”的姿态。</p>
+<p>为什么 Musk 在公开撕了 Anthropic 这么久之后选择翻脸合作？我能猜到的几个原因：</p>
+<p>SpaceX 准备 6 月 IPO。投资者要看到的是”我们的 AI 算力业务有真正的大客户”。Anthropic 这个名字在投资者眼里比”自家用 xAI 跑 Grok”分量重得多。</p>
+<p>Colossus 1 的算力闲置是公开的痛点。22 万块 GPU 维护成本高昂，跑不满就是亏。</p>
+<p>Anthropic 也准备 IPO，6 月节点附近。这一手”算力翻倍 + 用户体验改善”对它的投资者故事同样有用。</p>
+<p>两家 IPO-bound 的公司，在 IPO 前两个月做了一笔互相需要对方的交易。这件事看起来是 AI 行业的反常剧情，但放回到资本运作的逻辑里其实很合理。</p>
+<h2 id="这件事对昨天那篇”AI-产品分裂论”的修正"><a href="#这件事对昨天那篇”AI-产品分裂论”的修正" class="headerlink" title="这件事对昨天那篇”AI 产品分裂论”的修正"></a>这件事对昨天那篇”AI 产品分裂论”的修正</h2><p>我 5 月 5 日写过一篇文章，论点是 OpenAI 押广告路线、Anthropic 押订阅路线，AI 行业从这一周开始被劈成两条路。</p>
+<p>5 月 6 日的 Anthropic 动作让那个论点更清晰了，但分裂的层面比我当时想的更深。</p>
+<p>OpenAI 那条路：让用户继续免费&#x2F;低价，用注意力换收入。基础设施需求是”覆盖更多用户、更多场景”。</p>
+<p>Anthropic 这条路：让付费用户继续付费、付得起的人用得更爽，用资本支出（算力）换续航。基础设施需求是”够用的算力 + 用户使用强度上限”。</p>
+<p>5 月 6 日的硬动作把 Anthropic 这条路的真实底牌摊开了：靠多笔算力协议堆出来的供给曲线，让”扩张算力”赶得上”用户使用强度提升”。如果这条赛跑能跑得过，订阅制不需要涨价、不需要加限制。</p>
+<p>Anthropic 现在赌的就是这条赛跑能跑过去。它在去年签的 Amazon $25B 5GW、今年签的 SpaceX Colossus 1，加上 Google &#x2F; Microsoft &#x2F; Broadcom 几条线，是它给这条赛跑下的全部资本注码。</p>
+<p>如果 Opus 5、Opus 6 在能力提升的同时不大幅增加单位 token 算力消耗，那这套基建还能再撑两年。如果模型尺寸继续翻倍但能力涨得更慢，订阅制还是会被打穿。</p>
+<h2 id="对我自己工作流的实际意义"><a href="#对我自己工作流的实际意义" class="headerlink" title="对我自己工作流的实际意义"></a>对我自己工作流的实际意义</h2><p>我自己是 Claude Max 5x $100&#x2F;月，主力工作流是 Claude Code 跑 content pipeline。</p>
+<p>5&#x2F;6 之后我能感受到的具体变化：</p>
+<p>我连着两天跑完整博客 pipeline 的时候经常撞 5 小时窗口的限流（4&#x2F;30 那篇文章里我提过”一周撞限流 6 次降到 2 次”）。窗口限速翻倍之后，正常使用强度下应该完全不再撞墙。</p>
+<p>高峰时段限流取消这一条对我意义比较大。我有时候在美西高峰时段（亚洲深夜）跑长任务，那时候原本会被收紧。这个限制取消之后我可以放心通宵跑 ultraview &#x2F; 长 refactor 任务。</p>
+<p>API 速率提升对我直接影响比较小，因为我主要用订阅而不是按 token 走 API。但我那几个小工具（content-publisher 走 wx 接口、Claude Desktop 开发者模式调 API 端点）会受益。</p>
+<p>最关键的判断是：<strong>短期内（6 月 IPO 节点之前）订阅价大概率不会涨</strong>。Anthropic 不会在 IPO 前两个月做一个让用户怒的动作。如果你之前因为 4&#x2F;30 那条新闻在考虑切走，可以先按兵不动。</p>
+<p>中期看（6 个月内）我还是把 Claude Desktop 开发者模式接 DeepSeek V4 的备份方案留着。算力红利能持续多久取决于两件事：Musk 心情 + IPO 之后市场对 Anthropic 业绩压力。前者我没法预测，后者只会向上走。</p>
+<h2 id="那个”轨道算力”到底是认真的还是营销"><a href="#那个”轨道算力”到底是认真的还是营销" class="headerlink" title="那个”轨道算力”到底是认真的还是营销"></a>那个”轨道算力”到底是认真的还是营销</h2><p>最后留一段说轨道算力。</p>
+<p>Anthropic 在公告里说”expressed interest” 和 SpaceX 合作 multiple gigawatts 的轨道算力。SpaceX 最近向 FCC 申请了百万颗卫星建轨道数据中心。</p>
+<p>我的判断是这件事 70% 是认真的、30% 是营销。</p>
+<p>认真的部分：地面数据中心的电力、土地、冷却已经在大模型这一代开始撞物理上限。Anthropic 自己在公告里说 “compute required to train and operate the next generation of these systems is outpacing what terrestrial power, land, and cooling can deliver on the timelines that matter”。这话不是公关辞令。地面算力的物理瓶颈是真问题。</p>
+<p>但轨道算力面临三个硬约束没解：上下行带宽、辐射环境对芯片寿命的影响、卫星之间互联的延迟。这三个约束目前没有公开的工程方案能在 5 年内解掉。</p>
+<p>营销的部分：在 IPO 前两个月放一个”我们也在搞太空数据中心”的故事，对投资者画饼非常管用。这件事我会持续盯但不会很快当真。</p>
+<p>评论区想问两件事。</p>
+<p>如果你也是 Claude Max 用户，5&#x2F;6 之后这一两天用下来感觉限速真的变松了吗？我自己 5&#x2F;7 早上跑了一个长任务没撞墙，但样本太小。</p>
+<p>另外，你怎么看 Musk 那句”保留撤回算力的权利”？是单纯的姿态，还是合同里真有触发条款？我自己赌是 PR 姿态，没有真触发条款。但这件事如果未来出现摩擦，会很有意思。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>Anthropic</tag>
+        <tag>SpaceX</tag>
+        <tag>算力</tag>
+        <tag>Colossus</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>快，Codex 也能领养宠物了！！！</title>
+    <url>/2026/05/06/202605062329/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260506-20260506-codex-pets-launch.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>群里今天下午有人甩了一张截图过来，说”老子的 Codex 现在屏幕右下角有个像素小恐龙在等我”。</p>
+<p>我点开一看，是 OpenAI 5 月 2 日给 Codex 桌面 App 加的新功能。官方名字叫 <strong>Codex Pets</strong>。本质是一个永远漂浮在你桌面上的像素风小动物，实时反映你那条 Codex agent 在后台跑成什么样。</p>
+<p>这个东西第一眼看是萌点。第二眼想想，又觉得它不只是萌点。它解的其实是一个真问题。我自己昨天刚写完那篇”AI 产品被劈成广告路线和订阅路线”，今天看到 Codex Pets，又想到这件事在更细的产品哲学层面还在继续分化。</p>
+<p>下面写一下我对这个新功能的看法，以及它背后的设计判断。文章会比平时短一点，因为这事本身没那么重。</p>
+<h2 id="Codex-Pets-到底是个啥"><a href="#Codex-Pets-到底是个啥" class="headerlink" title="Codex Pets 到底是个啥"></a>Codex Pets 到底是个啥</h2><p>把 Codex Pets 一句话说完：你在用 Codex 跑 agent 任务（写代码、跑测试、改文件），传统做法是切回 Codex 窗口看 status。Codex Pets 让一只像素小动物挂在你桌面任意位置，用动作、表情、状态来反映 agent 在做什么。</p>
+<p>OpenAI 默认放了 7 只预制宠物：原版 Codex（蓝色机器人）、Dewey（鸭子）、Fireball（小火人）、Rocky（小石头）、Seedy（嫩芽小人）、Stacky（堆叠机器人）、BSOD（蓝屏小怪）。每只都有一句话定位（Dewey “calm workspace days”、Rocky “when the diff gets large”、Seedy “small green shoots for new ideas”），看选择器界面就能感觉到 OpenAI 的产品团队是真的在玩这件事而不是凑数：</p>
+<p><img src="https://image.vance.xin/blog-content/20260507-20260506-codex-pets-selector-screenshot.webp" alt="Codex Pets 选择器：7 只预制宠物 + 唤醒/刷新按钮"></p>
+<p>具体的视觉行为是这样的：</p>
+<ul>
+<li>agent 正在思考：宠物坐着发呆、偶尔眨眼。</li>
+<li>agent 正在执行工具调用：宠物开始走来走去、拿小工具。</li>
+<li>agent 完成了某个任务节点：宠物跳起来、做开心动作。</li>
+<li>agent 卡住或报错：宠物垂头丧气、可能戳你一下。</li>
+</ul>
+<p>它跟着你的 agent 走，agent 跑多久它就活多久。</p>
+<p>OpenAI 同时上了一个叫 <strong>Hatch</strong> 的工具，让你自己创建自定义 pet。你可以设计形象（pixel art）、定义不同状态对应的动作、起名字。媒体报道里已经看到用户社区开始分享自己的 pet 模板。有人做了猫、有人做了 Tamagotchi 风格的电子蛋、有人做了”焦虑的程序员小人”。</p>
+<p>外加几个小的实用功能：Codex 桌面 App 同时上了 config 自动导入（避免每台机器重新配一遍 agent 行为），但媒体焦点全在 pets 上。</p>
+<p>这个功能上线两天之内，PCWorld 那篇 review 标题直接是”我爱我的新 Codex AI pet，现在我希望每个 app 都有一个”。</p>
+<h2 id="它解的不只是萌点"><a href="#它解的不只是萌点" class="headerlink" title="它解的不只是萌点"></a>它解的不只是萌点</h2><p>我看完群里的截图之后第一反应是萌。</p>
+<p>但我自己用 Claude Code 跑长 agent 任务的痛点确实是这件事：我让它去跑一个 30 分钟的 refactor，前 5 分钟我盯着看，看不下去就切去做别的，回来的时候经常搞不清楚它跑到哪了、是卡住了还是真在跑。</p>
+<p>Status bar 解了一半问题：你能看到 token 数在涨、能看到当前在调什么工具。但 status bar 是”信息密度高、注意力成本也高”的解。你需要主动去看它、读它。</p>
+<p>Codex Pets 这种 ambient overlay 是另一种解：信息密度低、注意力成本接近零。你不需要主动看，宠物动起来你余光扫到就知道 agent 还活着；宠物垂头你就知道出问题了。</p>
+<p>这个设计跳过了程序员熟悉的 status indicator 那一套，借用的是 Tamagotchi 那种 ambient 电子宠物的认知模型。Tamagotchi 那一代产品的核心 insight 是：<strong>人对”活物”的注意力分配机制和对”信息”的注意力分配机制完全不同</strong>。同样要让你”知道现在状态”，把信息包装成一个有生命的小角色，认知成本直接降一个数量级。</p>
+<p>OpenAI 的产品团队选这条路，不是 designer 突发奇想。是真的看到了”长跑 agent 任务”这个新场景下旧 UX 不够用。</p>
+<h2 id="这件事和-Anthropic-的产品哲学差异"><a href="#这件事和-Anthropic-的产品哲学差异" class="headerlink" title="这件事和 Anthropic 的产品哲学差异"></a>这件事和 Anthropic 的产品哲学差异</h2><p>我昨天那篇文章的核心论点是：OpenAI 押广告路线、Anthropic 押订阅路线，两家的产品形态从这一周开始分化。</p>
+<p>今天看到 Codex Pets，我想再加一层观察：两家的 UX 哲学也在分化。</p>
+<p>Claude Code 的 status indicator 是这样的：右下角一个进度条、一行文字描述、token 数显示、按 ctrl-c 中断。整个交互是工程师风格的：信息透明、可控、零情感。Anthropic 在做的是”让你随时能干预 agent 行为”。</p>
+<p>Codex Pets 是这样的：屏幕角落一只活的小动物、它的动作就是状态、你可以给它起名字、可以养。整个交互是大众消费者风格的：情感连接、被动接收、有人格。OpenAI 在做的是”让你不用看着 agent 也能感觉到它在干活”。</p>
+<p>这两种路线对应的是两种用户假设：</p>
+<p>Anthropic 假设你的用户是写代码的工程师，工程师对工具的需求是”透明、可调、不打扰”。</p>
+<p>OpenAI 假设你的用户是一大堆刚开始 vibe coding 的非工程师用户，他们对工具的需求是”友好、有趣、不让我害怕”。</p>
+<p>两个假设都没错。它们对应的是两个不同的用户群体。</p>
+<p>但放在一起看就有意思：去年所有 AI 编程工具长得几乎一样（终端 + status bar + 文本输出）。今年开始，连 status indicator 这种最基础的 UX 元素都在分化。明年 Codex 和 Claude Code 会越来越不像同一个品类的产品，而像两个不同品类的产品（”AI 编程伴侣” vs “AI 编程工具”）共享了同一个底层模型能力。</p>
+<h2 id="我会用这个东西吗"><a href="#我会用这个东西吗" class="headerlink" title="我会用这个东西吗"></a>我会用这个东西吗</h2><p>我自己是 Claude Max 5x 用户，主力还是 Claude Code，所以 Codex Pets 我装不了。</p>
+<p>但有几件事值得说。</p>
+<p>如果我能装，我会装。理由不止是萌（虽然我也会觉得萌）。真正打动我的是 ambient awareness 这个机制对我跑 agent 任务真的有用。我现在写文章经常并行开两个会话：一个让 Claude 帮我跑 fact-check、一个自己写正文。Claude Code 的 status bar 我得主动切过去看。如果能有一个 pet 在屏幕角落不抢注意力地告诉我”另一个会话还在跑”，我会切的频率降一半。</p>
+<p>Anthropic 这边短期不会跟。Anthropic 的产品哲学不会突然加一只小动物。但我猜未来 6 个月内 Claude Code 可能会出”轻量 ambient indicator”，比如更微小的菜单栏图标、状态色变化、或者 macOS 那种 Live Activity 卡片。形态会更克制，但解的是同一个 ambient awareness 问题。</p>
+<p>至于 Hatch 这个自定义工具，我觉得是 OpenAI 押对了一件事：让用户自己做 pet，等于让用户和 Codex 这个工具产生情感连接。情感连接是订阅留存的最深层武器之一。半年之后看，”我自己养的 pet” 会成为一些用户不切换其他 AI 编程工具的理由。这件事对 OpenAI 的留存指标影响可能比想象中大。</p>
+<h2 id="还有一件没想明白的事"><a href="#还有一件没想明白的事" class="headerlink" title="还有一件没想明白的事"></a>还有一件没想明白的事</h2><p>写到这里我想留一个真实问题。</p>
+<p>Codex Pets 是 OpenAI 这一周连续动作里非常显眼的一个，但它和昨天那个”广告平台开放”放一起看，节奏有点反常。</p>
+<p>5 月 2 日：上 Codex Pets，全世界一片”哇，可爱”。</p>
+<p>5 月 5 日：广告平台对全美开放，目标 2030 年 $100B 广告。</p>
+<p>中间隔三天，一前一后两个公关动作。前者拉好感度、后者动用户体验。</p>
+<p>这种节奏在大公司常见，叫”好消息打底、坏消息夹带”。但 OpenAI 这次选 Codex Pets 做”好消息打底”很有意思。Codex 是付费用户的工具，pets 这个功能讨好的是付费用户那一群人。广告平台动的是免费用户的体验。</p>
+<p>如果这个解读成立，OpenAI 在做的其实是用 Codex Pets 这种”专业用户友好”的功能，对冲免费用户那边广告化带来的口碑损失。两条线在策略上是搭配的。</p>
+<p>我不敢百分百确信这个解读。但每次看到这种”萌动作 + 重磅商业动作”配套出现的时候，先想一层是不是策略性配套，没坏处。</p>
+<p>评论区想问两件事。</p>
+<p>你今天会装 Codex Pets 吗？如果你不是 Codex 用户，你会因为这个功能去试用 ChatGPT Plus 或 Pro 吗？</p>
+<p>另外，如果 Anthropic 半年内出”Claude Code 桌面伴侣”，你觉得它会做成什么样？我自己赌是一个非常克制的菜单栏小图标加状态色变化，不会做成动画宠物。</p>
+]]></content>
+      <categories>
+        <category>产品</category>
+      </categories>
+      <tags>
+        <tag>AI 编程</tag>
+        <tag>OpenAI</tag>
+        <tag>Codex</tag>
+        <tag>Codex Pets</tag>
+        <tag>UX</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ChatGPT 广告今天开放给所有美国广告主，AI 行业从这一周起被劈成两条路</title>
+    <url>/2026/05/06/202605061443/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260506-20260506-ai-product-split-ad-vs-subscription.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>昨天美西时间下午，OpenAI 把 ChatGPT 的自助广告平台对全美所有广告主开放了。这件事在中文圈不算大新闻，但海外 ad tech 媒体一晚上发了七八条报道。</p>
+<p>我自己看到这条消息的时候本能反应是”又一个互联网产品要走广告化路线”。但晚上把 Axios、Adweek、Digiday 那几篇连着读完之后，我意识到这件事不能这么看。</p>
+<p>放进过去十天 Anthropic 那边发生的事情里看，这一周不是一家公司在加广告。是两家头部 AI 公司在用截然不同的方式回答同一个问题：当 AI 用得越来越多、算力越来越紧、订阅模型撑不住的时候，钱从哪里来。</p>
+<p>OpenAI 的答案上周二落地了：广告。</p>
+<p>Anthropic 的答案上周也明确了：涨订阅 + 限流。</p>
+<p>这是同一个产业从这一周开始被劈成两条不同路径的标志。</p>
+<h2 id="OpenAI-5-月-5-日具体改了什么"><a href="#OpenAI-5-月-5-日具体改了什么" class="headerlink" title="OpenAI 5 月 5 日具体改了什么"></a>OpenAI 5 月 5 日具体改了什么</h2><p>把昨天的硬动作先列出来。</p>
+<p>OpenAI 推出了一个叫 Ads Manager 的自助广告平台，目前在 beta 阶段。这套系统的几个关键点：</p>
+<ul>
+<li><strong>覆盖范围</strong>：全美，包括 SMB、初创、全球品牌、以及 Dentsu、Omnicom、Publicis、WPP 四大广告控股集团。这是最大覆盖的一次扩张，三个月前 ChatGPT 第一次有广告时，只覆盖少数受邀广告主。</li>
+<li><strong>计费方式</strong>：之前只有 CPM（千次曝光），现在加了 CPC（按点击付费）。CPM 落在 $25 到 $45&#x2F;千次，CPC 落在 $3 到 $5&#x2F;次。CPA（按转化付费）官方说在做，没给时间表。</li>
+<li><strong>测量工具</strong>：上线了 Conversions API（CAPI），让广告主把转化事件回传给 ChatGPT。同时承诺接入第三方 measurement，避免”自己批改自己作业”的质疑。</li>
+<li><strong>下一步扩张</strong>：未来几周扩到加拿大、澳洲、新西兰。在伦敦和东京招广告团队 exec。</li>
+</ul>
+<p>OpenAI 自己给媒体的目标数字是：2026 年广告营收 $2.5B，2030 年 $100B。</p>
+<p>$100B 是 Meta 整个公司 2024 年广告营收的 60% 多。OpenAI 把这条线拉到这个量级，等于把广告从副业升级成准备吃掉一半以上收入大盘的主线。</p>
+<p>这件事还有一条 4 月 30 日的伏笔：WIRED 那一天报了 OpenAI 把免费 ChatGPT 用户的 marketing cookies 默认设置成”开”。隐私政策同步更新，允许把 cookie ID 和邮箱共享给广告伙伴，并接收广告商回传的购买数据。这是 Ads Manager 真正能跑起来的数据底盘。</p>
+<p>把 4&#x2F;30 的 cookie 默认开 + 5&#x2F;5 的自助平台放一起看，OpenAI 其实是用一周时间把广告这件事从”试点”推进到了”公司基础设施”。</p>
+<h2 id="同一周-Anthropic-在做完全相反的事"><a href="#同一周-Anthropic-在做完全相反的事" class="headerlink" title="同一周 Anthropic 在做完全相反的事"></a>同一周 Anthropic 在做完全相反的事</h2><p>我过去十天连着写了七篇关于 Anthropic 的文章。从 4 月 23 日 GitHub 停 Copilot 个人订阅注册开始，到 4 月 30 日 Anthropic 把 Claude Code 日均成本估算从 $6 改成 $13，再到 5 月 4 日 NYT 报白宫考虑给所有前沿模型加预审。</p>
+<p>Anthropic 这一边的关键词是：涨订阅价、加使用限制、把 Claude Code 从 Pro $20 套餐里拿掉、Head of Growth 公开承认”现有方案不适应目前的使用强度”。</p>
+<p>它在做的事情很明确：让用户多付钱，或者让用户用得少。</p>
+<p>这两个动作和 OpenAI 在做的是同一个问题（钱从哪里来）的两种相反答案。</p>
+<p>OpenAI 把成本转嫁给广告主，让用户继续免费或者低价用，用注意力换收入。Anthropic 把成本直接挂给用户，让付得起的人付更多，让付不起的人退出，用使用强度匹配价格。</p>
+<p>这两种模型上一次这么明面分裂是十几年前。Google 当时押广告，Microsoft 当时押软件订阅。两条路最后都通了，但路上的产品形态、用户关系、监管对待方式完全不一样。</p>
+<p>AI 产业从昨天开始走在这两条路上。</p>
+<h2 id="为什么这一周是分裂点而不是更早"><a href="#为什么这一周是分裂点而不是更早" class="headerlink" title="为什么这一周是分裂点而不是更早"></a>为什么这一周是分裂点而不是更早</h2><p>ChatGPT 有广告这件事不是昨天才发生的。3 月份 OpenAI 第一次在受邀广告主里跑广告。但那时候是封闭测试，对产品形态没有结构性影响。</p>
+<p>把这一周作为分裂点，原因是三个动作合在一起完成了一个完整的商业基础设施。</p>
+<p>最关键的是自助平台开放。Ads Manager 公开 beta 之后，任何美国广告主理论上都能开账户、买广告。这意味着 OpenAI 从”销售上门找客户”切到”客户自己上门买”，平台化的关键一步迈出来了。</p>
+<p>紧接着是 CPC 上线。原来只有 CPM 意味着广告主只能买曝光、不能买结果。CPC 上线之后，搜索广告生态的所有玩法（关键词竞价、转化优化、自动出价）都可以往 ChatGPT 上搬。这才让 ChatGPT 真正进入和 Google Search Ads 同一条赛道。</p>
+<p>最后是 CAPI 上线。让广告主回传自己的转化数据，是衡量广告 ROI 的硬条件。没有 CAPI 的广告平台是个黑盒，广告主不会真投预算。CAPI 一上，预算才会开始流。</p>
+<p>这三件事任何一件单独发生都不算转折。三件同一天发生才是。</p>
+<p>OpenAI 在媒体口径里说这是”扩展”。但从产品和商业角度看，5 月 5 日才是 ChatGPT 广告业务的真正起点。</p>
+<h2 id="广告路线和订阅路线的产品形态会怎么变得不一样"><a href="#广告路线和订阅路线的产品形态会怎么变得不一样" class="headerlink" title="广告路线和订阅路线的产品形态会怎么变得不一样"></a>广告路线和订阅路线的产品形态会怎么变得不一样</h2><p>这一节是我多花了点时间想的。如果两条路真的分裂，产品本身会怎么不同。</p>
+<p>广告路线下，产品的优化目标是 engagement。让用户多停留、多对话、多看到推荐。这个机制下，ChatGPT 会越来越像一个会聊天的购物入口。”帮我找一双跑鞋” 这种需求里，自然推荐 5 个品牌的链接，背后有竞价机制。”帮我规划一周饮食”会推荐配送到家的食材包。它在产品形态上会向 TikTok &#x2F; Instagram &#x2F; Pinterest 那一类发现型产品靠拢。</p>
+<p>订阅路线下，产品的优化目标是 task completion。让用户把任务做完、把代码写完、把项目部署完。Anthropic 现在在 Claude Code 里做的事情就是这条。用户付了 $100&#x2F;月或 $200&#x2F;月，要的是 24 小时不间断的工具调用稳定性。它在产品形态上会向 Bloomberg Terminal、Adobe Creative Cloud 那一类专业工具靠拢。</p>
+<p>这两个方向对模型本身的训练目标也不一样。</p>
+<p>广告路线需要的模型偏 conversational、有节制地推荐、能识别商业意图。Anthropic 那种”我不放开自主武器约束”的产品哲学不是优先项。</p>
+<p>订阅路线需要的模型偏 agentic、能跑长任务、能稳定调工具。OpenAI 那种”用户日活和留存”的指标不是优先项。</p>
+<p>未来一两年，这两条路上的模型会从底层开始长得不一样。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260506-20260506-ad-vs-subscription-comparison.webp" alt="广告路线 vs 订阅路线五维对比"></p>
+<h2 id="对中国开发者意味着什么"><a href="#对中国开发者意味着什么" class="headerlink" title="对中国开发者意味着什么"></a>对中国开发者意味着什么</h2><p>我自己每天用 Claude Max 5x，订阅路线那条线上。短期看，这件事对我没有直接影响。</p>
+<p>但有几个间接影响值得现在就开始想。</p>
+<p>ChatGPT 免费版接下来会越来越向”广告 + 推荐”形态靠拢。如果你的工作流里有 ChatGPT Plus $20 这一档，要做心理准备：要么继续付钱拿干净体验，要么接受越来越多的赞助内容混进对话。Plus 这一档目前还没有广告，但根据 OpenAI 的财务目标和 cookie 默认开启的动作，这条线不会一直纯粹。</p>
+<p>国产模型这一边目前没有任何一家走广告路线。DeepSeek、MiMo、GLM、Kimi、智谱全部是订阅 + token 计费。这跟监管环境有关（中国对 AI 推荐内容的备案要求让广告化路线门槛非常高），也跟商业现实有关（国产模型的 to B 营收占比远高于 to C，没必要打广告主意）。所以国产 AI 接下来一两年大概率全部走订阅路线，跟 Anthropic 同侧。</p>
+<p>如果你做 to C 的 AI 产品，要选一边站。继续做订阅产品的话，要意识到自己在跟 Anthropic、Cursor、Cline 这些专业工具同台。要做广告化产品的话，要去研究 Ads Manager 的玩法，未来 OpenAI 大概率会开放给海外开发者把自己的产品挂进去（类似 GPTs 那一套但带广告分成）。</p>
+<p>如果你做 to B 的 AI 工具（数据库、可观测、AI agent 平台之类），订阅路线是默认选择。这一年不要分心去想”要不要试试广告”。</p>
+<h2 id="我接下来想盯的几件具体事"><a href="#我接下来想盯的几件具体事" class="headerlink" title="我接下来想盯的几件具体事"></a>我接下来想盯的几件具体事</h2><p>写到这里我想留下三个我会真的盯的信号。</p>
+<p>最先想看到答案的是 OpenAI 的 Ads Manager 什么时候开放给非美区开发者。如果国内开发者能通过中转方式把自己的产品挂进 ChatGPT 广告位（哪怕是模糊的”赞助卡片”），中文 AI 产品的获客成本结构会被重写。这件事预期在 12 个月内会有动作。</p>
+<p>往订阅路线那边看，关键问题是 Anthropic 在这条路上还能撑多久。如果 Claude Max 5x 在 6 月之前真的涨到 $200&#x2F;月或者加更严的”按周用量”，那订阅路线会被自己的成本结构打穿。Anthropic 现在的赌注是 Opus 5、Opus 6 能在每代里把 token 效率提升 30% 以上，让单位 token 成本下降速度跑赢使用强度上升速度。这一赌赌的是 scaling law 的右半段还会继续奏效。</p>
+<p>最后一条留给 Plus $20 这一档的演变。OpenAI 财务目标 $100B 年广告，光靠免费用户支撑不起来。如果 Plus 用户开始看到”赞助内容”，那 OpenAI 在”用户体验”和”营收增速”之间已经做了选择。这件事我猜在 9 月之前会出第一条信号。</p>
+<p>评论区想问两件事。</p>
+<p>如果你做 to C 的 AI 产品，你会选广告路线还是订阅路线？为什么？</p>
+<p>另外，假设 OpenAI 的 Ads Manager 6 个月内对中国开发者开放（哪怕走中转），你会试着把自己的产品挂进 ChatGPT 广告位吗？我自己会试，但要看分成结构。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>Anthropic</tag>
+        <tag>OpenAI</tag>
+        <tag>ChatGPT</tag>
+        <tag>广告</tag>
+        <tag>商业模式</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>白宫一周内对 Anthropic 立场三转，&quot;务实合作&quot;只是这条故事线里最简单的一段</title>
+    <url>/2026/05/06/202605061004/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260506-20260506-white-house-anthropic-three-pivots.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>上个周末群里有人转了一条新闻给我，标题大意是”白宫拟调整对 Anthropic 监管立场，预示美国政府或转向更务实合作的 AI 治理策略”。我点进去之前以为是单纯的解冻新闻，看完之后发现故事远比标题复杂。</p>
+<p>过去一周，白宫对 Anthropic 至少做了三个方向不一致的动作。要把它们读成”务实合作”，需要先把另外两条线一起摆出来。</p>
+<p>我自己跟这件事的关系不大，我是 Claude Max 5x $100&#x2F;月的订阅者，不在美国，也不需要 Pentagon 合同。但 Anthropic 这家公司是我每天用的工具背后的实验室。这周看完所有报道之后我觉得这条故事线值得单独写一篇，因为它是接下来一年 AI 治理框架的预演，影响会一路传到我们这边。</p>
+<h2 id="上周到底发生了什么"><a href="#上周到底发生了什么" class="headerlink" title="上周到底发生了什么"></a>上周到底发生了什么</h2><p>把时间线先列出来，省得后面绕。</p>
+<p><strong>4 月 29 日（Axios 独家）</strong>：白宫内部正在 workshop 一个把 Anthropic 重新请回桌前的方案。Axios 引用一位消息人士的原话：”save face and bring em back in”。意思是给双方一个台阶下，把人请回来。背景是 Anthropic 之前因为拒绝给自主武器和大规模监控开放模型，被 Pentagon 标记为”供应链风险”，$200M 的合同直接黄了。</p>
+<p><strong>5 月 1 日（Axios 后续）</strong>：白宫的官方口径变成”Anthropic 既是风险也是必需”。原话是 “both a risk and a necessity to AI progress”。</p>
+<p><strong>5 月 3 日（WSJ）</strong>：白宫官员公开反对 Anthropic 把 Mythos 模型的访问范围从 50 家公司扩到约 70 家，理由是国家安全。同一天 Pentagon CTO Emil Michael 在 CNBC 上把 Mythos 单独定义为”a separate national security moment”，意思是这件事要单独按国安事件处理。</p>
+<p><strong>5 月 4 日（NYT 独家）</strong>：白宫在讨论一项行政命令，要求所有前沿 AI 模型在公开发布前先过政府审查。NSA、国家网络主任办公室（ONCD）、国家情报总监办公室（DNI）都被讨论过承担审查角色。模式接近英国 AI Security Institute。政府提前看到模型，但不强制拦截发布。</p>
+<p><strong>5 月 5 日（Politico）</strong>：上面这些讨论被进一步明确为多份行政命令的备选方案。白宫官员已经分别 brief 了 Anthropic、Google、OpenAI 三家的高管。</p>
+<p>七天，三个方向。一边在请人回来，一边在压住产品扩张，一边在搭一套覆盖整个行业的预审框架。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260506-20260506-wh-anthropic-week-timeline.webp" alt="白宫一周内对 Anthropic 的五个动作"></p>
+<h2 id="务实合作那条线确实存在"><a href="#务实合作那条线确实存在" class="headerlink" title="务实合作那条线确实存在"></a>务实合作那条线确实存在</h2><p>先说”务实合作”这个解读站得住的部分。</p>
+<p>David Sacks 这个名字要先记一下。他是 Trump 第二任期最初任命的 AI 沙皇，路线是去监管化、放手让美国 AI 公司跑，把 Anthropic 这种”事多”的实验室视为绊脚石。3 月份 Sacks 离任之后，AI 政策的话语权落到了白宫 Chief of Staff Susie Wiles 和财政部长 Scott Bessent 手里。这两个人没有 Sacks 那么强的”放任”立场。</p>
+<p>风向变化的第一个具体表现就是 4 月 29 日那条 Axios 爆料。”save face and bring em back in”这句话背后的潜台词是：白宫意识到把美国最前沿的实验室之一长期排除在政府体系之外不可持续。Pentagon CTO Michael 5 月 1 日承认即便 Anthropic 还顶着供应链风险的标签，美军在伊朗那次行动中实际上还是用了 Claude。这件事公开之后，”假装 Anthropic 是敌人”这个状态就维持不下去了。</p>
+<p>所以”务实合作”这个解读对应的是：白宫准备把 Anthropic 重新拉进政府工作流，可能通过 Pentagon 合同、可能通过 NSA 的 Mythos 测试合作（NSA 已经用 Mythos 评估了政府 Microsoft 软件部署里的漏洞）、可能通过新的 AI 治理工作组。</p>
+<p>这一条是真的。但它只是这周三条故事线里最浅的那一条。</p>
+<h2 id="同时白宫在准备上一道审查"><a href="#同时白宫在准备上一道审查" class="headerlink" title="同时白宫在准备上一道审查"></a>同时白宫在准备上一道审查</h2><p>5 月 4 日 NYT 那条新闻才是这周真正的重磅。</p>
+<p>Trump 政府在讨论一份行政命令，要求所有前沿 AI 模型在公开发布之前先过一道政府审查。审查模式参考英国的 AI Security Institute：政府机构在模型发布前后都做安全评估，但不强制拦截发布。</p>
+<p>这件事如果落地，对整个 AI 行业的意义远超 Anthropic 一家。它意味着 Trump 政府从最初的”noninterventionist”立场（David Sacks 时代的去监管路线）反转成了”前置审查”路线。</p>
+<p>更讽刺的是 Tom’s Hardware 文章里的那句话：The company that wanted AI regulation under Biden may have gotten its wish, just not on its own terms.</p>
+<p>Anthropic 在 Biden 时代是最强烈呼吁 AI 监管的公司之一，Dario Amodei 多次在国会作证支持监管立法。但 Trump 上任后，Anthropic 立刻变成了被边缘化的那家。现在 Trump 政府要做监管了，触发它的并不是 Anthropic 当初的呼吁，而是 Anthropic 自己发的那个 Mythos 模型。Anthropic 想要的监管以一种它没料到的方式回来了。</p>
+<h2 id="Mythos-这个引信值得单独看一眼"><a href="#Mythos-这个引信值得单独看一眼" class="headerlink" title="Mythos 这个引信值得单独看一眼"></a>Mythos 这个引信值得单独看一眼</h2><p>讲到这里需要把 Mythos 是什么单独说一下。</p>
+<p>Mythos 是 Anthropic 今年 4 月放出来的预览版模型，公开宣传里 Anthropic 说它能在主流操作系统和浏览器里识别上千个零日漏洞，强大到”too dangerous for public release”。早期访问只给了大约 50 家企业和机构。</p>
+<p>这套叙事从一开始就有争议。Tom’s Hardware 引用过几篇研究，发现便宜得多的开源模型在漏洞发现这件事上能拿到接近的结果。Anthropic 自己的”上千个零日”声称背后只有 198 次手工 review 做支撑。所以 Mythos 是一次真实能力跃迁，还是一次声势更大的产品营销，目前还有真争论。</p>
+<p>更耐人寻味的是 NSA 已经在用 Mythos 评估政府 Microsoft 软件的漏洞，但其他政府机构同时被切断了访问 Anthropic 工具的权限。一个机构在用，一群机构被禁。Pentagon CTO Michael 把这种状态描述成”separate national security moment”，意思是 Mythos 这件事要单独走流程，不能套用 Anthropic 公司被供应链拉黑的总框架。</p>
+<p>David Sacks 走之前在 X 上发过一条很重的话：”A growing number of people are wondering if Anthropic is the AI industry’s ‘boy who cried wolf’. If Mythos-related threats don’t materialize, the company will have a serious credibility problem.”</p>
+<p>Mythos 上线后真的发生过一次”未授权访问”事件，Anthropic 自己确认在调查。这件事让 Sacks 那句”狼来了”的指控变得有点尴尬。但同时 Mythos 真实能力到底多强，目前没有第三方完整评估。</p>
+<p>整个故事像一个反馈环：Anthropic 用”危险能力”营销 Mythos，把 WH 吓到要做预审；WH 一旦做预审，Anthropic 之前推动的”AI 监管”立法就以另一种方式落地。两边都在赢，又都在被推着走。</p>
+<h2 id="对中国开发者意味着什么"><a href="#对中国开发者意味着什么" class="headerlink" title="对中国开发者意味着什么"></a>对中国开发者意味着什么</h2><p>写到这里我想停一下，把视角拉回来一点。</p>
+<p>我自己每天用 Claude Code 写文章、跑 pipeline。Anthropic 这家公司怎么和白宫互动，跟我写一行代码看起来没关系。但我现在判断这件事的传导路径是这样的：</p>
+<p>如果 NYT 报道的那个”前沿模型预审行政命令”在五六月份真签了，美国就会有一份覆盖 Anthropic、Google、OpenAI 的官方 AI 治理框架。这份框架接下来会被两类力量参考：欧盟 AI Act 的执行细则、中国生成式 AI 服务管理办法的下一轮修订。两条路径里中国监管那一条对我们直接相关。中国的网信办今年 2 月发了关于”前沿模型备案”的征求意见稿，里面留了大量空白等美国先做。如果美国走”NSA 主导预审”这条路，中国大概率会做对等版本。</p>
+<p>另一条传导路径是 Anthropic 接下来会不会被 Pentagon 的合同重新拉进去。如果合同恢复，Anthropic 的下一代模型有更大概率会被设计成”军方友好”。这反过来会影响 Claude 系列对民间用户的可用性和功能边界。我用 Claude 写博客的时候不会撞到这条，但跑 agentic workflow 的开发者可能会感觉到 system prompt 风格和工具调用粒度的细微变化。</p>
+<p>这两条传导路径对我们来说都不会马上看到，但 18 到 24 个月内会显形。</p>
+<h2 id="我看完一周之后形成的几点判断"><a href="#我看完一周之后形成的几点判断" class="headerlink" title="我看完一周之后形成的几点判断"></a>我看完一周之后形成的几点判断</h2><p>先说定性。用”务实合作”概括这一周不准确。更准确的描述是白宫在被一项 Anthropic 的产品逼着重新设计 AI 治理框架。合作和监管在这件事上是同一面的两个角度，不是两件事。</p>
+<p>再看决策班子。David Sacks 离任之后，美国 AI 政策的真正决策者从一个有强意识形态的”AI 沙皇”换成了 Wiles 和 Bessent 这种偏务实的高层。这个班子的特点是不会先有立场再做政策，而是看到具体威胁之后再设计具体应对。Mythos 就是触发这种”看到再做”模式的第一个具体威胁。</p>
+<p>往后看 Anthropic 这家公司本身的位置变化。它和美国政府的关系不会回到 Biden 时代那种”AI 实验室直接进入立法咨询桌”的模式。它会变成一种更冷的”商业供应商 + 国安审查对象”双重身份，类似今天的 Lockheed Martin 在国防部体系里的位置。Dario Amodei 个人的话语权会下降，公司的合同份额会上升。</p>
+<p>最后是节奏层面。这一轮治理框架如果落地，对前沿模型发布的节奏会有真实影响。一个模型从”训练完成”到”对外发布”中间多一道政府审查，可能会加 4 到 12 周。Claude 5、GPT-6、DeepSeek V5 这种下一代旗舰发布会更慢、更安静、更分阶段。这可能让中国实验室的发布节奏在 2026 年下半年看起来比美国更激进，但这种领先很可能是治理框架成熟度差异造成的视觉差，并不一定对应真实能力差。</p>
+<h2 id="接下来两周我会盯什么"><a href="#接下来两周我会盯什么" class="headerlink" title="接下来两周我会盯什么"></a>接下来两周我会盯什么</h2><p>写到这里我想留下我接下来真要盯的几个具体信号。</p>
+<p>如果白宫五月内真签出那份”前沿模型预审”行政命令，全文一定要读。重点看三个字段：审查机构是单一机构还是联合工作组（联合工作组意味着扯皮多、落地慢）；审查触发条件是按参数规模、训练算力，还是按”宣称能力”（按宣称能力会让 Anthropic 这种 marketing 风格强的实验室吃亏）；审查结果是建议性还是强制性。</p>
+<p>如果 Pentagon 和 Anthropic 的诉讼 5 月内有新动作（特别是和解相关的传闻），那就是 Axios 那条 4&#x2F;29 爆料的实质化。和解条款里 Anthropic 让步多少、Pentagon 让步多少，决定了”务实合作”这条线的真实分量。</p>
+<p>如果欧盟 AI Office 在白宫这套框架明朗之前抢先发布自己的前沿模型评估细则，国际治理话语权可能就此分叉。这一条不太会发生，但发生了影响会很大。</p>
+<p>评论区想问两个问题。</p>
+<p>如果你在做面向欧美的 AI 产品，你已经在为”前沿模型可能要走政府预审”做合规准备了吗？具体准备的是什么？</p>
+<p>另外，如果你站在中国开发者的角度看 Anthropic 这家公司，你觉得它接下来一年里对你的工作影响会变大还是变小？我自己赌”变小但变深”。日常用 Claude 的频率可能下降，但读它发的论文和事件分析的频率会上升。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>Anthropic</tag>
+        <tag>AI 治理</tag>
+        <tag>白宫</tag>
+        <tag>Mythos</tag>
+        <tag>监管</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Anthropic 把 Claude Code 日均成本估算从 $6 改成 $13，官方说&quot;这不算涨价&quot;</title>
+    <url>/2026/04/30/202604300952/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260430-20260430-claude-code-cost-doubling.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>昨天写完那篇省 token 的文章之后，我以为这周关于 Claude 的内容就告一段落了。</p>
+<p>今早起床第一件事是被群里截图刷屏。Business Insider 昨天下午的一条报道：Anthropic 在 4 月 15 日悄悄把官方文档里”每个开发者每个活跃日的平均花费”从 $6 改成了 $13。</p>
+<p>这件事的发现者叫 Ed Zitron，他是 EZPR 的 CEO，前 Business Insider 专栏作者。他在 X 上的原话是”Anthropic stealth-tweaked their Claude Code docs”。stealth 这个词他用得很准：没有公告，没有 changelog 条目，只是把那一页文档默默改了。</p>
+<p>Anthropic 的官方回复也来得很快。发言人对 Business Insider 说：”这不是定价变化，也不是产品变化。Opus 4.7 现在是 Claude Code 的主力模型，我们更新这些数字只是反映从 2025 年 2 月那次更新到现在用户使用习惯的变化。”</p>
+<p>我读完一上午的报道之后想写这篇。这件事单看是一个数字调整的小新闻，但放进过去十天 Anthropic 在做的一系列动作里看，它和上周的”2% 测试”、和 Amol Avasare 那句被很多人忽略的话，连起来才是完整的故事。</p>
+<h2 id="改了什么具体数字"><a href="#改了什么具体数字" class="headerlink" title="改了什么具体数字"></a>改了什么具体数字</h2><p>Claude Code 的官方文档里有一页叫 Costs（<code>code.claude.com/docs/en/costs</code>），讲企业团队规划部署预算时怎么估算开销。</p>
+<p>这一页的旧版（4 月 15 日之前）写的是：</p>
+<ul>
+<li>平均每个开发者每个活跃日：**$6**</li>
+<li>90% 的用户活跃日花费在 <strong>$12</strong> 以内</li>
+</ul>
+<p>新版（4 月 16 日之后）写的是：</p>
+<ul>
+<li>平均每个开发者每个活跃日：**$13**</li>
+<li>90% 的用户活跃日花费在 <strong>$30</strong> 以内</li>
+<li>企业部署里每个开发者每月 <strong>$150 到 $250</strong></li>
+</ul>
+<p>平均成本从 $6 涨到 $13，是 117% 的涨幅。90% 用户的天花板从 $12 涨到 $30，是 150% 的涨幅。</p>
+<p>这个文档页 Anthropic 自己确认上一次大改是 2025 年 2 月，整整 14 个月没动过。这一次不发公告就把”参考预算”翻倍多。从企业 IT 视角看，这相当于年度预算审批要重新做一遍。</p>
+<h2 id="Anthropic-的解释：因为默认模型从-Sonnet-3-7-换到了-Opus-4-7"><a href="#Anthropic-的解释：因为默认模型从-Sonnet-3-7-换到了-Opus-4-7" class="headerlink" title="Anthropic 的解释：因为默认模型从 Sonnet 3.7 换到了 Opus 4.7"></a>Anthropic 的解释：因为默认模型从 Sonnet 3.7 换到了 Opus 4.7</h2><p>发言人给 Business Insider 的解释里有一句关键：”Opus 4.7 is now the frontier model in Claude Code.”</p>
+<p>这句话翻译过来是：旧版的 $6 估算，是基于当时 Claude Code 主推 Sonnet 3.7 模型计算出来的。新版的 $13 估算，反映的是用户现在主要用 Opus 4.7。</p>
+<p>我自己跑过这两个模型，从单价层面对比，Sonnet 3.7（已弃用）当时是 $3&#x2F;M 输入、$15&#x2F;M 输出，Opus 4.7 是 $5&#x2F;M 输入、$25&#x2F;M 输出。Opus 比 Sonnet 大概贵 67% 左右。</p>
+<p>如果只是模型默认换了，单纯的数学是 $6 × 1.67 ≈ $10。</p>
+<p>但官方实际改成了 $13。多出来的 $3 缺口，按 Anthropic 的解释是”使用强度也在涨”。这个说法和 Amol Avasare 那句”engagement per subscriber is way up”是配套的。</p>
+<p>所以从 Anthropic 的逻辑来说：单 token 价没动，模型选项没动，”涨价”这个词技术上他们说得过去。但是开发者每天实际烧的钱确实翻倍了。这个就是这篇报道之所以会引发反弹的核心。</p>
+<h2 id="上周的”2-测试”现在连起来看"><a href="#上周的”2-测试”现在连起来看" class="headerlink" title="上周的”2% 测试”现在连起来看"></a>上周的”2% 测试”现在连起来看</h2><p>上周（4 月 21 日左右）我写过一篇关于 Copilot 停注册 + Claude Code 从 Pro 套餐里被拿掉的文章。那时候 Pro 用户登录定价页发现 Claude Code 没有了，社区炸了，Anthropic 当天回应说是”对 2% 新用户的 A&#x2F;B 测试”。</p>
+<p>当时我自己的判断是：这个”2% 测试”里的”测试”两个字是给媒体听的。它更像在为后面的真改动做预演。</p>
+<p>今天这条新闻让那个判断更接近确认。</p>
+<p>理由很简单：4 月 16 日改 cost 文档（公开但低调），4 月 21 日做”2% 测试”（更激进的产品改动），4 月 28 日 Avasare 在 X 上明说”现有订阅计划不适应目前的使用强度”，4 月 29 日 Business Insider 把 cost 文档变化爆了出来。</p>
+<p>这十几天的节奏不像偶然。它更像一家公司在用市场可以接受的速率做价格预期管理：先调”参考预算”，再做小范围用户测试，然后等舆论消化，最后才动真正的订阅价。</p>
+<p>如果 Pro $20 这一档将来从产品页彻底拿掉 Claude Code，或者订阅价直接调高到 $40、$60 量级，那今天看似”只是一个文档数字调整”的动作就是序章。</p>
+<h2 id="Amol-Avasare-那句话才是真正的重点"><a href="#Amol-Avasare-那句话才是真正的重点" class="headerlink" title="Amol Avasare 那句话才是真正的重点"></a>Amol Avasare 那句话才是真正的重点</h2><p>这一节我想单独拎出来。</p>
+<p>Amol Avasare 是 Anthropic 的 Head of Growth。他上周在 X 上发的那条原文是：</p>
+<blockquote>
+<p>Engagement per subscriber is way up. We’ve made small adjustments along the way (weekly caps, tighter limits at peak), but usage has changed a lot and our current plans weren’t built for this.</p>
+</blockquote>
+<p>中文：每个订阅者的使用强度大幅上涨。我们一直在做小调整（周限额、高峰期收紧），但使用习惯变化太大，我们当前的方案不是为这种使用设计的。</p>
+<p>这句话被很多报道当作背景一笔带过。但它其实是这一系列动作里最坦诚的一句。它没有说”我们要涨价”，但它说的是”现在的订阅模型已经支撑不下去了”。</p>
+<p>订阅制（不管是 Pro $20 还是 Max 5x $100&#x2F;月）本质上是一个”打包定价”的赌博：Anthropic 赌大部分订阅者每月烧的 token 价值低于订阅费。这个赌博在 Sonnet 3.5、Sonnet 3.7 那个时代成立，那时候单次会话烧个几千 token 是常态，agentic 工作流还没普及。</p>
+<p>到了 Opus 4.7 + 1M context + agent 全员日跑这个时代，事情变了。我自己上周写的那篇文章里有数据：我一周烧 28M token，按 API 裸价是 $106。我开 Max 5x $100&#x2F;月，已经烧穿了订阅费的 100%。Disney 内部数据更夸张，Business Insider 之前另一篇报道里写过，他们有员工一天调 Claude 51000 次。</p>
+<p>订阅制本来就是要让你”用得多就赚到、用得少就被赚”。但当一线开发者人均用得多，那 Anthropic 自己就被赚了。这是 Avasare 想说但不能说得太直白的事。</p>
+<h2 id="对-Claude-Max-5x-这一档我目前的判断"><a href="#对-Claude-Max-5x-这一档我目前的判断" class="headerlink" title="对 Claude Max 5x 这一档我目前的判断"></a>对 Claude Max 5x 这一档我目前的判断</h2><p>我自己是 Claude Max 5x $100&#x2F;月。今天读完这条新闻，我做了几件事。</p>
+<p>最先做的是把昨天那篇省 token 的文章里的六个手法挨个再 review 一遍，确认 prompt caching、<code>/compact</code> 提前、sub-agent 隔离这三条最大的杠杆都在我的工作流里跑着。这件事在今天比昨天更重要，因为如果 Anthropic 的下一步是真的调订阅价，我用 Max 5x 多撑两个月的能力会直接转化为省下来的钱。</p>
+<p>接着我把上周写的 Claude Desktop 开发者模式那篇文章里的 DeepSeek V4 接入路径再走了一遍。这是我的备份方案。如果 Max 5x 涨到 $200，我会立刻切走。</p>
+<p>最后我把这周的几个备用模型再过一遍：DeepSeek V4（$1.74&#x2F;$3.48）、MiMo-V2.5-Pro（¥7&#x2F;¥21 分段）、GLM-5.1。同样的 28M token，如果走 DeepSeek V4 大概是 $50 上下，比 Anthropic 便宜一半。这个对比关系如果 Anthropic 调价，会瞬间被市场重新评估。</p>
+<p>把这三件事拼起来看，我对 Anthropic 接下来三个月动作的判断是：要么砍掉 Pro 一档的 Claude Code、要么涨价、要么在 Max 5x 上加更严的”使用强度”限制（比如把现在的”5 小时窗口”换成”周用量上限”）。三选一。我个人倾向认为是后两者的组合。</p>
+<h2 id="这件事和”AI-使用成本上升”那个大叙事的关系"><a href="#这件事和”AI-使用成本上升”那个大叙事的关系" class="headerlink" title="这件事和”AI 使用成本上升”那个大叙事的关系"></a>这件事和”AI 使用成本上升”那个大叙事的关系</h2><p>最后一节我想拉远一点看。</p>
+<p>媒体报道里都把这件事归到”AI 使用成本全面上升”这个大趋势。这个表述不算错，但容易让人误以为是”AI 模型本身变贵了”。</p>
+<p>实际上 Anthropic 这次没有动 token 单价。Opus 4.7 还是 $5&#x2F;$25，Sonnet 4.6 还是 $3&#x2F;$15。变贵的不是单价。</p>
+<p>变贵的是”使用强度”。一个 agentic 工作流跑一次的 token 消耗，是一年前手动打字的 50 倍到 100 倍。当 50 倍这个倍率被加到原来按”低强度”打包定价的订阅模型上，订阅模型就崩了。</p>
+<p>这就是为什么我这周连着写了七篇关于 AI 编程经济学的文章（Copilot 停 Pro 注册、Claude Code 从 Pro 里拿走、GPT-5.5 涨价、DeepSeek V4 涨价 8 倍、MiMo Token Plan 重构、Claude Desktop 开发者模式、token 省钱手法）。它们看上去是七件独立的事，但底下是同一条主线：订阅制这一代被 agent 打穿了，整个市场在重新定价”算力 + 模型能力”这个组合。</p>
+<p>今天 Anthropic 把 cost 文档从 $6 改成 $13，是这条主线上的又一个观察点。下个观察点很可能在五月份。</p>
+<h2 id="你的订阅档位会让你接下来怎么动"><a href="#你的订阅档位会让你接下来怎么动" class="headerlink" title="你的订阅档位会让你接下来怎么动"></a>你的订阅档位会让你接下来怎么动</h2><p>评论区想听你两件事。</p>
+<p>我想知道你今天在用什么订阅档位的 Claude Code。是 Pro $20、Max 5x $100、Max 20x $200，还是直接走 API？这周读完这一系列报道之后你的下一步打算是什么？</p>
+<p>另一件我自己很想听的：你怎么看 Avasare 那句”current plans weren’t built for this”？你觉得 Anthropic 接下来会怎么动这个订阅模型？</p>
+<p>我自己的赌注是 5 月内会出”按周或按月用量上限收紧”和”Max 20x 推出更高的 $300 一档”这两个组合拳。但我希望我赌错。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>Anthropic</tag>
+        <tag>定价</tag>
+        <tag>AI 成本</tag>
+        <tag>订阅</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Claude 1M 上下文一周烧了我 28M token，6 个我每天都在用的省钱手法</title>
+    <url>/2026/04/29/202604292325/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260429-20260429-claude-1m-context-token-saving.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>周末晚上我打开 Claude Code 的 usage 看板，被自己吓了一跳：上周累计 28M tokens。</p>
+<p>我自己是 Claude Max 5x $100&#x2F;月的订阅。Max 的好处是按 5 小时窗口给配额，不计 token 总量，听上去用不完。但我连着两天跑完整的博客 pipeline（researcher → writer → polisher → artist → distributor 一条龙），从早上 9 点到晚上 11 点几乎不停。第二天下午 3 点开始撞到 5 小时窗口的限流：每条新消息要等 90 秒才回。</p>
+<p>这件事让我开始正经盯每个 prompt 的 token 消耗。一周下来摸出来 6 个手法，今天这篇是把它们摆出来给你看。</p>
+<p>声明前置：我不是 Anthropic 内部员工，也没法读到他们的计费源码。下面所有的数字都是我自己 usage 看板上读出来的实测数据，能复现，但样本只有我一个人。如果你的工作流和我不一样，效果会有差异。</p>
+<h2 id="上周我跑了一遍账单"><a href="#上周我跑了一遍账单" class="headerlink" title="上周我跑了一遍账单"></a>上周我跑了一遍账单</h2><p>先把基线摆出来。</p>
+<p>我的工作流主力是 Claude Code，模型默认 Sonnet 4.6。开了 1M 上下文的长上下文档位（按 Anthropic 现在的定价，超过 200K 的部分输入是 $6&#x2F;M、输出是 $22.50&#x2F;M，比标准档贵 50%）。每天大概 6 到 12 个会话，每个会话从几千 token 到几十万 token 不等。</p>
+<p>上周这种节奏下，我看到的几个数字：</p>
+<ul>
+<li><strong>总输入</strong>：约 26.4M tokens，其中缓存命中（cache read）占 19.2M，约 73%。</li>
+<li><strong>总输出</strong>：约 1.8M tokens。</li>
+<li><strong>如果按 API 现价裸算</strong>（不考虑 Max 订阅打包）：26.4M 输入 × $3 + 1.8M 输出 × $15 大概是 $106。</li>
+<li><strong>走缓存的实际成本</strong>：cache read 是 $0.30&#x2F;M，cache write 是 $3.75&#x2F;M。所以实际可计费输入 ≈ 7.2M × $3 + 19.2M × $0.30 + 缓存写入费用，估算下来真实成本约 $33。</li>
+</ul>
+<p>73% 的缓存命中率不是天上掉下来的。它是我把 6 个手法摞在一起跑出来的结果。下面挨个拆开讲。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260429-20260429-token-saving-four-layers.webp" alt="6 个省钱手法分布在 Claude Code 请求的四个层"></p>
+<h2 id="Prompt-caching-是这套手法里杠杆最大的一条"><a href="#Prompt-caching-是这套手法里杠杆最大的一条" class="headerlink" title="Prompt caching 是这套手法里杠杆最大的一条"></a>Prompt caching 是这套手法里杠杆最大的一条</h2><p>如果今天你的工作流里只能加一件事，加这个。</p>
+<p>Claude 的 prompt caching 机制是这样：你在 system prompt 或者前置消息里标记某段内容为 <code>cache_control: ephemeral</code>，Anthropic 就会把这段 prefix 缓存 5 分钟。下一次请求里只要这段 prefix 一字不差，就走缓存读取，价格降到 $0.30&#x2F;M（标准输入是 $3&#x2F;M）。第一次写入是 $3.75&#x2F;M（贵 25%），但只要 5 分钟内被命中至少一次就回本。</p>
+<p>Claude Code 自带这套机制。它会自动把 CLAUDE.md、加载进来的 skills、对话历史的稳定部分标记为 cacheable。但前提是这些内容确实稳定。</p>
+<p>我做的几件事：</p>
+<ul>
+<li><strong>把 CLAUDE.md 当 cache 优化的对象写</strong>。任何会随会话变化的字段（”今天的任务是 X”）都不写进 CLAUDE.md，写进会话开头的临时消息。CLAUDE.md 只放真正长期不变的项目结构、命令、约束。</li>
+<li><strong>常驻 skill 永远显式 load</strong>。我的 6 个 content skill 每次会话都加载，等于成了缓存的一部分。如果哪次我只用 1 个 skill，整个 prefix 哈希变了，缓存读全废。所以我现在宁可全部加载浪费一点首次写入费用，也不让缓存碎掉。</li>
+<li><strong>不要在 system prompt 里塞时间戳</strong>。”Today is 2026-04-29”这种字段一变，缓存当场失效。把时间留给 user message 处理。</li>
+</ul>
+<p>我看到的实测数据：缓存命中率从我没专门优化前的 ~30% 涨到现在的 73%。按上周那个账面，光这一条就把账单从 $106 压到 $33 量级。</p>
+<h2 id="compact-我不再等到上下文满了才按"><a href="#compact-我不再等到上下文满了才按" class="headerlink" title="&#x2F;compact 我不再等到上下文满了才按"></a>&#x2F;compact 我不再等到上下文满了才按</h2><p>Claude Code 的 <code>/compact</code> 命令把当前会话历史压缩成一段摘要，腾出上下文空间。很多人（包括过去的我）的习惯是看到右下角红条快满了才按。</p>
+<p>这个时机是错的。</p>
+<p>原因：长会话里，每次新轮次的请求都把前面所有历史回放一遍。如果你已经积累了 80K token 的对话，你接下来每条消息的输入都至少 80K。等 1M 满了再 compact，意味着你最后那段对话每条都按 1M 计费。</p>
+<p>我现在的规则是：<strong>上下文用到 40% 就开始考虑 compact，到 60% 必 compact</strong>。</p>
+<p>每次 <code>/compact</code> 本身是一次 LLM 调用，大概烧 3K 到 8K token（取决于历史长度）。但它能让接下来 30 到 50 轮对话的输入维度从 600K 压到 30K。算账上看是大赚的。</p>
+<p>判断什么时候 compact 的实际信号：</p>
+<ul>
+<li>当前任务和前面的话题已经不再直接相关。</li>
+<li>我在同一个文件上反复修改同一段代码（说明前面的修改记录是噪声）。</li>
+<li>我准备开一个新的探索（比如让 Claude 读一遍另一个目录）。</li>
+</ul>
+<p>这三种情况一出现就 compact。代价是有时候 compact 会丢一些细节，需要我重新提一下背景。但比起按 1M context 烧钱，这点不便完全可以接受。</p>
+<h2 id="探索任务我现在全部丢给-sub-agent"><a href="#探索任务我现在全部丢给-sub-agent" class="headerlink" title="探索任务我现在全部丢给 sub-agent"></a>探索任务我现在全部丢给 sub-agent</h2><p>这一条是我在跑 &#x2F;ultraview 那篇文章的实测里学到的。</p>
+<p>主会话的 context 是宝贵的。每多一个文件读、每多一次 grep，都把这个会话的历史变长，下一轮请求的输入就变长。如果你只是想知道”这个项目里 RPA 任务相关的代码在哪几个目录”，让主会话去跑 <code>find</code> + 读 5 个文件不划算。</p>
+<p>正确做法是把这种探索任务丢给 sub-agent。Claude Code 的 Task tool 可以拉起一个新的会话（用 general-purpose 或 Explore 子代理），它有自己独立的 context window，跑完之后只把结果摘要返回给主会话。</p>
+<p>实际数据感受：让 Explore 子代理去找”RPA 任务相关的代码”，子代理会跑 10 几个 grep 和 read 调用，自己烧掉大概 30K token，但返回给我主会话的只有 800 字左右的总结。如果同样的事让主会话亲手做，我的主 context 会多出 30K 的污染，接下来每轮请求都得带着这 30K 算钱。</p>
+<p>我现在的判断标准：<strong>任何一个我不打算自己读全文的探索任务，都丢 sub-agent</strong>。包括”看一下 X 的相关代码”、”统计 Y 在项目里出现多少次”、”调研 Z 库的最新 API”。</p>
+<p>副作用是 sub-agent 偶尔会理解偏，需要我再次澄清。但这件事一年我可能撞 5 次，省下来的 token 是天天在省。</p>
+<h2 id="CLAUDE-md-每一行都在每轮重读"><a href="#CLAUDE-md-每一行都在每轮重读" class="headerlink" title="CLAUDE.md 每一行都在每轮重读"></a>CLAUDE.md 每一行都在每轮重读</h2><p>这条听起来废话但很多人不在意：你 CLAUDE.md 里写了什么，每一轮请求都把它当作 prefix 重新发一遍。</p>
+<p>我两个月前的 CLAUDE.md 是 12KB。里面塞了项目背景、各种命令、最佳实践、过往踩坑、为什么选这个架构……写得像一篇博客。我自己看着挺爽，每次告诉 Claude “去看 CLAUDE.md” 它都能秒答任何项目相关的问题。</p>
+<p>但 12KB 是 3K token。每轮都 3K。一个 50 轮对话的会话光 CLAUDE.md 就重复发了 150K token。</p>
+<p>我上周做的事是把 CLAUDE.md 砍到 4KB。砍掉的内容分两个去向。</p>
+<p>一部分搬进了 skill 文件。每个 skill 有自己的 SKILL.md，按需加载。”我的博客 pipeline 怎么跑”这种内容现在在 content-director 的 SKILL.md 里，没触发就不读。</p>
+<p>剩下的部分直接删了。”为什么选 Hexo 不选 Astro”这种历史决策记录，对当前工作没帮助，留着也是占 token。</p>
+<p>砍完之后我观察到的副作用是 Claude 偶尔会问一些过去能直接答的问题。频率大概一周三五次。每次回答它一句话就行，比起每天省下来的 token 完全划算。</p>
+<h2 id="small-fast-model-我切到了-Haiku-4-5"><a href="#small-fast-model-我切到了-Haiku-4-5" class="headerlink" title="small_fast_model 我切到了 Haiku 4.5"></a>small_fast_model 我切到了 Haiku 4.5</h2><p>Claude Code 的请求路由里有一个”快速辅助模型”槽位，处理一些低权重的小任务（比如生成搜索关键词、写 commit message 草稿）。默认是 Sonnet 走双角色。</p>
+<p>我把它切成了 Haiku 4.5：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">export</span> ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-haiku-4-5</span><br><span class="line"><span class="built_in">export</span> CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-4-6</span><br></pre></td></tr></table></figure>
+
+<p>Haiku 4.5 输入是 $1&#x2F;M、输出是 $5&#x2F;M。Sonnet 4.6 是 $3&#x2F;M、$15&#x2F;M。差三倍。</p>
+<p>这一条我没法精确测算省了多少，因为 Claude Code 的内部路由不是完全暴露的。但凭手感，做完这个切换之后，5 小时窗口的限流被撞到的次数明显少了。</p>
+<p>注意：是切 small_fast_model，不是切主模型。主模型仍然是 Sonnet 4.6。Haiku 处理的是那种”给我一个文件名候选”、”这段错误日志的关键词是什么”这种轻量请求。</p>
+<h2 id="thinking-effort-high-我现在只对真问题打开"><a href="#thinking-effort-high-我现在只对真问题打开" class="headerlink" title="thinking_effort&#x3D;high 我现在只对真问题打开"></a>thinking_effort&#x3D;high 我现在只对真问题打开</h2><p>Claude Code 支持 <code>--thinking-effort</code> 参数（或者在会话里 <code>/thinking high</code>），打开后模型在回答前会先做一段”思考”。这段思考也算 token，且是按输出计费。</p>
+<p>过去我习惯打开 thinking_effort&#x3D;high 当万能开关，觉得”反正多想一会儿不亏”。但 Anthropic 的计费里，思考 token 跟普通输出一个价。一个有 thinking 的复杂回答，输出可能从 800 token 涨到 3500 token。乘以一天几十次，账上就多了。</p>
+<p>我现在的规则：</p>
+<ul>
+<li>默认 thinking_effort&#x3D;medium。这是大部分任务的最优解。</li>
+<li>只有真在做架构决策、复杂调试、跨多文件的影响分析时切 high 或 max。</li>
+<li>写 commit message、改 typo、生成测试样例这种，关到 low 甚至 minimal。</li>
+</ul>
+<p>这条不是 prompt caching 那种几倍杠杆的省，但它解决的是”我以为 thinking 是免费的”这个错觉。一旦你认识到 thinking 也是 token，就不会无脑全打开了。</p>
+<h2 id="这周省下来的钱大概够多跑两天"><a href="#这周省下来的钱大概够多跑两天" class="headerlink" title="这周省下来的钱大概够多跑两天"></a>这周省下来的钱大概够多跑两天</h2><p>把六条加起来回看上周。</p>
+<p>修改前我估算如果不优化跑同样的工作量，账单大概在 $100 量级。修改后看到的实际命中价是 $33 量级。我的 Max 5x $100&#x2F;月已经覆盖了，不会真到 API 计费。但更直接的体验是：5 小时窗口的限流我撞到的次数从一周 6 次降到 2 次。换句话说，我可以在 Max 5x 的额度里多干两天活。</p>
+<p>如果你是按 API 计费的开发者（没开 Max 订阅，直接拿 API key 跑 Claude Code），上面这套手法理论上能把账单压到原来的 1&#x2F;3。但你的实际数字必然和我不一样，因为工作流里”什么内容是稳定的”这件事每个人差别很大。</p>
+<p>唯一一条我建议无脑就开的是 prompt caching。它的杠杆远超其他，且几乎没有副作用。</p>
+<h2 id="MCP-server-和-sub-agent-自己的开销我还没拆完账本"><a href="#MCP-server-和-sub-agent-自己的开销我还没拆完账本" class="headerlink" title="MCP server 和 sub-agent 自己的开销我还没拆完账本"></a>MCP server 和 sub-agent 自己的开销我还没拆完账本</h2><p>写到这里我想留两个真实没解决的点。</p>
+<p>最先想搞清楚的是 MCP server 的开销。MCP 协议每次 turn 都要把工具 schema 注入到请求里，schema 大的 server 一旦多挂几个，prefix 会被撑得很大。我目前挂了 6 个 MCP server（brave-search、fetch、obsidian-cli 等），但我还没专门测过关掉某几个之后命中率和总开销的变化。下周想做一个对照。</p>
+<p>另一个没拆开的账本是 sub-agent 自己烧的那部分。我目前的算法是按”主会话 context 干净”这个角度看的，sub-agent 内部那一段的消耗没单独算。理论上一个 30K token 的 sub-agent 调用要算 30K。我直觉上还是合算，但没拆过详细账。</p>
+<p>评论区想问两个具体问题。</p>
+<p>你自己跑 Claude Code 一周大概烧多少 token？是 Max 订阅还是 API 计费？</p>
+<p>另外，你有没有什么我这篇没写到的省 token 手法？尤其是 MCP server 这块，如果你做过对照测试，特别想听你的结果。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>AI 编程</tag>
+        <tag>Prompt Caching</tag>
+        <tag>token</tag>
+        <tag>成本</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Claude 桌面客户端有个开发者模式，把国产大模型直接接进 Cowork 界面</title>
+    <url>/2026/04/26/202604262259/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260426-20260426-claude-desktop-developer-mode.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>昨天那篇 MiMo-V2.5-Pro 的文章发出去之后，群里跳出来一个我没料到的问题：能不能不开 Claude Pro 订阅，直接把国产大模型接到 Claude 桌面客户端的 Cowork 界面里用？</p>
+<p>我第一反应是不行。Claude Desktop 我装了大半年，从来没看到任何关于自定义端点的入口。那个登录页面就是登录页面，没账号你连主界面都进不去。</p>
+<p>今天翻到蓝点网那篇文章才发现，Anthropic 自己在 Help 菜单里藏了一个开发者模式。打开之后能配第三方推理端点，连 Claude 账号都不用登。蓝点网那篇文章的源头是 Linux.do 上一个叫 @Donnad 的网友，他翻 Anthropic 的官方文档时挖出来的。Anthropic 自己的 support.claude.com 上其实有这个文档，标题叫”Install and configure Claude Cowork with third-party platforms”，原本是给企业 IT 管理员做 MDM 部署用的（让 Claude Desktop 连企业自建的 AWS Bedrock、Google Cloud Vertex AI、Azure Foundry 这种私有推理服务）。但只要端点协议是 Anthropic 兼容的，理论上接什么都行。</p>
+<p>国产大模型这边正好这两年纷纷推 Anthropic 兼容接口。这条路就通了。</p>
+<p>下面是我今天下午把 DeepSeek V4 接进去之后整理出来的完整流程。</p>
+<h2 id="这件事到底解决了什么问题"><a href="#这件事到底解决了什么问题" class="headerlink" title="这件事到底解决了什么问题"></a>这件事到底解决了什么问题</h2><p>先说为什么我觉得这个开关值得专门写一篇。</p>
+<p>这周我连着写了 Copilot 停 Pro 注册、Claude Code 从 $20 套餐里拿走、GPT-5.5、DeepSeek V4、MiMo-V2.5-Pro 五件事。中间一条贯穿的主线是：海外模型订阅在变贵、变难拿，国产模型在变便宜、变好用。</p>
+<p>但有一个心理门槛一直没破：Claude Desktop 那个 Cowork 界面是我用过最舒服的本地 AI 客户端之一。文件拖进去就读、Code Tab 自带工具调用、本地会话历史……这些东西在 Cherry Studio、Chatbox 这类替代品里都能凑齐，但凑不出 Claude 官方那个手感。</p>
+<p>所以一直以来的取舍是：要么花 $20 开 Pro 订阅享受这个 UI，要么放弃这个 UI 用国产模型省钱。</p>
+<p>开发者模式这一开，第三种路径出来了：保留 Claude Desktop 的 UI，把推理走 DeepSeek 或者 MiMo。订阅省了，UI 留了，按 token 实付。这个组合在两周前我会觉得不可能，今天可以了。</p>
+<p>唯一的代价是你不能用 Claude Sonnet 4.6 或 Opus 4.7 这两个模型本身（除非你的中转站包了它们）。换来的是国产模型的 token 价格通常是这两个模型的 1&#x2F;8 到 1&#x2F;10。</p>
+<h2 id="把开发者模式打开的实际操作"><a href="#把开发者模式打开的实际操作" class="headerlink" title="把开发者模式打开的实际操作"></a>把开发者模式打开的实际操作</h2><p>我把 Claude Desktop 关掉重新打开，在登录页面上方的菜单栏依次走 Help → Troubleshooting → Enable Developer Mode。点完之后界面没有任何动静，但菜单栏里多出来一个 Developer 项。</p>
+<p>这一步如果你在 Windows 上做，菜单按钮可能点不动（蓝点网那篇里专门提了一句）。绕开方法是先在登录页面里点输入框获取焦点，然后用 Tab 键切到菜单按钮，按回车键打开菜单，再用鼠标选下一级。我在 macOS 上没碰到这个问题，鼠标直接点下来就行。</p>
+<p>接下来要做的事是完全退出 Claude Desktop。光最小化没用，得 Cmd+Q 退出。然后再开一次。这次菜单栏里 Developer 项是亮的，点开它，里面有一项 Configure Third-Party Inference。</p>
+<p>点进去会弹一个配置面板。最重要的几个字段：</p>
+<ul>
+<li><strong>Inference Provider</strong>：默认是 Anthropic Compatible，意味着你的端点必须实现 Anthropic 的 <code>/v1/messages</code> 协议。如果你的中转站走的是 AWS Bedrock、Google Cloud Vertex AI、Azure AI Foundry 这三家任何一个，可以切到对应选项；接国产模型就保持默认。</li>
+<li><strong>API Base URL</strong>：填你那个国产模型的 Anthropic 兼容端点（下一节会列）。</li>
+<li><strong>API Key</strong>：从模型供应商控制台拿到的密钥。</li>
+</ul>
+<p>填完之后点底部的 <strong>Apply locally</strong>。Claude Desktop 会再次让你完全退出。</p>
+<p>第三次启动的时候，登录界面下方会多出一行字”继续使用本地网关”（英文版叫 Continue with local gateway）。点这行，不用任何 Anthropic 账号，直接进 Cowork 主界面。</p>
+<p>这就完了。整个流程我在 macOS 上做完一共大概 4 分钟，没有任何命令行操作。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260426-20260426-claude-desktop-config-flow.webp" alt="Claude Desktop 开发者模式 5 步配置流程"></p>
+<h2 id="国产大模型的-Anthropic-兼容端点速查"><a href="#国产大模型的-Anthropic-兼容端点速查" class="headerlink" title="国产大模型的 Anthropic 兼容端点速查"></a>国产大模型的 Anthropic 兼容端点速查</h2><p>这部分是这篇文章我打算放最久的一节。我把今天能确认的 Anthropic 兼容端点列出来，每条都来自模型官方文档或 SDK 源码，不掺中转站。</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>Anthropic 兼容 Base URL</th>
+<th>控制台</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DeepSeek V4 &#x2F; V4-Pro &#x2F; V4-Flash</td>
+<td><code>https://api.deepseek.com/anthropic</code></td>
+<td>platform.deepseek.com</td>
+</tr>
+<tr>
+<td>小米 MiMo-V2.5-Pro &#x2F; V2.5-Flash</td>
+<td><code>https://api.xiaomimimo.com/anthropic</code></td>
+<td>platform.xiaomimimo.com</td>
+</tr>
+<tr>
+<td>智谱 GLM-5 &#x2F; GLM-5.1（国内）</td>
+<td><code>https://open.bigmodel.cn/api/anthropic</code></td>
+<td>open.bigmodel.cn</td>
+</tr>
+<tr>
+<td>智谱 GLM-5 &#x2F; GLM-5.1（国际）</td>
+<td><code>https://api.z.ai/api/anthropic</code></td>
+<td>z.ai</td>
+</tr>
+<tr>
+<td>月之暗面 Kimi K2 &#x2F; K2.5 &#x2F; K2.6</td>
+<td><code>https://api.moonshot.cn/anthropic</code></td>
+<td>platform.moonshot.cn</td>
+</tr>
+<tr>
+<td>阿里百炼（Qwen3.6 &#x2F; Qwen3-Coder）</td>
+<td><code>https://dashscope.aliyuncs.com/apps/anthropic</code></td>
+<td>bailian.console.aliyun.com</td>
+</tr>
+<tr>
+<td>MiniMax M2.7</td>
+<td><code>https://api.minimax.io/anthropic</code></td>
+<td>minimaxi.com</td>
+</tr>
+</tbody></table>
+<p>几个细节坑要单独提一下：</p>
+<p>智谱这家比较特别，它不能用 <code>ANTHROPIC_API_KEY</code>，必须用 <code>ANTHROPIC_AUTH_TOKEN</code>。Claude Desktop 的配置面板里”API Key”那一栏其实对应的就是 token，填进去就好，不用纠结叫法。但如果你之后想在 Claude Code CLI 里同时配多个模型，这个区别会让你折腾两小时。</p>
+<p>阿里百炼如果你用国际版（新加坡区），URL 后缀同样是 <code>/apps/anthropic</code>，但前缀换成 <code>https://dashscope-intl.aliyuncs.com</code>。API Key 和 Base URL 必须地域匹配，错了就 403。</p>
+<p>DeepSeek V4 接进 Claude Desktop 的时候，思考模式默认是开着的，<code>reasoning_effort</code> 默认是 max。你如果只是聊天用，会感觉响应有点慢，可以考虑切换到 V4-Flash。</p>
+<p>MiMo 这边公测期 Token Plan 的 API Key 和按量计费的 API Key 是分开的，要注意你拿的是哪一种。</p>
+<h2 id="我接-DeepSeek-V4-的实际感受"><a href="#我接-DeepSeek-V4-的实际感受" class="headerlink" title="我接 DeepSeek V4 的实际感受"></a>我接 DeepSeek V4 的实际感受</h2><p>我今天下午接的是 DeepSeek V4。挑它的原因有两个：昨天 V4 刚发，价格 ¥12&#x2F;¥24 per M token 在国产里算中等偏低；昨天我写的那篇 V4 文章里说要把内容创作主力切过去，正好今天接进 Claude Desktop 试试 Cowork 的真实手感。</p>
+<p>接上之后第一感觉是 Cowork 的 UI 没有任何变化。文件拖进去能读、复制图片能粘贴（虽然 V4 不是多模态，图片会被忽略并提示一下）、Code Tab 切过去能直接跑工具调用、左边栏的会话历史依然存在本地。Anthropic 文档里说”conversation history stays on the user’s local device”这句是真的，我把网络断了之后老会话还能翻出来读。</p>
+<p>跑了三个我平时常用的任务：</p>
+<ul>
+<li>读一篇昨天写的 GPT-5.5 文章，让它做风格仿写。</li>
+<li>让它生成一份 Hexo 博客的 SEO meta tag 优化建议。</li>
+<li>让它修改我的一个 content-distributor skill 里的 prompt 模板。</li>
+</ul>
+<p>中文写作那一块跟我昨天直接在 DeepSeek 官网开会话的体验差不多，文字感觉一致。但 Code Tab 里跑工具调用的时候，明显能看出 V4 比 Sonnet 4.6 在”先看再做”这个动作上慢一拍。Sonnet 习惯先 ls 一下、读两个文件再动手；V4 倾向于直接按它的理解动手，错了再回来改。这个习惯差异在 Cowork 短任务里影响不大，但在 Code Tab 长任务里会拖时间。</p>
+<p>整体感受是：作为一个不订阅 Claude Pro 的临时方案，这条路完全跑得通。但作为长期主力方案，我个人还是会回到 Claude Max 5x + Sonnet 4.6 的组合。</p>
+<h2 id="这个开关让我重新想了一遍-20-这个档位"><a href="#这个开关让我重新想了一遍-20-这个档位" class="headerlink" title="这个开关让我重新想了一遍 $20 这个档位"></a>这个开关让我重新想了一遍 $20 这个档位</h2><p>写到这里我想留一个真实判断。</p>
+<p>Claude Pro 那 $20 一档过去的核心价值有三块：Claude Desktop 的 UI、Sonnet&#x2F;Opus 这两个模型本身、以及 Claude Code 的额度。本周 Anthropic 把第三块从 Pro 里拿掉了；今天这个开发者模式让第一块也不再是 Pro 独占的。</p>
+<p>剩下的就只有”Sonnet&#x2F;Opus 模型本身”这一块还属于 Pro 独占。</p>
+<p>如果你过去开 Pro 主要看中的是 Claude Desktop 的工作流而不是模型本身，那今天这条路确实让 Pro 那 $20 显得没那么必要。换到一个国产模型 + Anthropic 兼容端点，按量付费，每月烧 ¥20 到 ¥40 人民币就能覆盖中等使用强度。这是 Pro 月费的 1&#x2F;4 不到。</p>
+<p>但这个判断有两个前提需要明说。</p>
+<p>一个是你的工作流里多模态权重多大。Cowork 把图片塞进去这件事，能用的模型必须支持多模态。DeepSeek V4 没有，MiMo-V2.5-Pro 没有，GLM-5.1 有但不够强，Kimi K2.6 有但比较新。如果多模态是你的核心使用场景，留 Sonnet 4.6 还是当前最好的选择。</p>
+<p>另一个是 Anthropic 这条路他们能开多久。Configure Third-Party Inference 这个开关原本是给企业 MDM 部署用的。一旦个人用户大规模拿它薅免费 UI 的羊毛，Anthropic 完全有可能在某个版本里加一道账号校验。所以现在用着的人最好做好备份方案的心理准备。</p>
+<h2 id="我接下来一周想跑的几个对照测试"><a href="#我接下来一周想跑的几个对照测试" class="headerlink" title="我接下来一周想跑的几个对照测试"></a>我接下来一周想跑的几个对照测试</h2><p>写这篇之前我想了一下，要把这件事真正用清楚，光配置成功还不够。我接下来一周打算做这三件事。</p>
+<p>把同一个 prompt 在 Cowork 里分别用 DeepSeek V4、MiMo-V2.5-Pro、GLM-5.1 各跑五次，记录响应延迟、token 消耗、错误率。这种小样本不能盖棺定论，但至少能看出在 Claude Desktop 这种短任务场景里哪家是最稳的。</p>
+<p>把 Code Tab 的工具调用交给 V4 和 MiMo 各跑一次同样的修改任务（改我那个 RSS feed 生成脚本的描述字段映射）。看哪家能在没有 Claude Code 的工具调用框架辅助下，用 Cowork 自带的工具调用稳定完成。</p>
+<p>跑完之后回来更新这篇文章。如果你在跑相同的对照，欢迎评论区交流。</p>
+<p>最后留两个我想知道答案的问题。</p>
+<p>你今天会去打开 Claude Desktop 的开发者模式吗？如果会的话，你会先接哪一家？我猜大部分人会先接 DeepSeek V4，但如果有人先接了 GLM-5.1 或 MiMo-V2.5-Pro，我想听你和官方端点对接的过程里有没有什么坑。</p>
+<p>还有一个我自己想问的：你过去开 Claude Pro 的核心理由是什么？是模型本身，是 Cowork 的 UI，还是 Claude Code 的额度？这三块今天剩下两块的护城河了，我想看看大家的取舍点到底在哪里。</p>
+]]></content>
+      <categories>
+        <category>教程</category>
+      </categories>
+      <tags>
+        <tag>教程</tag>
+        <tag>MiMo</tag>
+        <tag>DeepSeek</tag>
+        <tag>Claude Desktop</tag>
+        <tag>国产大模型</tag>
+        <tag>GLM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MiMo-V2.5-Pro 实测两天，我把它排在 GLM-5.1 和 Kimi K2.6 之间</title>
+    <url>/2026/04/25/202604250010/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260424-20260425-mimo-v25-pro-positioning.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>这周我已经写了四篇 AI 大新闻了：周一 Copilot 停注册 + Claude Code 从 Pro 下架，周三的 &#x2F;ultraview 实测，昨天上午的 GPT-5.5，昨天下午的 DeepSeek V4。</p>
+<p>本来想歇一天。但群里从前天凌晨开始就一直有人在问同一件事：小米那个 MiMo-V2.5-Pro 到底值不值得切。</p>
+<p>我自己是 Claude Max 5x $100&#x2F;月的订阅者，主力一直是 Claude Code + Sonnet 4.6。按理说这种国产新模型离我有点远。但这次问的人实在太多，再加上卡兹克昨天那篇实测把”国内最适合 Claude Code 的新模型”这个判断甩出来之后，我觉得自己也得花一天跑一跑，才能给朋友回个靠谱答复。</p>
+<p>所以这篇不是发布新闻稿。它是我发布两天之后，把能搜到的官方数据、卡兹克的实测、Linux.do 上社区的吐槽、加上我自己在 Claude Code 里跑的一个小任务，摞在一起想看清楚一件事：MiMo-V2.5-Pro 在国内开源模型里到底排第几。</p>
+<h2 id="先把今天能查到的-MiMo-V2-5-Pro-硬数字摆出来"><a href="#先把今天能查到的-MiMo-V2-5-Pro-硬数字摆出来" class="headerlink" title="先把今天能查到的 MiMo-V2.5-Pro 硬数字摆出来"></a>先把今天能查到的 MiMo-V2.5-Pro 硬数字摆出来</h2><p>4 月 23 日凌晨小米突然甩出了 MiMo-V2.5 系列一共四款模型，旗舰是 V2.5-Pro，距离上一代 V2-Pro 只过了 36 天。</p>
+<p>关键规格：</p>
+<ul>
+<li><strong>参数</strong>：MoE 架构，总参数 309B，激活 15B。对比同期 GLM-5.1 是 754B、DeepSeek V4-Pro 是 1.6T。MiMo 是这一批里激活量最小的。</li>
+<li><strong>上下文</strong>：原生 1M token。</li>
+<li><strong>价格</strong>：0 到 256k 区间是 ¥7&#x2F;¥21 per M tokens（输入&#x2F;输出），256k 到 1M 区间是 ¥14&#x2F;¥42。折合美元 $1.0&#x2F;$3.0 起步。</li>
+<li><strong>Token Plan</strong>：小米这次同步推出了订阅计划，不区分 256k 和 1M，统一收费。</li>
+<li><strong>开源</strong>：V2.5-Pro 和 V2.5 宣布将全球开源，公测期先放 API。</li>
+</ul>
+<p>跑分我挑几个相对硬的数字：</p>
+<ul>
+<li><strong>SWE-bench Pro</strong>：57.2%。作为对比，Claude Opus 4.7 是 64.3%，GPT-5.5 是 58.6%，GLM-5.1 是 58.4%，Kimi K2.6 是 58.6%。V2.5-Pro 的 57.2% 挨着 GPT-5.5 和 GLM-5.1 这条线，比 Opus 4.7 低 7 个点。</li>
+<li><strong>AA 榜</strong>：与 Kimi K2.6 并列开源第一。</li>
+<li><strong>Token 效率</strong>：官方数据，V2.5-Pro 在同等 benchmark 分数下比 Kimi K2.6 少用 42% 的 token。</li>
+<li><strong>宣传案例</strong>：4.3 小时完成北大本科生编译原理课程的项目。180nm CMOS FVF-LDO 稳压器的模拟电路设计，接 ngspice 仿真循环，1 小时搞定资深工程师几天的工作。</li>
+</ul>
+<p>价格对比 Claude Opus 4.6 的 $5&#x2F;$25，V2.5-Pro 便宜大概 60%。对比昨天 DeepSeek V4-Pro 的 $1.74&#x2F;$3.48，两家定价几乎贴脸。</p>
+<p>这一轮国产模型的”价格屠夫”帽子谁戴都不再有那种冲击力了。大家都在同一个档位。</p>
+<h2 id="罗福莉-36-天交一代，这个速度本身就是信号"><a href="#罗福莉-36-天交一代，这个速度本身就是信号" class="headerlink" title="罗福莉 36 天交一代，这个速度本身就是信号"></a>罗福莉 36 天交一代，这个速度本身就是信号</h2><p>MiMo-V2 是 2026 年 3 月发布的，V2.5 是 4 月 23 日。36 天一代。</p>
+<p>这个节奏在今年的国产模型里属于第一档。GLM 是 4 月 7 日发 5.1（距 5.0 大概 2 个月），Kimi K2.6 是 4 月 21 日。</p>
+<p>带队的是罗福莉（前 DeepSeek 核心成员）。她在发上一代 V2 的时候说过”未来模型足够稳定后我们会开源”。这次 V2.5 直接把开源计划写进了公告。36 天之后就把”稳定”两个字认下来，这件事我觉得比跑分更值得看。</p>
+<p>上一代 V2-Pro 的发布方式也挺有意思。MiMo-V2-Pro 在发布前用”Hunter Alpha”这个代号，在 OpenRouter 上匿名霸榜了一周，才被小米宣布是自家的。这一代 V2.5 用的是直接开公测的做法，等于对自己的上一代结果有信心到不需要再跑一遍匿名盲测了。</p>
+<p>对我来说，一个 36 天能把总参数从 V2-Pro 的 1T 级降到 V2.5-Pro 的 309B、激活只剩 15B、还能保持 SWE-bench Pro 57.2% 的团队，就是国内值得跟的团队之一。</p>
+<h2 id="Token-效率比-Kimi-K2-6-少-42-这件事对开发者意味着什么"><a href="#Token-效率比-Kimi-K2-6-少-42-这件事对开发者意味着什么" class="headerlink" title="Token 效率比 Kimi K2.6 少 42% 这件事对开发者意味着什么"></a>Token 效率比 Kimi K2.6 少 42% 这件事对开发者意味着什么</h2><p>这次 V2.5-Pro 对外讲的最硬的一个差异化点，是 Token 效率。</p>
+<p>官方原话：在同等 benchmark 分数下，V2.5-Pro 比 Kimi K2.6 少用 42% 的 token。</p>
+<p>这个数字如果是真的，那它对在 Claude Code 里跑 Agent 的开发者是个很实际的利好。Agent 工作流最大的成本黑洞是反复的工具调用和思维链展开。同样一个任务，你用 Kimi 跑可能烧 20 万 token，用 V2.5-Pro 大概烧 12 万就能跑完。在 Claude Code 这种一次会话动不动几十轮工具调用的场景里，42% 的节省可以直接翻译成”同一个 Token Plan 额度多跑一个星期”。</p>
+<p>当然这是官方数据。我自己跑了一个不严谨的小对照（下一节会讲），感觉在我的场景里大概是 30% 左右，没到 42%。但即使打个八折，也仍然是一个明显的优势。</p>
+<p>价格加上这个效率差，V2.5-Pro 跑 agentic 任务的单位成本理论上能做到 Opus 4.7 的 1&#x2F;8 到 1&#x2F;10。官方那句”推理成本仅为国际闭源旗舰的 2.5%”，数学上能对得上。</p>
+<h2 id="我在-Claude-Code-里接上它跑了一个小任务"><a href="#我在-Claude-Code-里接上它跑了一个小任务" class="headerlink" title="我在 Claude Code 里接上它跑了一个小任务"></a>我在 Claude Code 里接上它跑了一个小任务</h2><p>先说怎么接。</p>
+<p>最简单的路径还是通过 cc-switch 这种代理工具，把 Claude Code 的模型端点切到 MiMo 开放平台的 API。cc-switch 里直接有 Xiaomi MiMo 的供应商选项，填 API Key 和模型名 <code>mimo-v2.5-pro</code> 就完事了。卡兹克周一那篇 Claude Code 国内使用保姆级教程里写得很清楚，我这里就不重复了。</p>
+<p>接上之后我让它做的任务是一个我 Hexo 博客的小需求：读 <code>source/_posts/</code> 下所有文章的 frontmatter，按 categories 字段分组，为每个分类生成一个单独的 RSS 子 feed XML 文件。</p>
+<p>挑这个任务的理由我想过。模型得做真实的目录扫描和 IO，得认得 Hexo frontmatter 这种 LLM 语料里不常见的格式，最后生成的 XML 还不能错一个闭合标签（错一个整个 feed 就废）。这三件事合起来能同时考验它的工具调用稳定性、指令遵循和格式严谨度。</p>
+<p>跑下来的观察：</p>
+<p>工具调用这块，MiMo-V2.5-Pro 没有出任何问题。它先跑了一遍 <code>ls source/_posts/</code>，然后抽了三篇读 frontmatter 确认格式，然后才开始写代码。这个顺序我比较喜欢，有条理，也没有像卡兹克那个 case 里”直接自己决定域名往服务器上怼”那种越权行为。</p>
+<p>生成的 RSS XML 一次通过，标签闭合没出错，pubDate 格式是正确的 RFC 822，我用 <code>xmllint</code> 过了一遍没报错。</p>
+<p>中间也有两个小瑕疵。一是它自作主张加了一个 <code>&lt;atom:link rel=&quot;self&quot;&gt;</code> 字段，但 <code>atom:</code> 的 xmlns 声明忘了加，第一版跑出来是不合法的。我指出之后它自己改了。二是它默认把 description 字段取的是文章的第一段，但我希望是 frontmatter 里的 description 字段。这个是我没说清楚，不算模型问题。</p>
+<p>整个任务从口述需求到拿到一个能跑的 Rakefile 级别的脚本，大概 15 分钟。token 消耗我没精确对照 Sonnet 4.6，但感觉是同一个量级下稍微省一点。</p>
+<h2 id="Linux-do-上那条负面反馈我不能绕开"><a href="#Linux-do-上那条负面反馈我不能绕开" class="headerlink" title="Linux.do 上那条负面反馈我不能绕开"></a>Linux.do 上那条负面反馈我不能绕开</h2><p>在网上搜这两天的实测反馈时，我翻到 Linux.do 上有一条评测帖。作者是私有 bench 路线的，他的结论是：”基础还算扎实，但比 GLM 还差点。而且很多有背题嫌疑。”他还特别点出一个问题：”思维链无限循环撑爆上下文，然后空回。”</p>
+<p>这两条吐槽我都想留一下。</p>
+<p>“比 GLM 差点”在我的实测里能对得上一部分。GLM-5.1 在 SWE-bench Pro 上是 58.4%，V2.5-Pro 是 57.2%。1.2 个点的差距不算巨大，但确实是落后的。在前端 UI 这类场景上，GLM-5.1 的审美明显更好（卡兹克自己也承认 V2.5-Pro 的前端审美还没跟上），这一条我在自己跑的 RSS feed 任务里体感不出来，但去翻 OpenRouter 上别人跑的前端生成对照能看出来。</p>
+<p>“背题嫌疑”这一条我暂时没法独立验证。MoE 架构的模型常见的通病之一就是在公开 benchmark 上表现比在私有 bench 上好（不只是 MiMo 一家）。这个指控需要更多私有 bench 数据交叉比对，我不下结论，但会把这条留在心里。</p>
+<p>“思维链无限循环”这一条我自己没撞上。但卡兹克的文章里虽然没明说是这个问题，他提到过”笨一点的模型在部署流程这一步会直接失败”，隐含的背景也可能是某些国产模型在长任务上的稳定性确实不够。V2.5-Pro 在这一条上有没有比 V2-Pro 改善，目前看实测样本还不够。</p>
+<p>不回避这些负面反馈，是我判断一个模型能不能长期用的底线。</p>
+<h2 id="我现在会给谁推荐-MiMo-V2-5-Pro"><a href="#我现在会给谁推荐-MiMo-V2-5-Pro" class="headerlink" title="我现在会给谁推荐 MiMo-V2.5-Pro"></a>我现在会给谁推荐 MiMo-V2.5-Pro</h2><p>跑完这一整套之后我的判断分成几档，按现在问我最多的顺序排。</p>
+<p><strong>我自己</strong>：不切。Claude Max 5x 的 Sonnet 4.6 在代码生成的稳定性和 skill 调用的默契度上，我还是没看到足够的理由切过去。内容创作那边昨天 DeepSeek V4 出来之后已经定了切过去，代码场景暂时不动。</p>
+<p>抢不到 GLM Coding Plan、或者干脆连 Claude 账号都开不了的朋友，V2.5-Pro 是我现在会优先推你的那一档。以前这个场景最好的兜底是 Kimi K2.6，但 V2.5-Pro 在 token 效率上有 42% 的理论优势，价格又差不多，Claude Code 适配做得也更细。卡兹克那句”目前国内配合 Claude Code 最好的模型之一”的判断，在”抢不到一线券商位”的场景下我能跟着点头。</p>
+<p>但有一类人我建议先等：每天要跑几小时不中断 agentic 长任务的那批。Linux.do 那条”思维链循环”在长任务上是个真实风险点，社区需要更多时间跑出来。Kimi K2.6 目前在 Terminal-Bench 2.0 上拿到 66.7%，持续 4000+ 工具调用 13 小时不中断这个纪录，V2.5-Pro 目前没有公开数据追平。这类场景我还是推 K2.6。</p>
+<p>至于只做前端、对审美敏感的那批朋友，切 GLM-5.1 就好，别在 V2.5-Pro 上浪费时间。卡兹克和 Linux.do 的反馈高度一致：V2.5-Pro 的前端审美目前就是在一线模型里垫底。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260424-20260425-mimo-model-picker-flowchart.webp" alt="场景选择决策图"></p>
+<h2 id="这-36-天会不会变成-18-天才是下一个要盯的事"><a href="#这-36-天会不会变成-18-天才是下一个要盯的事" class="headerlink" title="这 36 天会不会变成 18 天才是下一个要盯的事"></a>这 36 天会不会变成 18 天才是下一个要盯的事</h2><p>写到这里我想留一个真实问题。</p>
+<p>MiMo 团队从 V1.0 开源到 V2-Pro 发布用了大约 5 个月。从 V2-Pro 到 V2.5-Pro 只用了 36 天。</p>
+<p>如果下一次迭代再压到 18 天，那”小米 MiMo 团队”就会从”值得跟的国产团队之一”变成”国内开源模型节奏最快的那一个”。前提是这个速度不是以牺牲测评真实度换来的（这也是 Linux.do 那条”背题嫌疑”最需要被社区持续检验的地方）。</p>
+<p>我接下来两周会做一件事：把这次 RSS feed 任务用 V2.5-Pro、GLM-5.1、Kimi K2.6 各跑一遍完整流程，包括 debug、修改、重跑，然后把每个模型的 token 消耗和任务完成度记下来。等下一代 V3 或者 V2.6 出来，我再跑一次对照。</p>
+<p>评论区想问两个具体问题。</p>
+<p>在 Claude Code 里已经接上 MiMo-V2.5-Pro 的朋友，这两天你遇到的最大的坑是什么？思维链循环这个问题你撞过吗？</p>
+<p>还有一个我自己最想知道的：你手头有没有一个跨模型的私有 bench？如果有，你愿意把 V2.5-Pro 的私有分数和你的其他模型分数贴一份出来吗？这两天我一直觉得，公开 benchmark 和私有 bench 的分差已经大到让”开源第一”这种官方表述越来越不够用了。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>AI 编程</tag>
+        <tag>小米</tag>
+        <tag>MiMo</tag>
+        <tag>开源模型</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>DeepSeek V4 憋了一年半终于端出来，这一次改的是给昇腾跑的底座</title>
+    <url>/2026/04/24/202604241828/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260424-20260424-deepseek-v4-ascend-foundation.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>今天下午 2 点多，我手机又响了。</p>
+<p>这周第四条 AI 大新闻。周一那天 GitHub 把 Copilot 停了注册、Anthropic 把 Claude Code 从 Pro 里拿走；周四我写了 &#x2F;ultraview 实测；今天凌晨 GPT-5.5 发布；下午 DeepSeek V4 落地。</p>
+<p>我今天上午那篇 GPT-5.5 的文章结尾留了一个问题，说 OpenAI 的 API 什么时候开才是该盯的事。不到半天时间，DeepSeek V4 把 API 直接开了。</p>
+<p>跑分我晚点再说。让我今天想停下来单独写一篇的，是发布稿里那几行关于底层技术栈的话。V4-Pro 能不能跟 Opus 4.7 打五五开这种问题其实没那么重要。</p>
+<p>如果我没读错，这次 V4 真正的主线是一件事：把模型改成了能跑在昇腾上的样子。</p>
+<h2 id="先把今天这次发布的关键数字列出来"><a href="#先把今天这次发布的关键数字列出来" class="headerlink" title="先把今天这次发布的关键数字列出来"></a>先把今天这次发布的关键数字列出来</h2><p>4 月 24 日上午，DeepSeek 在官方公众号放出了 V4 预览版，两个尺寸：</p>
+<ul>
+<li><strong>V4-Pro</strong>：总参数 1.6T（1.6 万亿），对比 V3.2 的 671B 翻了将近 2.5 倍。输入 ¥12&#x2F;百万 token，输出 ¥24&#x2F;百万 token，换算成美元是 $1.74&#x2F;$3.48。</li>
+<li><strong>V4-Flash</strong>：参数更小、激活更小，输入 ¥1、输出 ¥2&#x2F;百万 token，约 $0.14&#x2F;$0.28。</li>
+<li><strong>上下文</strong>：两个版本都标配 1M（百万）token。官网默认就是 V4，点开就能聊。</li>
+<li><strong>架构</strong>：混合模型。思考和非思考合一，通过 <code>reasoning_effort=high/max</code> 控制。R2 这次没出，官方的意思是在这套混合架构里它的意义已经不明确。</li>
+<li><strong>定价提示</strong>：官方在定价页加了一行小字，说 Pro 的价格受限于高端算力是暂时的，等下半年昇腾 950 超节点上市后会大幅下调。</li>
+</ul>
+<p>API 侧的兼容做得很直接，同时支持 OpenAI ChatCompletions 接口和 Anthropic 接口。</p>
+<p>老的 <code>deepseek-chat</code> 和 <code>deepseek-reasoner</code> 两个别名三个月后（2026-07-24）停用，现在先指向 V4-Flash 的非思考模式和思考模式。</p>
+<p>跑分我放一个数字就行：V4-Pro 在 LMArena 代码榜目前排第三，第一是 GLM-5.1。</p>
+<p>官方坦诚和最前沿闭源旗舰的能力差距还有 3 到 6 个月。</p>
+<p>这些加起来没有爆炸感。接下来的三节才是我今天反复读了几遍的部分。</p>
+<h2 id="涨价-8-倍还是便宜，但比便宜更重要的是官方为什么涨"><a href="#涨价-8-倍还是便宜，但比便宜更重要的是官方为什么涨" class="headerlink" title="涨价 8 倍还是便宜，但比便宜更重要的是官方为什么涨"></a>涨价 8 倍还是便宜，但比便宜更重要的是官方为什么涨</h2><p>DeepSeek 历史上最出名的标签是”价格屠夫”。V3.2 输出是 ¥3&#x2F;百万 token，今天 V4-Pro 涨到 ¥24，差不多 8 倍。</p>
+<p>但放到全世界看，Opus 4.7 是 $5&#x2F;$25，GPT-5.5 昨天刚宣布的是 $5&#x2F;$30。V4-Pro 的输出价折合 $3.48，依然比两家海外头部便宜 60% 左右。</p>
+<p>“涨 8 倍还是便宜”这事本身不是新闻。我在意的是官方给涨价配的那段解释。</p>
+<p>官方原话的关键点有两个：一个是参数翻了 2.5 倍、Agent 消耗的 token 量又在暴增，算力账确实撑不住了；另一个是说”高端算力供给有限”，等昇腾 950 批量之后会往下调。</p>
+<p>第二点才是全文最有信号的一句。</p>
+<p>它的潜台词其实是：V4-Pro 现在 ¥24 这个价定的是限流，不是真实成本。</p>
+<p>当下卡不够用，DeepSeek 只能用价格把需求往回压一点。等昇腾到货，这个数会重算。</p>
+<p>这个逻辑和昨天我写 GPT-5.5 时 Sam Altman 那句”token 效率更高，所以单价涨了账单不一定贵”完全是同一个剧本的两个版本。</p>
+<p>一家在分子上动手（把单价抬高），一家在分母上动手（把国产算力补齐）。</p>
+<p>两家今天都在说同一件事：2026 年这一代 AI 编程扁平月费的账算不动了。</p>
+<h2 id="为昇腾改的模型长什么样"><a href="#为昇腾改的模型长什么样" class="headerlink" title="为昇腾改的模型长什么样"></a>为昇腾改的模型长什么样</h2><p>这一段是我今天多花了半小时反复读的部分。</p>
+<p>先说最容易被忽略的一个词：MXFP4。</p>
+<p>V4 训练还是在英伟达 FP8 上做的，但把后训练和推理换成了 MXFP4 这种开放低精度格式。</p>
+<p>这个动作等价于把自己从 NVIDIA 的 FP8 生态里解绑了一半，因为 MXFP4 是华为昇腾、寒武纪、壁仞这些国产卡能原生支持的格式。</p>
+<p>推理不绑 CUDA 生态，是适配国产卡的前提。</p>
+<p>再看底层算子这一层。V4 不再完全依赖 CUDA，用的是 TileLang 这个 DSL。</p>
+<p>TileLang 是北大去年开源的瓦片式张量语言，写出来的算子能编译到不同硬件上。</p>
+<p>DeepSeek 把 TileLang 塞进 V4 的核心算子里，等于把”硬件可迁移”这件事做进了架构本身。</p>
+<p>最后是 MegaMoE 这个融合内核。它是为了减少专家并行里的通信等待设计的。</p>
+<p>官方明写了：目前已经在华为昇腾上跑通。这是三件事里最直接的一个国产卡信号。</p>
+<p>三个点放一起再看就清楚了。</p>
+<p>V4 的架构设计本身就是以”能在昇腾上跑起来”为约束条件的，不是架构先做完再补一层适配层。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260424-20260424-deepseek-v4-three-layer-stack.webp" alt="V4 为国产卡改的三层底座"></p>
+<p>这条路径和当年 Meta 给自家 TPU 写 JAX 不是一回事。DeepSeek 不造卡，它是在替国产芯片厂商把上层生态先铺出来。</p>
+<p>等昇腾 950 真到货那天，至少不用再从零造上层栈。</p>
+<p>Fine-grained EP 这个工程优化也顺便公布了，英伟达和华为的卡上都测过，推理速度提升 1.50 到 1.73 倍。</p>
+<p>这块属于锦上添花，但对上游算力账很有意义。</p>
+<h2 id="我把它接到-Claude-Code-里试了一下中文写作"><a href="#我把它接到-Claude-Code-里试了一下中文写作" class="headerlink" title="我把它接到 Claude Code 里试了一下中文写作"></a>我把它接到 Claude Code 里试了一下中文写作</h2><p>今天下午看到卡兹克已经把 V4-Pro 接到他的 Claude Code 里测过 3 个小时，他的结论很直接：Agent coding 场景下还有适配问题，skill 调用不自然，CLAUDE.md 约束有些不生效。</p>
+<p>我自己在 DeepSeek 官网开了一个会话，没挂 Claude Code，用一个我已经跑了一个月的中文博客写作 prompt，让它把今早 GPT-5.5 那篇文章的一个小节重写成”冷科技”风格。</p>
+<p>几个我关心的点：</p>
+<ul>
+<li><strong>写作感觉</strong>：这是今天我最意外的一块。V4 写中文是目前我用过的开源模型里最少”翻译腔”的。</li>
+</ul>
+<p>“这玩意儿”、”涨 8 倍还是便宜”这种口语化表达它是敢用的，不像 Qwen 或 MiniMax 那种开口就是”让我们来一起探讨”。</p>
+<ul>
+<li><strong>上下文</strong>：我贴了一个 8000 字的上下文进去，它没压缩、没遗漏。这次 1M 上下文确实不是宣传数字。</li>
+<li><strong>审美</strong>：中文审美过关，用词不生硬，节奏控制合理。这块卡兹克的结论也一致：直出修改度大概 45%（Opus 4.6 是 30%，Opus 4.7 是 60%）。</li>
+</ul>
+<p>但限制也很清楚：</p>
+<ul>
+<li><strong>没多模态</strong>。不能读图，不能处理截图。这周 Opus 4.7 最大的升级就是多模态，GPT-5.5 也早就是多模态了。V4 在这块落后了一整代。</li>
+<li><strong>Agent 场景下工具调用不稳</strong>。卡兹克实测里那个没遵守 CLAUDE.md 里域名确认约束的 case，我在我的 skill 里也看到了类似的征兆。不如 GLM-5.1 和 MiMo-V2.5-Pro 贴合 Claude Code。</li>
+</ul>
+<p>所以我对它的定位有数了：内容创作可以用，Agent coding 别用。</p>
+<h2 id="对一个-Claude-Max-5x-用户这周的决策"><a href="#对一个-Claude-Max-5x-用户这周的决策" class="headerlink" title="对一个 Claude Max 5x 用户这周的决策"></a>对一个 Claude Max 5x 用户这周的决策</h2><p>这周我已经把决策改了两次。</p>
+<p>周一 Pro 的 Claude Code 砍掉那一轮，我判断自己 $100&#x2F;月的 Max 5x 短期不动；昨天 GPT-5.5 出来，我判断两周里不切 Codex、但把 10 个高频 prompt 跑一遍对照；今天 V4 出来，我的判断是这样的：</p>
+<p>写中文博客、写公众号、写小红书这类场景，我会把主力从 Claude 切到 DeepSeek V4 官网。</p>
+<p>开源模型里写中文这块，V4 是目前最顺手的一个。官网免费。</p>
+<p>写代码这条线不动。Claude Code + Sonnet 4.6 的组合我已经摸了一个月，V4 在 Agent 场景的工具调用稳定性不够，切过去的成本高于收益。</p>
+<p>API 走量这块我会观察。现在 Pro 涨到 ¥24&#x2F;百万 token 的输出，和 Opus 4.7 的 $25 只差不到 60%。</p>
+<p>等下半年昇腾 950 真把 Pro 价格打下来，这块我会重新测。</p>
+<p>坦白说，V4 这次没有让我做出”现在就切 Claude Max”的决定。</p>
+<p>但它打破了一件事：开源模型第一次在”写中文写得像中文”这个点上全面过线。这在去年都是不可想象的。</p>
+<h2 id="百万上下文普惠化这件事值得单独记一笔"><a href="#百万上下文普惠化这件事值得单独记一笔" class="headerlink" title="百万上下文普惠化这件事值得单独记一笔"></a>百万上下文普惠化这件事值得单独记一笔</h2><p>V4 官方那句”1M 上下文成为所有服务标配”我想单独拎出来说一下。</p>
+<p>今天开始，不管你是在官网免费聊天，还是调 V4-Flash 的 API（¥2&#x2F;百万 token 输出），你都能拿到 1M 上下文。</p>
+<p>对比海外模型，GPT-5.5 Plus 订阅里是 400K，Opus 4.7 API 是 200K，Gemini 3.1 Pro 是 1M 但 API 不便宜。</p>
+<p>这意味着长文档处理、整本书分析、跨文件代码审查这些场景，第一次有了一个定价上打得过大多数人的选项。</p>
+<p>KV Cache 压到原来 1&#x2F;10、计算量压到 1&#x2F;4，这两个数字就是让百万上下文能普惠化的根本原因。</p>
+<p>V4 在架构上用了 Hybrid Attention（把压缩稀疏和重度压缩稀疏两种注意力结合起来）和 DSA 稀疏注意力两招，效果确实做出来了。</p>
+<p>这块我觉得过半年再看，可能才是 V4 真正的长尾价值。比 Agent coding 的指标重要，比对标 Opus 的跑分重要。</p>
+<p>百万上下文从奢侈品变成基础设施这件事，改的是整个开发者的工作方式。</p>
+<h2 id="昇腾-950-下半年的产能才是这次伏笔的兑现点"><a href="#昇腾-950-下半年的产能才是这次伏笔的兑现点" class="headerlink" title="昇腾 950 下半年的产能才是这次伏笔的兑现点"></a>昇腾 950 下半年的产能才是这次伏笔的兑现点</h2><p>写到这里我想留一个我自己真的还没看清楚的点。</p>
+<p>官方说昇腾 950 超节点下半年批量之后，Pro 会大幅降价。”下半年”是一个很大的窗口。</p>
+<p>如果到 Q4 昇腾真批量了，V4-Pro 降到原来 V3.2 的价位（比如输出 ¥3），那国内做 Agent 的人就真没理由不切 DeepSeek。</p>
+<p>整个开源生态的重心会再往国产卡这边移一次。</p>
+<p>但如果到 Q4 昇腾 950 的产能又没跟上，V4-Pro 长期卡在 ¥24 的价位，那这次 V4 的”为昇腾改的底座”就会变成一个做了但没兑现的伏笔。</p>
+<p>我手头的信息不够判断哪边概率更大。</p>
+<p>所以今天这篇文章我不敢下”这是国产化拐点”的结论，只能说 V4 把子弹上了膛。</p>
+<p>评论区我想问两类人。</p>
+<p>一类是在国内做 Agent 产品、每个月烧几十万到几百万 token 的：V4-Pro 这个价位你会切吗？你的 Agent 栈切 DeepSeek 要改多少代码？</p>
+<p>一类是做中文内容创作、月订阅 ChatGPT Plus 或者 Claude Pro 的：你会把写作主力切到 DeepSeek 官网吗？写中文这事上你测过它和 Claude&#x2F;GPT 的差距吗？</p>
+<p>我今晚会把 10 个我常用的中文写作 prompt 在 V4 官网跑一遍。如果 8 个以上过线，我大概率会把 ChatGPT Plus 那个账号先停一个月。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI 编程</tag>
+        <tag>DeepSeek</tag>
+        <tag>昇腾</tag>
+        <tag>国产化</tag>
+        <tag>算力</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>GPT-5.5 发布当天，Tibo 两天前那句 &quot;we have the compute&quot; 被兑现了</title>
     <url>/2026/04/24/202604241030/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260424-gpt-55-spud-release.webp" alt="cover"></p>
@@ -592,8 +1594,8 @@
         <tag>Figma</tag>
         <tag>Anthropic</tag>
         <tag>Google</tag>
-        <tag>Claude Design</tag>
         <tag>Stitch</tag>
+        <tag>Claude Design</tag>
       </tags>
   </entry>
   <entry>
@@ -1058,8 +2060,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>gstack</tag>
         <tag>Skill</tag>
         <tag>Token</tag>
@@ -1121,8 +2123,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>Anthropic</tag>
         <tag>Claude</tag>
         <tag>Buddy</tag>
@@ -1861,11 +2863,11 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
+        <tag>AI Agent</tag>
+        <tag>Agent 工作流</tag>
         <tag>agency-agents</tag>
         <tag>subagent</tag>
-        <tag>Agent 工作流</tag>
       </tags>
   </entry>
   <entry>
@@ -1949,9 +2951,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>Agent 工作流</tag>
         <tag>superpowers</tag>
         <tag>skill</tag>
+        <tag>Agent 工作流</tag>
       </tags>
   </entry>
   <entry>
@@ -2450,8 +3452,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>开发工具</tag>
+        <tag>AI</tag>
         <tag>AI 编程</tag>
         <tag>Codex</tag>
         <tag>Agent Skills</tag>
@@ -2654,9 +3656,9 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>AI Agent</tag>
         <tag>Cursor</tag>
         <tag>开发工具</tag>
+        <tag>AI Agent</tag>
         <tag>IDE</tag>
       </tags>
   </entry>
@@ -2762,8 +3764,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>Skills</tag>
         <tag>编程工具</tag>
         <tag>效率</tag>
@@ -3143,9 +4145,9 @@
         <category>AI</category>
       </categories>
       <tags>
+        <tag>Claude Code</tag>
         <tag>AI</tag>
         <tag>AI Agent</tag>
-        <tag>Claude Code</tag>
         <tag>Harness</tag>
         <tag>编程工具</tag>
       </tags>
@@ -4841,8 +5843,8 @@
       </categories>
       <tags>
         <tag>程序员</tag>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>职业发展</tag>
         <tag>软件工程</tag>
       </tags>
@@ -4924,9 +5926,9 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
+        <tag>AI Agent</tag>
         <tag>IDE</tag>
         <tag>软件工程</tag>
       </tags>
@@ -5045,8 +6047,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
+        <tag>AI Agent</tag>
         <tag>多智能体</tag>
         <tag>Anthropic</tag>
         <tag>软件工程</tag>
@@ -5149,8 +6151,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>一人公司</tag>
         <tag>创业</tag>
         <tag>独立开发者</tag>
@@ -5271,8 +6273,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Cursor</tag>
+        <tag>AI</tag>
         <tag>Kimi K2.5</tag>
         <tag>开源模型</tag>
       </tags>
@@ -5471,9 +6473,9 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>AI编程</tag>
         <tag>Cursor</tag>
+        <tag>AI</tag>
         <tag>Vibe Coding</tag>
         <tag>赚钱</tag>
       </tags>
@@ -5899,8 +6901,8 @@
         <category>教程</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
+        <tag>AI Agent</tag>
         <tag>Skills</tag>
         <tag>MCP</tag>
         <tag>多代理协作</tag>
@@ -6982,8 +7984,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>AI编程</tag>
+        <tag>AI</tag>
         <tag>ChatGPT</tag>
         <tag>Claude</tag>
         <tag>开发者工具</tag>
@@ -8957,9 +9959,9 @@
       <tags>
         <tag>AI编程</tag>
         <tag>OpenAI Codex</tag>
+        <tag>基准测试</tag>
         <tag>意图理解</tag>
         <tag>Agent Loop</tag>
-        <tag>基准测试</tag>
       </tags>
   </entry>
   <entry>
@@ -10557,8 +11559,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
+        <tag>AI Agent</tag>
         <tag>OpenClaw</tag>
         <tag>Skills</tag>
         <tag>自动化</tag>
@@ -13224,9 +14226,9 @@
       <tags>
         <tag>Cursor</tag>
         <tag>IDE</tag>
-        <tag>Prompt Engineering</tag>
         <tag>AI 编程</tag>
         <tag>开发效率</tag>
+        <tag>Prompt Engineering</tag>
       </tags>
   </entry>
   <entry>
@@ -13770,8 +14772,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>开发工具</tag>
+        <tag>AI</tag>
         <tag>Gemini</tag>
         <tag>CLI</tag>
         <tag>Google</tag>
@@ -13908,9 +14910,9 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
+        <tag>AI</tag>
         <tag>编程助手</tag>
         <tag>Opus</tag>
       </tags>
@@ -14016,10 +15018,10 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI</tag>
-        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
+        <tag>AI</tag>
+        <tag>AI Agent</tag>
         <tag>Dify</tag>
       </tags>
   </entry>
@@ -17224,9 +18226,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
+        <tag>Agentic Coding</tag>
         <tag>npm</tag>
         <tag>终端调试</tag>
-        <tag>Agentic Coding</tag>
       </tags>
   </entry>
   <entry>
@@ -17347,9 +18349,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>Agentic Coding</tag>
         <tag>Debug</tag>
         <tag>新手开发</tag>
+        <tag>Agentic Coding</tag>
       </tags>
   </entry>
   <entry>
@@ -17910,8 +18912,8 @@
       </categories>
       <tags>
         <tag>编程</tag>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>职业发展</tag>
         <tag>软件工程</tag>
       </tags>
@@ -21308,9 +22310,9 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>Prompt Engineering</tag>
         <tag>Meta-Prompt</tag>
         <tag>元提示词</tag>
+        <tag>Prompt Engineering</tag>
         <tag>自然语言编程</tag>
       </tags>
   </entry>
@@ -22423,8 +23425,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
+        <tag>AI Agent</tag>
         <tag>AI 编程助手</tag>
         <tag>OpenClaw</tag>
         <tag>技术架构</tag>
@@ -22764,9 +23766,9 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>技术提升</tag>
+        <tag>AI编程</tag>
         <tag>AI</tag>
         <tag>个人成长</tag>
-        <tag>AI编程</tag>
         <tag>提示词工程</tag>
       </tags>
   </entry>
@@ -23202,8 +24204,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>JavaEE</category>
       </categories>
       <tags>
-        <tag>vm</tag>
         <tag>CentOS7</tag>
+        <tag>vm</tag>
         <tag>Vagrant</tag>
       </tags>
   </entry>
@@ -23245,8 +24247,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>JavaEE</category>
       </categories>
       <tags>
-        <tag>CentOS7</tag>
         <tag>Docker</tag>
+        <tag>CentOS7</tag>
       </tags>
   </entry>
   <entry>
@@ -23357,10 +24359,10 @@ feat(auth): 添加 JWT Token 认证功能
         <category>程序员</category>
       </categories>
       <tags>
-        <tag>编程</tag>
-        <tag>经验分享</tag>
         <tag>程序员</tag>
         <tag>个人提升</tag>
+        <tag>编程</tag>
+        <tag>经验分享</tag>
       </tags>
   </entry>
   <entry>
@@ -23480,10 +24482,10 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>写作</tag>
-        <tag>程序员</tag>
-        <tag>个人提升</tag>
         <tag>个人总结</tag>
         <tag>年终总结</tag>
+        <tag>程序员</tag>
+        <tag>个人提升</tag>
       </tags>
   </entry>
   <entry>
@@ -24235,7 +25237,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#116;&#x40;&#x67;&#105;&#x74;&#x68;&#x75;&#98;&#46;&#99;&#x6f;&#x6d;">&#x67;&#x69;&#116;&#x40;&#x67;&#105;&#x74;&#x68;&#x75;&#98;&#46;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#x74;&#64;&#x67;&#105;&#116;&#x68;&#117;&#x62;&#46;&#x63;&#x6f;&#109;">&#x67;&#x69;&#x74;&#64;&#x67;&#105;&#116;&#x68;&#117;&#x62;&#46;&#x63;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -25161,6 +26163,35 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android Picasso 实现圆形图片和圆角图片</title>
+    <url>/2017/09/24/201709242356/</url>
+    <content><![CDATA[<p>##1.实现圆形图片</p>
+<p>###1.1代码调用如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new CircleTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
+
+<p>###1.2自定义圆形图片处理工具类(可以修改圆形图片的半径)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆形图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class CircleTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line">    private int radius; // 圆形图片半径</span><br><span class="line"></span><br><span class="line">    public CircleTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">        radius = DensityUtil.dp2px(mContext, 10);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int size = Math.min(source.getWidth(), source.getHeight());</span><br><span class="line"></span><br><span class="line">        int x = (source.getWidth() - size) / 2;</span><br><span class="line">        int y = (source.getHeight() - size) / 2;</span><br><span class="line"></span><br><span class="line">        Bitmap squaredBitmap = Bitmap.createBitmap(source, x, y, size, size);</span><br><span class="line">        if (squaredBitmap != source) &#123;</span><br><span class="line">            source.recycle();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Bitmap bitmap = Bitmap.createBitmap(size, size, source.getConfig());</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(bitmap);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        BitmapShader shader = new BitmapShader(squaredBitmap,</span><br><span class="line">                BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);</span><br><span class="line">        paint.setShader(shader);</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line"></span><br><span class="line">        float r = size / 2f;</span><br><span class="line">//        float r = radius;</span><br><span class="line">        canvas.drawCircle(r, r, r, paint);</span><br><span class="line"></span><br><span class="line">        squaredBitmap.recycle();</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;circle&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##2.实现圆角图片</p>
+<p>###2.1代码调用如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new RoundTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
+
+<p>###2.2自定义圆角图片处理工具类(可以修改图片圆角的半径)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line">import android.graphics.PorterDuff;</span><br><span class="line">import android.graphics.PorterDuffXfermode;</span><br><span class="line">import android.graphics.Rect;</span><br><span class="line">import android.graphics.RectF;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆角图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class RoundTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public RoundTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int widthLight = source.getWidth();</span><br><span class="line">        int heightLight = source.getHeight();</span><br><span class="line">        int radius = DensityUtil.dp2px(mContext, 8); // 圆角半径</span><br><span class="line"></span><br><span class="line">        Bitmap output = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(output);</span><br><span class="line">        Paint paintColor = new Paint();</span><br><span class="line">        paintColor.setFlags(Paint.ANTI_ALIAS_FLAG);</span><br><span class="line"></span><br><span class="line">        RectF rectF = new RectF(new Rect(0, 0, widthLight, heightLight));</span><br><span class="line"></span><br><span class="line">        canvas.drawRoundRect(rectF, radius, radius, paintColor);</span><br><span class="line">//        canvas.drawRoundRect(rectF, widthLight / 5, heightLight / 5, paintColor);</span><br><span class="line"></span><br><span class="line">        Paint paintImage = new Paint();</span><br><span class="line">        paintImage.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));</span><br><span class="line">        canvas.drawBitmap(source, 0, 0, paintImage);</span><br><span class="line">        source.recycle();</span><br><span class="line">        return output;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;roundcorner&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>今天就到这里吧…</p>
+<p>下篇预告：Android Glide实现圆形图片和圆角图片</p>
+<p>敬请期待…</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Picasso</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android OTG 之 USB 转串口模块通讯</title>
     <url>/2017/09/24/201709242355/</url>
     <content><![CDATA[<h2 id="1-背景简介"><a href="#1-背景简介" class="headerlink" title="1.背景简介"></a>1.背景简介</h2><p>我们公司开发了一款室内机平板APP应用，要求平板能去控制智能门锁、等其他智能设备，智能门锁不是我们公司开发的，与我们公司属于合作关系。</p>
@@ -25194,35 +26225,6 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>OTG</tag>
         <tag>USB</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Picasso 实现圆形图片和圆角图片</title>
-    <url>/2017/09/24/201709242356/</url>
-    <content><![CDATA[<p>##1.实现圆形图片</p>
-<p>###1.1代码调用如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new CircleTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
-
-<p>###1.2自定义圆形图片处理工具类(可以修改圆形图片的半径)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆形图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class CircleTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line">    private int radius; // 圆形图片半径</span><br><span class="line"></span><br><span class="line">    public CircleTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">        radius = DensityUtil.dp2px(mContext, 10);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int size = Math.min(source.getWidth(), source.getHeight());</span><br><span class="line"></span><br><span class="line">        int x = (source.getWidth() - size) / 2;</span><br><span class="line">        int y = (source.getHeight() - size) / 2;</span><br><span class="line"></span><br><span class="line">        Bitmap squaredBitmap = Bitmap.createBitmap(source, x, y, size, size);</span><br><span class="line">        if (squaredBitmap != source) &#123;</span><br><span class="line">            source.recycle();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Bitmap bitmap = Bitmap.createBitmap(size, size, source.getConfig());</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(bitmap);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        BitmapShader shader = new BitmapShader(squaredBitmap,</span><br><span class="line">                BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);</span><br><span class="line">        paint.setShader(shader);</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line"></span><br><span class="line">        float r = size / 2f;</span><br><span class="line">//        float r = radius;</span><br><span class="line">        canvas.drawCircle(r, r, r, paint);</span><br><span class="line"></span><br><span class="line">        squaredBitmap.recycle();</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;circle&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##2.实现圆角图片</p>
-<p>###2.1代码调用如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new RoundTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
-
-<p>###2.2自定义圆角图片处理工具类(可以修改图片圆角的半径)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line">import android.graphics.PorterDuff;</span><br><span class="line">import android.graphics.PorterDuffXfermode;</span><br><span class="line">import android.graphics.Rect;</span><br><span class="line">import android.graphics.RectF;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆角图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class RoundTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public RoundTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int widthLight = source.getWidth();</span><br><span class="line">        int heightLight = source.getHeight();</span><br><span class="line">        int radius = DensityUtil.dp2px(mContext, 8); // 圆角半径</span><br><span class="line"></span><br><span class="line">        Bitmap output = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(output);</span><br><span class="line">        Paint paintColor = new Paint();</span><br><span class="line">        paintColor.setFlags(Paint.ANTI_ALIAS_FLAG);</span><br><span class="line"></span><br><span class="line">        RectF rectF = new RectF(new Rect(0, 0, widthLight, heightLight));</span><br><span class="line"></span><br><span class="line">        canvas.drawRoundRect(rectF, radius, radius, paintColor);</span><br><span class="line">//        canvas.drawRoundRect(rectF, widthLight / 5, heightLight / 5, paintColor);</span><br><span class="line"></span><br><span class="line">        Paint paintImage = new Paint();</span><br><span class="line">        paintImage.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));</span><br><span class="line">        canvas.drawBitmap(source, 0, 0, paintImage);</span><br><span class="line">        source.recycle();</span><br><span class="line">        return output;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;roundcorner&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>今天就到这里吧…</p>
-<p>下篇预告：Android Glide实现圆形图片和圆角图片</p>
-<p>敬请期待…</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Picasso</tag>
       </tags>
   </entry>
   <entry>
@@ -25308,42 +26310,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android Studio 曲折更新之路</title>
-    <url>/2017/09/24/201709242402/</url>
-    <content><![CDATA[<blockquote>
-<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
-</blockquote>
-<p>##1.开始更新</p>
-<p>打开AS 点击Help –&gt; Check for Updates…</p>
-<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
-<p>###1.1找到最新的版本号对应的串号</p>
-<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
-<p>如下图所示：</p>
-<p>###1.2下载你对应版本的到最新版本的补丁包</p>
-<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
-<p>然后拼接出一个下载补丁包的url:如下</p>
-<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
-<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
-<p>###1.3手动安装AS补丁包</p>
-<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
-<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
-<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
-<p>稍等一会更新包就安装完成了</p>
-<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
-<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
-<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
-<p>另外，感谢下面博主的博客：</p>
-<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android Studio</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>用起来贼爽的 Android Studio 插件推荐</title>
     <url>/2017/09/24/201709242401/</url>
     <content><![CDATA[<blockquote>
@@ -25404,6 +26370,42 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>Plugin</tag>
+        <tag>GitHub</tag>
+        <tag>Android Studio</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android Studio 曲折更新之路</title>
+    <url>/2017/09/24/201709242402/</url>
+    <content><![CDATA[<blockquote>
+<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
+</blockquote>
+<p>##1.开始更新</p>
+<p>打开AS 点击Help –&gt; Check for Updates…</p>
+<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
+<p>###1.1找到最新的版本号对应的串号</p>
+<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
+<p>如下图所示：</p>
+<p>###1.2下载你对应版本的到最新版本的补丁包</p>
+<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
+<p>然后拼接出一个下载补丁包的url:如下</p>
+<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
+<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
+<p>###1.3手动安装AS补丁包</p>
+<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
+<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
+<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
+<p>稍等一会更新包就安装完成了</p>
+<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
+<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
+<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
+<p>另外，感谢下面博主的博客：</p>
+<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
       </tags>
@@ -26541,48 +27543,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>CentOS7 安装 MySQL 8.0)</title>
-    <url>/2017/09/24/201709242432/</url>
-    <content><![CDATA[<p>个人服务器搭建一个 MySQL 数据库，来读写一些简单的接口数据处理。</p>
-<p>废话不多说，直接撸起。</p>
-<p>1.切换到用户目录</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd ~</span><br></pre></td></tr></table></figure>
-
-<p>2.下载 rpm 包</p>
-<p>在官网找到对应的 MySQL 的源，我们选择 <strong>mysql80-community-release-el7-1.noarch.rpm</strong> 社区免费正式发布版8.0</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
-
-<p>3.安装 rpm 包</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rpm -ivh mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
-
-<p>4.修改 MySQL 的repo源，使MySQL8.0可用</p>
-<p>使用 vim 编辑</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vi /etc/yum.repos.d/mysql-community.repo</span><br></pre></td></tr></table></figure>
-
-<p>找到 [mysql80-community] 确保 enabled&#x3D;1</p>
-<p>修改，保存并退出。</p>
-<p>5.安装 mysql-server</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install mysql-server</span><br></pre></td></tr></table></figure>
-
-<p>开始下载并安装 MySQL，中间会有几次询问你，一路 yes 即可，等待直到完成。</p>
-<p>6.修改 MySQL 的访问权限</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chown -R root:root /var/lib/mysql </span><br></pre></td></tr></table></figure>
-
-<p>7.重启 MySQL 服务</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service mysqld restart</span><br></pre></td></tr></table></figure>
-
-<p>至此 MySQL8.0 的安装就算完成了。</p>
-<p>安装完成后，我们要登录使用 MySQL，但是我们需要访问的密码，安装的时候已经为我们生成了一个随机密码，我们必须重置密码才能使用，因为 MySQL8.0 的密码重还比较麻烦，下一篇我来讲解如何重置密码。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>MySQL</tag>
-        <tag>CentOS</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>CentOS7.x 搭建 GitLab 教程</title>
     <url>/2017/09/24/201709242431/</url>
     <content><![CDATA[<p>今天闲来无事，想起之前买了一个阿里云 ECS，一直闲置着没用，一时兴起就想搭个自己的 GitLab 玩玩，GitLab 官网也提供了安装教程，很简单，照着步骤一步步基本没什么问题，可能安装的过程中有一些坑需要自己去解决。</p>
@@ -26668,6 +27628,48 @@ Thanks all.
       <tags>
         <tag>CentOS</tag>
         <tag>GitLab</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CentOS7 安装 MySQL 8.0)</title>
+    <url>/2017/09/24/201709242432/</url>
+    <content><![CDATA[<p>个人服务器搭建一个 MySQL 数据库，来读写一些简单的接口数据处理。</p>
+<p>废话不多说，直接撸起。</p>
+<p>1.切换到用户目录</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd ~</span><br></pre></td></tr></table></figure>
+
+<p>2.下载 rpm 包</p>
+<p>在官网找到对应的 MySQL 的源，我们选择 <strong>mysql80-community-release-el7-1.noarch.rpm</strong> 社区免费正式发布版8.0</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
+
+<p>3.安装 rpm 包</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rpm -ivh mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
+
+<p>4.修改 MySQL 的repo源，使MySQL8.0可用</p>
+<p>使用 vim 编辑</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vi /etc/yum.repos.d/mysql-community.repo</span><br></pre></td></tr></table></figure>
+
+<p>找到 [mysql80-community] 确保 enabled&#x3D;1</p>
+<p>修改，保存并退出。</p>
+<p>5.安装 mysql-server</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install mysql-server</span><br></pre></td></tr></table></figure>
+
+<p>开始下载并安装 MySQL，中间会有几次询问你，一路 yes 即可，等待直到完成。</p>
+<p>6.修改 MySQL 的访问权限</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chown -R root:root /var/lib/mysql </span><br></pre></td></tr></table></figure>
+
+<p>7.重启 MySQL 服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service mysqld restart</span><br></pre></td></tr></table></figure>
+
+<p>至此 MySQL8.0 的安装就算完成了。</p>
+<p>安装完成后，我们要登录使用 MySQL，但是我们需要访问的密码，安装的时候已经为我们生成了一个随机密码，我们必须重置密码才能使用，因为 MySQL8.0 的密码重还比较麻烦，下一篇我来讲解如何重置密码。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
+        <tag>CentOS</tag>
       </tags>
   </entry>
   <entry>
@@ -27442,25 +28444,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Java 基本数据类型转换为 String</title>
-    <url>/2017/09/24/201709242442/</url>
-    <content><![CDATA[<blockquote>
-<p>我们都知道把一个基本数据类型转为 String 类型，一般有三种方式，例如：有一个 Integer 型数据 a，可以使用i.toString()、String.valueOf(i)、i+”” 三种方式，三种方式的效率如何，接下来我们做一个小测试：</p>
-</blockquote>
-<h2 id="1-测试代码如下："><a href="#1-测试代码如下：" class="headerlink" title="1.测试代码如下："></a>1.测试代码如下：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 把一个基本数据类型转为字符串</span><br><span class="line">     */</span><br><span class="line">    private void testExecuteTime() &#123;</span><br><span class="line">        int loopTime = 100000;</span><br><span class="line">        //Integer i = 0;</span><br><span class="line">        Long i = 0L;</span><br><span class="line">        long startTime;</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = String.valueOf(i);</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;String.valueOf()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i.toString();</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;Integer.toString()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i + &quot;&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;i + \&quot;\&quot;：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-测试结果"><a href="#2-测试结果" class="headerlink" title="2.测试结果"></a>2.测试结果</h2><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061540759.png" alt="这里写图片描述"></p>
-<h2 id="3-结论"><a href="#3-结论" class="headerlink" title="3.结论"></a>3.结论</h2><p>把一个基本数据类型转换为String,使用**.toString()<strong>是最快的方式、</strong>String.valueOf<strong>和</strong>toString<strong>差不多、</strong>数据+””**的效率最慢，其实这些执行都是毫秒级，现在处理器的性能都比较强悍，其实影响不大，对于用户来说，没有什么感觉，但是我们可以再写代码的时候养成一个良好的习惯，有时候不用抠这么细，毕竟不是底层的代码，应用层，主要先以实现业务功能为主，这样后续有时间可以优化，记住一点：大行不顾细谨，大理不辞小让！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-        <tag>String</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Java 中 equals 与 == 区别</title>
     <url>/2017/09/24/201709242441/</url>
     <content><![CDATA[<p>**&#x3D;&#x3D;**是运算符而equals是比较方法。</p>
@@ -27488,6 +28471,25 @@ Thanks all.
       <tags>
         <tag>Java</tag>
         <tag>equals</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java 基本数据类型转换为 String</title>
+    <url>/2017/09/24/201709242442/</url>
+    <content><![CDATA[<blockquote>
+<p>我们都知道把一个基本数据类型转为 String 类型，一般有三种方式，例如：有一个 Integer 型数据 a，可以使用i.toString()、String.valueOf(i)、i+”” 三种方式，三种方式的效率如何，接下来我们做一个小测试：</p>
+</blockquote>
+<h2 id="1-测试代码如下："><a href="#1-测试代码如下：" class="headerlink" title="1.测试代码如下："></a>1.测试代码如下：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 把一个基本数据类型转为字符串</span><br><span class="line">     */</span><br><span class="line">    private void testExecuteTime() &#123;</span><br><span class="line">        int loopTime = 100000;</span><br><span class="line">        //Integer i = 0;</span><br><span class="line">        Long i = 0L;</span><br><span class="line">        long startTime;</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = String.valueOf(i);</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;String.valueOf()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i.toString();</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;Integer.toString()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i + &quot;&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;i + \&quot;\&quot;：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-测试结果"><a href="#2-测试结果" class="headerlink" title="2.测试结果"></a>2.测试结果</h2><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061540759.png" alt="这里写图片描述"></p>
+<h2 id="3-结论"><a href="#3-结论" class="headerlink" title="3.结论"></a>3.结论</h2><p>把一个基本数据类型转换为String,使用**.toString()<strong>是最快的方式、</strong>String.valueOf<strong>和</strong>toString<strong>差不多、</strong>数据+””**的效率最慢，其实这些执行都是毫秒级，现在处理器的性能都比较强悍，其实影响不大，对于用户来说，没有什么感觉，但是我们可以再写代码的时候养成一个良好的习惯，有时候不用抠这么细，毕竟不是底层的代码，应用层，主要先以实现业务功能为主，这样后续有时间可以优化，记住一点：大行不顾细谨，大理不辞小让！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>String</tag>
       </tags>
   </entry>
   <entry>

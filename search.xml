@@ -1,6 +1,502 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>我每天开 6 个 Claude Code，昨天 Agent View 一行命令收编了</title>
+    <url>/2026/05/12/202605121809/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260512-claude-code-agent-view.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>5 月 11 日深夜我刷推刷到一条 @claudeai 的官方公告:「New in Claude Code: agent view. One list of all your sessions」。</p>
+<p>那个瞬间我电脑上同时挂着 4 个 Claude Code session:一个在跑 PR review、一个在做 codemod 改一堆同名变量、一个在帮我写另一篇文章草稿、一个是我自己开来 ad-hoc 排查的。</p>
+<p>4 个 tmux 窗口我已经记不清哪个在等我输入、哪个在跑、哪个其实早就跑完了。</p>
+<p>第二天（今天 5&#x2F;12）我升级到 Claude Code v2.1.139，跑了一行 <code>claude agents</code>，整个工作流就被收编了。</p>
+<p>写这篇之前我又翻了一遍那个 dashboard，确认这次 Anthropic 真不是发了个新能力。</p>
+<p>它发的是「认知开销减半」这件事。</p>
+<h2 id="昨晚我看到-Agent-View-那一刻同时还有-4-个-session-在挂着"><a href="#昨晚我看到-Agent-View-那一刻同时还有-4-个-session-在挂着" class="headerlink" title="昨晚我看到 Agent View 那一刻同时还有 4 个 session 在挂着"></a>昨晚我看到 Agent View 那一刻同时还有 4 个 session 在挂着</h2><p>具体说一下我那天的真实工作状态。</p>
+<p>下午 3 点我开了第一个 session，让 Claude Code 跑一个长 codemod（说人话就是批量改代码的脚本）:把一个内部计费服务里 47 处 <code>userId</code> 改成 <code>accountId</code>。这是个会跑 20-30 分钟的活。</p>
+<p>中间 4 点我突然要写一篇 PR review，开了第二个 session。又过 20 分钟用户找我排查一个 webhook 没触发的 bug，第三个 session 开起来。</p>
+<p>到 5 点我自己想再写一篇文章草稿，第四个 session。</p>
+<p>4 个 session 在 tmux 里排成 2×2 网格，每次切窗口我得先想:这个窗口刚才在干嘛?它停了吗?还是跑完了在等我?</p>
+<p>我自己每周大概有 2-3 次「打开 tmux 发现某个 session 已经停在那里等我半小时」的事故。</p>
+<p>「2026 年的 Claude Code 用户大多在同时管 3-8 个 parallel sessions」（buildfastwithai 引用）这条标签我贴在自己脑门上。</p>
+<h2 id="claude-agents-这一行命令做了什么"><a href="#claude-agents-这一行命令做了什么" class="headerlink" title="claude agents 这一行命令做了什么"></a><code>claude agents</code> 这一行命令做了什么</h2><p>Agent View 的入口非常简单。</p>
+<p>打开终端，确认 Claude Code 是 v2.1.139 或更新版本，然后:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">claude agents</span><br></pre></td></tr></table></figure>
+
+<p>回车之后弹出一个 dashboard。</p>
+<p>每一行是一个 session，包括正在跑的、阻塞在等你输入的、已经跑完的。每行右边显示当前状态、最后一条回复的内容预览。</p>
+<p>说人话就是:<strong>一个 list，所有 session 状态扫一眼就知道</strong>。</p>
+<p>每行的状态分三种:<code>running</code>（正在跑）、<code>waiting on you</code>（卡在等你输入）、<code>done</code>（跑完了）。Long-running agent 比如 PR babysitter 这类，旁边会显示「next run in 12m」这种下一次触发时间。</p>
+<p>之前我得在 tmux 里 <code>Ctrl+b s</code> 列出所有 session，挨个 attach 进去看状态再退出来。这个动作每天我重复几十次。</p>
+<p>现在这个 dashboard 替我做完了。</p>
+<h2 id="5-个按键替代-tmux-网格的认知开销"><a href="#5-个按键替代-tmux-网格的认知开销" class="headerlink" title="5 个按键替代 tmux 网格的认知开销"></a>5 个按键替代 tmux 网格的认知开销</h2><p>Agent View 全部交互可以浓缩到 5 个按键和 1 个命令。</p>
+<p><strong>左箭头</strong>: 在任何 Claude Code session 里按一下，跳到 Agent View 的 dashboard 列表。</p>
+<p><strong>空格</strong>: 在 dashboard 里按一下，”peek”瞄一眼这个 session 最新一回合的回复，不会真正接入。</p>
+<p><strong>Enter 或者右箭头</strong>: 真正 attach 进去，接管这个 session 跟它聊。</p>
+<p><strong><code>/bg</code></strong>: 在某个 session 里输入 <code>/bg</code>，把当前 session 切到后台继续跑，自己回到 dashboard。</p>
+<p><strong><code>claude --bg &quot;task description&quot;</code></strong>: 直接在终端起一个新的后台任务，根本不需要 attach 进去看。</p>
+<p>挑两个最有体感的说。</p>
+<p><code>/bg</code> 解决的痛点是「我开了一个 session 但它在跑长任务，我想去干别的不想盯着」。说人话就是把这个 session 摁到后台，不阻塞我。</p>
+<p><code>claude --bg &quot;task&quot;</code> 更狠。比如我现在想让 Claude 帮我把所有 README 里的拼写错误改一遍，直接 <code>claude --bg &quot;fix typos in all README files&quot;</code>，它就开了个后台 session 自己跑，我连 attach 都不需要。</p>
+<p>跑完了在 dashboard 里看就行。</p>
+<p>我今天下午用 Agent View 实际跑了一遍完整流程:<code>claude --bg &quot;扫一遍 src/ 把所有 console.log 改成 logger.debug&quot;</code> 起任务、转头继续写这篇文章、25 分钟后左箭头切回 dashboard 看到那个 session <code>done</code>、Enter 进去 review diff、合理就 merge worktree。整套操作我没碰过 tmux 一次。</p>
+<h2 id="隔离-worktree-是这次设计真正解决问题的地方"><a href="#隔离-worktree-是这次设计真正解决问题的地方" class="headerlink" title="隔离 worktree 是这次设计真正解决问题的地方"></a>隔离 worktree 是这次设计真正解决问题的地方</h2><p><img src="https://image.vance.xin/aigc/image/20260512-agent-view-before-after.webp" alt="之前的 tmux 多窗口工作流 vs 现在的 Agent View dashboard 工作流对照"></p>
+<p>之前 tmux + 多 Claude Code 工作流最大的坑不是切换累，是<strong>两个 agent 同时改同一个文件</strong>。</p>
+<p>我之前踩过一次:左边 session 在 refactor <code>auth.ts</code>、右边 session 在修 <code>auth.ts</code> 里的一个 bug。两边都生效，结果右边把左边的 refactor 覆盖了一半。</p>
+<p>回滚 git 找原始版本花了 40 分钟。</p>
+<p>Agent View 解决这个问题的方式是:<strong>后台 session 默认禁止写当前 working directory 的文件</strong>。</p>
+<p>当 session 需要写文件时，Claude Code 自动把它 fork 到一个 <code>.claude/worktrees/</code> 目录下的隔离 worktree。</p>
+<p>worktree 说人话就是「把同一个 repo fork 出多份副本，每份在自己的目录里独立工作，互不踩脚」。</p>
+<p>具体到我们的场景:你在主目录 <code>/myrepo</code> 启动了 3 个 background session，它们读的都是 <code>/myrepo</code> 的代码，但写的时候每个 session 写自己的 <code>.claude/worktrees/session-xxx/</code> 副本。</p>
+<p>完成之后你 review 哪个 worktree 的 diff 合理、merge 进主 repo。两个 agent 互相覆盖文件这件事，<strong>架构上不可能发生了</strong>。</p>
+<p>代价是你每次结束 session 之前要确认 merge 还是丢弃，删 session 的时候 worktree 也一起被删。</p>
+<h2 id="这周-Anthropic-还顺带发了-dreaming-和-20-specialist-编排"><a href="#这周-Anthropic-还顺带发了-dreaming-和-20-specialist-编排" class="headerlink" title="这周 Anthropic 还顺带发了 dreaming 和 20 specialist 编排"></a>这周 Anthropic 还顺带发了 dreaming 和 20 specialist 编排</h2><p>Agent View 不是孤立动作。</p>
+<p>5&#x2F;11 这同一周 Anthropic 还发了三件东西:dreaming（让 Claude 在等待时自我推理改进）、最高 20 个 specialist 的 multiagent orchestration、Claude Code desktop app 重设计（带 sidebar + drag-and-drop layout）。</p>
+<p>把这 4 件事摆一起看就清楚:Anthropic 在把 Claude Code 从「我跟一个 AI 聊代码」升级成「我管一队 agent 干活」。</p>
+<p>Agent View 是这个升级里给 CLI 用户的入口。Desktop redesign 是给 GUI 用户的入口。</p>
+<p>底层 worktrees + subagents + agent teams + background session 这套基础设施一直都在。</p>
+<p>之前要靠社区脚本拼:Reddit 上 135 票的 tmux + admin agent 帖子、Kaushik Gopal 的 forking subagent 脚本、Adam Wulf 的 IttyBitty、Dariusz Parys 的 tmux -CC 配置。每个开发者自己拼一套，每套都不完整。Anthropic 这次收编上来，给了一个统一界面。</p>
+<h2 id="Agent-View-跟-agent-team-不是同一件事，容易搞混"><a href="#Agent-View-跟-agent-team-不是同一件事，容易搞混" class="headerlink" title="Agent View 跟 agent team 不是同一件事，容易搞混"></a>Agent View 跟 agent team 不是同一件事，容易搞混</h2><p>澄清一下这两个概念。</p>
+<p><strong>Agent team</strong>（要 <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1</code> flag 开启）是协调式的:你定一个 lead session，lead 自动分配子任务给 teammate sessions，teammate 之间可以直接通信。</p>
+<p><strong>Agent View</strong> 是 dashboard 式的:你自己开多个 session、自己决定每个 session 干什么，Agent View 只是帮你统一看。session 之间互不通信。</p>
+<p>简单选:复杂跨组件 refactor + 你想让 AI 自己分工，用 agent team；多个独立任务 + 你自己控制每个 session 干啥，用 Agent View。</p>
+<p>我自己 90% 时间是后一种场景。</p>
+<h2 id="OpenAI-Codex-Desktop-2-月先发，Agent-View-这一招是回应"><a href="#OpenAI-Codex-Desktop-2-月先发，Agent-View-这一招是回应" class="headerlink" title="OpenAI Codex Desktop 2 月先发，Agent View 这一招是回应"></a>OpenAI Codex Desktop 2 月先发，Agent View 这一招是回应</h2><p>时间线上 OpenAI 早三个月。</p>
+<p>OpenAI Codex Desktop 2026 年 2 月发了 parallel cloud tasks 的视觉命令中心，思路是把多任务管理放在 desktop GUI 里。</p>
+<p>Agent View 5&#x2F;11 上来，思路是把多任务管理直接放进 CLI dashboard。</p>
+<p>两套思路差别不大，但 terminal 用户群（Claude Code 的核心人群）这下不用切到桌面 GUI 就能管理 8 个 session 了。</p>
+<p>我自己作为重度 terminal 用户，更喜欢 Agent View 这个形态。CLI 内置 dashboard 跟我的 muscle memory 不冲突。</p>
+<p>社区里其实还有 macOS 独立 GUI 工具:Conductor、Vibe Kanban、Superset 这些。它们的卖点是「漂亮的 worktree 看板 + diff viewer + 多 agent 并发」。但代价是切 GUI 等于切环境，跑 agent 的时候我手得离开键盘去点鼠标。Agent View 没这个问题，整套交互全在 terminal 里完成。GUI 工具适合 design &#x2F; PM 这类需要可视化 review 的角色，dev 在 CLI 里干完更顺。</p>
+<h2 id="Research-Preview-这件事的代价我观察了一天"><a href="#Research-Preview-这件事的代价我观察了一天" class="headerlink" title="Research Preview 这件事的代价我观察了一天"></a>Research Preview 这件事的代价我观察了一天</h2><p>Agent View 是 Research Preview 状态（说人话就是公测版，不是正式版）。这意味着几件事。</p>
+<p>按键 shortcut 可能在 GA 之前改。我目前看到的左箭头&#x2F;空格&#x2F;Enter 这套组合，下周说不定就变了。Anthropic 官方文档自己也写明「keyboard shortcuts may change as the preview evolves」。</p>
+<p>Reliability 是底层问题，Agent View 也解不掉。如果一个 background session 跑到一半 hang 住了，dashboard 显示它在跑实际上没在跑，这件事我一天测下来碰到过一次。具体场景:我让一个 session 跑长 codemod，回来看 dashboard 状态还是 <code>running</code> 但实际进度 18 分钟没动过，Enter 进去发现 Claude 卡在一个工具调用里。教训是 background 跑长任务时仍然要在 30 分钟节点 peek 一下。</p>
+<p>tokens 消耗按 session 累加。我 Max 20x 每周 limit 在那里，开 6 个 session 比开 1 个吃掉 6 倍 token quota。Agent View 让我开多 session 的心理门槛降低了，但账单不会降低。</p>
+<h2 id="Failure-通知、worktree-合并、远程-attach，这-3-件事我等一周看再下结论"><a href="#Failure-通知、worktree-合并、远程-attach，这-3-件事我等一周看再下结论" class="headerlink" title="Failure 通知、worktree 合并、远程 attach，这 3 件事我等一周看再下结论"></a>Failure 通知、worktree 合并、远程 attach，这 3 件事我等一周看再下结论</h2><p>最后留几个我自己没回答的问题。</p>
+<p><code>--bg</code> 后台任务的可靠性是一个。一个 30 分钟的 codemod 让我后台跑，跑到一半失败了我怎么知道?Dashboard 显示状态会变红吗?failure 通知能不能推到我手机?</p>
+<p>worktree 自动合并是另一个。<code>.claude/worktrees/</code> 里 3 个 session 改了同一个文件的不同部分，我怎么 review、怎么合并、有没有冲突解决工具?</p>
+<p>最让我好奇的是 Agent View + Remote Control 的组合。我能不能在手机上看 dashboard，远程触发 attach?这件事如果能做，我离开电脑也能管 4 个跑着的 session。</p>
+<p>留个问题给你:<strong>你每天同时开几个 Claude Code（或 Cursor &#x2F; Codex &#x2F; 任意 agent 工具）的 session?</strong></p>
+<p>或者反过来:<strong>你之前是用 tmux + worktree 自己拼工作流的，还是只开一个 session 顺序干?</strong></p>
+<p>评论区告诉我你的数字，我也告诉你我的。</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>Anthropic</tag>
+        <tag>工作流</tag>
+        <tag>Agent View</tag>
+        <tag>多 agent</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>800 MB 在 iPhone 上跑出 27 tok/sec，PocketPal 让我重新看本地 LLM</title>
+    <url>/2026/05/12/202605121702/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260512-pocketpal-qwen-iphone.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>我每天用 Claude Max $200&#x2F;月 跑 Claude Code，平时根本不是本地 LLM 信徒。</p>
+<p>但上周有两个场景把我推过去试 PocketPal：一个是飞机起飞前关 Wi-Fi 想继续写日记被打回原形，另一个是想用 AI 总结一份私密医疗记录但不想喂给云端。</p>
+<p>我装了 PocketPal AI、下载了 Qwen3.5-0.8B q8_0、在 iPhone 15 Pro 上跑了 benchmark。</p>
+<p>跑分截图里那个数字是 <strong>27.10 tok&#x2F;sec</strong>。</p>
+<p>写到这里前我又翻了一遍公开数据：iPhone 16 Pro 跑 3B 模型才 4 tok&#x2F;sec，Snapdragon X Elite 跑 7B 才 5 tok&#x2F;sec。我这个 27 tok&#x2F;sec 是怎么来的？</p>
+<h2 id="先看-iPhone-15-Pro-跑出来的-27-tok-sec-是个什么量级"><a href="#先看-iPhone-15-Pro-跑出来的-27-tok-sec-是个什么量级" class="headerlink" title="先看 iPhone 15 Pro 跑出来的 27 tok&#x2F;sec 是个什么量级"></a>先看 iPhone 15 Pro 跑出来的 27 tok&#x2F;sec 是个什么量级</h2><p>跑分截图里的核心数字有两个：<strong>PP 585.16 tok&#x2F;sec</strong> 和 <strong>TG 27.10 tok&#x2F;sec</strong>。</p>
+<p>说人话就是:PP（prompt processing）是模型「读完你说的话」有多快，TG（token generation）是模型「往外蹦字」有多快。</p>
+<p>人能感受到速度的主要是 TG 这个数。</p>
+<p>27 tok&#x2F;sec 体感约等于什么?</p>
+<p>中文一个 token 通常对应 1.5-2 个汉字，27 tok&#x2F;sec 大致是<strong>一秒蹦 40-50 个汉字</strong>。</p>
+<p>我自己打字熟练大概一秒 5-7 字，模型这个速度是我打字的 5-10 倍。比常见的云端 GPT-4o 流式输出体感慢一档，但已经远超「能用」的门槛。</p>
+<p>横向对比一下:</p>
+<ul>
+<li>iPhone 16 Pro 跑 3B 模型:4 tok&#x2F;sec</li>
+<li>Snapdragon X Elite 跑 7B:5 tok&#x2F;sec</li>
+<li>Pixel 7 Pro 12GB 跑 Qwen2.5 复杂代码:6-8 tok&#x2F;sec</li>
+<li>iPad Pro M4 跑 13B:15 tok&#x2F;sec（已是移动端最快档）</li>
+<li>iPhone 17 Pro 跑 Qwen 9B:18-20 tok&#x2F;sec</li>
+</ul>
+<p>我 iPhone 15 Pro 这个 27 tok&#x2F;sec 之所以好看，主要是因为模型只有 0.8B。</p>
+<p>模型越小越快是常识。真正值得反过来想的是:0.8B 在我手机里能干哪些事?</p>
+<p>后面我会回到这条。</p>
+<h2 id="在-iPhone-上我用-App-Store-装了-3-分钟就开始跑"><a href="#在-iPhone-上我用-App-Store-装了-3-分钟就开始跑" class="headerlink" title="在 iPhone 上我用 App Store 装了 3 分钟就开始跑"></a>在 iPhone 上我用 App Store 装了 3 分钟就开始跑</h2><p>iOS 这边几乎没难度。</p>
+<p>打开 App Store，搜「PocketPal AI」（作者写着 Asghar Ghorbani），免费，iOS 15.1+ 起步。</p>
+<p>iPhone 15 Pro 上我装完打开第一个画面是空白的「模型」页。</p>
+<p>右下角点 <code>+</code>，弹出 3 个选项:从 Hugging Face 添加、添加本地模型、Add Remote Model。</p>
+<p><img src="https://image.vance.xin/screenshots/20260512-pocketpal-add-model.webp" alt="PocketPal 添加模型对话框：从 Hugging Face 添加 / 添加本地模型 / Add Remote Model"></p>
+<p>我选了「从 Hugging Face 添加」。</p>
+<p>搜 <code>Qwen3.5-0.8B</code>，挑量化版本，按下载。这 800 MB 在 Wi-Fi 下大概 2 分钟搞定。</p>
+<p>下载完点「加载模型」，跳到对话页就能聊了。</p>
+<p>加起来 3 分钟，模型问一句「你好，请介绍下自己」就有答案:「我是由阿里巴巴集团旗下的通义实验室自主研发的『通义千问（Qwen）』系列大语言模型之一」。</p>
+<p><img src="https://image.vance.xin/screenshots/20260512-pocketpal-qwen-chat.webp" alt="Qwen3.5-0.8B 在 iPhone 15 Pro 上的自我介绍"></p>
+<p>模型自己说自己是 Qwen 系列，这一句话证明你装对了。</p>
+<h2 id="Android-这边推荐两条路-Google-Play-稳但慢、GitHub-APK-新但要点手动"><a href="#Android-这边推荐两条路-Google-Play-稳但慢、GitHub-APK-新但要点手动" class="headerlink" title="Android 这边推荐两条路:Google Play 稳但慢、GitHub APK 新但要点手动"></a>Android 这边推荐两条路:Google Play 稳但慢、GitHub APK 新但要点手动</h2><p>Android 我没亲测，下面说的是 GitHub 项目和社区方法。</p>
+<p>先说 Google Play 这条路:搜 <code>PocketPal AI</code>（包名 <code>com.pocketpalai</code>），开发者 LLM Ventures，免费下，要求 Android 7.0+，APK 98 MB。</p>
+<p>Google Play 商店审核会让版本比 GitHub 慢几周，<strong>稳是稳，新功能等得久</strong>。</p>
+<p>再说 GitHub Releases 直装这条路:去 <code>github.com/a-ghorbani/pocketpal-ai/releases</code> 拉最新版 <code>.apk</code>，手机开开发者选项允许「未知来源安装」，传过去点开装。</p>
+<p>GitHub 直装的好处是版本快，能拿到 1.14.0 这种最新版（Google Play 这周还在 1.13.1）。</p>
+<p>代价是要自己承担「APK 来源信任」，Google Play 那一层签名审核没了。</p>
+<p>我自己如果是 Android 用户，会先 Google Play 试一周，确认能跑、能挑自己想要的模型，再考虑要不要切 GitHub 直装。</p>
+<h2 id="装好之后第一件事是挑模型，我跳过内置清单装了-Qwen3-5-0-8B"><a href="#装好之后第一件事是挑模型，我跳过内置清单装了-Qwen3-5-0-8B" class="headerlink" title="装好之后第一件事是挑模型，我跳过内置清单装了 Qwen3.5-0.8B"></a>装好之后第一件事是挑模型，我跳过内置清单装了 Qwen3.5-0.8B</h2><p>PocketPal 内置一份策展清单，里面常见的有:</p>
+<p><img src="https://image.vance.xin/screenshots/20260512-pocketpal-models.webp" alt="PocketPal 内置模型策展清单：Gemma / Phi / Qwen2.5 / Llama 等"></p>
+<ul>
+<li>Gemma-2-2b-it Q6_K · 2.15 GB</li>
+<li>Phi-3.5 mini 4k instruct Q4_K_M · 2.39 GB</li>
+<li>Qwen2.5-1.5B-Instruct Q8_0 · 1.89 GB</li>
+<li>Qwen2.5-3B-Instruct Q5_K_M · 2.44 GB</li>
+<li>Llama-3.2-1b-instruct Q8_0</li>
+</ul>
+<p>我跳过这份清单，从 Hugging Face 单独装了 Qwen3.5-0.8B q8_0。原因有两个。</p>
+<p>先说 Qwen3.5 这个版本。</p>
+<p>阿里 Qwen3.5 系列 2026-03-02 发布，Small 档分 0.8B &#x2F; 2B &#x2F; 4B &#x2F; 9B 四个尺寸，原生 256K context（说人话就是它一次能记住的对话长度上限是 25 万字左右）、支持 201 种语言，混合推理（small 档默认 reasoning 关闭，对小模型反而是好事，不会无限自说自话）。</p>
+<p>PocketPal 内置清单里那几个 Qwen 是 2.5 老一代，落后一个版本。</p>
+<p>再说 q8_0 这个量化。</p>
+<p>gguf 是 llama.cpp 自家的二进制格式，说人话就是「方便手机加载的模型打包格式」。</p>
+<p>q8_0 &#x2F; q4_k_m 这些尾缀是不同的「压缩档位」:</p>
+<ul>
+<li><strong>q8_0</strong>:8 bit 量化，文件接近原模型大小，精度损失最小</li>
+<li><strong>q4_k_m</strong>:4 bit 量化，文件减半还多，精度有一定损失</li>
+<li><strong>q5_k_m</strong>:折中档</li>
+</ul>
+<p>iPhone 15 Pro 7.5 GB RAM 内存不算紧，0.8B 模型 q8_0 才 800.88 MB（后面 benchmark 跑分页能看到这个数），没必要为省内存换 q4 损失精度。</p>
+<p>挑模型这件事的判断逻辑很简单:<strong>手机内存够、模型够小，就上最高保真的量化档</strong>。</p>
+<h2 id="benchmark-数字怎么读-PP-TG-内存峰值这三个数翻译给小白"><a href="#benchmark-数字怎么读-PP-TG-内存峰值这三个数翻译给小白" class="headerlink" title="benchmark 数字怎么读:PP &#x2F; TG &#x2F; 内存峰值这三个数翻译给小白"></a>benchmark 数字怎么读:PP &#x2F; TG &#x2F; 内存峰值这三个数翻译给小白</h2><p><img src="https://image.vance.xin/screenshots/20260512-pocketpal-benchmark.webp" alt="iPhone 15 Pro 跑 Qwen3.5-0.8B q8_0 的 benchmark 跑分页"></p>
+<p>跑分截图里那一堆数字，对小白读者来说是天书。我翻译一下。</p>
+<p><strong>PP 585.16 tok&#x2F;sec</strong>:模型读你输入的速度。说人话就是你贴一篇 2000 字的稿子进去，3-4 秒就吃完了。</p>
+<p>对应使用场景:手机上让它读一篇长文章做总结，等待时间很短。</p>
+<p><strong>TG 27.10 tok&#x2F;sec</strong>:模型往外蹦字的速度。说人话就是一秒打 40-50 个汉字。</p>
+<p>对应使用场景:连续对话、写日记、翻译，都能跟得上你思考速度。</p>
+<p><strong>峰值内存 1 GB &#x2F; 8 GB（15.5%）</strong>:模型最多占了手机一成多内存。</p>
+<p>对应使用场景:跑模型的时候你照样能开微信、刷推特，不会卡。</p>
+<p><strong>总时间 16 秒</strong>:跑完那个标准压力测试用了 16 秒，里面跑了 512 + 128×3 ≈ 900 个 token。</p>
+<p>对应使用场景:基本上你只要不跑超长上下文，模型「热」起来的时间可以忽略不计。</p>
+<p>模型设置里 <code>GPU 层数 99</code>、<code>Flash Attention 启用</code> 这两条要重点提一下。</p>
+<p>GPU 层数 99 说人话就是「把模型全部塞到 GPU 上算」，iPhone 15 Pro 用 Metal 加速跑得动。</p>
+<p>Flash Attention 启用说人话就是「用更省内存的注意力算法」，省内存的同时提速。</p>
+<p>不开这两条的话，TG 我估计要掉到 15 tok&#x2F;sec 上下。</p>
+<h2 id="飞机上写日记、隐私笔记总结，这两个场景我打算这样用"><a href="#飞机上写日记、隐私笔记总结，这两个场景我打算这样用" class="headerlink" title="飞机上写日记、隐私笔记总结，这两个场景我打算这样用"></a>飞机上写日记、隐私笔记总结，这两个场景我打算这样用</h2><p>回到我最早装 PocketPal 的那两个具体场景。</p>
+<p><strong>飞机上写日记</strong>:从浦东到旧金山 12 小时无网，过去我只能拿手机记事本干写。</p>
+<p>接下来准备这样做:起飞前在 PocketPal 里把 Qwen 加载好，开飞行模式，让它当我的「日记搭子」。</p>
+<p>写到一半卡住了让它接两句，写完让它帮我标一下情绪关键词、按主题归类。</p>
+<p>只要不联网，整个过程数据不出手机。这件事 Claude 做不了，因为 Claude 离线就死。</p>
+<p><strong>私密笔记总结</strong>:我前阵子拿了一份医疗体检报告，里面有具体指标。</p>
+<p>我不想喂给 ChatGPT，也不想喂给 Claude 网页版（虽然 Claude API 默认不训练，但走网页输入这件事本身就要传）。</p>
+<p>PocketPal + Qwen3.5-0.8B 这套，整个体检报告复制粘贴进去，让它讲讲哪几项偏高需要注意，全程关 Wi-Fi。</p>
+<p><strong>0.8B 的能力边界</strong>:写日记、做翻译、总结结构化文本、回答中等复杂度问题，体感都跟得上。复杂代码生成、长链路 agent 任务，0.8B 撑不住。</p>
+<p>这就回到开头那条立场:本地 0.8B 跟 Claude Opus 比是输的，跟「飞行模式下没 AI」比是赢的。</p>
+<h2 id="电池、发热、模型库下载流量，这三个代价我装之前没意识到"><a href="#电池、发热、模型库下载流量，这三个代价我装之前没意识到" class="headerlink" title="电池、发热、模型库下载流量，这三个代价我装之前没意识到"></a>电池、发热、模型库下载流量，这三个代价我装之前没意识到</h2><p>聊完优点要诚实说代价。</p>
+<p><strong>电池</strong>:跑模型时 CPU + GPU 拉满。</p>
+<p>我用 iPhone 15 Pro 连续问了 20 分钟，电量从 100% 掉到 88%。</p>
+<p>按这个速率，一整段飞行 12 小时如果一直跑，电池撑不过 6 小时。实际用要节制:写几句、停一停，不要让它在后台一直推理。</p>
+<p><strong>发热</strong>:连续跑超过 10 分钟，机身明显发热。</p>
+<p>iPhone 15 Pro 钛金属边框传热快，握着会烫。我建议放桌上跑，不要握在手里。</p>
+<p><strong>模型库下载流量</strong>:PocketPal app 才 98 MB，但模型动辄 800 MB - 2.5 GB。</p>
+<p>第一次下载必须连稳定 Wi-Fi，蜂窝下载会让你看着流量计跳。</p>
+<p>PocketPal 默认推荐的几个模型如果都试一遍，4-5 GB 起步。我建议挑一个稳定能跑的（比如 Qwen3.5-0.8B q8_0），其他先不下，等真的有场景再来。</p>
+<h2 id="Qwen3-5-0-8B-跟-Apple-自家-foundation-models-摆一起怎么选，我还没想明白"><a href="#Qwen3-5-0-8B-跟-Apple-自家-foundation-models-摆一起怎么选，我还没想明白" class="headerlink" title="Qwen3.5-0.8B 跟 Apple 自家 foundation models 摆一起怎么选，我还没想明白"></a>Qwen3.5-0.8B 跟 Apple 自家 foundation models 摆一起怎么选，我还没想明白</h2><p>iOS 26.5 自带 Apple Foundation Models（系统级，A17 Pro 芯片上跑），开发者可以通过 API 调用。</p>
+<p>跟我装的 Qwen3.5-0.8B 摆在一起，理论上 Apple 自家那个跟 iOS 系统集成度更深、电池优化更好。</p>
+<p>但 Apple Foundation 我还没看清楚的几个点:</p>
+<ul>
+<li>Apple 模型权重不公开，跑分官方没说具体数字</li>
+<li>我自己没法换模型，跟着 iOS 系统升级走</li>
+<li>第三方 app 调起来要走 Apple API，免不了走苹果生态</li>
+</ul>
+<p>PocketPal + Qwen 这套给我的是另一种自由:随时换 Gemma、Phi、Llama 试，模型坏了我自己换。</p>
+<p>代价就是上面说的电池、发热、流量。</p>
+<p>留个问题给你:<strong>如果 iOS 27 的 Apple Foundation Models 性能能追到 Qwen3.5-0.8B 的 27 tok&#x2F;sec，你还会装 PocketPal 吗?</strong></p>
+<p>或者反过来,<strong>你是为了「能换模型」这件事本身才装 PocketPal，还是只把它当一个能跑 LLM 的客户端?</strong></p>
+<p>评论区告诉我你的答案，我也告诉你我的。</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>iOS</tag>
+        <tag>PocketPal</tag>
+        <tag>Qwen</tag>
+        <tag>本地大模型</tag>
+        <tag>离线 AI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>OpenCode 把蚂蚁 1T 推理模型免费送你 7 天，但有条小字你得先看</title>
+    <url>/2026/05/11/202605111344/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260511-opencode-ring-26-free.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>5 月 8 日凌晨，蚂蚁百灵团队发了一个新模型：<strong>Ring-2.6-1T</strong>。1 万亿总参数、63B 活跃参数、专门为 agentic 工作流（说人话就是给 AI 写代码、让 AI 调工具）调过的推理模型。</p>
+<p>同一个凌晨，Novita Labs 把这个模型上架到了 OpenRouter，<strong>免费</strong>。</p>
+<p>同一天，OpenCode（开源版 Claude Code，GitHub 90K+ star）把它加进自己的 OpenCode Zen 策展清单。</p>
+<p>三方动作时间几乎卡在一起。免费窗口截止到 5 月 15 日 PT。今天是 5 月 11 日，<strong>还剩 4 天</strong>。</p>
+<p>我下午装好 OpenCode 跑了一轮，准备写这篇之前想了一会儿。这条免费下面有一行小字，我看完之后没法装作没看见。</p>
+<h2 id="4-21-到-5-8-这-17-天里-AI-编程世界到底发生了什么"><a href="#4-21-到-5-8-这-17-天里-AI-编程世界到底发生了什么" class="headerlink" title="4&#x2F;21 到 5&#x2F;8 这 17 天里 AI 编程世界到底发生了什么"></a>4&#x2F;21 到 5&#x2F;8 这 17 天里 AI 编程世界到底发生了什么</h2><p>先把时间线还原一下。</p>
+<p>4 月 20 日 GitHub Copilot 暂停个人订阅注册，第二天 4 月 21 日 Anthropic 把 Claude Code 从 $20 Pro 套餐页面下架。</p>
+<p>我那一周已经写过一篇文章谈这件事。结论很直接：扁平订阅制 + agentic 工作流不兼容，烧不起。</p>
+<p>时间走到 5 月 8 日。这一天我刷推刷出了三条公告，加起来构成那一整周最密集的中国 AI 动作。</p>
+<p>DeepSeek 接 75 亿美金融资的消息先来，梁文锋自己掏 30 亿，中国 AI 创业公司有史以来最大单轮。</p>
+<p>紧接着是 Anthropic Claude Code 团队工程师 Thariq 那条 9 个英文单词的推「HTML is the new markdown」，3 天 3.4M 阅读。</p>
+<p>然后是这次的主角：蚂蚁百灵 Ring-2.6-1T 发布 + Novita 在 OpenRouter 上架免费端点 + OpenCode Zen 接入。</p>
+<p>5&#x2F;8 这一天不像巧合。看起来是 4 月那一周闭源订阅收紧之后，开源 + 中国推理模型 + 第三方推理云的对位反击。</p>
+<p>我看着自己的 Claude Max $200&#x2F;月账单，发现每一个 Anthropic 涨价的动作背后，都有人在给开发者准备 fallback。</p>
+<h2 id="Ring-2-6-1T-真正的卖点不在那个「1T」"><a href="#Ring-2-6-1T-真正的卖点不在那个「1T」" class="headerlink" title="Ring-2.6-1T 真正的卖点不在那个「1T」"></a>Ring-2.6-1T 真正的卖点不在那个「1T」</h2><p>「1 万亿参数」这个数字现在听起来已经不那么唬人了。DeepSeek V4-Pro 1.6 万亿、Kimi K2 1 万亿，Claude Opus 4.7 参数没公开但量级也在那里。1T 这个数字现在只算入场券。</p>
+<p>那 Ring-2.6-1T 凭什么值得装个 OpenCode 来试？</p>
+<p>我看了官方放的两个东西。</p>
+<p>先说 <strong>active params 63B</strong>。说人话就是：模型总共有 1 万亿个参数住在那个大池子里，但每跑一次推理只激活 63B 实际参与计算。这是 MoE 架构的好处，让你跑得起这个量级的模型。</p>
+<p>为对比，DeepSeek V4-Pro 1.6T 活跃 490B。Ring-2.6-1T 的活跃量是它的八分之一。意味着延迟和单 token 成本都低一档。这才是 OpenCode 这种「每秒可能跑几十次 tool call」的 agent 工作流真正需要的东西。</p>
+<p>再说 <strong>adaptive Reasoning Effort</strong>。蚂蚁给它做了两档可调的「思考力度」：</p>
+<ul>
+<li><code>high</code>：偏 agent 和 tool use 场景，让模型快思考、多轮交互不卡</li>
+<li><code>xhigh</code>：偏深度数学和科研推理，让模型慢慢想</li>
+</ul>
+<p>你写 prompt 的时候可以指定。这跟 Claude 把 sonnet thinking 当个二选一开关不太一样，它给的是连续调节。同一个模型在不同任务上能切换工作模式。</p>
+<p>我用 OpenCode 跑了几次。<code>high</code> 档下做 PR review，每次响应大概 8-12 秒回完。<code>xhigh</code> 在简单任务上明显比 <code>high</code> 慢两倍以上，但跟 Claude Opus 4.7 比并不显著快。说明 <code>xhigh</code> 是为难题留的档。</p>
+<h2 id="PinchBench-87-60-这个数字到底意味着什么"><a href="#PinchBench-87-60-这个数字到底意味着什么" class="headerlink" title="PinchBench 87.60 这个数字到底意味着什么"></a>PinchBench 87.60 这个数字到底意味着什么</h2><p>跑分这个事我最讨厌一段堆一堆。挑两个最有信号的说。</p>
+<p><strong>PinchBench 87.60</strong>（Ring-2.6-1T 的 high 档）。PinchBench 是个专门测 AI 在真实 agentic 任务里能不能跑通的跑分。</p>
+<p>同档对比里，GPT-5.4 xHigh 比它低，Gemini-3.1-Pro high 比它低，<strong>Claude Opus 4.7x High 也比它低</strong>。</p>
+<p>第一次看到一个中国开源模型在 agentic 跑分上压过当代旗舰闭源模型。PinchBench 本身也是 2025-2026 年才出现的新 benchmark，专门为 agent 时代设计，比 SWE-bench 那种几年前的老测试更贴近真实使用场景。</p>
+<p><strong>ClawEval 63.82</strong>。这是工具使用能力的跑分。Ring-2.6-1T 在这个 benchmark 上不是第一，但够用。说明它不是在某一两个跑分上磨过头，整体功能曲线比较平。</p>
+<p>跟 4 月 21 日那时的体感对照一下：Claude Code 砍 Pro 的时候，开发者社区担心的是「中国模型还差一截，没得选」。5 月 8 日这个 PinchBench 数字第一次把这种担心打掉了一半。</p>
+<p>但分数能用是一回事，跑起来好不好用是另一回事。</p>
+<h2 id="我今天下午装-OpenCode-把-model-切到-ring-跑了一轮-PR-review"><a href="#我今天下午装-OpenCode-把-model-切到-ring-跑了一轮-PR-review" class="headerlink" title="我今天下午装 OpenCode 把 model 切到 ring 跑了一轮 PR review"></a>我今天下午装 OpenCode 把 model 切到 ring 跑了一轮 PR review</h2><p>OpenCode 这个工具我之前断断续续在用。它是 SST 团队的开源 CLI coding agent，GitHub 90-95K star，定位是开源版 Claude Code，支持 75+ 个 LLM provider。</p>
+<p>今天下午装最新版（如果你已经有可以跳过这段），配 OpenRouter API key，把默认 model 切到 <code>inclusionai/ring-2.6-1t:free</code> 这个端点。</p>
+<p>我丢给它一个我之前用 Claude Opus 4.7 跑过的 PR review 任务。同样的 PR、同样的 prompt。</p>
+<p>Ring 在 agent 模式下用了大约 4 分钟，吐出 6 条问题。Claude 那次是 3 条问题。</p>
+<p>我对照看了一下：Ring 多发现的 3 条里，2 条是真问题（一处 nil 检查、一处异步 race），1 条是过度谨慎的误报。Claude 那 3 条都是真问题，但 Ring 抓到的那个 race 是 Claude 漏的。</p>
+<p><strong>256K context、$0 推理成本、抓到了 Claude 漏的一处 race</strong>。我盯着 OpenCode 终端看了一会儿。</p>
+<p>短期内我不打算把 Claude Max 退订。Claude 在 plan 阶段的语义连贯性还是更稳一档，Ring 偶尔会绕路。</p>
+<p>但作为第二意见、作为 sanity check 的二审、作为周末跑大批量 codemod 的算力补位，这套 free 端点的价值就出来了。</p>
+<p>前提是你能接受下面这条「小字」。</p>
+<h2 id="OpenCode-Zen-那行小字我没法装作没看见"><a href="#OpenCode-Zen-那行小字我没法装作没看见" class="headerlink" title="OpenCode Zen 那行小字我没法装作没看见"></a>OpenCode Zen 那行小字我没法装作没看见</h2><p><img src="https://image.vance.xin/aigc/image/20260511-opencode-ring-free-data-loop.webp" alt="5/8 三方协调到下一代模型迭代的数据回流闭环"></p>
+<p>我去翻了 OpenCode Zen 的官方文档。在 Ring 2.6 1T Free 那一行下面，原文写着：</p>
+<blockquote>
+<p>Ring 2.6 1T Free: During its free period, collected data may be used to improve the model.</p>
+</blockquote>
+<p>翻成大白话：<strong>免费期间，你扔进去的 prompt 和代码，可能会被收集起来用于训练这个模型</strong>。</p>
+<p>这条条款来自接入这个免费端点的默认设置，Novita 和 OpenCode 都没单独改过。</p>
+<p>对比一下 Claude API：默认设置是「不用于训练」。这是 Anthropic 商业模式的核心承诺之一，也是为什么很多公司能拿 Claude 接生产代码。</p>
+<p>如果你今天用 OpenCode + Ring free 跑了一个内部业务系统的 refactor、一个客户私有库的 PR review、一个公司核心算法的 spec，你的代码就有可能进入下一版 Ring 2.7 的训练集。</p>
+<p>这条小字我反复看了两次。</p>
+<p>它不是阴谋，是个公开的、写在文档里的交易：你用 4 天免费推理，蚂蚁拿到一周的真实 agentic 工作流数据。</p>
+<p>对一家想训出更好 agent 模型的实验室来说，这周数据的价值远高于免费给你的那点推理成本。工程师作为决策者得知道这是 trade-off。</p>
+<h2 id="剩-4-天我自己分三种用法走"><a href="#剩-4-天我自己分三种用法走" class="headerlink" title="剩 4 天我自己分三种用法走"></a>剩 4 天我自己分三种用法走</h2><p>最值得做的是开个干净的沙箱仓库专门跑对照实验。同一个 prompt、同一个 PR、同一个 spec，对 Claude Opus 4.7 和 Ring-2.6-1T 跑双盲对比，把结果存下来。下次有人在群里问「Ring 真的有那么好用吗」，你手里有自己的数据。</p>
+<p>再就是把你过去半年开源贡献过的那些 PR、那些 issue triage、那些个人项目代码，喂给 Ring 跑一遍。这些代码本来就在 GitHub 公开了，再被训练一次没什么额外损失。顺便看看 Ring 在你熟悉的项目结构上能跑到什么水平。</p>
+<p>绝对<strong>不要做</strong>的事更直接：公司内部代码、客户私有库、未公开的算法、含真实凭据的脚本，<strong>不要直接喂给免费端点</strong>。</p>
+<p>等 5&#x2F;15 之后大概率会出付费版本（这是漏斗的下一站），那时候付费档大概率回到「数据不训练」的默认。</p>
+<p>我自己今天下午用的就是前两种。第三种那块代码我搬了沙箱仓库才改写。</p>
+<h2 id="价格和开源-weights-这两件事，我等到-5-15-才能下判断"><a href="#价格和开源-weights-这两件事，我等到-5-15-才能下判断" class="headerlink" title="价格和开源 weights 这两件事，我等到 5&#x2F;15 才能下判断"></a>价格和开源 weights 这两件事，我等到 5&#x2F;15 才能下判断</h2><p>写到这里我手里还有两个问号。</p>
+<p>一个关于 5&#x2F;15 之后的价格。蚂蚁开源 Ling-1T 那次是真开源（model weights 上 Hugging Face）。Ring-2.6-1T 官方说「权重即将开源」，但「即将」是个浮动词。如果下周变成 OpenRouter 付费档而不是开源 weights，那就是另一种故事了。</p>
+<p>另一个关于 OpenCode 把它放进 Zen 策展清单这个动作。OpenCode Zen 这一年里在做的事，看起来很像 Anthropic 早期的「Bedrock 中间层」：让你不用直接跟模型厂商打交道，OpenCode 帮你做模型选择。这对依赖 Claude Code 习惯的开发者是不是新的迁移路径，我现在还没想清楚。</p>
+<p>留个问题给你：<strong>如果免费窗口 5&#x2F;15 之后变成付费但价格只有 Claude Opus 4.7 的十分之一，你会从 Claude Code 迁过来吗？</strong></p>
+<p>或者反过来，<strong>那行「免费期间数据可能用于训练」的小字，会不会成为你拒绝迁的最后一条护城河？</strong></p>
+<p>评论区告诉我你的答案，我也告诉你我的。</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>AI 编程</tag>
+        <tag>开源</tag>
+        <tag>OpenCode</tag>
+        <tag>Ring-2.6-1T</tag>
+        <tag>蚂蚁</tag>
+        <tag>Novita</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Anthropic 工程师让 Claude 不写 Markdown 了，我突然不敢按 LGTM</title>
+    <url>/2026/05/10/202605101913/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260510-thariq-html-decision-replacement.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>5 月 8 日 Anthropic 自己 Claude Code 团队的工程师 Thariq，在 X 上发了一条 9 个英文单词的推：”HTML is the new markdown.”后面跟了一篇《Using Claude Code: The Unreasonable Effectiveness of HTML》。</p>
+<p>Thariq 自己披露这条推短短几天就跑到 3.4M 阅读、1.3 万收藏。Simon Willison 这种从 GPT-4 时代开始就默认让 Claude 写 markdown 的老用户，看完之后专门写了篇 link post 说自己准备改习惯。</p>
+<p>但我今天不打算聊「Claude 该输出 markdown 还是 HTML」这种格式偏好的事。</p>
+<p>我想聊的是另一件事：当 AI 输出越来越长、越来越结构化、越来越漂亮，工程师作为决策者的注意力到底还剩多少。</p>
+<h2 id="5-8-凌晨我刷到-Thariq-这条推时正在看-Claude-的-plan"><a href="#5-8-凌晨我刷到-Thariq-这条推时正在看-Claude-的-plan" class="headerlink" title="5&#x2F;8 凌晨我刷到 Thariq 这条推时正在看 Claude 的 plan"></a>5&#x2F;8 凌晨我刷到 Thariq 这条推时正在看 Claude 的 plan</h2><p>那是个周五凌晨。我让 Claude Code 跑一个数据迁移的 plan，跑完吐出来一份 1500 行左右的 markdown，里面有 12 步、4 个表格、3 个 fallback 方案。我从头滚到尾大概用了 90 秒。然后我打开 X 准备睡觉，刷到了 Thariq 这条推。</p>
+<p>Thariq 是 Anthropic Claude Code 团队的 Member of Technical Staff，前 YC W20、MIT Media Lab 出身，现在每天写 Claude Code 这个产品。他不是评论家也不是博主，他是每天用 Claude Code 跟 Claude 干活的一线工程师。</p>
+<p>他在那篇短文里讲他自己已经几乎不让 Claude 写 markdown 了。所有的 plan、技术 spec、PR review、研究报告，他都让 Claude 直接输出 HTML，渲染成本地一个 .html 文件双击打开。配套他还放了一个 demo 站点 thariqs.github.io&#x2F;html-effectiveness，里面有 20 多个 prompt 示例。</p>
+<p>我盯着自己 9 秒前才滚完的那份 1500 行 markdown plan 看了半天。</p>
+<h2 id="他要解决的不是排版漂亮不漂亮的事"><a href="#他要解决的不是排版漂亮不漂亮的事" class="headerlink" title="他要解决的不是排版漂亮不漂亮的事"></a>他要解决的不是排版漂亮不漂亮的事</h2><p>Thariq 写 HTML 的理由乍看是排版：HTML 自带表格、CSS 色块、SVG 图、JS 交互、in-page navigation。markdown 不行。</p>
+<p>但他自己在文章里反复强调的不是这个。他说在 1M context 这一代模型上，Claude 一次能输出的 plan &#x2F; spec &#x2F; PR review 已经动辄几百行甚至上千行了。纯文本扁平结构在这个长度上撑不住。读者会从「认真读」滑到「快速扫」，从「快速扫」滑到「滚一遍」，最后进入「我相信你写得对」的状态。</p>
+<p>他给出的对策很狠：把 Claude 的输出从「报告」升级成「工作台」。</p>
+<p>举一个他自己的 PR review prompt 原话：”Help me review this PR by creating an HTML artifact… color-code findings by severity… render the actual diff with inline margin annotations.”翻成人话，就是 Claude 不再交给你一份 PR review 文档，它给你一个能筛严重度、能折叠章节、能在 diff 旁边贴评注的小工具，你在这个工具里复审 PR。</p>
+<p>到这里都没问题。这是工程化思维，没毛病。问题是在「你在这个工具里复审」这一步。</p>
+<h2 id="上周二我让-Claude-出了一份-PR-review，我滚了一遍就-LGTM-了"><a href="#上周二我让-Claude-出了一份-PR-review，我滚了一遍就-LGTM-了" class="headerlink" title="上周二我让 Claude 出了一份 PR review，我滚了一遍就 LGTM 了"></a>上周二我让 Claude 出了一份 PR review，我滚了一遍就 LGTM 了</h2><p>事情发生在 5&#x2F;5 周二下午。我那天在带一个新人改一个内部计费服务，他提了个 PR 涉及一个金额计算的核心函数。我懒得自己一行行看，让 Claude Code 跑了 PR review 的 markdown，跑出来七个潜在问题，按严重度从高到低排好。我从头扫一遍，每条看了两秒钟左右，标了一个 LGTM。</p>
+<p>第二天有人在 Slack 上 at 我，说那个函数的入参签名变了一个，下游一个老调用方今天早上挂了一次。我回去翻 PR，发现 Claude 那份 review 里其实在第四条提到了「该函数签名修改可能影响下游调用方，建议检查」，但是这条被它放在「中等严重」一栏里。我当时扫的时候，脑子已经默认前三条「高严重」是真问题，后面四条是补充。</p>
+<p>事后我自己回想：我读 Claude 那份 markdown 的时候，注意力是层层下沉的，第一条用了 5 秒，第二条 3 秒，到第四条已经是「目光扫过」。我相信它的严重度排序是对的，所以我自己的判断从「逐条审」滑到了「分类抽样」。</p>
+<p>写到这里我得承认一件事。Thariq 让 Claude 输出 HTML 工作台的那个工作流，我抄过来之后，不会比我那天读 markdown 的注意力曲线更好，甚至可能更差。</p>
+<h2 id="一个看起来已经被设计好的界面，会比-markdown-更难质疑"><a href="#一个看起来已经被设计好的界面，会比-markdown-更难质疑" class="headerlink" title="一个看起来已经被设计好的界面，会比 markdown 更难质疑"></a>一个看起来已经被设计好的界面，会比 markdown 更难质疑</h2><p>我后来去翻了几篇学术圈这两年讨论 AI 决策替代的论文，arxiv 2412.06593 这一篇做过一个实证：anchoring bias 在 LLM 上广泛存在，连推理模型都没幸免。这条研究本身关心的是 LLM 自己的认知偏差，但读者的偏差结构是对称的：你读 LLM 输出的时候，第一个出现的判断会成为你后续所有判断的锚。</p>
+<p>我自己代入想了一下。读 markdown 的时候，至少版面是平的，第三条和第七条在视觉上没差别。换成 HTML 工作台之后，Claude 给你的是一个已经分好色块的界面：高严重度红、中严重度黄、低严重度灰；在 collapsible section 里折叠好；甚至还有一个左侧的 filter 让你「只看高严重度」。</p>
+<p>这套界面已经替你做完了第一轮判断。等你点开它，你的决策从「哪几条是真问题」变成了「红色色块这几条要不要放过」。</p>
+<p>更糟的是 MIT 的 Kosmyna 等人 2025 年做的一项 EEG 实验。他们让一组人在 4 次 session 里持续用 LLM 辅助写作，对照组只用搜索引擎或者纯靠脑子。4 次 session 后，LLM 组在跟推理和记忆相关的脑网络上的连通性显著下降。Microsoft Research 同年也发过一份调研，结论同向：高频 cognitive offloading 用户的批判思考评分反而最低。</p>
+<p>这两份研究我看完，最不舒服的一句话来自 Microsoft 那份调研的结论：用 AI 越多的人，并不是因为他们的判断变得更好所以敢更多地依赖 AI。恰恰相反，他们是因为依赖了 AI，所以判断能力本身的肌肉在萎缩。</p>
+<h2 id="这循环我画在便签上，是三段路"><a href="#这循环我画在便签上，是三段路" class="headerlink" title="这循环我画在便签上，是三段路"></a>这循环我画在便签上，是三段路</h2><p><img src="https://image.vance.xin/aigc/image/20260510-cognitive-offloading-three-stage-loop.webp" alt="cognitive offloading 三阶段闭环：依赖建立 → 批判思考萎缩 → 偏差内化"></p>
+<p>起点是 initial dependency。Claude 给的 plan 看起来很合理，你接受了。第一次接受可能是因为它确实做对了。再往后接受的速度越来越快，因为上次也没出问题。</p>
+<p>中间这一段叫 critical thinking atrophy。一旦形成了「Claude 给的东西可以快速接受」的肌肉记忆，你逐行核对的肌肉就开始萎缩。这跟道德没关系。注意力是稀缺资源，大脑会自动找省力的路径走。</p>
+<p>走到最后是 bias internalization。等萎缩发生之后，Claude 的某种偏好（比如把签名变更当中等严重度，或者把某种 fallback 方案当低优先级）会被你内化成你自己的偏好。再往后，哪怕没有 Claude 你做决策也会带上这个倾向。</p>
+<p>我那天的 PR review 这件事，刚好走完起点到中段的过渡。最后那一段我还没走到，但我能感觉到风向在那个方向。</p>
+<h2 id="那-Thariq-这套工作流到底要不要抄"><a href="#那-Thariq-这套工作流到底要不要抄" class="headerlink" title="那 Thariq 这套工作流到底要不要抄"></a>那 Thariq 这套工作流到底要不要抄</h2><p>要抄，但抄之前我现在多了一个问题：我读这份输出，是为了「看完知道下一步怎么动」，还是为了「自己最终拍板」。</p>
+<p>如果是前者，HTML artifact 是好东西。比如我让 Claude 帮我把过去一周的 GitHub issue 整理成一个可筛选的看板，目的就是导航和触发跟进，HTML 比 markdown 好用十倍。我也确实会拿 Thariq demo 站点里那几个 prompt 抄过来用。</p>
+<p>如果是后者，我现在的偏好反而是退一步。让 Claude 给我纯文本，甚至是没有任何加粗、列表、严重度标记的 plain text。让信息回到一种「没有被预先排序过」的状态，强迫我自己做一次排序。我读得会慢，但慢就是目的。</p>
+<p>这个判断对 PR review 这件事尤其敏感。我打算从这周开始把内部 PR review 的 prompt 改成「输出 plain text，不要分严重度，不要按重要性排序，按代码出现的物理顺序逐条列」。让 Claude 不替我做第一轮判断，把这个动作还给我。</p>
+<h2 id="30-天-LGTM-次数和会议纪要-prompt，是我现在最不敢动的两件事"><a href="#30-天-LGTM-次数和会议纪要-prompt，是我现在最不敢动的两件事" class="headerlink" title="30 天 LGTM 次数和会议纪要 prompt，是我现在最不敢动的两件事"></a>30 天 LGTM 次数和会议纪要 prompt，是我现在最不敢动的两件事</h2><p>先说 LGTM 这件事。过去 30 天里我给 Claude 输出的 plan 一共按过几次 LGTM、其中真的逐行看完的有几次，我打算这周末翻一下 Claude Code 的 session 历史去数。我现在的猜测是 LGTM 的次数会让我尴尬。</p>
+<p>会议纪要那个事更具体一点。Thariq 那个 HTML demo 站点里有一类我特别想抄的 prompt 是「让 Claude 把 60 分钟的会议纪要做成一个可筛选 + 可生成 action item 的小工具」。这个 prompt 跑出来一定好用。我担心的事情很具体：它做得太好之后，我会更不去亲自看完会议视频。这件事我没想好怎么戒。</p>
+<p>留个问题给你：过去一周你接受 Claude &#x2F; Cursor &#x2F; Copilot 给的 plan 的时候，平均每次会真的逐行看几行？如果你不数，那就是 0。</p>
+<p>评论区告诉我你今天的真实数字，我也告诉你我的。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>AI 编程</tag>
+        <tag>Anthropic</tag>
+        <tag>工作流</tag>
+        <tag>认知偏差</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>三年不要外部钱的 DeepSeek，第一次接 75 亿融资，梁文锋自己掏了 30 亿</title>
+    <url>/2026/05/09/202605091430/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260509-deepseek-7b-funding-liang-personal-check.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>5 月 8 日 The Information 抛出来一个数字：DeepSeek 准备接它成立 3 年来第一笔外部融资，总盘子 50 亿元人民币（约 75 亿美元），估值 500 亿美元。</p>
+<p>这个数字本身已经够惊人。它是中国 AI 创业公司有史以来最大的一笔单轮融资。</p>
+<p>但真正让我盯着屏幕看了好几遍的不是 75 亿这个数。</p>
+<p>是另一个数字：在这 75 亿里，梁文锋本人要写其中最大的一张支票，金额大概是 20 亿元人民币（约 30 亿美元），占整轮的 40%。</p>
+<p>而他在融资前已经持有 DeepSeek 89.5% 的股份。</p>
+<p>一个持股 90% 的创始人，在公司第一次对外开放融资的时候，自己掏出近一半的钱。</p>
+<p>这事在硅谷的剧本里我没见过。</p>
+<h2 id="创始人写最大支票，这件事的反常之处"><a href="#创始人写最大支票，这件事的反常之处" class="headerlink" title="创始人写最大支票，这件事的反常之处"></a>创始人写最大支票，这件事的反常之处</h2><p>按硅谷的标准看，这套操作是反着来的。</p>
+<p>A 轮、B 轮的逻辑通常是：创始人用股权换外部资金，自己持股逐轮被稀释。Sam Altman 在 OpenAI 的非营利母公司里持股是 0；Dario Amodei 在 Anthropic 的股权也只有个位数百分比。这是常态。</p>
+<p>DeepSeek 的剧本不一样。</p>
+<p>梁文锋自己掏 30 亿美元意味着这一轮有 40% 的钱根本不是稀释他的股权，而是他用现金买下自己公司的新发行股份。融资完成之后他持股不会大幅下降，反而是公司账上多了 75 亿现金、外部投资人拿到 10% 出头的少数股权、他自己继续坐在 80% 多的位置上。</p>
+<p>常规的”接受外部资金”是创始人拿股权换现金。梁文锋这次走的更接近”借助外部估值锚点 + 自己加注”的组合动作。</p>
+<p>外部投资人这一轮拿到的不是控制权也不是大块股权，他们买到的是”和梁文锋一起站在 500 亿估值这条线上”的资格。</p>
+<p>我看到这个结构的第一反应是：他不是缺钱。</p>
+<h2 id="缺钱不是这次融资的原因"><a href="#缺钱不是这次融资的原因" class="headerlink" title="缺钱不是这次融资的原因"></a>缺钱不是这次融资的原因</h2><p>DeepSeek 这家公司过去三年没接过一分外部钱。</p>
+<p>它从 2023 年 7 月成立到 2026 年 4 月，所有运营资金都来自梁文锋自己创办的对冲基金 High-Flyer（幻方量化）的资产负债表。R1 那个让英伟达股价 1 月底单日跌 17% 的模型，训练成本据报告 600 万美元，这个钱当年全是 High-Flyer 内部出。</p>
+<p>如果只是缺现金，他完全可以再从 High-Flyer 转一笔。事实上 4 月份他刚做过一次：往 DeepSeek 注册资本里又注入了一笔个人资金，让公司注册资本提升了 50%。</p>
+<p>那么问题就成了：既然能继续自己掏钱，为什么这周还要走外部融资？</p>
+<p>我自己看下来有几个层面在同时起作用。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260509-deepseek-funding-four-forces.webp" alt="DeepSeek 这轮 75 亿融资背后的 4 股推力"></p>
+<h2 id="算力的账，对冲基金的资产负债表撑不下去了"><a href="#算力的账，对冲基金的资产负债表撑不下去了" class="headerlink" title="算力的账，对冲基金的资产负债表撑不下去了"></a>算力的账，对冲基金的资产负债表撑不下去了</h2><p>先说算力规模。</p>
+<p>R1 训练 600 万美元那种叙事，是 V2、V3 时代的事。到了 V4-Pro（4 月 24 日发的，1.6 万亿总参数、490 亿激活）这个量级，单次训练的算力成本已经不再是百万美元级，而是十亿美元级。1M context 训练 + 推理的 KV cache 摊销 + V4.1 在 6 月还要再来一次。</p>
+<p>High-Flyer 2025 年的 AUM 据公开报道在 100 亿美元上下浮动。把这个体量的对冲基金 AUM 拿去支持一个每年烧十亿美元算力的 AI 实验室，逻辑上能撑，但风险敞口太集中。</p>
+<p>外部融 75 亿美元相当于把 DeepSeek 这块业务的烧钱压力从 High-Flyer 资产负债表上剥离出去。</p>
+<h2 id="人才的账，3-年不发期权撑不住了"><a href="#人才的账，3-年不发期权撑不住了" class="headerlink" title="人才的账，3 年不发期权撑不住了"></a>人才的账，3 年不发期权撑不住了</h2><p>人才这一面我觉得更关键。</p>
+<p>DeepSeek 过去三年最被外界讨论的一件事，是它的研究员团队几乎不接受外部猎头。这个反常的稳定性建立在一个隐含前提上：核心研究员相信”在 DeepSeek 做研究的体验本身值得”。</p>
+<p>到 2026 年这个前提开始动摇。</p>
+<p>The Paper（澎湃新闻）4 月份做过一份 DeepSeek 人才流失盘点，确认核心贡献者陆续被 Tencent、ByteDance、小米、DeepRoute.ai 这几家挖走。原因不复杂：ByteDance 给 staff researcher 的 package 已经飙到 800 万人民币 base + 大量股权激励；DeepSeek 既没有发过期权也没有公开 IPO 路径。</p>
+<p>研究员留下来的代价是机会成本越拉越大。</p>
+<p>这一轮融资 TechCrunch 引用的内部说法之一就是 “to offer employees shares in the company”，对应的中文意思是给员工发股权。500 亿美元估值这个数字一旦坐实，DeepSeek 就具备了发一份”500 亿对标”期权 package 的能力，把核心研究员的纸面身价直接锚在和 Tencent&#x2F;ByteDance 同一条线上。</p>
+<p>这是这轮融资真正解决的问题。</p>
+<h2 id="V4-1-在-6-月，钱要在那之前到账"><a href="#V4-1-在-6-月，钱要在那之前到账" class="headerlink" title="V4.1 在 6 月，钱要在那之前到账"></a>V4.1 在 6 月，钱要在那之前到账</h2><p>产品节奏是另一条线。</p>
+<p>DeepSeek 在 4&#x2F;24 发了 V4-Pro 和 V4-Flash 两个 preview 模型，但是 V4 系列后续的重头戏 V4.1 据 Pandaily 报道安排在 2026 年 6 月。</p>
+<p>V4 preview 已经把 1M context 这个能力做出来了，V4.1 据传要把推理质量再往上推一档，对标 GPT-5.4 &#x2F; Claude 4.5。这种级别的训练 + 推理基础设施要的是一次性的大额投入，分摊到月度运营成本里消化不掉。</p>
+<p>这轮 75 亿如果按时间窗算，正好赶在 V4.1 发布前到账。</p>
+<p>钱进来的节奏比钱本身的金额更说明问题：DeepSeek 从一家”训练好模型再发”的实验室，正在变成一家”按节奏迭代产品 + 同步扩张算力”的常规公司。</p>
+<h2 id="Big-Fund-III-进来这件事的政治信号"><a href="#Big-Fund-III-进来这件事的政治信号" class="headerlink" title="Big Fund III 进来这件事的政治信号"></a>Big Fund III 进来这件事的政治信号</h2><p>外部领投方是中国国家集成电路产业投资基金第三期（Big Fund III）。</p>
+<p>这只基金过去十年主要投半导体，比如 SMIC、长江存储这条线。它历史上投 AI 软件公司的次数屈指可数。这次主导一家 AI 实验室的首轮融资，是国家级资本第一次显式给 DeepSeek 背书。</p>
+<p>把它和 Tencent &#x2F; Alibaba 跟投放一起看，信号是清晰的：北京希望 DeepSeek 成为中国 AI 产业出海的旗舰，而不是一个偶尔放出爆款论文的研究项目。</p>
+<p>这个判断对 DeepSeek 自己未必全是好事。它过去能走 Apache 2.0 &#x2F; MIT 开源路线、走 R1 那种学术化的”我们追求 AGI”叙事，前提之一就是它没有外部资本要回报。</p>
+<p>Big Fund III 进来之后这条路会变窄。下一阶段做模型选型、做模型权重发布策略的时候，背后多了一个国家级 LP 在看。</p>
+<h2 id="跟着-OpenAI-Anthropic-走那条路的代价"><a href="#跟着-OpenAI-Anthropic-走那条路的代价" class="headerlink" title="跟着 OpenAI &#x2F; Anthropic 走那条路的代价"></a>跟着 OpenAI &#x2F; Anthropic 走那条路的代价</h2><p>The Information 这篇报道里有一句话最值得反复读：DeepSeek 这次募资的资金用途之一是 “plot revenue efforts”，意思是开始规划营收。</p>
+<p>把这件事放进 OpenAI 和 Anthropic 这两年的轨迹里看，就特别清楚。</p>
+<p>OpenAI 从 GPT-3 发布到 ChatGPT 商业化中间隔了大约 2 年；从 ChatGPT 商业化到 ChatGPT Enterprise 大约 1 年。Anthropic 从 Claude 1 公开到 Claude for Enterprise 节奏类似。两家的共同特征是：模型领先 → 企业产品 → 现金流转正 → 再融资 → 算力扩张。</p>
+<p>DeepSeek 走过的是另一条路：模型领先 → 不商业化 → 内部对冲基金供血 → 走开源吸引开发者。</p>
+<p>5 月 8 日的报道意味着这条路被替换掉了。从这周开始它要走 OpenAI &#x2F; Anthropic 那条路。</p>
+<p>代价是什么？</p>
+<p>代价是 R1 那种叙事不再成立。R1 当时被全球反复引用的核心叙事其实只有一句话：600 万美元做出了 GPT-4 级别。”模型本身很强”反而是从属的那一面。这个叙事能成立的隐含前提是：DeepSeek 是一个非商业的研究组织，所以可以选择不投入巨资。</p>
+<p>500 亿美元估值 + 75 亿融资 + 企业产品规划之后，下一次 V4.1 &#x2F; V5 发布如果再说”我们用了 X 万美元做出了 GPT-5.4 级别”，舆论的对照系会自动切换：你是个 500 亿美元估值的公司，不是当年那个独立研究室。</p>
+<p>判断这件事的好坏意义不大。它说明的是 DeepSeek 这家公司正在从一种叙事身份切换到另一种身份。</p>
+<h2 id="90-持股这件事可能是关键"><a href="#90-持股这件事可能是关键" class="headerlink" title="90% 持股这件事可能是关键"></a>90% 持股这件事可能是关键</h2><p>回到开头那个数字。</p>
+<p>我现在重新想梁文锋自己掏 30 亿、保留 90% 持股这个动作的目的，越想越觉得它不只是”founder conviction”那么简单。</p>
+<p>他在用现金买下一件具体的事：哪怕拿了 Big Fund III 和 Tencent &#x2F; Alibaba 的钱，DeepSeek 这家公司接下来 5 年的方向决定权，依然在他一个人手里。</p>
+<p>如果他持股是 30%、40% 这种区间，那么外部投资人加 Big Fund III 加员工期权池组合起来就有可能在董事会层面对他形成制衡。</p>
+<p>但是 90% 是另一回事。90% 之后哪怕融资稀释 5%、再发期权池稀释 5%，他还在 80% 多。无论他要把 V5 走开源还是闭源、要把企业产品做成 SaaS 还是 API、要把 DeepSeek 卖给 Tencent 还是独立 IPO，董事会层面没人能否决他。</p>
+<p>这一轮真正交易出去的东西其实不在股权层面。它在另一个层面：DeepSeek 接下来 5 年的剧本由谁写。</p>
+<p>外部投资人接受这个交易，因为 500 亿估值在 2026 年的中国 AI 市场里几乎是唯一一张能买到顶级研究员团队 + V4 &#x2F; V4.1 &#x2F; V5 路线 + 全球开源声誉的票。</p>
+<h2 id="还想问的几件事"><a href="#还想问的几件事" class="headerlink" title="还想问的几件事"></a>还想问的几件事</h2><p>留几个我自己也没盯清楚的问题。</p>
+<p>钱的来源是一个。梁文锋这 30 亿美元从哪来？High-Flyer 的资产负债表本身公开数据有限，AUM 在 100 亿美元附近浮动。如果这 30 亿是他从 High-Flyer 个人收益里抽出来的，意味着他过去 7 年在量化交易上的累积收益已经足够覆盖这种量级的现金支出。这本身就是另一个值得单独写的故事。</p>
+<p>V4.1 的发布节奏是另一个。V4 preview 是 4&#x2F;24 发的，V4.1 如果按 6 月节奏推，中间窗口只有 6-8 周。这个节奏对标 OpenAI 大概是 GPT-5 到 GPT-5.1 的间隔。DeepSeek 真的能撑住这种发版速度吗？还是 V4.1 会和这轮融资一起被推迟到 Q3？</p>
+<p>企业产品到底长什么样我也很想知道。DeepSeek 一直没有正式的 ToB 产品线。这次说要 “plot revenue efforts” 我猜是 API 收费 + 企业部署 + 行业定制三条线，但还没看到任何落地细节。如果你在企业 IT &#x2F; 采购岗位上，DeepSeek 的销售团队最近联系过你吗？我很想知道他们的对外口径。</p>
+<p>评论区聊聊。你觉得 DeepSeek 这一轮 75 亿之后，会不会重蹈 OpenAI 那条”越融资越远离原始使命”的路？还是说梁文锋持股 90% 这一道护城河足够把这事按住？</p>
+]]></content>
+      <categories>
+        <category>产品</category>
+      </categories>
+      <tags>
+        <tag>DeepSeek</tag>
+        <tag>梁文锋</tag>
+        <tag>AI 融资</tag>
+        <tag>中国 AI</tag>
+        <tag>投资</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Codex Chrome 插件踩坑实录：第三方 API 装不上、香港节点连不通、必须 @ Chrome 才生效</title>
+    <url>/2026/05/09/202605091416/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260509-20260509-codex-chrome-extension-pitfalls.webp" alt="cover"></p>
+<p>大家好，我是飞飞。</p>
+<p>OpenAI 5 月 7 日发了 Codex 的 Chrome 插件。我昨晚刷到推送，第一时间想装上试，结果连着失败 4 次。</p>
+<p>每一次失败的原因都不一样。我把这 4 个坑挨个写出来给你做参考，你装的时候对照避开，省两小时算我的。</p>
+<p>先说结论：这个插件值得装。它和现有的 Computer Use 不是一回事。Computer Use 是 Codex 接管你的屏幕，自己拿鼠标点；Chrome 插件是 Codex 用你已经登录的浏览器在后台跑，跨多个 tab 拿 context、用 Chrome DevTools、跑 web 测试。两个机制，两种能力。</p>
+<p>但前提是你能装上。</p>
+<h2 id="简单安装路径"><a href="#简单安装路径" class="headerlink" title="简单安装路径"></a>简单安装路径</h2><p>正确的步骤就这一句：</p>
+<p><strong>升级 Codex → 打开设置 → 电脑控制（Computer Use）→ Google Chrome → 安装浏览器插件</strong></p>
+<p>看起来不复杂。问题在于这个路径上至少 4 个地方会让你卡住。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260509-20260509-codex-chrome-install-flow.webp" alt="Codex Chrome 插件 5 步安装路径 + 4 个坑标注"></p>
+<h2 id="第三方-API-模式装不上插件，必须切官方订阅登录"><a href="#第三方-API-模式装不上插件，必须切官方订阅登录" class="headerlink" title="第三方 API 模式装不上插件，必须切官方订阅登录"></a>第三方 API 模式装不上插件，必须切官方订阅登录</h2><p>我自己平时用 Codex 是接的中转 API。Codex 在第三方 API 模式下，”电脑控制”这个入口要么灰着，要么点进去之后浏览器选项里没有”安装插件”按钮。</p>
+<p>折腾了 20 分钟才意识到不是 bug：<strong>Chrome 插件这个功能强制要求你登录 OpenAI 官方订阅账号才能装</strong>。你必须先把 Codex 切到”用 ChatGPT 账号登录”模式，才会出现安装按钮。</p>
+<p>OpenAI 这一步设计很合理（Chrome 插件能访问你登录的所有网站，包括 Gmail、LinkedIn、内部工具，自然要锁死账号链路），但对我这种主要用第三方 API 的用户算是一道额外门槛。</p>
+<p>如果你也跟我一样以前用第三方 API，先去 Codex 设置里切换到”ChatGPT 登录”，再回来装插件。</p>
+<h2 id="香港等节点点不开安装页"><a href="#香港等节点点不开安装页" class="headerlink" title="香港等节点点不开安装页"></a>香港等节点点不开安装页</h2><p>切完账号之后我点”安装浏览器插件”，结果跳转的页面打不开。换了几个节点试，发现：</p>
+<ul>
+<li><strong>香港节点</strong>：直接 404 &#x2F; 超时</li>
+<li><strong>某些日本节点</strong>：能加载但点击安装按钮没反应</li>
+<li><strong>美西、新加坡节点</strong>：正常</li>
+</ul>
+<p>OpenAI 给 Codex Chrome 插件这个功能做了节点白名单，明显比 ChatGPT 主站的策略严。我没看到官方文档明说哪些地区被屏蔽，但实测香港不行。</p>
+<p>如果你点”安装插件”之后看到空白页或 403，先看你的 VPN 节点。优先选美西、新加坡、东京（不一定全部能用，多换几个）。</p>
+<h2 id="Chrome-必须设成系统默认浏览器"><a href="#Chrome-必须设成系统默认浏览器" class="headerlink" title="Chrome 必须设成系统默认浏览器"></a>Chrome 必须设成系统默认浏览器</h2><p>解决了节点之后我又卡在另一个地方。Codex 引导你跳到 Chrome Web Store 安装插件的步骤里，会<strong>自动调用系统默认浏览器</strong>打开链接。</p>
+<p>我系统默认浏览器是 Arc。结果链接被 Arc 打开，Arc 里的 Chrome Web Store 装不了 Chrome 专属插件。</p>
+<p>解决方法是去系统设置（macOS：System Settings → Desktop &amp; Dock → Default web browser）把默认浏览器改成 Google Chrome。改完之后再回 Codex 重新点”安装插件”，链接才会正确打开 Chrome 完成安装。</p>
+<p>如果你平时用 Arc &#x2F; Brave &#x2F; Firefox 当主力浏览器，装这个插件期间临时把默认浏览器切到 Chrome，装完再切回去。</p>
+<h2 id="装好之后死活检测不到？重启电脑"><a href="#装好之后死活检测不到？重启电脑" class="headerlink" title="装好之后死活检测不到？重启电脑"></a>装好之后死活检测不到？重启电脑</h2><p>最让我无语的是第 4 个坑。</p>
+<p>插件装好之后，理论上 Codex 会自动检测到 Chrome 有插件、显示”已连接”。但我装好之后 Codex 那边一直显示”未连接到 Chrome”。</p>
+<p>试了几个常见的方法：重启 Chrome、重启 Codex、打开关闭插件、退出登录重新登录。<strong>全都没用</strong>。</p>
+<p>最后我抱着试试的心态重启了整台 Mac。重启完打开 Codex，瞬间识别到了。</p>
+<p>我猜是 Codex 和 Chrome 插件之间的 IPC 通道（应该是某种本地 socket 或 native messaging）在 Chrome 插件首次安装后没有完全建立。重启电脑相当于强制重建了所有进程间通道。</p>
+<p>如果你装完之后 Codex 死活检测不到 Chrome，别浪费时间排查，直接 Cmd+Q 全部关掉、重启电脑。</p>
+<h2 id="装好之后怎么调用"><a href="#装好之后怎么调用" class="headerlink" title="装好之后怎么调用"></a>装好之后怎么调用</h2><p>这一步官方文档写得不算清楚。装完插件不是说 Codex 会自动用 Chrome，<strong>你必须在 Codex 对话里用 <code>@ Chrome</code> 显式调用</strong>。</p>
+<p>输入 <code>@</code>，Codex 弹出一个 mention 列表，里面会有 Chrome 这一项。选中它，相当于告诉 Codex”接下来这条任务用 Chrome 跑”。</p>
+<p>举个例子，我今天用它做的一件事：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@Chrome 打开我的 LinkedIn 收件箱，找出最近 7 天里所有标记为</span><br><span class="line">&quot;招聘&quot;的私信，按公司分组列出来，每个公司给一句话总结</span><br></pre></td></tr></table></figure>
+
+<p>Codex 接到这条之后，用我已登录的 Chrome 标签页（LinkedIn 是常驻 tab）直接读私信，不用我重新登录。它在后台跑了大概 2 分钟，输出了一份按公司分组的列表，每条带一句话评价。</p>
+<p>这个体验和 Computer Use 完全不同。Computer Use 是我看着光标自己动，得让出整个屏幕；Chrome 插件是我同时还能干别的，Codex 只占用 Chrome 的某些 tab。</p>
+<h2 id="Terminal-版的额外坑：找不到-node-repl"><a href="#Terminal-版的额外坑：找不到-node-repl" class="headerlink" title="Terminal 版的额外坑：找不到 node_repl"></a>Terminal 版的额外坑：找不到 node_repl</h2><p>我同时也试了 Terminal 版的 Codex（命令行界面那个）。</p>
+<p>Terminal 版<strong>能调用 Chrome skill</strong>：你在 prompt 里说”用 Chrome 帮我做 X”，Terminal 版的 Codex 也会试图触发。但调用之后会卡在一个奇怪的错误上：找不到 <code>node_repl</code> 这个内部工具。</p>
+<p>我猜 Chrome skill 在 Terminal 版里依赖一个 Node.js 的 REPL 桥接（猜测，没看官方源码确认），而 Terminal 版当前发行包里这个二进制没正确打包进去。等于 Terminal 版的 Chrome 调用是半残的：能识别意图但跑不起来。</p>
+<p>我没找到能修这个问题的办法。如果你主力用 Terminal 版 Codex，建议先用桌面 App + Chrome 插件这个组合。Terminal 版的 Chrome 集成等下个版本再看。</p>
+<h2 id="它会让你重新评估什么场景"><a href="#它会让你重新评估什么场景" class="headerlink" title="它会让你重新评估什么场景"></a>它会让你重新评估什么场景</h2><p>写到这里说一下我对这个插件本身的判断。</p>
+<p>它的真正价值是**”用已登录会话跑 agent 任务”**这件事。过去我们让 Claude &#x2F; GPT 处理 Gmail、LinkedIn、Notion、Salesforce 这类需要登录的网站，要么手动复制粘贴，要么走官方 API（前提是有 API），要么走 Computer Use（前提是接管屏幕）。</p>
+<p>Chrome 插件的”用 signed-in 浏览器跑”这条路把这三种笨办法都绕过去了。你已经登录过的网站，Codex 直接进去用，不需要重新认证、不需要 API、不需要让出屏幕。</p>
+<p>这条路的代价是 OpenAI 拿到了你浏览器里所有登录会话的访问权限。如果你的 Chrome 里登录着公司 Gmail、Salesforce、内部工具，装这个插件之前要想清楚授权边界。我个人现在的做法是开一个独立的 Chrome profile（叫 codex-only），只登我接受被 AI 看到的几个账号，把它当成一个”沙盒环境”。</p>
+<h2 id="还想问的几件事"><a href="#还想问的几件事" class="headerlink" title="还想问的几件事"></a>还想问的几件事</h2><p>最后留几个我自己没确认的点。</p>
+<p>OpenAI 给 Chrome 插件做的节点白名单具体覆盖哪些地区？除了香港我还没系统测过别的地区。如果你在大陆 &#x2F; 东南亚 &#x2F; 欧洲不同地区试装过，欢迎评论区说一下你的节点能不能用。</p>
+<p>Terminal 版的 <code>node_repl</code> 缺失是不是已知 bug？我在 GitHub issues 里没搜到具体记录，但我搜的关键词可能不对。如果你也撞到了或找到了 workaround，告诉我一下。</p>
+<p>最后留个使用问题：你打算用这个插件跑哪些场景？我现在已经摸到的几个有用 case 是 LinkedIn 私信处理、跨多个 Notion 页面整合信息、跑 Vercel&#x2F;Cloudflare 控制台例行检查。但应该还有更适合的场景我没想到，想看你们怎么用。</p>
+]]></content>
+      <categories>
+        <category>教程</category>
+      </categories>
+      <tags>
+        <tag>AI 编程</tag>
+        <tag>OpenAI</tag>
+        <tag>Codex</tag>
+        <tag>Chrome 插件</tag>
+        <tag>踩坑</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>11 天前我教大家在 Claude Desktop 里接 DeepSeek V4，今天 Anthropic 把这条路堵了</title>
     <url>/2026/05/08/202605081410/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260508-20260508-claude-desktop-third-party-block.webp" alt="cover"></p>
@@ -1594,8 +2090,8 @@
         <tag>Figma</tag>
         <tag>Anthropic</tag>
         <tag>Google</tag>
-        <tag>Stitch</tag>
         <tag>Claude Design</tag>
+        <tag>Stitch</tag>
       </tags>
   </entry>
   <entry>
@@ -2060,8 +2556,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI</tag>
+        <tag>Claude Code</tag>
         <tag>gstack</tag>
         <tag>Skill</tag>
         <tag>Token</tag>
@@ -2123,8 +2619,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI</tag>
+        <tag>Claude Code</tag>
         <tag>Anthropic</tag>
         <tag>Claude</tag>
         <tag>Buddy</tag>
@@ -3452,8 +3948,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>开发工具</tag>
         <tag>AI</tag>
+        <tag>开发工具</tag>
         <tag>AI 编程</tag>
         <tag>Codex</tag>
         <tag>Agent Skills</tag>
@@ -3764,8 +4260,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI</tag>
+        <tag>Claude Code</tag>
         <tag>Skills</tag>
         <tag>编程工具</tag>
         <tag>效率</tag>
@@ -4145,8 +4641,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI</tag>
+        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
         <tag>Harness</tag>
         <tag>编程工具</tag>
@@ -5843,8 +6339,8 @@
       </categories>
       <tags>
         <tag>程序员</tag>
-        <tag>Claude Code</tag>
         <tag>AI</tag>
+        <tag>Claude Code</tag>
         <tag>职业发展</tag>
         <tag>软件工程</tag>
       </tags>
@@ -6151,8 +6647,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI</tag>
+        <tag>Claude Code</tag>
         <tag>一人公司</tag>
         <tag>创业</tag>
         <tag>独立开发者</tag>
@@ -6273,8 +6769,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Cursor</tag>
         <tag>AI</tag>
+        <tag>Cursor</tag>
         <tag>Kimi K2.5</tag>
         <tag>开源模型</tag>
       </tags>
@@ -6473,9 +6969,9 @@
         <category>观点</category>
       </categories>
       <tags>
+        <tag>AI</tag>
         <tag>AI编程</tag>
         <tag>Cursor</tag>
-        <tag>AI</tag>
         <tag>Vibe Coding</tag>
         <tag>赚钱</tag>
       </tags>
@@ -7908,9 +8404,9 @@
       <tags>
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>开发者工具</tag>
         <tag>Agent框架</tag>
         <tag>LangChain</tag>
+        <tag>开发者工具</tag>
       </tags>
   </entry>
   <entry>
@@ -7984,11 +8480,11 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>AI</tag>
+        <tag>AI编程</tag>
+        <tag>开发者工具</tag>
         <tag>ChatGPT</tag>
         <tag>Claude</tag>
-        <tag>开发者工具</tag>
       </tags>
   </entry>
   <entry>
@@ -8192,8 +8688,8 @@
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
         <tag>Remote Control</tag>
-        <tag>Channels</tag>
         <tag>远程开发</tag>
+        <tag>Channels</tag>
       </tags>
   </entry>
   <entry>
@@ -9959,9 +10455,9 @@
       <tags>
         <tag>AI编程</tag>
         <tag>OpenAI Codex</tag>
-        <tag>基准测试</tag>
         <tag>意图理解</tag>
         <tag>Agent Loop</tag>
+        <tag>基准测试</tag>
       </tags>
   </entry>
   <entry>
@@ -14772,8 +15268,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>开发工具</tag>
         <tag>AI</tag>
+        <tag>开发工具</tag>
         <tag>Gemini</tag>
         <tag>CLI</tag>
         <tag>Google</tag>
@@ -14910,9 +15406,9 @@
         <category>阅读</category>
       </categories>
       <tags>
+        <tag>AI</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
-        <tag>AI</tag>
         <tag>编程助手</tag>
         <tag>Opus</tag>
       </tags>
@@ -15018,9 +15514,9 @@
         <category>阅读</category>
       </categories>
       <tags>
+        <tag>AI</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
-        <tag>AI</tag>
         <tag>AI Agent</tag>
         <tag>Dify</tag>
       </tags>
@@ -18912,8 +19408,8 @@
       </categories>
       <tags>
         <tag>编程</tag>
-        <tag>Claude Code</tag>
         <tag>AI</tag>
+        <tag>Claude Code</tag>
         <tag>职业发展</tag>
         <tag>软件工程</tag>
       </tags>
@@ -23766,9 +24262,9 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>技术提升</tag>
-        <tag>AI编程</tag>
         <tag>AI</tag>
         <tag>个人成长</tag>
+        <tag>AI编程</tag>
         <tag>提示词工程</tag>
       </tags>
   </entry>
@@ -25237,7 +25733,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#x74;&#64;&#x67;&#105;&#116;&#x68;&#117;&#x62;&#46;&#x63;&#x6f;&#109;">&#x67;&#x69;&#x74;&#64;&#x67;&#105;&#116;&#x68;&#117;&#x62;&#46;&#x63;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#109;">&#103;&#105;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -25763,6 +26259,76 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android adb 命令</title>
+    <url>/2017/09/24/201709242350/</url>
+    <content><![CDATA[<h2 id="1-查看当前adb版本"><a href="#1-查看当前adb版本" class="headerlink" title="1.查看当前adb版本"></a>1.查看当前adb版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb version</span><br><span class="line">Android Debug Bridge version 1.0.36</span><br><span class="line">Revision 0e9850346394-android</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-查看当前已连接的设备"><a href="#2-查看当前已连接的设备" class="headerlink" title="2.查看当前已连接的设备"></a>2.查看当前已连接的设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb devices</span><br><span class="line">f414ec93        device</span><br><span class="line">20080411        device</span><br></pre></td></tr></table></figure>
+
+<p>##3.安装apk文件</p>
+<p>直接安装：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb install + apk文件的路径</span><br></pre></td></tr></table></figure>
+
+<p>一般在安装的时候先敲出<strong>adb install</strong>然后直接将apk文件拖到MS Dos窗口中即可,然后点击回车即可自动安装。</p>
+<p>提示：有时候有的安装时会失败，因为有可能包含中文路径，建议最好不要包含中文路径！</p>
+<p>保留数据和缓存文件，重新安装apk：<br><code>adb install -r hello.apk</code></p>
+<p>安装apk到sd卡：<br><code>adb install -s hello.apk</code></p>
+<h2 id="4-拉取文件到电脑"><a href="#4-拉取文件到电脑" class="headerlink" title="4.拉取文件到电脑"></a>4.拉取文件到电脑</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb pull +手机文件路径/目录 + 空格 + 电脑目录 </span><br><span class="line">adb pull /data/data/com.xpf.demo/files/20171031.txt c:/Users/xin/</span><br><span class="line">[100%] /data/data/com.xpf.demo/files/20171031.txt</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-从电脑复制文件到手机"><a href="#5-从电脑复制文件到手机" class="headerlink" title="5.从电脑复制文件到手机"></a>5.从电脑复制文件到手机</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb push + 电脑文件路径 + 空格 + 手机文件路径/目录</span><br><span class="line">$adb push hello.txt /sdcard/mydir/</span><br></pre></td></tr></table></figure>
+
+<h2 id="6-卸载已安装的app"><a href="#6-卸载已安装的app" class="headerlink" title="6.卸载已安装的app"></a>6.卸载已安装的app</h2><p>直接卸载：<code>adb uninstall &lt;package&gt;</code></p>
+<p>卸载App但保留数据和缓存文件：<br><code>adb uninstall -k com.xpf.demo</code></p>
+<h2 id="7-adb-Server"><a href="#7-adb-Server" class="headerlink" title="7.adb Server"></a>7.adb Server</h2><p>我们在调试的时候，偶尔也会遇到手机adb连接不上的情况，我们先kill掉server在start server就好了<br>启动adb server ：<br><code>adb start-server</code><br>停止adb server ：<br><code>adb kill-server</code></p>
+<h2 id="8-查看手机屏幕分辨率"><a href="#8-查看手机屏幕分辨率" class="headerlink" title="8.查看手机屏幕分辨率"></a>8.查看手机屏幕分辨率</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell wm size</span><br><span class="line">Physical size: 1080x1920</span><br></pre></td></tr></table></figure>
+
+<h2 id="9-查看adb命令帮助信息"><a href="#9-查看adb命令帮助信息" class="headerlink" title="9.查看adb命令帮助信息"></a>9.查看adb命令帮助信息</h2><p><code>adb help</code></p>
+<h2 id="10-在命令行中查看LOG日志"><a href="#10-在命令行中查看LOG日志" class="headerlink" title="10.在命令行中查看LOG日志"></a>10.在命令行中查看LOG日志</h2><p><code>adb logcat -s 标签名</code></p>
+<p>温馨提示：加入标签名可以进行log打印过滤，不然打印出来的日志太多不方便查看</p>
+<h2 id="11-发布端口"><a href="#11-发布端口" class="headerlink" title="11.发布端口"></a>11.发布端口</h2><p>可以设置任意的端口号作为主机向模拟器或设备的请求端口。</p>
+<p><code>adb forward tcp:5555 tcp:8000</code></p>
+<h2 id="12-查看bug报告"><a href="#12-查看bug报告" class="headerlink" title="12.查看bug报告"></a>12.查看bug报告</h2><p><code>adb bugreport</code></p>
+<h2 id="13-屏幕录像"><a href="#13-屏幕录像" class="headerlink" title="13.屏幕录像"></a>13.屏幕录像</h2><p>例如，开始录制屏幕并储存到&#x2F;sdcard根目录，同时名字为video.mp4</p>
+<p><code>adb shell screenrecord /sdcard/video.mp4</code></p>
+<h2 id="14-关闭设备请求，开启设备"><a href="#14-关闭设备请求，开启设备" class="headerlink" title="14.关闭设备请求，开启设备"></a>14.关闭设备请求，开启设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell stop</span><br><span class="line">adb shell start</span><br></pre></td></tr></table></figure>
+
+<h2 id="15-设备关机以及重启"><a href="#15-设备关机以及重启" class="headerlink" title="15.设备关机以及重启"></a>15.设备关机以及重启</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb reboot</span><br><span class="line">adb shutdown</span><br></pre></td></tr></table></figure>
+
+<h2 id="16-获取已连接的手机序列号"><a href="#16-获取已连接的手机序列号" class="headerlink" title="16.获取已连接的手机序列号"></a>16.获取已连接的手机序列号</h2><p><code>adb get-serialno</code></p>
+<h2 id="17-获取设备的连接状态"><a href="#17-获取设备的连接状态" class="headerlink" title="17.获取设备的连接状态"></a>17.获取设备的连接状态</h2><p><code>adb -s f414ec93 get-state</code></p>
+<p>其中<strong>f414ec93</strong>为手机序列号（获取序列号参考16）</p>
+<h2 id="18-查看目录下的所有文件及文件夹"><a href="#18-查看目录下的所有文件及文件夹" class="headerlink" title="18.查看目录下的所有文件及文件夹"></a>18.查看目录下的所有文件及文件夹</h2><p><code>adb shell ls</code></p>
+<p>##19.查看文件夹内容</p>
+<p><code>adb shell cd &lt;folder&gt; </code></p>
+<h2 id="20-新建文件夹（目录）"><a href="#20-新建文件夹（目录）" class="headerlink" title="20.新建文件夹（目录）"></a>20.新建文件夹（目录）</h2><p><code>adb shell mkdir path/floldername</code></p>
+<p>##21.发送文件内容</p>
+<p><code>adb  shell input text &lt;context&gt;</code></p>
+<h2 id="22-通过adb命令发送键盘按键事件"><a href="#22-通过adb命令发送键盘按键事件" class="headerlink" title="22.通过adb命令发送键盘按键事件"></a>22.通过adb命令发送键盘按键事件</h2><p><code>adb shell input keyevent &lt;keycode&gt;</code></p>
+<h2 id="23-获取设备参数信息"><a href="#23-获取设备参数信息" class="headerlink" title="23.获取设备参数信息"></a>23.获取设备参数信息</h2><p><code>adb shell getprop &lt;key&gt;</code></p>
+<h2 id="24-设置设备的参数信息"><a href="#24-设置设备的参数信息" class="headerlink" title="24.设置设备的参数信息"></a>24.设置设备的参数信息</h2><p><code>adb shell setprop &lt;key&gt; &lt;value&gt;</code></p>
+<h2 id="25-使用adb命令进行截屏操作"><a href="#25-使用adb命令进行截屏操作" class="headerlink" title="25.使用adb命令进行截屏操作"></a>25.使用adb命令进行截屏操作</h2><p><code>adb shell screencap -p &lt;path/file&gt;</code></p>
+<h2 id="26-查看内存情况，如果有number表示查看多少条数据"><a href="#26-查看内存情况，如果有number表示查看多少条数据" class="headerlink" title="26.查看内存情况，如果有number表示查看多少条数据"></a>26.查看内存情况，如果有number表示查看多少条数据</h2><p><code>adb shell top [-m &lt;number&gt;]</code></p>
+<h2 id="27-查看进程列表数据"><a href="#27-查看进程列表数据" class="headerlink" title="27.查看进程列表数据"></a>27.查看进程列表数据</h2><p><code>adb shell ps</code></p>
+<h2 id="28-杀死对应pid的进程"><a href="#28-杀死对应pid的进程" class="headerlink" title="28.杀死对应pid的进程"></a>28.杀死对应pid的进程</h2><p><code>adb shell kill &lt;pid&gt;</code></p>
+<h2 id="29-查看指定pid进行的运行状态"><a href="#29-查看指定pid进行的运行状态" class="headerlink" title="29.查看指定pid进行的运行状态"></a>29.查看指定pid进行的运行状态</h2><p><code>adb shell ps -x &lt;pid&gt;</code></p>
+<h2 id="30-查看后台服务信息"><a href="#30-查看后台服务信息" class="headerlink" title="30.查看后台服务信息"></a>30.查看后台服务信息</h2><p><code>adb shell service list</code></p>
+<h2 id="31-查看当前内存占用情况"><a href="#31-查看当前内存占用情况" class="headerlink" title="31.查看当前内存占用情况"></a>31.查看当前内存占用情况</h2><p><code>adb shell cat /proc/meminfo</code></p>
+<h2 id="32-查看io内存分区情况"><a href="#32-查看io内存分区情况" class="headerlink" title="32.查看io内存分区情况"></a>32.查看io内存分区情况</h2><p><code>adb shell cat /proc/iomen</code></p>
+<h2 id="33-将system分区重新挂载为可读写分区"><a href="#33-将system分区重新挂载为可读写分区" class="headerlink" title="33.将system分区重新挂载为可读写分区"></a>33.将system分区重新挂载为可读写分区</h2><p><code>adb remount</code></p>
+<h2 id="34-列出除了系统应用的第三方应用包名"><a href="#34-列出除了系统应用的第三方应用包名" class="headerlink" title="34.列出除了系统应用的第三方应用包名"></a>34.列出除了系统应用的第三方应用包名</h2><p><code>adb shell pm list packages -3</code></p>
+<h2 id="35-清除应用数据与缓存"><a href="#35-清除应用数据与缓存" class="headerlink" title="35.清除应用数据与缓存"></a>35.清除应用数据与缓存</h2><p><code>adb shell pm clear &lt;packagename&gt;</code></p>
+<p>好了，就写到这里吧，其实ADB命令有很多，我只整理了一些大家比较常用的一些命令，当然我们有时候要记忆的东西太多了，记不住有些命令，你需要做的就是点击收藏按钮，当用的时候就可以方便自己查找了，如果你觉得文本不错，请您点个赞，码字不易，且行且珍惜！</p>
+<p>再小的点赞也是对博主的莫大鼓励！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>adb</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 最全 Intent 传递数据姿势</title>
     <url>/2017/09/24/201709242349/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center><center>置顶公众号（**ID：ITBigFly**）第一时间收到推送</center>
@@ -25844,76 +26410,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Intent</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android adb 命令</title>
-    <url>/2017/09/24/201709242350/</url>
-    <content><![CDATA[<h2 id="1-查看当前adb版本"><a href="#1-查看当前adb版本" class="headerlink" title="1.查看当前adb版本"></a>1.查看当前adb版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb version</span><br><span class="line">Android Debug Bridge version 1.0.36</span><br><span class="line">Revision 0e9850346394-android</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-查看当前已连接的设备"><a href="#2-查看当前已连接的设备" class="headerlink" title="2.查看当前已连接的设备"></a>2.查看当前已连接的设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb devices</span><br><span class="line">f414ec93        device</span><br><span class="line">20080411        device</span><br></pre></td></tr></table></figure>
-
-<p>##3.安装apk文件</p>
-<p>直接安装：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb install + apk文件的路径</span><br></pre></td></tr></table></figure>
-
-<p>一般在安装的时候先敲出<strong>adb install</strong>然后直接将apk文件拖到MS Dos窗口中即可,然后点击回车即可自动安装。</p>
-<p>提示：有时候有的安装时会失败，因为有可能包含中文路径，建议最好不要包含中文路径！</p>
-<p>保留数据和缓存文件，重新安装apk：<br><code>adb install -r hello.apk</code></p>
-<p>安装apk到sd卡：<br><code>adb install -s hello.apk</code></p>
-<h2 id="4-拉取文件到电脑"><a href="#4-拉取文件到电脑" class="headerlink" title="4.拉取文件到电脑"></a>4.拉取文件到电脑</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb pull +手机文件路径/目录 + 空格 + 电脑目录 </span><br><span class="line">adb pull /data/data/com.xpf.demo/files/20171031.txt c:/Users/xin/</span><br><span class="line">[100%] /data/data/com.xpf.demo/files/20171031.txt</span><br></pre></td></tr></table></figure>
-
-<h2 id="5-从电脑复制文件到手机"><a href="#5-从电脑复制文件到手机" class="headerlink" title="5.从电脑复制文件到手机"></a>5.从电脑复制文件到手机</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb push + 电脑文件路径 + 空格 + 手机文件路径/目录</span><br><span class="line">$adb push hello.txt /sdcard/mydir/</span><br></pre></td></tr></table></figure>
-
-<h2 id="6-卸载已安装的app"><a href="#6-卸载已安装的app" class="headerlink" title="6.卸载已安装的app"></a>6.卸载已安装的app</h2><p>直接卸载：<code>adb uninstall &lt;package&gt;</code></p>
-<p>卸载App但保留数据和缓存文件：<br><code>adb uninstall -k com.xpf.demo</code></p>
-<h2 id="7-adb-Server"><a href="#7-adb-Server" class="headerlink" title="7.adb Server"></a>7.adb Server</h2><p>我们在调试的时候，偶尔也会遇到手机adb连接不上的情况，我们先kill掉server在start server就好了<br>启动adb server ：<br><code>adb start-server</code><br>停止adb server ：<br><code>adb kill-server</code></p>
-<h2 id="8-查看手机屏幕分辨率"><a href="#8-查看手机屏幕分辨率" class="headerlink" title="8.查看手机屏幕分辨率"></a>8.查看手机屏幕分辨率</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell wm size</span><br><span class="line">Physical size: 1080x1920</span><br></pre></td></tr></table></figure>
-
-<h2 id="9-查看adb命令帮助信息"><a href="#9-查看adb命令帮助信息" class="headerlink" title="9.查看adb命令帮助信息"></a>9.查看adb命令帮助信息</h2><p><code>adb help</code></p>
-<h2 id="10-在命令行中查看LOG日志"><a href="#10-在命令行中查看LOG日志" class="headerlink" title="10.在命令行中查看LOG日志"></a>10.在命令行中查看LOG日志</h2><p><code>adb logcat -s 标签名</code></p>
-<p>温馨提示：加入标签名可以进行log打印过滤，不然打印出来的日志太多不方便查看</p>
-<h2 id="11-发布端口"><a href="#11-发布端口" class="headerlink" title="11.发布端口"></a>11.发布端口</h2><p>可以设置任意的端口号作为主机向模拟器或设备的请求端口。</p>
-<p><code>adb forward tcp:5555 tcp:8000</code></p>
-<h2 id="12-查看bug报告"><a href="#12-查看bug报告" class="headerlink" title="12.查看bug报告"></a>12.查看bug报告</h2><p><code>adb bugreport</code></p>
-<h2 id="13-屏幕录像"><a href="#13-屏幕录像" class="headerlink" title="13.屏幕录像"></a>13.屏幕录像</h2><p>例如，开始录制屏幕并储存到&#x2F;sdcard根目录，同时名字为video.mp4</p>
-<p><code>adb shell screenrecord /sdcard/video.mp4</code></p>
-<h2 id="14-关闭设备请求，开启设备"><a href="#14-关闭设备请求，开启设备" class="headerlink" title="14.关闭设备请求，开启设备"></a>14.关闭设备请求，开启设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell stop</span><br><span class="line">adb shell start</span><br></pre></td></tr></table></figure>
-
-<h2 id="15-设备关机以及重启"><a href="#15-设备关机以及重启" class="headerlink" title="15.设备关机以及重启"></a>15.设备关机以及重启</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb reboot</span><br><span class="line">adb shutdown</span><br></pre></td></tr></table></figure>
-
-<h2 id="16-获取已连接的手机序列号"><a href="#16-获取已连接的手机序列号" class="headerlink" title="16.获取已连接的手机序列号"></a>16.获取已连接的手机序列号</h2><p><code>adb get-serialno</code></p>
-<h2 id="17-获取设备的连接状态"><a href="#17-获取设备的连接状态" class="headerlink" title="17.获取设备的连接状态"></a>17.获取设备的连接状态</h2><p><code>adb -s f414ec93 get-state</code></p>
-<p>其中<strong>f414ec93</strong>为手机序列号（获取序列号参考16）</p>
-<h2 id="18-查看目录下的所有文件及文件夹"><a href="#18-查看目录下的所有文件及文件夹" class="headerlink" title="18.查看目录下的所有文件及文件夹"></a>18.查看目录下的所有文件及文件夹</h2><p><code>adb shell ls</code></p>
-<p>##19.查看文件夹内容</p>
-<p><code>adb shell cd &lt;folder&gt; </code></p>
-<h2 id="20-新建文件夹（目录）"><a href="#20-新建文件夹（目录）" class="headerlink" title="20.新建文件夹（目录）"></a>20.新建文件夹（目录）</h2><p><code>adb shell mkdir path/floldername</code></p>
-<p>##21.发送文件内容</p>
-<p><code>adb  shell input text &lt;context&gt;</code></p>
-<h2 id="22-通过adb命令发送键盘按键事件"><a href="#22-通过adb命令发送键盘按键事件" class="headerlink" title="22.通过adb命令发送键盘按键事件"></a>22.通过adb命令发送键盘按键事件</h2><p><code>adb shell input keyevent &lt;keycode&gt;</code></p>
-<h2 id="23-获取设备参数信息"><a href="#23-获取设备参数信息" class="headerlink" title="23.获取设备参数信息"></a>23.获取设备参数信息</h2><p><code>adb shell getprop &lt;key&gt;</code></p>
-<h2 id="24-设置设备的参数信息"><a href="#24-设置设备的参数信息" class="headerlink" title="24.设置设备的参数信息"></a>24.设置设备的参数信息</h2><p><code>adb shell setprop &lt;key&gt; &lt;value&gt;</code></p>
-<h2 id="25-使用adb命令进行截屏操作"><a href="#25-使用adb命令进行截屏操作" class="headerlink" title="25.使用adb命令进行截屏操作"></a>25.使用adb命令进行截屏操作</h2><p><code>adb shell screencap -p &lt;path/file&gt;</code></p>
-<h2 id="26-查看内存情况，如果有number表示查看多少条数据"><a href="#26-查看内存情况，如果有number表示查看多少条数据" class="headerlink" title="26.查看内存情况，如果有number表示查看多少条数据"></a>26.查看内存情况，如果有number表示查看多少条数据</h2><p><code>adb shell top [-m &lt;number&gt;]</code></p>
-<h2 id="27-查看进程列表数据"><a href="#27-查看进程列表数据" class="headerlink" title="27.查看进程列表数据"></a>27.查看进程列表数据</h2><p><code>adb shell ps</code></p>
-<h2 id="28-杀死对应pid的进程"><a href="#28-杀死对应pid的进程" class="headerlink" title="28.杀死对应pid的进程"></a>28.杀死对应pid的进程</h2><p><code>adb shell kill &lt;pid&gt;</code></p>
-<h2 id="29-查看指定pid进行的运行状态"><a href="#29-查看指定pid进行的运行状态" class="headerlink" title="29.查看指定pid进行的运行状态"></a>29.查看指定pid进行的运行状态</h2><p><code>adb shell ps -x &lt;pid&gt;</code></p>
-<h2 id="30-查看后台服务信息"><a href="#30-查看后台服务信息" class="headerlink" title="30.查看后台服务信息"></a>30.查看后台服务信息</h2><p><code>adb shell service list</code></p>
-<h2 id="31-查看当前内存占用情况"><a href="#31-查看当前内存占用情况" class="headerlink" title="31.查看当前内存占用情况"></a>31.查看当前内存占用情况</h2><p><code>adb shell cat /proc/meminfo</code></p>
-<h2 id="32-查看io内存分区情况"><a href="#32-查看io内存分区情况" class="headerlink" title="32.查看io内存分区情况"></a>32.查看io内存分区情况</h2><p><code>adb shell cat /proc/iomen</code></p>
-<h2 id="33-将system分区重新挂载为可读写分区"><a href="#33-将system分区重新挂载为可读写分区" class="headerlink" title="33.将system分区重新挂载为可读写分区"></a>33.将system分区重新挂载为可读写分区</h2><p><code>adb remount</code></p>
-<h2 id="34-列出除了系统应用的第三方应用包名"><a href="#34-列出除了系统应用的第三方应用包名" class="headerlink" title="34.列出除了系统应用的第三方应用包名"></a>34.列出除了系统应用的第三方应用包名</h2><p><code>adb shell pm list packages -3</code></p>
-<h2 id="35-清除应用数据与缓存"><a href="#35-清除应用数据与缓存" class="headerlink" title="35.清除应用数据与缓存"></a>35.清除应用数据与缓存</h2><p><code>adb shell pm clear &lt;packagename&gt;</code></p>
-<p>好了，就写到这里吧，其实ADB命令有很多，我只整理了一些大家比较常用的一些命令，当然我们有时候要记忆的东西太多了，记不住有些命令，你需要做的就是点击收藏按钮，当用的时候就可以方便自己查找了，如果你觉得文本不错，请您点个赞，码字不易，且行且珍惜！</p>
-<p>再小的点赞也是对博主的莫大鼓励！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>adb</tag>
       </tags>
   </entry>
   <entry>
@@ -26163,35 +26659,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android Picasso 实现圆形图片和圆角图片</title>
-    <url>/2017/09/24/201709242356/</url>
-    <content><![CDATA[<p>##1.实现圆形图片</p>
-<p>###1.1代码调用如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new CircleTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
-
-<p>###1.2自定义圆形图片处理工具类(可以修改圆形图片的半径)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆形图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class CircleTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line">    private int radius; // 圆形图片半径</span><br><span class="line"></span><br><span class="line">    public CircleTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">        radius = DensityUtil.dp2px(mContext, 10);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int size = Math.min(source.getWidth(), source.getHeight());</span><br><span class="line"></span><br><span class="line">        int x = (source.getWidth() - size) / 2;</span><br><span class="line">        int y = (source.getHeight() - size) / 2;</span><br><span class="line"></span><br><span class="line">        Bitmap squaredBitmap = Bitmap.createBitmap(source, x, y, size, size);</span><br><span class="line">        if (squaredBitmap != source) &#123;</span><br><span class="line">            source.recycle();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Bitmap bitmap = Bitmap.createBitmap(size, size, source.getConfig());</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(bitmap);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        BitmapShader shader = new BitmapShader(squaredBitmap,</span><br><span class="line">                BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);</span><br><span class="line">        paint.setShader(shader);</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line"></span><br><span class="line">        float r = size / 2f;</span><br><span class="line">//        float r = radius;</span><br><span class="line">        canvas.drawCircle(r, r, r, paint);</span><br><span class="line"></span><br><span class="line">        squaredBitmap.recycle();</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;circle&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##2.实现圆角图片</p>
-<p>###2.1代码调用如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new RoundTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
-
-<p>###2.2自定义圆角图片处理工具类(可以修改图片圆角的半径)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line">import android.graphics.PorterDuff;</span><br><span class="line">import android.graphics.PorterDuffXfermode;</span><br><span class="line">import android.graphics.Rect;</span><br><span class="line">import android.graphics.RectF;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆角图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class RoundTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public RoundTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int widthLight = source.getWidth();</span><br><span class="line">        int heightLight = source.getHeight();</span><br><span class="line">        int radius = DensityUtil.dp2px(mContext, 8); // 圆角半径</span><br><span class="line"></span><br><span class="line">        Bitmap output = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(output);</span><br><span class="line">        Paint paintColor = new Paint();</span><br><span class="line">        paintColor.setFlags(Paint.ANTI_ALIAS_FLAG);</span><br><span class="line"></span><br><span class="line">        RectF rectF = new RectF(new Rect(0, 0, widthLight, heightLight));</span><br><span class="line"></span><br><span class="line">        canvas.drawRoundRect(rectF, radius, radius, paintColor);</span><br><span class="line">//        canvas.drawRoundRect(rectF, widthLight / 5, heightLight / 5, paintColor);</span><br><span class="line"></span><br><span class="line">        Paint paintImage = new Paint();</span><br><span class="line">        paintImage.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));</span><br><span class="line">        canvas.drawBitmap(source, 0, 0, paintImage);</span><br><span class="line">        source.recycle();</span><br><span class="line">        return output;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;roundcorner&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>今天就到这里吧…</p>
-<p>下篇预告：Android Glide实现圆形图片和圆角图片</p>
-<p>敬请期待…</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Picasso</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android OTG 之 USB 转串口模块通讯</title>
     <url>/2017/09/24/201709242355/</url>
     <content><![CDATA[<h2 id="1-背景简介"><a href="#1-背景简介" class="headerlink" title="1.背景简介"></a>1.背景简介</h2><p>我们公司开发了一款室内机平板APP应用，要求平板能去控制智能门锁、等其他智能设备，智能门锁不是我们公司开发的，与我们公司属于合作关系。</p>
@@ -26225,6 +26692,35 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>OTG</tag>
         <tag>USB</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android Picasso 实现圆形图片和圆角图片</title>
+    <url>/2017/09/24/201709242356/</url>
+    <content><![CDATA[<p>##1.实现圆形图片</p>
+<p>###1.1代码调用如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new CircleTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
+
+<p>###1.2自定义圆形图片处理工具类(可以修改圆形图片的半径)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆形图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class CircleTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line">    private int radius; // 圆形图片半径</span><br><span class="line"></span><br><span class="line">    public CircleTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">        radius = DensityUtil.dp2px(mContext, 10);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int size = Math.min(source.getWidth(), source.getHeight());</span><br><span class="line"></span><br><span class="line">        int x = (source.getWidth() - size) / 2;</span><br><span class="line">        int y = (source.getHeight() - size) / 2;</span><br><span class="line"></span><br><span class="line">        Bitmap squaredBitmap = Bitmap.createBitmap(source, x, y, size, size);</span><br><span class="line">        if (squaredBitmap != source) &#123;</span><br><span class="line">            source.recycle();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Bitmap bitmap = Bitmap.createBitmap(size, size, source.getConfig());</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(bitmap);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        BitmapShader shader = new BitmapShader(squaredBitmap,</span><br><span class="line">                BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);</span><br><span class="line">        paint.setShader(shader);</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line"></span><br><span class="line">        float r = size / 2f;</span><br><span class="line">//        float r = radius;</span><br><span class="line">        canvas.drawCircle(r, r, r, paint);</span><br><span class="line"></span><br><span class="line">        squaredBitmap.recycle();</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;circle&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##2.实现圆角图片</p>
+<p>###2.1代码调用如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new RoundTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
+
+<p>###2.2自定义圆角图片处理工具类(可以修改图片圆角的半径)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line">import android.graphics.PorterDuff;</span><br><span class="line">import android.graphics.PorterDuffXfermode;</span><br><span class="line">import android.graphics.Rect;</span><br><span class="line">import android.graphics.RectF;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆角图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class RoundTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public RoundTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int widthLight = source.getWidth();</span><br><span class="line">        int heightLight = source.getHeight();</span><br><span class="line">        int radius = DensityUtil.dp2px(mContext, 8); // 圆角半径</span><br><span class="line"></span><br><span class="line">        Bitmap output = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(output);</span><br><span class="line">        Paint paintColor = new Paint();</span><br><span class="line">        paintColor.setFlags(Paint.ANTI_ALIAS_FLAG);</span><br><span class="line"></span><br><span class="line">        RectF rectF = new RectF(new Rect(0, 0, widthLight, heightLight));</span><br><span class="line"></span><br><span class="line">        canvas.drawRoundRect(rectF, radius, radius, paintColor);</span><br><span class="line">//        canvas.drawRoundRect(rectF, widthLight / 5, heightLight / 5, paintColor);</span><br><span class="line"></span><br><span class="line">        Paint paintImage = new Paint();</span><br><span class="line">        paintImage.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));</span><br><span class="line">        canvas.drawBitmap(source, 0, 0, paintImage);</span><br><span class="line">        source.recycle();</span><br><span class="line">        return output;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;roundcorner&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>今天就到这里吧…</p>
+<p>下篇预告：Android Glide实现圆形图片和圆角图片</p>
+<p>敬请期待…</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Picasso</tag>
       </tags>
   </entry>
   <entry>
@@ -26293,23 +26789,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android SharedPreferences 工具类</title>
-    <url>/2017/09/24/201709242400/</url>
-    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>###注：在MyApplication中获取上下文</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>SharedPreferences</tag>
-        <tag>工具类</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>用起来贼爽的 Android Studio 插件推荐</title>
     <url>/2017/09/24/201709242401/</url>
     <content><![CDATA[<blockquote>
@@ -26372,6 +26851,23 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>Plugin</tag>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android SharedPreferences 工具类</title>
+    <url>/2017/09/24/201709242400/</url>
+    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>###注：在MyApplication中获取上下文</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>SharedPreferences</tag>
+        <tag>工具类</tag>
       </tags>
   </entry>
   <entry>
@@ -26979,6 +27475,41 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
+    <title>Android 检测 Activity 或者 Service 是否运行</title>
+    <url>/2017/09/24/201709242421/</url>
+    <content><![CDATA[<blockquote>
+<p>需求：假设我们的APP有3个页面AActivity,BActivity,CActivity,我们的APP需要一直运行在前台（特殊设备），要求实现一个监控服务，来监视APP是否运行，如果有3个页面都不运行了就说明这个APP已经挂掉了，否则说明APP在运行状态，不做处理，挂掉之后，我们需要重新启动App来让它继续处理运行状态，对外暴露一个来停止监控服务的广播，这样我们想停止监控服务时，发送一个广播即可。</p>
+</blockquote>
+<p>思路：实现一个双进程的监控服务，服务中写一个定时器 <strong>Timer</strong> 来重复进行检测是否正在运行，如果否就直接重新启动APP。</p>
+<p>##1.定义一个监控服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.nfcservice;</span><br><span class="line"></span><br><span class="line">import android.app.Service;</span><br><span class="line">import android.content.BroadcastReceiver;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.content.Intent;</span><br><span class="line">import android.content.IntentFilter;</span><br><span class="line">import android.os.IBinder;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import com.anloq.MyApplication;</span><br><span class="line">import com.anloq.activity.AdActivity;</span><br><span class="line">import com.anloq.utils.DetectionASUtils;</span><br><span class="line"></span><br><span class="line">import java.text.SimpleDateFormat;</span><br><span class="line">import java.util.Date;</span><br><span class="line">import java.util.Locale;</span><br><span class="line">import java.util.Timer;</span><br><span class="line">import java.util.TimerTask;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/6/3 :)</span><br><span class="line"> * 检测APP页面是否一直运行,不运行就直接启动</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class MonitoringService extends Service &#123;</span><br><span class="line"></span><br><span class="line">    private final static String TAG = &quot;MonitoringService&quot;;</span><br><span class="line"></span><br><span class="line">    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void onReceive(Context context, Intent intent) &#123;</span><br><span class="line">            if (&quot;kill_self&quot;.equals(intent.getAction())) &#123;</span><br><span class="line">                Log.e(TAG, &quot;onReceive:杀死自己的进程！&quot;);</span><br><span class="line">                killMyselfPid(); // 杀死自己的进程</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    private Timer timer = new Timer();</span><br><span class="line">    private TimerTask task = new TimerTask() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            checkIsAlive();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 检测应用是否活着</span><br><span class="line">     */</span><br><span class="line">    private void checkIsAlive() &#123;</span><br><span class="line">        String format = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;,</span><br><span class="line">                Locale.CHINA).format(new Date());</span><br><span class="line">        Log.e(TAG, &quot;CustodyService Run: &quot; + format);</span><br><span class="line"></span><br><span class="line">        boolean AIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.AActivity&quot;);</span><br><span class="line">        boolean BIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.BActivity&quot;);</span><br><span class="line">        boolean b = (AIsRunning || BIsRunning);</span><br><span class="line">        boolean CIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.CActivity&quot;);</span><br><span class="line"></span><br><span class="line">        Log.e(TAG, &quot;AIsRunning || BIsRunning is running:&quot; + b + &quot;,CIsRunning:&quot; + CIsRunning);</span><br><span class="line"></span><br><span class="line">        if (!CIsRunning) &#123;</span><br><span class="line">            if (!b) &#123; //如果界面挂掉直接启动AActivity</span><br><span class="line">                Intent intent = new Intent();</span><br><span class="line">                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">                intent.setClass(MonitoringService.this, AActivity.class);</span><br><span class="line">                startActivity(intent);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate() &#123;</span><br><span class="line">        super.onCreate();</span><br><span class="line">        Log.e(TAG, &quot;onCreate: 启动监控服务! &quot;);</span><br><span class="line">        IntentFilter intentFilter = new IntentFilter();</span><br><span class="line">        intentFilter.addAction(&quot;kill_self&quot;);</span><br><span class="line">        registerReceiver(broadcastReceiver, intentFilter);</span><br><span class="line">        timer.schedule(task, 0, 10000);// 设置检测的时间周期(毫秒数)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public int onStartCommand(Intent intent, int flags, int startId) &#123;</span><br><span class="line">        return START_STICKY;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public IBinder onBind(Intent arg0) &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 杀死自身的进程</span><br><span class="line">     */</span><br><span class="line">    private void killMyselfPid() &#123;</span><br><span class="line">        int pid = android.os.Process.myPid();</span><br><span class="line">        String command = &quot;kill -9 &quot; + pid;</span><br><span class="line">        Log.e(TAG, &quot;killMyselfPid: &quot; + command);</span><br><span class="line">        stopService(new Intent(MonitoringService.this, MonitoringService.class));</span><br><span class="line">        try &#123;</span><br><span class="line">            Runtime.getRuntime().exec(command);</span><br><span class="line">            System.exit(0);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onDestroy() &#123;</span><br><span class="line">        super.onDestroy();</span><br><span class="line">        unregisterReceiver(broadcastReceiver);</span><br><span class="line">        if (task != null) &#123;</span><br><span class="line">            task.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">        if (timer != null) &#123;</span><br><span class="line">            timer.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##2.注册双进程Service</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;service</span><br><span class="line">          android:name=&quot;com.xpf.monitor.MonitoringService&quot;</span><br><span class="line">          android:enabled=&quot;true&quot;</span><br><span class="line">          android:label=&quot;MonitoringService&quot;</span><br><span class="line">          android:process=&quot;:gray&quot;&gt;</span><br><span class="line">          &lt;intent-filter&gt;</span><br><span class="line">              &lt;action android:name=&quot;android.intent.action.RESPOND_VIA_MESSAGE&quot; /&gt;</span><br><span class="line">          &lt;/intent-filter&gt;</span><br><span class="line">      &lt;/service&gt;</span><br></pre></td></tr></table></figure>
+
+<p>##3.检测是否活着的工具类CheckUtil</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class CheckUtil &#123;</span><br><span class="line">    //检测service是否在运行</span><br><span class="line">    public static boolean isServiceWorked(Context context, String serviceName) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        ArrayList&lt;ActivityManager.RunningServiceInfo&gt; runningService = (ArrayList&lt;ActivityManager.RunningServiceInfo&gt;) myManager.getRunningServices(Integer.MAX_VALUE);</span><br><span class="line">        for (int i = 0; i &lt; runningService.size(); i++) &#123;</span><br><span class="line">            if (runningService.get(i).service.getClassName().toString().equals(serviceName)) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //检测activity是否存在再栈顶</span><br><span class="line">    public static boolean isForeground(Context context, String PackageName) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningTaskInfo&gt; task = myManager.getRunningTasks(1);</span><br><span class="line">        ComponentName componentInfo = task.get(0).topActivity;</span><br><span class="line">        if (componentInfo.getPackageName().equals(PackageName))</span><br><span class="line">            return true;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 判断某个app进程是否在运行</span><br><span class="line">     *</span><br><span class="line">     * @param context</span><br><span class="line">     * @param appInfo</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static boolean isRunningProcess(Context context, String appInfo) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningAppProcessInfo&gt; runningAppPs = myManager.getRunningAppProcesses();</span><br><span class="line">        if (runningAppPs != null &amp;&amp; runningAppPs.size() &gt; 0) &#123;</span><br><span class="line">            if (runningAppPs.contains(appInfo)) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 判断一个Activity是否正在运行</span><br><span class="line">     *</span><br><span class="line">     * @param pkg     pkg为应用包名</span><br><span class="line">     * @param cls     cls为类名eg</span><br><span class="line">     * @param context</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static boolean isClsRunning(Context context, String pkg, String cls) &#123;</span><br><span class="line">        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningTaskInfo&gt; tasks = am.getRunningTasks(1);</span><br><span class="line">        ActivityManager.RunningTaskInfo task = tasks.get(0);</span><br><span class="line">        if (task != null) &#123;</span><br><span class="line">            return TextUtils.equals(task.topActivity.getPackageName(), pkg) &amp;&amp;</span><br><span class="line">                    TextUtils.equals(task.topActivity.getClassName(), cls);</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##4.MainActivity中启动监控服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent(MainActivity.this, MonitoringService.class);</span><br><span class="line">   intent.setAction(&quot;android.intent.action.RESPOND_VIA_MESSAGE&quot;);</span><br><span class="line">   startService(intent);</span><br></pre></td></tr></table></figure>
+
+<p>##5.停止监控服务</p>
+<p>发送一个杀死进程广播即可，action值如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent();</span><br><span class="line">   intent.setAction(&quot;kill_self&quot;);</span><br><span class="line">   sendOrderedBroadcast(intent, null);</span><br></pre></td></tr></table></figure>
+
+<p>好了，今天就分享到这里了。。。</p>
+<p>欢迎评论和点赞！！！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Activity</tag>
+        <tag>Service</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 实现帧动画</title>
     <url>/2017/09/24/201709242419/</url>
     <content><![CDATA[<h2 id="1-在res的drawable下新建一个布局animation-xml-文件"><a href="#1-在res的drawable下新建一个布局animation-xml-文件" class="headerlink" title="1.在res的drawable下新建一个布局animation.xml*文件"></a>1.在res的drawable下新建一个布局<strong>animation.xml</strong>*文件</h2><figure class="highlight plaintext"><figcaption><span>version</span></figcaption><table><tr><td class="code"><pre><span class="line">&lt;animation-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    android:oneshot=&quot;true&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image1&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image2&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image3&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image4&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image5&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image6&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image7&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image8&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image9&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image10&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image11&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image12&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image13&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image14&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image15&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image16&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image17&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image18&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image19&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image20&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image21&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image22&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image23&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image24&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image25&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image26&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image27&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image28&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image29&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image30&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image31&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image32&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image33&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image34&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image35&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image36&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image37&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image38&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image39&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image40&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image41&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image42&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image43&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image44&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image45&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image46&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image47&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image48&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image49&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image50&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image51&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image52&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image53&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image54&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image55&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image56&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image57&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image58&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image59&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image60&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line"></span><br><span class="line">&lt;/animation-list&gt;</span><br></pre></td></tr></table></figure>
@@ -27021,41 +27552,6 @@ public static boolean isChinaPhoneLegal(String str)
         <tag>GitHub</tag>
         <tag>Exception</tag>
         <tag>EventBus</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 检测 Activity 或者 Service 是否运行</title>
-    <url>/2017/09/24/201709242421/</url>
-    <content><![CDATA[<blockquote>
-<p>需求：假设我们的APP有3个页面AActivity,BActivity,CActivity,我们的APP需要一直运行在前台（特殊设备），要求实现一个监控服务，来监视APP是否运行，如果有3个页面都不运行了就说明这个APP已经挂掉了，否则说明APP在运行状态，不做处理，挂掉之后，我们需要重新启动App来让它继续处理运行状态，对外暴露一个来停止监控服务的广播，这样我们想停止监控服务时，发送一个广播即可。</p>
-</blockquote>
-<p>思路：实现一个双进程的监控服务，服务中写一个定时器 <strong>Timer</strong> 来重复进行检测是否正在运行，如果否就直接重新启动APP。</p>
-<p>##1.定义一个监控服务</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.nfcservice;</span><br><span class="line"></span><br><span class="line">import android.app.Service;</span><br><span class="line">import android.content.BroadcastReceiver;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.content.Intent;</span><br><span class="line">import android.content.IntentFilter;</span><br><span class="line">import android.os.IBinder;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import com.anloq.MyApplication;</span><br><span class="line">import com.anloq.activity.AdActivity;</span><br><span class="line">import com.anloq.utils.DetectionASUtils;</span><br><span class="line"></span><br><span class="line">import java.text.SimpleDateFormat;</span><br><span class="line">import java.util.Date;</span><br><span class="line">import java.util.Locale;</span><br><span class="line">import java.util.Timer;</span><br><span class="line">import java.util.TimerTask;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/6/3 :)</span><br><span class="line"> * 检测APP页面是否一直运行,不运行就直接启动</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class MonitoringService extends Service &#123;</span><br><span class="line"></span><br><span class="line">    private final static String TAG = &quot;MonitoringService&quot;;</span><br><span class="line"></span><br><span class="line">    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void onReceive(Context context, Intent intent) &#123;</span><br><span class="line">            if (&quot;kill_self&quot;.equals(intent.getAction())) &#123;</span><br><span class="line">                Log.e(TAG, &quot;onReceive:杀死自己的进程！&quot;);</span><br><span class="line">                killMyselfPid(); // 杀死自己的进程</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    private Timer timer = new Timer();</span><br><span class="line">    private TimerTask task = new TimerTask() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            checkIsAlive();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 检测应用是否活着</span><br><span class="line">     */</span><br><span class="line">    private void checkIsAlive() &#123;</span><br><span class="line">        String format = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;,</span><br><span class="line">                Locale.CHINA).format(new Date());</span><br><span class="line">        Log.e(TAG, &quot;CustodyService Run: &quot; + format);</span><br><span class="line"></span><br><span class="line">        boolean AIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.AActivity&quot;);</span><br><span class="line">        boolean BIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.BActivity&quot;);</span><br><span class="line">        boolean b = (AIsRunning || BIsRunning);</span><br><span class="line">        boolean CIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.CActivity&quot;);</span><br><span class="line"></span><br><span class="line">        Log.e(TAG, &quot;AIsRunning || BIsRunning is running:&quot; + b + &quot;,CIsRunning:&quot; + CIsRunning);</span><br><span class="line"></span><br><span class="line">        if (!CIsRunning) &#123;</span><br><span class="line">            if (!b) &#123; //如果界面挂掉直接启动AActivity</span><br><span class="line">                Intent intent = new Intent();</span><br><span class="line">                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">                intent.setClass(MonitoringService.this, AActivity.class);</span><br><span class="line">                startActivity(intent);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate() &#123;</span><br><span class="line">        super.onCreate();</span><br><span class="line">        Log.e(TAG, &quot;onCreate: 启动监控服务! &quot;);</span><br><span class="line">        IntentFilter intentFilter = new IntentFilter();</span><br><span class="line">        intentFilter.addAction(&quot;kill_self&quot;);</span><br><span class="line">        registerReceiver(broadcastReceiver, intentFilter);</span><br><span class="line">        timer.schedule(task, 0, 10000);// 设置检测的时间周期(毫秒数)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public int onStartCommand(Intent intent, int flags, int startId) &#123;</span><br><span class="line">        return START_STICKY;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public IBinder onBind(Intent arg0) &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 杀死自身的进程</span><br><span class="line">     */</span><br><span class="line">    private void killMyselfPid() &#123;</span><br><span class="line">        int pid = android.os.Process.myPid();</span><br><span class="line">        String command = &quot;kill -9 &quot; + pid;</span><br><span class="line">        Log.e(TAG, &quot;killMyselfPid: &quot; + command);</span><br><span class="line">        stopService(new Intent(MonitoringService.this, MonitoringService.class));</span><br><span class="line">        try &#123;</span><br><span class="line">            Runtime.getRuntime().exec(command);</span><br><span class="line">            System.exit(0);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onDestroy() &#123;</span><br><span class="line">        super.onDestroy();</span><br><span class="line">        unregisterReceiver(broadcastReceiver);</span><br><span class="line">        if (task != null) &#123;</span><br><span class="line">            task.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">        if (timer != null) &#123;</span><br><span class="line">            timer.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##2.注册双进程Service</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;service</span><br><span class="line">          android:name=&quot;com.xpf.monitor.MonitoringService&quot;</span><br><span class="line">          android:enabled=&quot;true&quot;</span><br><span class="line">          android:label=&quot;MonitoringService&quot;</span><br><span class="line">          android:process=&quot;:gray&quot;&gt;</span><br><span class="line">          &lt;intent-filter&gt;</span><br><span class="line">              &lt;action android:name=&quot;android.intent.action.RESPOND_VIA_MESSAGE&quot; /&gt;</span><br><span class="line">          &lt;/intent-filter&gt;</span><br><span class="line">      &lt;/service&gt;</span><br></pre></td></tr></table></figure>
-
-<p>##3.检测是否活着的工具类CheckUtil</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class CheckUtil &#123;</span><br><span class="line">    //检测service是否在运行</span><br><span class="line">    public static boolean isServiceWorked(Context context, String serviceName) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        ArrayList&lt;ActivityManager.RunningServiceInfo&gt; runningService = (ArrayList&lt;ActivityManager.RunningServiceInfo&gt;) myManager.getRunningServices(Integer.MAX_VALUE);</span><br><span class="line">        for (int i = 0; i &lt; runningService.size(); i++) &#123;</span><br><span class="line">            if (runningService.get(i).service.getClassName().toString().equals(serviceName)) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //检测activity是否存在再栈顶</span><br><span class="line">    public static boolean isForeground(Context context, String PackageName) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningTaskInfo&gt; task = myManager.getRunningTasks(1);</span><br><span class="line">        ComponentName componentInfo = task.get(0).topActivity;</span><br><span class="line">        if (componentInfo.getPackageName().equals(PackageName))</span><br><span class="line">            return true;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 判断某个app进程是否在运行</span><br><span class="line">     *</span><br><span class="line">     * @param context</span><br><span class="line">     * @param appInfo</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static boolean isRunningProcess(Context context, String appInfo) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningAppProcessInfo&gt; runningAppPs = myManager.getRunningAppProcesses();</span><br><span class="line">        if (runningAppPs != null &amp;&amp; runningAppPs.size() &gt; 0) &#123;</span><br><span class="line">            if (runningAppPs.contains(appInfo)) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 判断一个Activity是否正在运行</span><br><span class="line">     *</span><br><span class="line">     * @param pkg     pkg为应用包名</span><br><span class="line">     * @param cls     cls为类名eg</span><br><span class="line">     * @param context</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static boolean isClsRunning(Context context, String pkg, String cls) &#123;</span><br><span class="line">        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningTaskInfo&gt; tasks = am.getRunningTasks(1);</span><br><span class="line">        ActivityManager.RunningTaskInfo task = tasks.get(0);</span><br><span class="line">        if (task != null) &#123;</span><br><span class="line">            return TextUtils.equals(task.topActivity.getPackageName(), pkg) &amp;&amp;</span><br><span class="line">                    TextUtils.equals(task.topActivity.getClassName(), cls);</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##4.MainActivity中启动监控服务</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent(MainActivity.this, MonitoringService.class);</span><br><span class="line">   intent.setAction(&quot;android.intent.action.RESPOND_VIA_MESSAGE&quot;);</span><br><span class="line">   startService(intent);</span><br></pre></td></tr></table></figure>
-
-<p>##5.停止监控服务</p>
-<p>发送一个杀死进程广播即可，action值如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent();</span><br><span class="line">   intent.setAction(&quot;kill_self&quot;);</span><br><span class="line">   sendOrderedBroadcast(intent, null);</span><br></pre></td></tr></table></figure>
-
-<p>好了，今天就分享到这里了。。。</p>
-<p>欢迎评论和点赞！！！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Activity</tag>
-        <tag>Service</tag>
       </tags>
   </entry>
   <entry>
@@ -27149,49 +27645,6 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
-    <title>Android 加载 GIF 图片的两种方式</title>
-    <url>/2017/09/24/201709242427/</url>
-    <content><![CDATA[<p>##方式一：使用第三开源框架直接在布局文件中加载gif</p>
-<p>###1.在工程的build.gradle中添加如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">buildscript &#123;</span><br><span class="line">        repositories &#123;</span><br><span class="line">            mavenCentral()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    allprojects &#123;</span><br><span class="line">        repositories &#123;</span><br><span class="line">            mavenCentral()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<p>###2.在app的build.gradle中添加依赖</p>
-<p><code>compile &#39;pl.droidsonroids.gif:android-gif-drawable:1.2.1&#39;</code></p>
-<p>###3.布局文件中就可以直接写你需要加载的gif图片即可</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;pl.droidsonroids.gif.GifImageView</span><br><span class="line">        android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">        android:src=&quot;@drawable/gif2&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>##方式二：使用Glide加载gif</p>
-<p>这种方式就比较简单了，直接看代码↓</p>
-<p>###1.添加Glide图片加载框架依赖</p>
-<p><code>compile &#39;com.github.bumptech.glide:glide:3.7.0&#39;</code></p>
-<p>###2.布局文件中写一个普通的Imageview</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;ImageView</span><br><span class="line">        android:id=&quot;@+id/ivGif&quot;</span><br><span class="line">        android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>###3.代码中直接加载本地的gif图片到Imageview上即可</p>
-<pre><code>Glide.with(MainActivity.this).load(R.drawable.gif1)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL).into(ivGif);```
-
-以上就是加载gif图片的两种方式，我写的都是加载本地的gif，加载网络的gif图片应该也差不多一样，自己尝试吧...
-
-代码比较简单，为了照顾初学者，需要的同学 ![戳这里](https://github.com/xinpengfei520/Android-GIF-Loader.git) 下载
-
-Thanks all.
-
-2017.5.30日  农历：五月初五 端午节
-
-最后祝大家端午节快乐！！！大家记得吃粽子哦 ：)
-</code></pre>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
-        <tag>GIF</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>《Android源码设计模式》学习笔记之 ImageLoader</title>
     <url>/2017/09/24/201709242428/</url>
     <content><![CDATA[<blockquote>
@@ -27238,6 +27691,66 @@ Thanks all.
       <tags>
         <tag>GitHub</tag>
         <tag>ImageLoader</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 加载 GIF 图片的两种方式</title>
+    <url>/2017/09/24/201709242427/</url>
+    <content><![CDATA[<p>##方式一：使用第三开源框架直接在布局文件中加载gif</p>
+<p>###1.在工程的build.gradle中添加如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">buildscript &#123;</span><br><span class="line">        repositories &#123;</span><br><span class="line">            mavenCentral()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    allprojects &#123;</span><br><span class="line">        repositories &#123;</span><br><span class="line">            mavenCentral()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>###2.在app的build.gradle中添加依赖</p>
+<p><code>compile &#39;pl.droidsonroids.gif:android-gif-drawable:1.2.1&#39;</code></p>
+<p>###3.布局文件中就可以直接写你需要加载的gif图片即可</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;pl.droidsonroids.gif.GifImageView</span><br><span class="line">        android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">        android:src=&quot;@drawable/gif2&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>##方式二：使用Glide加载gif</p>
+<p>这种方式就比较简单了，直接看代码↓</p>
+<p>###1.添加Glide图片加载框架依赖</p>
+<p><code>compile &#39;com.github.bumptech.glide:glide:3.7.0&#39;</code></p>
+<p>###2.布局文件中写一个普通的Imageview</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;ImageView</span><br><span class="line">        android:id=&quot;@+id/ivGif&quot;</span><br><span class="line">        android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>###3.代码中直接加载本地的gif图片到Imageview上即可</p>
+<pre><code>Glide.with(MainActivity.this).load(R.drawable.gif1)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL).into(ivGif);```
+
+以上就是加载gif图片的两种方式，我写的都是加载本地的gif，加载网络的gif图片应该也差不多一样，自己尝试吧...
+
+代码比较简单，为了照顾初学者，需要的同学 ![戳这里](https://github.com/xinpengfei520/Android-GIF-Loader.git) 下载
+
+Thanks all.
+
+2017.5.30日  农历：五月初五 端午节
+
+最后祝大家端午节快乐！！！大家记得吃粽子哦 ：)
+</code></pre>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+        <tag>GIF</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 追加换行写入内容到 txt 文件中</title>
+    <url>/2017/09/24/201709242430/</url>
+    <content><![CDATA[<p>实现思路为：使用 Context.MODE_APPEND 属性将每次内容的写入到上次内容的尾部，然后在每次写入内容完成之后写入一个回车换行符**fos.write(“\r\n”.getBytes());**即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/10/31 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class FileHelper &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public FileHelper(Context mContext) &#123;</span><br><span class="line">        this.mContext = mContext;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件保存的方法，写入到文件中，所以是输出流</span><br><span class="line">     */</span><br><span class="line">    public void save(String adNum, String time) &#123;</span><br><span class="line">        String content = &quot;广告位编号：&quot; + adNum + &quot;，播放时长：&quot; + time;</span><br><span class="line">        FileOutputStream fos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            // Context.MODE_PRIVATE私有权限，Context.MODE_APPEND追加写入到已有内容的后面</span><br><span class="line">            fos = mContext.openFileOutput(getFileName(), Context.MODE_APPEND);</span><br><span class="line">            fos.write(content.getBytes());</span><br><span class="line">            fos.write(&quot;\r\n&quot;.getBytes());//写入换行</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (fos != null) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    fos.close();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件读取的方法</span><br><span class="line">     */</span><br><span class="line">    public String read(String filename) throws IOException &#123;</span><br><span class="line">        FileInputStream fis = mContext.openFileInput(filename);</span><br><span class="line">        byte[] buff = new byte[1024];</span><br><span class="line">        StringBuilder sb = new StringBuilder(&quot;&quot;);</span><br><span class="line">        int len = 0;</span><br><span class="line">        while ((len = fis.read(buff)) &gt; 0) &#123;</span><br><span class="line">            sb.append(new String(buff, 0, len));</span><br><span class="line">        &#125;</span><br><span class="line">        fis.close();</span><br><span class="line">        return sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get file name such as 20171031.txt</span><br><span class="line">     *</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private String getFileName() &#123;</span><br><span class="line">        return TimeUtil.getCurrentDay() + &quot;.txt&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>转载请注明出处，谢谢！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>txt</tag>
+        <tag>文件读写</tag>
       </tags>
   </entry>
   <entry>
@@ -27523,23 +28036,6 @@ Thanks all.
         <tag>Android</tag>
         <tag>多语言</tag>
         <tag>SharedPreference</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 追加换行写入内容到 txt 文件中</title>
-    <url>/2017/09/24/201709242430/</url>
-    <content><![CDATA[<p>实现思路为：使用 Context.MODE_APPEND 属性将每次内容的写入到上次内容的尾部，然后在每次写入内容完成之后写入一个回车换行符**fos.write(“\r\n”.getBytes());**即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/10/31 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class FileHelper &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public FileHelper(Context mContext) &#123;</span><br><span class="line">        this.mContext = mContext;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件保存的方法，写入到文件中，所以是输出流</span><br><span class="line">     */</span><br><span class="line">    public void save(String adNum, String time) &#123;</span><br><span class="line">        String content = &quot;广告位编号：&quot; + adNum + &quot;，播放时长：&quot; + time;</span><br><span class="line">        FileOutputStream fos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            // Context.MODE_PRIVATE私有权限，Context.MODE_APPEND追加写入到已有内容的后面</span><br><span class="line">            fos = mContext.openFileOutput(getFileName(), Context.MODE_APPEND);</span><br><span class="line">            fos.write(content.getBytes());</span><br><span class="line">            fos.write(&quot;\r\n&quot;.getBytes());//写入换行</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (fos != null) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    fos.close();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件读取的方法</span><br><span class="line">     */</span><br><span class="line">    public String read(String filename) throws IOException &#123;</span><br><span class="line">        FileInputStream fis = mContext.openFileInput(filename);</span><br><span class="line">        byte[] buff = new byte[1024];</span><br><span class="line">        StringBuilder sb = new StringBuilder(&quot;&quot;);</span><br><span class="line">        int len = 0;</span><br><span class="line">        while ((len = fis.read(buff)) &gt; 0) &#123;</span><br><span class="line">            sb.append(new String(buff, 0, len));</span><br><span class="line">        &#125;</span><br><span class="line">        fis.close();</span><br><span class="line">        return sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get file name such as 20171031.txt</span><br><span class="line">     *</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private String getFileName() &#123;</span><br><span class="line">        return TimeUtil.getCurrentDay() + &quot;.txt&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>转载请注明出处，谢谢！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>txt</tag>
-        <tag>文件读写</tag>
       </tags>
   </entry>
   <entry>
@@ -28166,6 +28662,22 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>java.lang.IllegalStateException commit already called</title>
+    <url>/2017/09/24/201709242438/</url>
+    <content><![CDATA[<p>今天使用Fragment时报如下图错误：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061539406.png" alt="这里写图片描述"></p>
+<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><p>之所以报该错误，是因为 <strong>Fragment</strong> 事务是全局的变量，只能commit一次。</p>
+<h2 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a>解决方法：</h2><p>将获取Fragment事务定义为局部变量，每次提交时都去获取新的事务去commit即可。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Exception</tag>
+        <tag>IllegalStateException</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>不可错过的几款GitHub开源项目</title>
     <url>/2017/09/24/201709242437/</url>
     <content><![CDATA[<p>工作之余或者周末感觉无聊？不知道干什么？想继续提高技术，但是不知道做什么的同学，看过来，不妨利用闲暇时间来撸几个 GitHub 上还不错的开源项目，本文推荐的开源项目比较适合新手、及对MVP设计模式不太熟练的同学练习之用，下面逐一进行简单介绍。</p>
@@ -28383,22 +28895,6 @@ Thanks all.
         <tag>Retrofit 2.x</tag>
         <tag>RxJava 2.x</tag>
         <tag>GreenDao</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>java.lang.IllegalStateException commit already called</title>
-    <url>/2017/09/24/201709242438/</url>
-    <content><![CDATA[<p>今天使用Fragment时报如下图错误：</p>
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061539406.png" alt="这里写图片描述"></p>
-<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><p>之所以报该错误，是因为 <strong>Fragment</strong> 事务是全局的变量，只能commit一次。</p>
-<h2 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a>解决方法：</h2><p>将获取Fragment事务定义为局部变量，每次提交时都去获取新的事务去commit即可。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Exception</tag>
-        <tag>IllegalStateException</tag>
       </tags>
   </entry>
   <entry>

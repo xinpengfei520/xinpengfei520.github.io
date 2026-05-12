@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="哈喽，我是飞飞。 5 月 8 日 Anthropic 自己 Claude Code 团队的工程师 Thariq，在 X 上发了一条 9 个英文单词的推：”HTML is the new markdown.”后面跟了一篇《Using Claude Code: The Unreasonable Effectiveness of HTML》。 Thariq 自己披露这条推短短几天就跑到 3.4M 阅读">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Anthropic 工程师让 Claude 不写 Markdown 了，我突然不敢按 LGTM">
+<meta property="og:url" content="https://www.vance.xin/2026/05/10/202605101913/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="哈喽，我是飞飞。 5 月 8 日 Anthropic 自己 Claude Code 团队的工程师 Thariq，在 X 上发了一条 9 个英文单词的推：”HTML is the new markdown.”后面跟了一篇《Using Claude Code: The Unreasonable Effectiveness of HTML》。 Thariq 自己披露这条推短短几天就跑到 3.4M 阅读">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260510-thariq-html-decision-replacement.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260510-cognitive-offloading-three-stage-loop.webp">
+<meta property="article:published_time" content="2026-05-10T19:13:00.000Z">
+<meta property="article:modified_time" content="2026-05-12T10:31:09.713Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI 编程">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="认知偏差">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260510-thariq-html-decision-replacement.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/05/10/202605101913/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/05/10/202605101913/","path":"2026/05/10/202605101913/","title":"Anthropic 工程师让 Claude 不写 Markdown 了，我突然不敢按 LGTM"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Anthropic 工程师让 Claude 不写 Markdown 了，我突然不敢按 LGTM | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#5-8-%E5%87%8C%E6%99%A8%E6%88%91%E5%88%B7%E5%88%B0-Thariq-%E8%BF%99%E6%9D%A1%E6%8E%A8%E6%97%B6%E6%AD%A3%E5%9C%A8%E7%9C%8B-Claude-%E7%9A%84-plan"><span class="nav-text">5&#x2F;8 凌晨我刷到 Thariq 这条推时正在看 Claude 的 plan</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%96%E8%A6%81%E8%A7%A3%E5%86%B3%E7%9A%84%E4%B8%8D%E6%98%AF%E6%8E%92%E7%89%88%E6%BC%82%E4%BA%AE%E4%B8%8D%E6%BC%82%E4%BA%AE%E7%9A%84%E4%BA%8B"><span class="nav-text">他要解决的不是排版漂亮不漂亮的事</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E5%91%A8%E4%BA%8C%E6%88%91%E8%AE%A9-Claude-%E5%87%BA%E4%BA%86%E4%B8%80%E4%BB%BD-PR-review%EF%BC%8C%E6%88%91%E6%BB%9A%E4%BA%86%E4%B8%80%E9%81%8D%E5%B0%B1-LGTM-%E4%BA%86"><span class="nav-text">上周二我让 Claude 出了一份 PR review，我滚了一遍就 LGTM 了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E7%9C%8B%E8%B5%B7%E6%9D%A5%E5%B7%B2%E7%BB%8F%E8%A2%AB%E8%AE%BE%E8%AE%A1%E5%A5%BD%E7%9A%84%E7%95%8C%E9%9D%A2%EF%BC%8C%E4%BC%9A%E6%AF%94-markdown-%E6%9B%B4%E9%9A%BE%E8%B4%A8%E7%96%91"><span class="nav-text">一个看起来已经被设计好的界面，会比 markdown 更难质疑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E5%BE%AA%E7%8E%AF%E6%88%91%E7%94%BB%E5%9C%A8%E4%BE%BF%E7%AD%BE%E4%B8%8A%EF%BC%8C%E6%98%AF%E4%B8%89%E6%AE%B5%E8%B7%AF"><span class="nav-text">这循环我画在便签上，是三段路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3-Thariq-%E8%BF%99%E5%A5%97%E5%B7%A5%E4%BD%9C%E6%B5%81%E5%88%B0%E5%BA%95%E8%A6%81%E4%B8%8D%E8%A6%81%E6%8A%84"><span class="nav-text">那 Thariq 这套工作流到底要不要抄</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#30-%E5%A4%A9-LGTM-%E6%AC%A1%E6%95%B0%E5%92%8C%E4%BC%9A%E8%AE%AE%E7%BA%AA%E8%A6%81-prompt%EF%BC%8C%E6%98%AF%E6%88%91%E7%8E%B0%E5%9C%A8%E6%9C%80%E4%B8%8D%E6%95%A2%E5%8A%A8%E7%9A%84%E4%B8%A4%E4%BB%B6%E4%BA%8B"><span class="nav-text">30 天 LGTM 次数和会议纪要 prompt，是我现在最不敢动的两件事</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">308</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">540</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/05/10/202605101913/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Anthropic 工程师让 Claude 不写 Markdown 了，我突然不敢按 LGTM | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Anthropic 工程师让 Claude 不写 Markdown 了，我突然不敢按 LGTM
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-05-10 19:13:00" itemprop="dateCreated datePublished" datetime="2026-05-10T19:13:00+00:00">2026-05-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-05-12 10:31:09" itemprop="dateModified" datetime="2026-05-12T10:31:09+00:00">2026-05-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260510-thariq-html-decision-replacement.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>5 月 8 日 Anthropic 自己 Claude Code 团队的工程师 Thariq，在 X 上发了一条 9 个英文单词的推：”HTML is the new markdown.”后面跟了一篇《Using Claude Code: The Unreasonable Effectiveness of HTML》。</p>
+<p>Thariq 自己披露这条推短短几天就跑到 3.4M 阅读、1.3 万收藏。Simon Willison 这种从 GPT-4 时代开始就默认让 Claude 写 markdown 的老用户，看完之后专门写了篇 link post 说自己准备改习惯。</p>
+<p>但我今天不打算聊「Claude 该输出 markdown 还是 HTML」这种格式偏好的事。</p>
+<p>我想聊的是另一件事：当 AI 输出越来越长、越来越结构化、越来越漂亮，工程师作为决策者的注意力到底还剩多少。</p>
+<h2 id="5-8-凌晨我刷到-Thariq-这条推时正在看-Claude-的-plan"><a href="#5-8-凌晨我刷到-Thariq-这条推时正在看-Claude-的-plan" class="headerlink" title="5&#x2F;8 凌晨我刷到 Thariq 这条推时正在看 Claude 的 plan"></a>5&#x2F;8 凌晨我刷到 Thariq 这条推时正在看 Claude 的 plan</h2><p>那是个周五凌晨。我让 Claude Code 跑一个数据迁移的 plan，跑完吐出来一份 1500 行左右的 markdown，里面有 12 步、4 个表格、3 个 fallback 方案。我从头滚到尾大概用了 90 秒。然后我打开 X 准备睡觉，刷到了 Thariq 这条推。</p>
+<p>Thariq 是 Anthropic Claude Code 团队的 Member of Technical Staff，前 YC W20、MIT Media Lab 出身，现在每天写 Claude Code 这个产品。他不是评论家也不是博主，他是每天用 Claude Code 跟 Claude 干活的一线工程师。</p>
+<p>他在那篇短文里讲他自己已经几乎不让 Claude 写 markdown 了。所有的 plan、技术 spec、PR review、研究报告，他都让 Claude 直接输出 HTML，渲染成本地一个 .html 文件双击打开。配套他还放了一个 demo 站点 thariqs.github.io&#x2F;html-effectiveness，里面有 20 多个 prompt 示例。</p>
+<p>我盯着自己 9 秒前才滚完的那份 1500 行 markdown plan 看了半天。</p>
+<h2 id="他要解决的不是排版漂亮不漂亮的事"><a href="#他要解决的不是排版漂亮不漂亮的事" class="headerlink" title="他要解决的不是排版漂亮不漂亮的事"></a>他要解决的不是排版漂亮不漂亮的事</h2><p>Thariq 写 HTML 的理由乍看是排版：HTML 自带表格、CSS 色块、SVG 图、JS 交互、in-page navigation。markdown 不行。</p>
+<p>但他自己在文章里反复强调的不是这个。他说在 1M context 这一代模型上，Claude 一次能输出的 plan &#x2F; spec &#x2F; PR review 已经动辄几百行甚至上千行了。纯文本扁平结构在这个长度上撑不住。读者会从「认真读」滑到「快速扫」，从「快速扫」滑到「滚一遍」，最后进入「我相信你写得对」的状态。</p>
+<p>他给出的对策很狠：把 Claude 的输出从「报告」升级成「工作台」。</p>
+<p>举一个他自己的 PR review prompt 原话：”Help me review this PR by creating an HTML artifact… color-code findings by severity… render the actual diff with inline margin annotations.”翻成人话，就是 Claude 不再交给你一份 PR review 文档，它给你一个能筛严重度、能折叠章节、能在 diff 旁边贴评注的小工具，你在这个工具里复审 PR。</p>
+<p>到这里都没问题。这是工程化思维，没毛病。问题是在「你在这个工具里复审」这一步。</p>
+<h2 id="上周二我让-Claude-出了一份-PR-review，我滚了一遍就-LGTM-了"><a href="#上周二我让-Claude-出了一份-PR-review，我滚了一遍就-LGTM-了" class="headerlink" title="上周二我让 Claude 出了一份 PR review，我滚了一遍就 LGTM 了"></a>上周二我让 Claude 出了一份 PR review，我滚了一遍就 LGTM 了</h2><p>事情发生在 5&#x2F;5 周二下午。我那天在带一个新人改一个内部计费服务，他提了个 PR 涉及一个金额计算的核心函数。我懒得自己一行行看，让 Claude Code 跑了 PR review 的 markdown，跑出来七个潜在问题，按严重度从高到低排好。我从头扫一遍，每条看了两秒钟左右，标了一个 LGTM。</p>
+<p>第二天有人在 Slack 上 at 我，说那个函数的入参签名变了一个，下游一个老调用方今天早上挂了一次。我回去翻 PR，发现 Claude 那份 review 里其实在第四条提到了「该函数签名修改可能影响下游调用方，建议检查」，但是这条被它放在「中等严重」一栏里。我当时扫的时候，脑子已经默认前三条「高严重」是真问题，后面四条是补充。</p>
+<p>事后我自己回想：我读 Claude 那份 markdown 的时候，注意力是层层下沉的，第一条用了 5 秒，第二条 3 秒，到第四条已经是「目光扫过」。我相信它的严重度排序是对的，所以我自己的判断从「逐条审」滑到了「分类抽样」。</p>
+<p>写到这里我得承认一件事。Thariq 让 Claude 输出 HTML 工作台的那个工作流，我抄过来之后，不会比我那天读 markdown 的注意力曲线更好，甚至可能更差。</p>
+<h2 id="一个看起来已经被设计好的界面，会比-markdown-更难质疑"><a href="#一个看起来已经被设计好的界面，会比-markdown-更难质疑" class="headerlink" title="一个看起来已经被设计好的界面，会比 markdown 更难质疑"></a>一个看起来已经被设计好的界面，会比 markdown 更难质疑</h2><p>我后来去翻了几篇学术圈这两年讨论 AI 决策替代的论文，arxiv 2412.06593 这一篇做过一个实证：anchoring bias 在 LLM 上广泛存在，连推理模型都没幸免。这条研究本身关心的是 LLM 自己的认知偏差，但读者的偏差结构是对称的：你读 LLM 输出的时候，第一个出现的判断会成为你后续所有判断的锚。</p>
+<p>我自己代入想了一下。读 markdown 的时候，至少版面是平的，第三条和第七条在视觉上没差别。换成 HTML 工作台之后，Claude 给你的是一个已经分好色块的界面：高严重度红、中严重度黄、低严重度灰；在 collapsible section 里折叠好；甚至还有一个左侧的 filter 让你「只看高严重度」。</p>
+<p>这套界面已经替你做完了第一轮判断。等你点开它，你的决策从「哪几条是真问题」变成了「红色色块这几条要不要放过」。</p>
+<p>更糟的是 MIT 的 Kosmyna 等人 2025 年做的一项 EEG 实验。他们让一组人在 4 次 session 里持续用 LLM 辅助写作，对照组只用搜索引擎或者纯靠脑子。4 次 session 后，LLM 组在跟推理和记忆相关的脑网络上的连通性显著下降。Microsoft Research 同年也发过一份调研，结论同向：高频 cognitive offloading 用户的批判思考评分反而最低。</p>
+<p>这两份研究我看完，最不舒服的一句话来自 Microsoft 那份调研的结论：用 AI 越多的人，并不是因为他们的判断变得更好所以敢更多地依赖 AI。恰恰相反，他们是因为依赖了 AI，所以判断能力本身的肌肉在萎缩。</p>
+<h2 id="这循环我画在便签上，是三段路"><a href="#这循环我画在便签上，是三段路" class="headerlink" title="这循环我画在便签上，是三段路"></a>这循环我画在便签上，是三段路</h2><p><img src="https://image.vance.xin/aigc/image/20260510-cognitive-offloading-three-stage-loop.webp" alt="cognitive offloading 三阶段闭环：依赖建立 → 批判思考萎缩 → 偏差内化"></p>
+<p>起点是 initial dependency。Claude 给的 plan 看起来很合理，你接受了。第一次接受可能是因为它确实做对了。再往后接受的速度越来越快，因为上次也没出问题。</p>
+<p>中间这一段叫 critical thinking atrophy。一旦形成了「Claude 给的东西可以快速接受」的肌肉记忆，你逐行核对的肌肉就开始萎缩。这跟道德没关系。注意力是稀缺资源，大脑会自动找省力的路径走。</p>
+<p>走到最后是 bias internalization。等萎缩发生之后，Claude 的某种偏好（比如把签名变更当中等严重度，或者把某种 fallback 方案当低优先级）会被你内化成你自己的偏好。再往后，哪怕没有 Claude 你做决策也会带上这个倾向。</p>
+<p>我那天的 PR review 这件事，刚好走完起点到中段的过渡。最后那一段我还没走到，但我能感觉到风向在那个方向。</p>
+<h2 id="那-Thariq-这套工作流到底要不要抄"><a href="#那-Thariq-这套工作流到底要不要抄" class="headerlink" title="那 Thariq 这套工作流到底要不要抄"></a>那 Thariq 这套工作流到底要不要抄</h2><p>要抄，但抄之前我现在多了一个问题：我读这份输出，是为了「看完知道下一步怎么动」，还是为了「自己最终拍板」。</p>
+<p>如果是前者，HTML artifact 是好东西。比如我让 Claude 帮我把过去一周的 GitHub issue 整理成一个可筛选的看板，目的就是导航和触发跟进，HTML 比 markdown 好用十倍。我也确实会拿 Thariq demo 站点里那几个 prompt 抄过来用。</p>
+<p>如果是后者，我现在的偏好反而是退一步。让 Claude 给我纯文本，甚至是没有任何加粗、列表、严重度标记的 plain text。让信息回到一种「没有被预先排序过」的状态，强迫我自己做一次排序。我读得会慢，但慢就是目的。</p>
+<p>这个判断对 PR review 这件事尤其敏感。我打算从这周开始把内部 PR review 的 prompt 改成「输出 plain text，不要分严重度，不要按重要性排序，按代码出现的物理顺序逐条列」。让 Claude 不替我做第一轮判断，把这个动作还给我。</p>
+<h2 id="30-天-LGTM-次数和会议纪要-prompt，是我现在最不敢动的两件事"><a href="#30-天-LGTM-次数和会议纪要-prompt，是我现在最不敢动的两件事" class="headerlink" title="30 天 LGTM 次数和会议纪要 prompt，是我现在最不敢动的两件事"></a>30 天 LGTM 次数和会议纪要 prompt，是我现在最不敢动的两件事</h2><p>先说 LGTM 这件事。过去 30 天里我给 Claude 输出的 plan 一共按过几次 LGTM、其中真的逐行看完的有几次，我打算这周末翻一下 Claude Code 的 session 历史去数。我现在的猜测是 LGTM 的次数会让我尴尬。</p>
+<p>会议纪要那个事更具体一点。Thariq 那个 HTML demo 站点里有一类我特别想抄的 prompt 是「让 Claude 把 60 分钟的会议纪要做成一个可筛选 + 可生成 action item 的小工具」。这个 prompt 跑出来一定好用。我担心的事情很具体：它做得太好之后，我会更不去亲自看完会议视频。这件事我没想好怎么戒。</p>
+<p>留个问题给你：过去一周你接受 Claude &#x2F; Cursor &#x2F; Copilot 给的 plan 的时候，平均每次会真的逐行看几行？如果你不数，那就是 0。</p>
+<p>评论区告诉我你今天的真实数字，我也告诉你我的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-%E7%BC%96%E7%A8%8B/" rel="tag"># AI 编程</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/%E8%AE%A4%E7%9F%A5%E5%81%8F%E5%B7%AE/" rel="tag"># 认知偏差</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/05/09/202605091430/" rel="prev" title="三年不要外部钱的 DeepSeek，第一次接 75 亿融资，梁文锋自己掏了 30 亿">
+                  <i class="fa fa-angle-left"></i> 三年不要外部钱的 DeepSeek，第一次接 75 亿融资，梁文锋自己掏了 30 亿
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/05/11/202605111344/" rel="next" title="OpenCode 把蚂蚁 1T 推理模型免费送你 7 天，但有条小字你得先看">
+                  OpenCode 把蚂蚁 1T 推理模型免费送你 7 天，但有条小字你得先看 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">16:27</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

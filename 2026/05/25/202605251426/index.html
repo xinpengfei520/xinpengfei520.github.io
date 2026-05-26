@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="哈喽，我是飞飞。 5&#x2F;22 早上我刷到 400 这个数字，第一反应是看错了5 月 22 号早上，我刷到智谱发了个新东西叫 GLM-5.1 高速版，输出速度 400 tokens&#x2F;s。 第一眼没什么反应。国产模型这两年发布会太多了，看到这种新闻已经麻木。但隔了 30 秒我意识到 400 这个数字不对劲。 普通 GLM-5.1 大概 44 tokens&#x2F;s，Claude">
+<meta property="og:type" content="article">
+<meta property="og:title" content="智谱把模型干到了 400 tokens&#x2F;s，国产开始卷速度了">
+<meta property="og:url" content="https://www.vance.xin/2026/05/25/202605251426/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="哈喽，我是飞飞。 5&#x2F;22 早上我刷到 400 这个数字，第一反应是看错了5 月 22 号早上，我刷到智谱发了个新东西叫 GLM-5.1 高速版，输出速度 400 tokens&#x2F;s。 第一眼没什么反应。国产模型这两年发布会太多了，看到这种新闻已经麻木。但隔了 30 秒我意识到 400 这个数字不对劲。 普通 GLM-5.1 大概 44 tokens&#x2F;s，Claude">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260525-20260525-glm-51-400-tokens.webp">
+<meta property="article:published_time" content="2026-05-25T14:26:00.000Z">
+<meta property="article:modified_time" content="2026-05-26T08:54:21.651Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="DeepSeek">
+<meta property="article:tag" content="国产大模型">
+<meta property="article:tag" content="GLM">
+<meta property="article:tag" content="智谱">
+<meta property="article:tag" content="推理加速">
+<meta property="article:tag" content="TileRT">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260525-20260525-glm-51-400-tokens.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/05/25/202605251426/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/05/25/202605251426/","path":"2026/05/25/202605251426/","title":"智谱把模型干到了 400 tokens/s，国产开始卷速度了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>智谱把模型干到了 400 tokens/s，国产开始卷速度了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#5-22-%E6%97%A9%E4%B8%8A%E6%88%91%E5%88%B7%E5%88%B0-400-%E8%BF%99%E4%B8%AA%E6%95%B0%E5%AD%97%EF%BC%8C%E7%AC%AC%E4%B8%80%E5%8F%8D%E5%BA%94%E6%98%AF%E7%9C%8B%E9%94%99%E4%BA%86"><span class="nav-text">5&#x2F;22 早上我刷到 400 这个数字，第一反应是看错了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E6%89%8B%E6%91%B8%E4%BA%86%E4%B8%80%E9%81%8D%E4%BC%81%E4%B8%9A-API%EF%BC%8C%E7%9C%BC%E7%9D%9B%E8%BF%BD%E4%B8%8D%E4%B8%8A%E5%90%90%E5%AD%97%E7%9A%84%E9%80%9F%E5%BA%A6"><span class="nav-text">上手摸了一遍企业 API，眼睛追不上吐字的速度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A-400-%E7%BF%BB%E8%AF%91%E4%B8%80%E4%B8%8B%EF%BC%9A%E6%98%AF%E4%BA%BA%E7%B1%BB%E9%98%85%E8%AF%BB%E6%9E%81%E9%99%90%E7%9A%84-80-%E5%80%8D"><span class="nav-text">把 400 翻译一下：是人类阅读极限的 80 倍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TileRT-%E6%8A%8A%E6%8E%A8%E7%90%86%E5%B7%A5%E5%8E%82%E4%BB%8E%E6%89%B9%E5%A4%84%E7%90%86%E6%94%B9%E9%80%A0%E6%88%90%E8%BF%9E%E7%BB%AD%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="nav-text">TileRT 把推理工厂从批处理改造成连续流水线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#GLM-5-1-%E6%A8%A1%E5%9E%8B%E6%9E%B6%E6%9E%84%E6%9C%AC%E8%BA%AB%E5%B0%B1%E5%A5%94%E7%9D%80%E9%85%8D%E5%90%88%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E%E5%81%9A%E7%9A%84"><span class="nav-text">GLM-5.1 模型架构本身就奔着配合推理引擎做的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%BD%E4%BA%A7%E5%A4%A7%E6%A8%A1%E5%9E%8B%EF%BC%8C%E5%BC%80%E5%A7%8B%E5%8D%B7%E5%88%AB%E4%BA%BA%E6%B2%A1%E8%B5%B0%E8%BF%87%E7%9A%84%E6%96%B9%E5%90%91"><span class="nav-text">国产大模型，开始卷别人没走过的方向</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Claude-Code-%E7%94%A8%E4%BA%86%E5%BF%AB%E4%B8%80%E5%B9%B4%EF%BC%8C%E6%85%A2%E4%B8%80%E7%9B%B4%E6%98%AF%E6%88%91%E5%BF%83%E9%87%8C%E9%82%A3%E7%82%B9%E5%88%AB%E6%89%AD"><span class="nav-text">Claude Code 用了快一年，慢一直是我心里那点别扭</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%99%BA%E8%B0%B1-SLA-%E6%95%B0%E6%8D%AE%E5%92%8C-DeepSeek-%E6%98%AF%E5%90%A6%E5%8F%8D%E5%87%BB%EF%BC%8C%E8%BF%99%E4%B8%A4%E4%BB%B6%E4%BA%8B%E6%88%91%E4%BC%9A%E7%9B%AF%E7%9D%80"><span class="nav-text">智谱 SLA 数据和 DeepSeek 是否反击，这两件事我会盯着</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">320</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">571</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/05/25/202605251426/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="智谱把模型干到了 400 tokens&#x2F;s，国产开始卷速度了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          智谱把模型干到了 400 tokens/s，国产开始卷速度了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-05-25 14:26:00" itemprop="dateCreated datePublished" datetime="2026-05-25T14:26:00+00:00">2026-05-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-05-26 08:54:21" itemprop="dateModified" datetime="2026-05-26T08:54:21+00:00">2026-05-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260525-20260525-glm-51-400-tokens.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<h2 id="5-22-早上我刷到-400-这个数字，第一反应是看错了"><a href="#5-22-早上我刷到-400-这个数字，第一反应是看错了" class="headerlink" title="5&#x2F;22 早上我刷到 400 这个数字，第一反应是看错了"></a>5&#x2F;22 早上我刷到 400 这个数字，第一反应是看错了</h2><p>5 月 22 号早上，我刷到智谱发了个新东西叫 GLM-5.1 高速版，输出速度 400 tokens&#x2F;s。</p>
+<p>第一眼没什么反应。国产模型这两年发布会太多了，看到这种新闻已经麻木。但隔了 30 秒我意识到 400 这个数字不对劲。</p>
+<p>普通 GLM-5.1 大概 44 tokens&#x2F;s，Claude Opus 4.6 标准模式 44，DeepSeek 官方 API 30 到 35。Gemini 3 Flash 算业界比较快的一档 121。最快的 Mercury C 是 633，但用的是 diffusion 架构，能力不在第一档。</p>
+<p>智谱直接干到 400，而且是旗舰能力的旗舰，没有为了快阉割掉能力。</p>
+<p>说白了，全球大模型 API 的速度天花板被顶高了一截。</p>
+<h2 id="上手摸了一遍企业-API，眼睛追不上吐字的速度"><a href="#上手摸了一遍企业-API，眼睛追不上吐字的速度" class="headerlink" title="上手摸了一遍企业 API，眼睛追不上吐字的速度"></a>上手摸了一遍企业 API，眼睛追不上吐字的速度</h2><p>我立刻申请了企业 API 权限上手测了一下。</p>
+<p>上来先扔一段 React 组件重构，把一个 800 行的列表组件改写成 useMemo + virtualized 版本。我盯着输出窗口，代码像字幕一样从上往下飞过去。下意识想用 Cmd+F 去定位变量名，手还没碰到键盘，整段代码已经吐完了。</p>
+<p>换下一个，丢一份 35 页 PDF 行业报告进去让它总结核心论点。同样的任务我用 Claude Code 跑过几次，每次要等 40 到 60 秒。这次数到 6 秒，结果出来了。</p>
+<p>再试 Agent 链。让它先抓一个 GitHub repo 的 README，再读源码目录，再生成一段中文技术解读。三个动作连着跑下来不到 15 秒。</p>
+<p>测试结束时我有种很奇怪的感觉。模型还在那儿一边思考一边吐字，但我的眼睛已经追不上它的速度了。</p>
+<p>副作用也有一个：太快导致来不及打断。PDF 总结那一轮里，它有一段方向跑偏了，但等我意识到的时候它已经吐完结论。Claude Code 那种「慢慢吐字给你时间叫停」的节奏，在这儿不存在。</p>
+<h2 id="把-400-翻译一下：是人类阅读极限的-80-倍"><a href="#把-400-翻译一下：是人类阅读极限的-80-倍" class="headerlink" title="把 400 翻译一下：是人类阅读极限的 80 倍"></a>把 400 翻译一下：是人类阅读极限的 80 倍</h2><p>人类正常阅读速度大概是 3 到 5 个 token 每秒。对，就这么慢。觉得自己看文章很快，其实绝大多数时候是在跳读。认真看每一个字，3 到 5 个 token 就是上限。</p>
+<p>400 tokens&#x2F;s 是这个的 80 倍。AI 在 1 秒内吐出来的东西，你需要花 80 秒才能读完。</p>
+<p>落到具体场景。Cursor 或 Claude Code 让你生成 2000 token 代码，标准模型要 50 秒，够你去厨房接杯水回来。换成 400 tokens&#x2F;s 是 5 秒，刚把手从键盘上挪开，代码已经全部出来。</p>
+<p>50 秒那种叫「等 AI」：下命令然后等，等的时候打开微信刷两条朋友圈，结果出来再回头检查。</p>
+<p>5 秒那种叫「跟着 AI」：你的眼睛、思维和模型几乎同步，看着代码流出来，发现哪里写偏了立刻按 Esc 改方向。</p>
+<p>这种差距大到「快了一点」根本描述不了，整个交互范式被换了一套。</p>
+<h2 id="TileRT-把推理工厂从批处理改造成连续流水线"><a href="#TileRT-把推理工厂从批处理改造成连续流水线" class="headerlink" title="TileRT 把推理工厂从批处理改造成连续流水线"></a>TileRT 把推理工厂从批处理改造成连续流水线</h2><p>理论上推理速度上限由硬件决定。一台 8 卡 H200 服务器按理论带宽算 decode 上限差不多 1000 tokens&#x2F;s。但主流推理框架跑出来常常只有几十 tokens&#x2F;s，中间差了一个数量级。</p>
+<p>TileRT 团队博客里有个比喻特别好。想象一个工厂，里面分好几个工位，一个切割，一个打磨，一个装配。</p>
+<p>主流推理框架是这么干活的：工头喊「开工」，第一个工位做完整批，半成品送进仓库。工头再喊一声，第二个工位从仓库把半成品搬出来接着做。</p>
+<p>如果这批量很大，每个工位忙几十甚至几百毫秒，进出仓库的几微秒可以忽略。但实时交互场景里每次只生成一个 token，工位处理时间被压缩到几微秒。工件加工 2 微秒，搬运用了 5 到 10 微秒。超过一半的时间机器都在等下一个工位「准备好」，不是在干活。</p>
+<p>GPU 利用率看着挺高，算力理论上也够，但 token 就是吐不快。卡在工位与工位之间的那堵墙上。</p>
+<p>TileRT 干的事儿就是把整个工厂从「批处理车间」改造成「连续流水线」。</p>
+<p>不再等一整批做完再送仓库，而是一件一件直接传给下一个工位。工头只在最开始喊一次「开工」，之后所有调度、同步、传递都在车间内部完成，再也不停机。</p>
+<p>更狠的是这条流水线在编译期就预先编排好了，运行时根本不需要即时调度。把流水线塞到 GPU 里让它一直跑。工位之间那堵墙被拆掉了。</p>
+<h2 id="GLM-5-1-模型架构本身就奔着配合推理引擎做的"><a href="#GLM-5-1-模型架构本身就奔着配合推理引擎做的" class="headerlink" title="GLM-5.1 模型架构本身就奔着配合推理引擎做的"></a>GLM-5.1 模型架构本身就奔着配合推理引擎做的</h2><p>光有流水线还不够，得让上面跑的东西也对流水线友好。</p>
+<p>先说 MoE 稀疏激活。744B 总参数里每个 token 只激活 40B。工厂虽大，订单进来时只调用相关那几个工位，不用整个仓库都翻。</p>
+<p>再说多 token 预测，简称 MTP。传统模型每生成一个 token 都要把整个模型跑一遍。GLM-5 训了一手，让模型一次预测接下来 2 到 3 个 token，再由主模型快速校验。实际平均每次稳定吐出 2.76 个，比 DeepSeek-V3.2 的 2.55 还高一点。</p>
+<p>还有稀疏注意力。长上下文下传统注意力复杂度跟长度的平方成正比。稀疏注意力让模型自己判断哪些 token 重要，只对重要的做计算，砍掉 1.5 到 2 倍算力开销。</p>
+<p>省下来的算力，正好被流水线拿去掩盖数据搬运和卡间通信的时间。模型和引擎互相给对方留头部空间。400 这个数字是这三层加上 TileRT 的执行模型重构搭在一起才出来的。</p>
+<h2 id="国产大模型，开始卷别人没走过的方向"><a href="#国产大模型，开始卷别人没走过的方向" class="headerlink" title="国产大模型，开始卷别人没走过的方向"></a>国产大模型，开始卷别人没走过的方向</h2><p>让我头皮发麻的不是 400 这个数字本身，是国产大模型开始卷速度了。</p>
+<p>目前 API 速度梯队大致这样：极速档超过 200 tokens&#x2F;s，GLM-5.1 高速版之前只有 Mercury C 一家达到 633，但是 diffusion 架构，能力不在第一线。快速档 100 到 200 tokens&#x2F;s，Gemini 3 Flash 121，Claude Fast Mode 100 到 112，GPT-5.1 95 到 120，DeepSeek V4 Pro 在第三方推理服务商上能跑到 170。标准档 40 到 100 tokens&#x2F;s，绝大多数前沿模型都在这里。</p>
+<p>智谱直接干到 400，把原天花板顶到新位置，而且是旗舰能力的旗舰。更巧的是 DeepSeek 同一天宣布把之前 75% 的促销折扣永久化，API 价格变 1&#x2F;4。一个卷速度，一个卷价格。</p>
+<p>实话讲，中国的大模型厂商已经从「我们也能做到」开始往别人没去过的方向走。前两年是在追，每发一个模型第一句话都是「在某某 benchmark 上超过了某某」，潜台词是「我们也有了」。今年不一样：DeepSeek 把推理价格打下来一个数量级，是别人没敢干的。智谱这次直接重写推理执行模型把速度干到 400，也是别人没去做的方向。</p>
+<p>国际厂商怎么做的：Anthropic Fast Mode 是同一个模型调推理配置，2.5 倍速度换 6 倍价格。Google 的 Flash-Pro 分级是直接训不同大小的模型覆盖速度和能力的光谱。Fireworks 这类第三方推理服务商是在现有框架上做单点优化。</p>
+<p>智谱走的是第四条路：根上动手术，把整个推理执行模型从批处理改成连续流水线。最深、最难、回报也最大。</p>
+<h2 id="Claude-Code-用了快一年，慢一直是我心里那点别扭"><a href="#Claude-Code-用了快一年，慢一直是我心里那点别扭" class="headerlink" title="Claude Code 用了快一年，慢一直是我心里那点别扭"></a>Claude Code 用了快一年，慢一直是我心里那点别扭</h2><p>Claude Code 我用了快一年，依赖到不可逆的程度。但有件事一直别扭：写一个复杂 prompt 之后等 30 到 50 秒看结果，几乎每天都在发生。</p>
+<p>这个等待时间挺尴尬。说短不短，长到我会本能切到飞书或推特刷两眼。说长不长，等回来重拾上下文比直接等还累。切走再切回来思路断了，这 prompt 等于白写。</p>
+<p>我试过 Claude 的 Fast Mode 和几个第三方推理服务，确实快一些但能力损失明显，复杂 Agent 链跟不上。</p>
+<p>GLM-5.1 高速版让我第一次意识到，慢这件事可以被解决。能力跟 Claude Code 完全一样还远着呢，但「快」第一次被推到「快到需要重新适应交互节奏」的程度，跟「快了一点点」完全两个东西。</p>
+<p>就像十年前第一次从机械硬盘换到 SSD：开机时间从 90 秒压到 10 秒，看起来只是数字变化，但整个 workflow 节奏被重写了一遍。这次给我的体感几乎一样。</p>
+<h2 id="智谱-SLA-数据和-DeepSeek-是否反击，这两件事我会盯着"><a href="#智谱-SLA-数据和-DeepSeek-是否反击，这两件事我会盯着" class="headerlink" title="智谱 SLA 数据和 DeepSeek 是否反击，这两件事我会盯着"></a>智谱 SLA 数据和 DeepSeek 是否反击，这两件事我会盯着</h2><p>但也得说几句心里的别扭。</p>
+<p>400 tokens&#x2F;s 这个数字目前还没被 Artificial Analysis 这种独立第三方测过。智谱自己也承认需要更多条件下的持续验证。我看到的更多是一个声明加少量企业客户实测，普通开发者还摸不着。</p>
+<p>9 倍速度提升，单位 token 成本是不是也跟着便宜，定价怎么算，目前没看到具体数字。Anthropic Fast Mode 那种 2.5 倍速度换 6 倍价格的玩法市场会买账。但 400 tokens&#x2F;s 如果价格跟着 9 倍 10 倍往上走，那它就是一个高端定制服务，不是普惠工具。</p>
+<p>这些都还不清楚。但速度作为新的竞争维度被打开了。</p>
+<p>我要盯两件事。一是智谱的 SLA 数据和正式定价区间什么时候出来，能不能从企业内测扩到通用开发者。二是 DeepSeek 会不会接着卷速度反过来回应。它过去一年都是「价格 + 能力」两条腿走，速度这条腿如果也迈出来，国产推理这块就真彻底拉开。</p>
+<p>之前搭流水线只想着能不能跑通，没想过跑通之后在烧什么时间。GLM-5.1 高速版让我意识到，「等待时间」本身就是一种被忽略的成本。</p>
+<p>智能 × 速度，是未来三五年 AI 行业的新战场。第一记发令枪，恰好被一家中国公司打响。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/DeepSeek/" rel="tag"># DeepSeek</a>
+              <a href="/tags/%E5%9B%BD%E4%BA%A7%E5%A4%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 国产大模型</a>
+              <a href="/tags/GLM/" rel="tag"># GLM</a>
+              <a href="/tags/%E6%99%BA%E8%B0%B1/" rel="tag"># 智谱</a>
+              <a href="/tags/%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F/" rel="tag"># 推理加速</a>
+              <a href="/tags/TileRT/" rel="tag"># TileRT</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/05/25/202605251414/" rel="prev" title="Google 一周两次 3x，把 Antigravity 周配额拉到 9x 之后我重新算了笔账">
+                  <i class="fa fa-angle-left"></i> Google 一周两次 3x，把 Antigravity 周配额拉到 9x 之后我重新算了笔账
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/05/25/202605251500/" rel="next" title="Anthropic 官方搞了 17 门免费 AI 课程加证书，国内开发者基本没人在聊">
+                  Anthropic 官方搞了 17 门免费 AI 课程加证书，国内开发者基本没人在聊 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">17:16</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

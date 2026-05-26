@@ -1,6 +1,1079 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Google 在 I/O 2026 把 Antigravity 拆成两个产品了：Antigravity IDE 和 Antigravity 2.0 各自管什么</title>
+    <url>/2026/05/21/202605211530/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260521-20260521-antigravity-2-split.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>5 月 19 日凌晨我熬夜看了 Google I&#x2F;O 2026 的 keynote，看到中段那张产品全景图弹出来的时候我直接坐直了。</p>
+<p>Antigravity 不再是一个产品了。</p>
+<p>它被拆成两个独立的桌面应用，加上一个 CLI、一个 SDK、一组 Managed Agents API，五个 surface 同时往外铺。</p>
+<p>第二天我把两个桌面应用都装到了 macOS 上，分别打开看了一遍。</p>
+<p>老的那个 Antigravity IDE 长得跟我之前熟悉的样子完全一样，VS Code fork 的编辑器界面，左侧文件树右侧编辑区。</p>
+<p>新的那个 Antigravity 2.0 完全不一样，打开是一个 Mission Control 风格的看板，左边一栏挂着我跑过的 agent 任务，中间是当前 agent 的实时执行流，右边是它正在浏览的网页 preview。</p>
+<p>我盯着新这个看了 30 秒才反应过来一件事。</p>
+<p>Google 这次干的事不只是发了个 2.0 版本，他们在产品形态上<strong>公开承认</strong>编辑器界面在 AI 编程里已经退到次要位置，承担主线的是 agent harness。</p>
+<h2 id="Google-这次到底把-Antigravity-拆成了几块"><a href="#Google-这次到底把-Antigravity-拆成了几块" class="headerlink" title="Google 这次到底把 Antigravity 拆成了几块"></a>Google 这次到底把 Antigravity 拆成了几块</h2><p>先把全景画清楚。</p>
+<p>Antigravity 原本（2025 年 11 月发布）只有一个东西，就是那个 VS Code fork 的 IDE，Cursor 的对标产品。</p>
+<p>I&#x2F;O 2026 这次拆完之后变成 5 个 surface 并列。</p>
+<p><strong>Antigravity 2.0 desktop app</strong>：全新桌面应用，跟原来的 IDE 是两个完全独立的程序，围绕 agent orchestration 设计，不带传统写代码界面。</p>
+<p><strong>Antigravity IDE</strong>：原来那个 VS Code fork 编辑器，保留下来继续维护，定位是”agent-first 平台里的一个 surface”。</p>
+<p><strong>Antigravity CLI</strong>：新写的命令行工具，用 Go 重新实现，完全替代原来的 Gemini CLI。</p>
+<p><strong>Antigravity SDK</strong>：给开发者自己写 agent 用，可以部署到自己基础设施。</p>
+<p><strong>Managed Agents（在 Gemini API 里）+ Enterprise Agent Platform</strong>：一次 API 调用就能拉起一个隔离的 Linux 环境跑 agent，企业客户走 Google Cloud 直连。</p>
+<p>5 个 surface 都共享同一套底层 agent harness，底模型默认是 Gemini 3.5 Flash。</p>
+<p>这套结构和 Anthropic 那一套（Claude Code IDE + Claude Code CLI + Claude API + Managed Agents）几乎完全对齐了。</p>
+<h2 id="Antigravity-IDE-保留下来，但定位变了"><a href="#Antigravity-IDE-保留下来，但定位变了" class="headerlink" title="Antigravity IDE 保留下来，但定位变了"></a>Antigravity IDE 保留下来，但定位变了</h2><p>很多人以为 Antigravity IDE 这次会被砍掉。</p>
+<p>实际上没有。</p>
+<p>实话讲，它的定位明显变了。</p>
+<p>原来 Antigravity 就是 IDE 本身，IDE 等于产品。</p>
+<p>现在 Antigravity IDE 是 5 个 surface 里的一个，是写代码场景下的 surface，跟 desktop app（agent 场景）、CLI（终端场景）、SDK（自部署场景）、Managed Agents（API 调用场景）并列。</p>
+<p>我打开 Antigravity IDE 看了一下，界面没大变，但产品定位文档里明确写了一句：「For traditional coding with AI help」。</p>
+<p>翻译过来就是，<strong>如果你主要的动作还是写代码，用这个</strong>。</p>
+<p>如果你主要的动作是布置任务给 agent 让它去跑，那应该切到 2.0 desktop app。</p>
+<p>这个分界对我自己来说很清楚。</p>
+<p>写函数、读代码、debug，编辑器仍然是最顺的形态。</p>
+<p>但批量 refactor、跑测试、查文档、写 commit message 这种周边动作，编辑器界面其实是冗余的，agent 直接在后台跑然后给我看结果效率更高。</p>
+<p>Google 把 Antigravity 拆开就是承认这个分界。</p>
+<h2 id="Antigravity-2-0-desktop-app-是个全新东西"><a href="#Antigravity-2-0-desktop-app-是个全新东西" class="headerlink" title="Antigravity 2.0 desktop app 是个全新东西"></a>Antigravity 2.0 desktop app 是个全新东西</h2><p>我装完 2.0 desktop app 第一次打开的时候有点懵。</p>
+<p>它没有文件树。</p>
+<p>也没有编辑区。</p>
+<p>打开是一个 dashboard，最显眼的是中央那块叫 Mission Control 的区域，挂着我可以并行触发的 agent，每个 agent 旁边有运行状态、用了多少 token、跑了多久。</p>
+<p>我让它做了一个简单任务，”用 Tailwind 实现一个 todo list demo 并部署到 Firebase Hosting”。</p>
+<p>它启动了 3 个 subagent，一个负责架构和文件结构、一个负责写 React 代码、一个负责跑 build 和发布。</p>
+<p>Mission Control 实时画出 3 个 agent 的执行流。</p>
+<p>中央位置内嵌了一个 Chromium 浏览器窗口，agent 跑到部署阶段的时候直接在那个窗口里打开了部署预览。</p>
+<p>整个过程我没有看过一行代码，全程像在看一个项目进度看板。</p>
+<p>跑完之后任务进了”已完成”列表，结果是一个能访问的 URL。</p>
+<p>这种产品形态，跟传统 IDE 的”我打开文件看光标在哪一行”是完全不同的认知模型。</p>
+<p>它有一个我之前在其他工具里没见过的功能叫 <strong>Scheduled Tasks</strong>，可以让 agent 在后台按时间自动跑。</p>
+<p>比如我让它每天早上 9 点自动 pull 一遍我的 GitHub 上 watch 的几个 repo，把 release notes 整理成中文摘要发到我邮箱。</p>
+<p>我设了一个之后，今天早上 9 点 02 分确实收到了邮件。</p>
+<p>说白了，Antigravity 2.0 把 agent 从”我每次主动 prompt 它”变成了”它在后台自己活着”。</p>
+<p>这是 IDE 这种形态做不到的事。</p>
+<h2 id="Antigravity-CLI-用-Go-重写，Gemini-CLI-6-月-18-日-EOL"><a href="#Antigravity-CLI-用-Go-重写，Gemini-CLI-6-月-18-日-EOL" class="headerlink" title="Antigravity CLI 用 Go 重写，Gemini CLI 6 月 18 日 EOL"></a>Antigravity CLI 用 Go 重写，Gemini CLI 6 月 18 日 EOL</h2><p>CLI 这条线值得单独说。</p>
+<p>新的 Antigravity CLI 是 Google 拿 Go 重写的，原来的 Gemini CLI 是 TypeScript 写的。</p>
+<p>这里有两个信号。</p>
+<p>一个是性能。</p>
+<p>Go 启动比 Node.js 快得多，对一个高频在终端调用的工具，启动延迟从几百毫秒降到几十毫秒，每天累计省不少时间。</p>
+<p>另一个信号是对标。</p>
+<p>Claude Code 也是 Go 写的。</p>
+<p>Google 这次重写等于明确表态要在 CLI 战场跟 Anthropic 正面打。</p>
+<p>迁移的时间表也很紧。</p>
+<p>Google 在 developer blog 里写了，<strong>2026 年 6 月 18 日</strong>起，Gemini CLI 和 Gemini Code Assist IDE 扩展对 AI Pro、AI Ultra 和免费用户停止服务。</p>
+<p>从 5 月 19 日公告到 6 月 18 日停服，只有 30 天。</p>
+<p>对国内大量正在用 Gemini CLI 的开发者来说，这 30 天必须做完两件事，一是装 Antigravity CLI 看跟自己原来的工作流配不配合，二是把 Gemini CLI 上的 Agent Skills、Hooks、Subagents 这些自定义配置迁过去。</p>
+<p>好消息是这几样核心功能 Antigravity CLI 都保留了，Extensions 改名叫 Antigravity plugins。</p>
+<p>坏消息是迁移文档目前只有一份初版，遇到细节差异官方还没给完整对照表。</p>
+<p>企业版（Gemini Code Assist Standard &#x2F; Enterprise license）不受这次 EOL 影响，继续用 Gemini CLI 没问题。</p>
+<h2 id="拆分背后-Google-在传递的工程信号"><a href="#拆分背后-Google-在传递的工程信号" class="headerlink" title="拆分背后 Google 在传递的工程信号"></a>拆分背后 Google 在传递的工程信号</h2><p>把这次拆分往后退一步看，能读出两层东西。</p>
+<p>表层是 Google 在产品 SKU 上做了分化，给不同场景的用户切了不同入口。</p>
+<p>往下一层，是 Google 用产品形态明确划了一条线：<strong>写代码的核心动作交给 IDE，跑 agent 的核心动作交给 desktop app</strong>。</p>
+<p>往再下一层，是 Google 公开承认 IDE 这个 1970 年代发明的产品形态已经不能承载 2026 年的 AI 编程需求了。</p>
+<p>IDE 当然没有被淘汰，它仍然是写代码这件事的最佳形态。</p>
+<p>但 AI 编程这件事的工作内容<strong>早就不只是写代码</strong>了，它有 50% 的时间是在 review、refactor、跑测试、查文档、做架构决策、写 commit。</p>
+<p>这 50% 的工作不需要光标停在某一行，它需要的是 agent 在后台异步跑然后给我看结果。</p>
+<p>Google 拆 Antigravity 这件事，本质上是把这个产品形态分化第一次明确写到 release note 里。</p>
+<p>Anthropic 那边其实早就用 Claude Code IDE + Claude Code CLI + Managed Agents API 这套结构在做同样的事，Google 这次只是补齐了产品线。</p>
+<p>后面要看的是 OpenAI 会怎么走，Codex CLI 目前还是一个独立产品，OpenAI 没有官方 IDE。</p>
+<h2 id="我装完之后实际遇到的几个坑"><a href="#我装完之后实际遇到的几个坑" class="headerlink" title="我装完之后实际遇到的几个坑"></a>我装完之后实际遇到的几个坑</h2><p>讲一下我自己装的时候踩到的几件事。</p>
+<p>先说 macOS 这边。</p>
+<p>两个程序的进程名很接近，Activity Monitor 里都叫 Antigravity，得看 PID 区分。</p>
+<p>Windows 用户的情况更夸张，国外论坛已经在抱怨这件事。</p>
+<p>AppData 目录被偷偷拆成了两个，老的 Antigravity 数据在 <code>\Roaming\Antigravity</code> 路径下，新的 2.0 装完之后只读 <code>\Roaming\Antigravity IDE</code>，老用户工作环境直接被破坏。</p>
+<p>Reddit 上有 thread 标题就叫「Antigravity 2.0 a rushed un-tested release」，Techloy 的报道说 “developers furious”。</p>
+<p>如果你是 Windows 上原 Antigravity 用户，建议先备份 <code>\Roaming\Antigravity</code> 目录再装 2.0。</p>
+<p>订阅价位这次也跟着调整了。</p>
+<p>Google 加了一档新的 AI Ultra at $100 月，5x Pro limits。</p>
+<p>老顶配 AI Ultra 从 $250 降到 $200，20x Pro limits。</p>
+<p>这个定价跟 Anthropic 的 Claude Max（$100&#x2F;$200 两档）几乎一模一样，跟 OpenAI 的 ChatGPT Pro（$100 + Codex CLI）也对齐了。</p>
+<p>三大 lab 现在订阅结构基本同质化。</p>
+<p>默认模型换成 Gemini 3.5 Flash 这件事单独说一下。</p>
+<p>它比 Gemini 3.1 Pro 在几乎所有 benchmark 上都赢，比前沿模型快 4 倍。</p>
+<p>更有意思的是，Gemini 3.5 Flash 本身是用 Antigravity 共开发的。</p>
+<p>模型反过来开发自己的工具，工具又被用来训下一代模型，这条 meta loop 跟 Karpathy 加入 Anthropic 那边「用 Claude 加速 pre-training」是同一个故事。</p>
+<p>所有前沿 lab 都在押这一招。</p>
+<h2 id="Gemini-CLI-迁移截止日和-scheduled-tasks-实测这两件事"><a href="#Gemini-CLI-迁移截止日和-scheduled-tasks-实测这两件事" class="headerlink" title="Gemini CLI 迁移截止日和 scheduled tasks 实测这两件事"></a>Gemini CLI 迁移截止日和 scheduled tasks 实测这两件事</h2><p>我自己 Gemini CLI 上有 5 个 custom agent skill，会在 6 月 10 号前全部迁到 Antigravity CLI，留 8 天 buffer 应对迁移过程中可能踩的坑。</p>
+<p>另一个是用 Antigravity 2.0 desktop app 的 scheduled tasks 跑一个真实场景：每周一早上 8 点自动 pull 我 watch 的 AI lab 仓库的 release notes，整理成中文摘要发到我自己邮箱。</p>
+<p>跑两周之后我会写一篇实测，看 scheduled tasks 的稳定性、调度延迟、Token 消耗这几个具体数据。</p>
+<p>你呢，你用的 Cursor、Claude Code 还是 Gemini CLI？</p>
+<p>要不要在 6 月 18 日之前一起试试 Antigravity 2.0？</p>
+<p>评论区告诉我，下一篇我可以专门写「Gemini CLI 配置迁移到 Antigravity CLI 的完整记录」。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI 编程</tag>
+        <tag>Gemini</tag>
+        <tag>Google</tag>
+        <tag>Antigravity</tag>
+        <tag>agent</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>详解 Claude Code 的 /team-onboarding 命令：我跑完才明白它在替团队干什么</title>
+    <url>/2026/05/21/202605211033/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260521-20260521-team-onboarding.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上周三晚上我升级了 Claude Code 到 v2.1.101，看到 changelog 里多了一行：「Added &#x2F;team-onboarding command」。</p>
+<p>我习惯性在主仓库里跑了一次。</p>
+<p>输出贴到屏幕上那一瞬间我有点尴尬。</p>
+<p>里面挂着我自己写的好几条绝对路径，挂着我个人 dev 环境的 MCP 配置，挂着一堆我习惯性给自己开的 allow 权限。</p>
+<p>如果我把这份直接发给团队新人，他们会以为这就是团队标准。</p>
+<p>那一刻我才反应过来，这个命令真正在干的事，是替我审视自己留在这个仓库里的隐性习惯。</p>
+<h2 id="team-onboarding-到底在生成什么"><a href="#team-onboarding-到底在生成什么" class="headerlink" title="&#x2F;team-onboarding 到底在生成什么"></a>&#x2F;team-onboarding 到底在生成什么</h2><p>先把命令本身讲清楚。</p>
+<p><code>/team-onboarding</code> 是 Claude Code v2.1.101 在 2026 年 4 月 10 日（Week 15 release）加进来的内置斜杠命令，调用方式就一行：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/team-onboarding</span><br></pre></td></tr></table></figure>
+
+<p>不带参数，在任何活跃的 Claude Code 会话里直接输入即可。</p>
+<p>它会做一件事，扫你过去 30 天在这个项目里的会话历史、用过的斜杠命令、配置过和实际调用过的 MCP 服务器，把这些行为揉成一份结构化的 Markdown 草稿。</p>
+<p>说白了就是，它把”老同事最近一个月在这个项目里都用了哪些工具，写过哪些 prompt 模板，跑过哪些自定义 workflow”显式地写成文档，让新人能直接拿来用。</p>
+<p>为什么是 30 天而不是 7 天或 90 天？</p>
+<p>7 天太短，刚好覆盖一个 sprint，抓到的多是临时实验和一次性脚本。</p>
+<p>90 天太长，会把项目早期的试错噪音也拖进来。</p>
+<p>30 天卡在一个”稳定使用期”的窗口上，既能反映真实习惯，也能过滤掉早期摸索。</p>
+<p>这个数字本身是设计选择，不是随便定的。</p>
+<h2 id="我跑完那一份-ONBOARDING-md-长什么样"><a href="#我跑完那一份-ONBOARDING-md-长什么样" class="headerlink" title="我跑完那一份 ONBOARDING.md 长什么样"></a>我跑完那一份 ONBOARDING.md 长什么样</h2><p>回到我自己那次。</p>
+<p>跑完之后 Claude Code 在会话里直接吐出一份完整的 Markdown，大概 600 行，分了 6 个章节。</p>
+<p>开头是项目快速 setup，里面挂了我装 hexo CLI 用的 npm 命令、本地起服务的端口、一条我个人习惯的 hexo clean → hexo g → hexo s 三连命令链。</p>
+<p>往下是我在这个项目里高频用过的斜杠命令，<code>/content-director</code>、<code>/content-publisher</code>、<code>/content-researcher</code>，加上每条命令的典型触发语和我自己最近一次的实际调用。</p>
+<p>再往下挂了我配置过的 MCP 服务器，包括 banana-image 这套生成封面图的私有 MCP、brave-search 拉行业资料用的 MCP。</p>
+<p>然后是我反复使用的 prompt 模板，包括我跟 polisher skill 沟通时几乎每次都会带的”扫一遍 grep 硬规则”那条引导句。</p>
+<p>倒数第二段叫”常见陷阱”，列了我自己之前踩过的几次：一次是把封面图上传顺序搞反了，一次是 hexo new 之后忘了改 frontmatter 的 date。</p>
+<p>最后一段是”团队约定”，这段比较空，因为我这个仓库其实是单人维护，没什么团队约定可以抽取。</p>
+<p>整份文档读下来的感觉很直接，它确实能让一个新人在 20 分钟内知道我在这个仓库里”日常都在干什么”。</p>
+<p>但它也很赤裸地把我个人的本地习惯暴露了出来。</p>
+<h2 id="ShareOnboardingGuide-这个工具单独说一下"><a href="#ShareOnboardingGuide-这个工具单独说一下" class="headerlink" title="ShareOnboardingGuide 这个工具单独说一下"></a>ShareOnboardingGuide 这个工具单独说一下</h2><p>光生成一份 Markdown 不算稀奇。</p>
+<p><code>/team-onboarding</code> 真正配套的是一个叫 <code>ShareOnboardingGuide</code> 的内置工具，它负责把这份 ONBOARDING.md 上传到 Anthropic 的 guide 服务，换一个短码（short_code）出来。</p>
+<p>短码长这样：6 到 8 位字母数字混合，团队成员拿到短码后可以直接在自己的 Claude Code 里打开对应链接，guide 内容会作为新会话的首条上下文加载进去。</p>
+<p>这个工具有 4 个模式。</p>
+<p><code>check</code> 是默认模式，本地有 ONBOARDING.md 文件就上传到组织里最近一份 guide，没有就返回已有链接。</p>
+<p><code>update</code> 是用短码指定某一份 guide 覆盖更新，适合 ONBOARDING.md 改版后同步。</p>
+<p><code>create</code> 是强制新建一条 guide，每次拿到新短码。</p>
+<p><code>delete</code> 是按短码删一条 guide。</p>
+<p>我自己实际用 <code>check</code>，每次 ONBOARDING.md 改了跑一次就把同一条链接内容更新掉，团队成员收藏的旧链接还能继续用，体验比群里反复贴新链接舒服多了。</p>
+<p>权限上，目前看起来 Pro &#x2F; Max &#x2F; Team &#x2F; Enterprise 几种付费 plan 都能用，免费 plan 是否开放还没看到明确说法。</p>
+<h2 id="ONBOARDING-md-跟-CLAUDE-md-各自管的事情不一样"><a href="#ONBOARDING-md-跟-CLAUDE-md-各自管的事情不一样" class="headerlink" title="ONBOARDING.md 跟 CLAUDE.md 各自管的事情不一样"></a>ONBOARDING.md 跟 CLAUDE.md 各自管的事情不一样</h2><p>这是最容易被搞混的一点。</p>
+<p>CLAUDE.md 是项目根目录下那份每次会话启动都会自动加载的指令文件，里面写的是项目架构、命名规则、构建命令、Git 工作流这种长期不变的硬性规范。</p>
+<p>ONBOARDING.md 不一样，它是 <code>/team-onboarding</code> 跑出来的产物，反映的是过去 30 天最近的使用习惯，是一份动态快照。</p>
+<p>我用一张表对照一下：</p>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>内容性质</th>
+<th>加载时机</th>
+<th>更新频率</th>
+<th>权威性</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CLAUDE.md</td>
+<td>规范、规则</td>
+<td>每次会话自动加载</td>
+<td>手动维护，半年改一次</td>
+<td>团队标准，Claude 必须遵循</td>
+</tr>
+<tr>
+<td>ONBOARDING.md</td>
+<td>实践、发现</td>
+<td>新人手动加载或通过短码链接</td>
+<td>自动重生成，可频繁刷新</td>
+<td>入职辅助，不是规范</td>
+</tr>
+<tr>
+<td>settings.json</td>
+<td>配置</td>
+<td>启动时加载</td>
+<td>跟着权限变更走</td>
+<td>权限和 hook 边界</td>
+</tr>
+<tr>
+<td>skills</td>
+<td>程序性知识</td>
+<td>按需触发</td>
+<td>跟着任务模式沉淀</td>
+<td>重复任务专用</td>
+</tr>
+</tbody></table>
+<p>CLAUDE.md 是”团队应该怎么做”的规范，ONBOARDING.md 是”老同事最近实际怎么做”的快照。</p>
+<p>这两份文件不该混在一起，也不该一份替代另一份。</p>
+<p>CLAUDE.md 一旦写好就要被严格遵守，ONBOARDING.md 反过来，跑一次看一次，能看到什么就是什么。</p>
+<h2 id="分享前必查的三件事"><a href="#分享前必查的三件事" class="headerlink" title="分享前必查的三件事"></a>分享前必查的三件事</h2><p>回到我那次的初跑。</p>
+<p>输出文档里挂的那些本地路径、MCP 配置、宽松权限，是 <code>/team-onboarding</code> 这个命令本身没办法替你过滤的。</p>
+<p>分享给团队之前，你必须自己 review 三个区域。</p>
+<p>先说本地机器假设这一块。</p>
+<p>绝对路径（<code>/Users/vancexin/Documents/...</code>）、临时目录（<code>/tmp/cache-xxx</code>）、私人 shell 别名，这些只对你自己有意义，新人拿到会一脸懵。</p>
+<p>我那次扫了一遍，把 4 处绝对路径全部替换成项目相对路径或环境变量。</p>
+<p>MCP 假设那一项更隐蔽。</p>
+<p>我自己装的 banana-image MCP 是私有的，团队新人没有，文档里挂着这个 MCP 的调用会让对方以为这是项目标配。</p>
+<p>正确做法是在 ONBOARDING.md 里给每个 MCP 加一行说明，标注”团队必装”还是”我个人在用”。</p>
+<p>权限和安全这块最容易被忽略。</p>
+<p>我个人开发环境里给 Claude Code 的 allow 列表特别宽松，连 <code>rm</code> 都直接放行。</p>
+<p>这份默认设置一旦被新人当成团队标准抄过去，刚入职那周可能就会出事。</p>
+<p>所以 ONBOARDING.md 里凡是碰到 settings，必须按”最严格的团队默认”重写一遍，把个人宽松设置剔除。</p>
+<p>这三件事 SmartScope 那篇评测文章总结得很到位，他们叫”local-machine assumptions &#x2F; MCP assumptions &#x2F; permissions and safety”，跟我的实际遭遇完全对得上。</p>
+<h2 id="把它当探测器用，会比当生成器用走得远"><a href="#把它当探测器用，会比当生成器用走得远" class="headerlink" title="把它当探测器用，会比当生成器用走得远"></a>把它当探测器用，会比当生成器用走得远</h2><p>跑过几次之后我形成了一个新理解。</p>
+<p>实话讲，<code>/team-onboarding</code> 真正值钱的地方在于它逼你看清你团队的隐性知识到底卡在哪几个人脑子里。</p>
+<p>每次跑出来的那份 ONBOARDING.md，本质上是一面镜子，照的是过去 30 天在这个仓库里最活跃的那个人的工作流。</p>
+<p>如果你跑出来看了之后觉得”嗯这就是我团队的标准做法”，那说明你的团队工作流已经够清晰了。</p>
+<p>但如果你看了之后惊呆，发现”原来我每天都在用这么多本地路径”、”原来这个 MCP 只是我一个人装了”、”原来我给自己开了这么多宽 allow”，那才是这个命令命中目标的时刻。</p>
+<p>惊呆的那一刻，就是你应该把这些隐性习惯升级成显性规范的时刻。</p>
+<p>SmartScope 把这套用法叫”tribal-knowledge detector”（部落知识探测器），我觉得这个词比”onboarding guide generator”准确得多。</p>
+<p>操作上的最佳循环大概是这样。</p>
+<p>让最活跃的成员先在成熟仓库里跑一次 <code>/team-onboarding</code>，然后人工 review 一遍，把本地路径、私有 MCP、宽权限这些个人化的东西全部剔除。</p>
+<p>剔除下来发现的稳定规范，挪进 CLAUDE.md 或 .claude&#x2F;settings.json，让它们正式成为团队规则。</p>
+<p>清洗过的 ONBOARDING.md 通过 ShareOnboardingGuide 上传，发短码链接给新人。</p>
+<p>新人入职几周后，再跑一次 <code>/team-onboarding</code>，看新的输出里还有没有从老同事那继承下来的本地噪音，没有就说明知识沉淀已经落地。</p>
+<p>这套流程跑两轮，团队隐性知识基本就被显式化了。</p>
+<h2 id="我自己跑下来踩过的两个小坑"><a href="#我自己跑下来踩过的两个小坑" class="headerlink" title="我自己跑下来踩过的两个小坑"></a>我自己跑下来踩过的两个小坑</h2><p>再说两个我跑这个命令时撞到的具体障碍。</p>
+<p>一个是老版本看不到这个命令。</p>
+<p>我同事的 Claude Code 还是 v2.0.x 的版本，我跟他说”你跑一下 &#x2F;team-onboarding”，他在自己机器上敲完发现命令根本不存在。</p>
+<p>解决办法是先 <code>claude --version</code> 看版本，低于 2.1.101 就先升级。</p>
+<p>另一个是新项目跑出来的内容会很稀薄。</p>
+<p>我在一个刚建两周的新仓库里跑了一次，输出只有不到 100 行，因为 30 天会话历史里没多少东西可抓。</p>
+<p>这个命令的产出质量跟项目使用历史强相关，越成熟、越活跃的仓库跑出来越饱满。</p>
+<p>如果是新项目想做入职引导，老老实实手写 CLAUDE.md 更合适，<code>/team-onboarding</code> 留到项目跑了三个月再用。</p>
+<h2 id="章节结构会不会迭代和短码会不会挂-dashboard"><a href="#章节结构会不会迭代和短码会不会挂-dashboard" class="headerlink" title="章节结构会不会迭代和短码会不会挂 dashboard"></a>章节结构会不会迭代和短码会不会挂 dashboard</h2><p>下个月我自己想观察的是这两个具体动向。</p>
+<p>一个是 <code>/team-onboarding</code> 输出的章节结构会不会再加一层。</p>
+<p>目前 6 个章节里”团队约定”那一段对单人维护的仓库基本是空的，等 Claude Code 能把多人协作的 PR 评论、Code Review 习惯也抓进去，这段就会真的有内容。</p>
+<p>另一个是 ShareOnboardingGuide 的短码会不会向团队管理工具方向延伸。</p>
+<p>现在短码只是一个 URL，等它能挂到企业级 dashboard 上做版本追踪和访问统计，团队就能看到”新人入职 7 天内有几个人打开了这份指南”，入职效果第一次有了可观测的指标。</p>
+<p>你呢，升级到 v2.1.101 了吗？</p>
+<p>如果你在自己最常用的那个仓库里跑了一次 <code>/team-onboarding</code>，输出里有没有让你尴尬到想立刻删的几行？</p>
+<p>评论区告诉我，下次我可以聊一篇”我清理 ONBOARDING.md 的具体改动日记”。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>团队协作</tag>
+        <tag>team-onboarding</tag>
+        <tag>AI 工具</tag>
+        <tag>工程实践</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Anthropic 官方搞了 17 门免费 AI 课程加证书，国内开发者基本没人在聊</title>
+    <url>/2026/05/25/202605251500/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260525-20260525-anthropic-academy-17-free-courses.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<h2 id="5-月深夜在-Reddit-上刷到一条几乎没人聊的消息"><a href="#5-月深夜在-Reddit-上刷到一条几乎没人聊的消息" class="headerlink" title="5 月深夜在 Reddit 上刷到一条几乎没人聊的消息"></a>5 月深夜在 Reddit 上刷到一条几乎没人聊的消息</h2><p>上周六凌晨我在 Reddit r&#x2F;ChatGPT 板块刷到一条帖子，标题写「Anthropic officially launched 13+ FREE AI courses with certificates」。</p>
+<p>楼主说几乎没人在讨论这事。我点进官网试了一下，确认这事真的没在炒作。anthropic.skilljar.com 这个域名属于 Anthropic 官方训练学院平台。邮箱注册，不要信用卡，每门课刷完发一张可挂 LinkedIn 的官方证书。</p>
+<p>我自己用 Claude Code 已经快一年了，依赖到那种「断网三天就工作受影响」的程度。但 Anthropic 官方课程上线我居然完全没注意到。打开课程目录一看，里面有几门是我这一年自己摸着石头过河的盲区。当时是凌晨两点，我直接把咖啡续了一杯，注册账号开始扫课程目录。</p>
+<p>我搜了一下中文圈的讨论度，知乎、即刻、推特上聊这事的人加起来不到 20 条。Reddit 那条原帖虽然 800 多 upvote，但中文翻译几乎为零。</p>
+<p>说白了，这是我最近见过性价比最高的 AI 学习资源，没有之一。</p>
+<h2 id="Anthropic-三月开了个-academy，五月已经从-13-门扩到-17-门"><a href="#Anthropic-三月开了个-academy，五月已经从-13-门扩到-17-门" class="headerlink" title="Anthropic 三月开了个 academy，五月已经从 13 门扩到 17 门"></a>Anthropic 三月开了个 academy，五月已经从 13 门扩到 17 门</h2><p>Academy 平台是 2026-03-02 上线的，初版 13 门课。4 月 26 号扩到 17 门，5 月底统计已经到 18 门。还在动态加。</p>
+<p>17 门分 5 个学习路径：</p>
+<ul>
+<li><strong>AI Fluency</strong>（6 门），非技术向，给老师、学生、非营利组织、培训师</li>
+<li><strong>Developer Deep-Dives</strong>（5 门），开发者向，覆盖 Claude API、Claude Code、MCP、Agent Skills</li>
+<li><strong>Cloud &amp; Enterprise</strong>（2 门），Amazon Bedrock 和 Google Cloud Vertex AI 集成</li>
+<li><strong>Product Training</strong>（2 门，4 月新增），Claude Code 101 加 Claude Cowork 桌面 agent</li>
+<li><strong>Foundational Knowledge</strong>（2 门，4 月新增），Subagents 加 AI Capabilities and Limitations</li>
+</ul>
+<p>刷完全部 17 门的预估时间是 18 到 22 小时。最长的「Building with the Claude API」单门就 8.1 小时，84 节课加 10 个 quiz。最短的「AI Fluency for Educators」只有 24 分钟。</p>
+<h2 id="我用了一年-Claude-Code，但-Claude-Code-101-教的工作流我从没系统学过"><a href="#我用了一年-Claude-Code，但-Claude-Code-101-教的工作流我从没系统学过" class="headerlink" title="我用了一年 Claude Code，但 Claude Code 101 教的工作流我从没系统学过"></a>我用了一年 Claude Code，但 Claude Code 101 教的工作流我从没系统学过</h2><p>打开 Claude Code 101 的目录我有点尴尬。</p>
+<p>这门课教的是 Anthropic 官方定义的 Explore → Plan → Code → Commit 循环。说人话讲，就是先让 Claude 把代码库翻一遍搞清楚现状（Explore），写一份计划（Plan），按计划写代码（Code），最后 commit 收尾。听起来朴素得像废话，但我自己用 Claude Code 这一年，至少有一半时间是直接「Plan 都不写就让它写代码」，然后等它写偏了再回头救。</p>
+<p>课里专门讲了 Plan Mode。让 agent 在动手之前先展示完整方案给你审批，看了 OK 再让它执行。我之前用 approval mode 和 auto-accept 比较多，Plan Mode 反而是被我忽略最严重的那个。上周写一个 Next.js 项目的认证模块，我顺手开了 Plan Mode 试了一下，agent 先给我列出来 7 个文件改动 + 2 个新建依赖，我直接圈掉了一个其实根本不需要的中间件包。这种「先看再批」的体感，比我之前野路子写完再 revert 高效太多。</p>
+<p>7 个 section、12 个 module、一个期末 quiz。前置条件是 Claude Pro &#x2F; Max &#x2F; Enterprise 订阅或者有 API key。整门课预估 1 小时左右刷完。安装环节覆盖 terminal、VS Code、JetBrains、Claude Desktop、web 五个入口都讲到，对从没在 IDE 装过 Claude Code 的人也算完整。</p>
+<p>实话讲，对所有「已经在用 Claude Code 但工作流靠经验积累」的人，这门是最优先要刷的。我自己刷完最大的收获不在新功能那块。真正值的是把过去一年自己摸索出的零散习惯映射到一套官方定义的方法论里，知道哪些是 best practice、哪些其实是我自己绕远路。</p>
+<h2 id="Subagents-那门-30-分钟课，把我对-agents-命令的理解整个掀了一遍"><a href="#Subagents-那门-30-分钟课，把我对-agents-命令的理解整个掀了一遍" class="headerlink" title="Subagents 那门 30 分钟课，把我对 &#x2F;agents 命令的理解整个掀了一遍"></a>Subagents 那门 30 分钟课，把我对 &#x2F;agents 命令的理解整个掀了一遍</h2><p>4 月新增的 Introduction to Subagents 是我打开 academy 之后立刻去刷的那门。</p>
+<p>4 个 hands-on module，30 分钟左右。核心概念是 subagent 是「带独立 context window 的 isolated assistant」，主对话不会被它的 context 污染。它干完活只返回有用的输出，中间过程主 agent 看不到也不存。</p>
+<p>我之前的用法基本是把 subagent 当成「另开一个 Claude 实例帮我跑」的快捷方式。课里讲的设计模式让我重新看了一遍：structured outputs 强制 subagent 按指定 JSON schema 返回结果、blocker reporting 让 subagent 卡住时自己上报而不是傻等、tool restriction 限制 subagent 只能用某些工具。</p>
+<p>还讲了反模式。什么时候不该用 subagent，比如任务太短、上下文太轻量、需要多轮交互的场景。这块我之前就是凭感觉决定，看完课才发现有半数情况其实应该直接在主 agent 里做。</p>
+<p>Agent Skills 跟 Subagents 是配对课程。Skills 是可复用的 markdown 指令文件，让 Claude 在合适场景自动应用某种工作方式。Subagents 是隔离的执行单元，更像是给某个具体任务开一个新房间，自己跑完再把结果丢回来。</p>
+<p>两门加起来 1 小时，把 Claude Code 的 agent 编排能力上到一个新档位。</p>
+<h2 id="MCP-两门课刚好补上国内开发者最容易踩坑的生产级部分"><a href="#MCP-两门课刚好补上国内开发者最容易踩坑的生产级部分" class="headerlink" title="MCP 两门课刚好补上国内开发者最容易踩坑的生产级部分"></a>MCP 两门课刚好补上国内开发者最容易踩坑的生产级部分</h2><p>Anthropic 官方有两门 MCP 课，一门基础一门进阶。</p>
+<p>基础课 Introduction to MCP 讲架构加三个原语 Tools、Resources、Prompts，Python SDK 实操，再加 MCP Server Inspector 调试工具。前置要求是 Python 基础和 JSON &#x2F; HTTP 知识。如果你之前看过 MCP 协议的官方文档但没动过手，这门课是把概念落到代码上最直接的路径。</p>
+<p>进阶课 MCP: Advanced Topics 才是真正的硬货。讲生产级部署 patterns、stdio vs HTTP SSE 两种 transport 怎么选、可靠性管理、鉴权方案。</p>
+<p>国内开发者写 MCP server 大部分卡在「基础课覆盖的内容能跑通但生产环境一上就崩」的尴尬位置。进阶课里讲的 transport 选型、错误重试、token 鉴权这些 patterns，是自己摸索能摸两个月的坑。</p>
+<p>我自己上个月帮朋友写一个内部 MCP server，光是 stdio 和 HTTP SSE 该选哪个就纠结了两天。最后是看 Anthropic 一个 GitHub issue 才大概明白的判断标准。后来 Academy 把这块直接讲清楚，stdio 适合本地 client、HTTP SSE 适合多 client 远程调用，连重连机制都给了 reference 实现。早一个月开课我能省整整两个周末。</p>
+<p>Anthropic 官方一次性给你打包讲清楚，是真的可以省时间。</p>
+<h2 id="国内-AWS-和-GCP-团队最被遗忘的两门：Bedrock-和-Vertex-AI"><a href="#国内-AWS-和-GCP-团队最被遗忘的两门：Bedrock-和-Vertex-AI" class="headerlink" title="国内 AWS 和 GCP 团队最被遗忘的两门：Bedrock 和 Vertex AI"></a>国内 AWS 和 GCP 团队最被遗忘的两门：Bedrock 和 Vertex AI</h2><p>Cloud &amp; Enterprise 这条线在国内开发者圈讨论度几乎为零，但企业场景下用得最多。</p>
+<p>Claude with Amazon Bedrock 讲 AWS 原生集成，API 调用、tool use、retrieval pipeline 都在 Bedrock 平台层做，跟直接调 Anthropic API 是两套路径。Claude with Google Cloud Vertex AI 是同样思路的 GCP 版本，覆盖部署、流式输出、tool features。</p>
+<p>国内一线大厂很多团队为了合规、稳定性、跨区分发，正经业务跑在 AWS &#x2F; GCP 上。这两门课是企业架构 + 安全部署视角，跟个人开发者用 Claude Code 完全是两个世界。如果你在的团队正好用这两个云，强烈建议刷一遍，对接合规和安全团队的时候你会多一张牌。</p>
+<h2 id="CodeSignal-平行路线适合「敲代码学」的人，跟-Anthropic-主站正好互补"><a href="#CodeSignal-平行路线适合「敲代码学」的人，跟-Anthropic-主站正好互补" class="headerlink" title="CodeSignal 平行路线适合「敲代码学」的人，跟 Anthropic 主站正好互补"></a>CodeSignal 平行路线适合「敲代码学」的人，跟 Anthropic 主站正好互补</h2><p>Anthropic 主站偏视频讲解。CodeSignal 跟 Anthropic 合作的「Developing Claude Agents」走另一条路：带 interactive coding environment、自动评分的 lab。</p>
+<p>Python 和 TypeScript 两个版本都有。通过 lab 之后发免费证书。</p>
+<p>简单讲，更偏视频学习的人走 Anthropic 主站，更偏动手敲的就上 CodeSignal。两边证书都能挂 LinkedIn。我个人更喜欢混着来：核心概念跟主站视频，动手部分去 CodeSignal 做 lab。</p>
+<h2 id="我下周打算刷三门，剩下的看公司项目走向"><a href="#我下周打算刷三门，剩下的看公司项目走向" class="headerlink" title="我下周打算刷三门，剩下的看公司项目走向"></a>我下周打算刷三门，剩下的看公司项目走向</h2><p>按我自己的优先级排序，开发者最该先刷的就这三门：</p>
+<ol>
+<li>Claude Code 101（1 小时，把 Plan Mode 用上）</li>
+<li>Introduction to Subagents（30 分钟，重学 &#x2F;agents 命令）</li>
+<li>Introduction to Agent Skills（30 分钟，跟 Subagents 配对）</li>
+</ol>
+<p>合计 2 小时左右。这三门刷完，你日常用 Claude Code 的工作流可以直接换一档。</p>
+<p>往下一档：</p>
+<ol start="4">
+<li>Introduction to MCP（基础架构）</li>
+<li>MCP: Advanced Topics（生产级 patterns）</li>
+</ol>
+<p>两门加起来 3 到 4 小时，需要 Python + JSON &#x2F; HTTP 前置。做 MCP server 集成的人必看。</p>
+<p>要跳过的：AI Fluency 那 6 门，除非你是培训师或者要给非技术读者写内容。我做公众号确实可能去刷 AI Fluency Framework &amp; Foundations，对应小白读者的解释方式有参考。但纯技术 takeaway 有限。</p>
+<p>证书挂 LinkedIn 这件事我之前是不在乎的。但 Anthropic 官方证书在国内还很少有人挂，挂上算「早期采用」的标记。对 AI 集成、prompt engineering、AI agent 开发岗，这是比 Coursera 课更直接的信号。LinkedIn 国内访问要梯子，但 Skilljar 主站本身可以正常访问，证书 PDF 下载完贴到 LinkedIn 上是离线动作，不会被卡。</p>
+<p>国内访问 Skilljar 主站本身网速可能慢，建议挂代理刷视频。邮箱注册不需要梯子，但视频流偶尔会卡。如果你公司有 Cloudflare WARP 之类的开发者网络方案，刷起来会顺很多。</p>
+<p>我下周一开始刷 Claude Code 101，刷完写一篇实测笔记，把 Plan Mode 的实际用法和我之前野路子的差距讲清楚。如果你也在刷，可以在留言里说你打算先刷哪一门，我可以根据反馈调整后面的实测顺序。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>MCP</tag>
+        <tag>Subagents</tag>
+        <tag>Anthropic</tag>
+        <tag>学习路径</tag>
+        <tag>证书</tag>
+        <tag>AI 课程</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>智谱把模型干到了 400 tokens/s，国产开始卷速度了</title>
+    <url>/2026/05/25/202605251426/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260525-20260525-glm-51-400-tokens.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<h2 id="5-22-早上我刷到-400-这个数字，第一反应是看错了"><a href="#5-22-早上我刷到-400-这个数字，第一反应是看错了" class="headerlink" title="5&#x2F;22 早上我刷到 400 这个数字，第一反应是看错了"></a>5&#x2F;22 早上我刷到 400 这个数字，第一反应是看错了</h2><p>5 月 22 号早上，我刷到智谱发了个新东西叫 GLM-5.1 高速版，输出速度 400 tokens&#x2F;s。</p>
+<p>第一眼没什么反应。国产模型这两年发布会太多了，看到这种新闻已经麻木。但隔了 30 秒我意识到 400 这个数字不对劲。</p>
+<p>普通 GLM-5.1 大概 44 tokens&#x2F;s，Claude Opus 4.6 标准模式 44，DeepSeek 官方 API 30 到 35。Gemini 3 Flash 算业界比较快的一档 121。最快的 Mercury C 是 633，但用的是 diffusion 架构，能力不在第一档。</p>
+<p>智谱直接干到 400，而且是旗舰能力的旗舰，没有为了快阉割掉能力。</p>
+<p>说白了，全球大模型 API 的速度天花板被顶高了一截。</p>
+<h2 id="上手摸了一遍企业-API，眼睛追不上吐字的速度"><a href="#上手摸了一遍企业-API，眼睛追不上吐字的速度" class="headerlink" title="上手摸了一遍企业 API，眼睛追不上吐字的速度"></a>上手摸了一遍企业 API，眼睛追不上吐字的速度</h2><p>我立刻申请了企业 API 权限上手测了一下。</p>
+<p>上来先扔一段 React 组件重构，把一个 800 行的列表组件改写成 useMemo + virtualized 版本。我盯着输出窗口，代码像字幕一样从上往下飞过去。下意识想用 Cmd+F 去定位变量名，手还没碰到键盘，整段代码已经吐完了。</p>
+<p>换下一个，丢一份 35 页 PDF 行业报告进去让它总结核心论点。同样的任务我用 Claude Code 跑过几次，每次要等 40 到 60 秒。这次数到 6 秒，结果出来了。</p>
+<p>再试 Agent 链。让它先抓一个 GitHub repo 的 README，再读源码目录，再生成一段中文技术解读。三个动作连着跑下来不到 15 秒。</p>
+<p>测试结束时我有种很奇怪的感觉。模型还在那儿一边思考一边吐字，但我的眼睛已经追不上它的速度了。</p>
+<p>副作用也有一个：太快导致来不及打断。PDF 总结那一轮里，它有一段方向跑偏了，但等我意识到的时候它已经吐完结论。Claude Code 那种「慢慢吐字给你时间叫停」的节奏，在这儿不存在。</p>
+<h2 id="把-400-翻译一下：是人类阅读极限的-80-倍"><a href="#把-400-翻译一下：是人类阅读极限的-80-倍" class="headerlink" title="把 400 翻译一下：是人类阅读极限的 80 倍"></a>把 400 翻译一下：是人类阅读极限的 80 倍</h2><p>人类正常阅读速度大概是 3 到 5 个 token 每秒。对，就这么慢。觉得自己看文章很快，其实绝大多数时候是在跳读。认真看每一个字，3 到 5 个 token 就是上限。</p>
+<p>400 tokens&#x2F;s 是这个的 80 倍。AI 在 1 秒内吐出来的东西，你需要花 80 秒才能读完。</p>
+<p>落到具体场景。Cursor 或 Claude Code 让你生成 2000 token 代码，标准模型要 50 秒，够你去厨房接杯水回来。换成 400 tokens&#x2F;s 是 5 秒，刚把手从键盘上挪开，代码已经全部出来。</p>
+<p>50 秒那种叫「等 AI」：下命令然后等，等的时候打开微信刷两条朋友圈，结果出来再回头检查。</p>
+<p>5 秒那种叫「跟着 AI」：你的眼睛、思维和模型几乎同步，看着代码流出来，发现哪里写偏了立刻按 Esc 改方向。</p>
+<p>这种差距大到「快了一点」根本描述不了，整个交互范式被换了一套。</p>
+<h2 id="TileRT-把推理工厂从批处理改造成连续流水线"><a href="#TileRT-把推理工厂从批处理改造成连续流水线" class="headerlink" title="TileRT 把推理工厂从批处理改造成连续流水线"></a>TileRT 把推理工厂从批处理改造成连续流水线</h2><p>理论上推理速度上限由硬件决定。一台 8 卡 H200 服务器按理论带宽算 decode 上限差不多 1000 tokens&#x2F;s。但主流推理框架跑出来常常只有几十 tokens&#x2F;s，中间差了一个数量级。</p>
+<p>TileRT 团队博客里有个比喻特别好。想象一个工厂，里面分好几个工位，一个切割，一个打磨，一个装配。</p>
+<p>主流推理框架是这么干活的：工头喊「开工」，第一个工位做完整批，半成品送进仓库。工头再喊一声，第二个工位从仓库把半成品搬出来接着做。</p>
+<p>如果这批量很大，每个工位忙几十甚至几百毫秒，进出仓库的几微秒可以忽略。但实时交互场景里每次只生成一个 token，工位处理时间被压缩到几微秒。工件加工 2 微秒，搬运用了 5 到 10 微秒。超过一半的时间机器都在等下一个工位「准备好」，不是在干活。</p>
+<p>GPU 利用率看着挺高，算力理论上也够，但 token 就是吐不快。卡在工位与工位之间的那堵墙上。</p>
+<p>TileRT 干的事儿就是把整个工厂从「批处理车间」改造成「连续流水线」。</p>
+<p>不再等一整批做完再送仓库，而是一件一件直接传给下一个工位。工头只在最开始喊一次「开工」，之后所有调度、同步、传递都在车间内部完成，再也不停机。</p>
+<p>更狠的是这条流水线在编译期就预先编排好了，运行时根本不需要即时调度。把流水线塞到 GPU 里让它一直跑。工位之间那堵墙被拆掉了。</p>
+<h2 id="GLM-5-1-模型架构本身就奔着配合推理引擎做的"><a href="#GLM-5-1-模型架构本身就奔着配合推理引擎做的" class="headerlink" title="GLM-5.1 模型架构本身就奔着配合推理引擎做的"></a>GLM-5.1 模型架构本身就奔着配合推理引擎做的</h2><p>光有流水线还不够，得让上面跑的东西也对流水线友好。</p>
+<p>先说 MoE 稀疏激活。744B 总参数里每个 token 只激活 40B。工厂虽大，订单进来时只调用相关那几个工位，不用整个仓库都翻。</p>
+<p>再说多 token 预测，简称 MTP。传统模型每生成一个 token 都要把整个模型跑一遍。GLM-5 训了一手，让模型一次预测接下来 2 到 3 个 token，再由主模型快速校验。实际平均每次稳定吐出 2.76 个，比 DeepSeek-V3.2 的 2.55 还高一点。</p>
+<p>还有稀疏注意力。长上下文下传统注意力复杂度跟长度的平方成正比。稀疏注意力让模型自己判断哪些 token 重要，只对重要的做计算，砍掉 1.5 到 2 倍算力开销。</p>
+<p>省下来的算力，正好被流水线拿去掩盖数据搬运和卡间通信的时间。模型和引擎互相给对方留头部空间。400 这个数字是这三层加上 TileRT 的执行模型重构搭在一起才出来的。</p>
+<h2 id="国产大模型，开始卷别人没走过的方向"><a href="#国产大模型，开始卷别人没走过的方向" class="headerlink" title="国产大模型，开始卷别人没走过的方向"></a>国产大模型，开始卷别人没走过的方向</h2><p>让我头皮发麻的不是 400 这个数字本身，是国产大模型开始卷速度了。</p>
+<p>目前 API 速度梯队大致这样：极速档超过 200 tokens&#x2F;s，GLM-5.1 高速版之前只有 Mercury C 一家达到 633，但是 diffusion 架构，能力不在第一线。快速档 100 到 200 tokens&#x2F;s，Gemini 3 Flash 121，Claude Fast Mode 100 到 112，GPT-5.1 95 到 120，DeepSeek V4 Pro 在第三方推理服务商上能跑到 170。标准档 40 到 100 tokens&#x2F;s，绝大多数前沿模型都在这里。</p>
+<p>智谱直接干到 400，把原天花板顶到新位置，而且是旗舰能力的旗舰。更巧的是 DeepSeek 同一天宣布把之前 75% 的促销折扣永久化，API 价格变 1&#x2F;4。一个卷速度，一个卷价格。</p>
+<p>实话讲，中国的大模型厂商已经从「我们也能做到」开始往别人没去过的方向走。前两年是在追，每发一个模型第一句话都是「在某某 benchmark 上超过了某某」，潜台词是「我们也有了」。今年不一样：DeepSeek 把推理价格打下来一个数量级，是别人没敢干的。智谱这次直接重写推理执行模型把速度干到 400，也是别人没去做的方向。</p>
+<p>国际厂商怎么做的：Anthropic Fast Mode 是同一个模型调推理配置，2.5 倍速度换 6 倍价格。Google 的 Flash-Pro 分级是直接训不同大小的模型覆盖速度和能力的光谱。Fireworks 这类第三方推理服务商是在现有框架上做单点优化。</p>
+<p>智谱走的是第四条路：根上动手术，把整个推理执行模型从批处理改成连续流水线。最深、最难、回报也最大。</p>
+<h2 id="Claude-Code-用了快一年，慢一直是我心里那点别扭"><a href="#Claude-Code-用了快一年，慢一直是我心里那点别扭" class="headerlink" title="Claude Code 用了快一年，慢一直是我心里那点别扭"></a>Claude Code 用了快一年，慢一直是我心里那点别扭</h2><p>Claude Code 我用了快一年，依赖到不可逆的程度。但有件事一直别扭：写一个复杂 prompt 之后等 30 到 50 秒看结果，几乎每天都在发生。</p>
+<p>这个等待时间挺尴尬。说短不短，长到我会本能切到飞书或推特刷两眼。说长不长，等回来重拾上下文比直接等还累。切走再切回来思路断了，这 prompt 等于白写。</p>
+<p>我试过 Claude 的 Fast Mode 和几个第三方推理服务，确实快一些但能力损失明显，复杂 Agent 链跟不上。</p>
+<p>GLM-5.1 高速版让我第一次意识到，慢这件事可以被解决。能力跟 Claude Code 完全一样还远着呢，但「快」第一次被推到「快到需要重新适应交互节奏」的程度，跟「快了一点点」完全两个东西。</p>
+<p>就像十年前第一次从机械硬盘换到 SSD：开机时间从 90 秒压到 10 秒，看起来只是数字变化，但整个 workflow 节奏被重写了一遍。这次给我的体感几乎一样。</p>
+<h2 id="智谱-SLA-数据和-DeepSeek-是否反击，这两件事我会盯着"><a href="#智谱-SLA-数据和-DeepSeek-是否反击，这两件事我会盯着" class="headerlink" title="智谱 SLA 数据和 DeepSeek 是否反击，这两件事我会盯着"></a>智谱 SLA 数据和 DeepSeek 是否反击，这两件事我会盯着</h2><p>但也得说几句心里的别扭。</p>
+<p>400 tokens&#x2F;s 这个数字目前还没被 Artificial Analysis 这种独立第三方测过。智谱自己也承认需要更多条件下的持续验证。我看到的更多是一个声明加少量企业客户实测，普通开发者还摸不着。</p>
+<p>9 倍速度提升，单位 token 成本是不是也跟着便宜，定价怎么算，目前没看到具体数字。Anthropic Fast Mode 那种 2.5 倍速度换 6 倍价格的玩法市场会买账。但 400 tokens&#x2F;s 如果价格跟着 9 倍 10 倍往上走，那它就是一个高端定制服务，不是普惠工具。</p>
+<p>这些都还不清楚。但速度作为新的竞争维度被打开了。</p>
+<p>我要盯两件事。一是智谱的 SLA 数据和正式定价区间什么时候出来，能不能从企业内测扩到通用开发者。二是 DeepSeek 会不会接着卷速度反过来回应。它过去一年都是「价格 + 能力」两条腿走，速度这条腿如果也迈出来，国产推理这块就真彻底拉开。</p>
+<p>之前搭流水线只想着能不能跑通，没想过跑通之后在烧什么时间。GLM-5.1 高速版让我意识到，「等待时间」本身就是一种被忽略的成本。</p>
+<p>智能 × 速度，是未来三五年 AI 行业的新战场。第一记发令枪，恰好被一家中国公司打响。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>DeepSeek</tag>
+        <tag>国产大模型</tag>
+        <tag>GLM</tag>
+        <tag>智谱</tag>
+        <tag>推理加速</tag>
+        <tag>TileRT</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Google 一周两次 3x，把 Antigravity 周配额拉到 9x 之后我重新算了笔账</title>
+    <url>/2026/05/25/202605251414/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260525-20260525-antigravity-9x-quota-comeback.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上周三凌晨我在 Reddit 上刷到一个帖子，标题写着「weekly quota burned in 1 hour」。点进去发现是个 Antigravity Pro 订阅用户，账号刚续费完一周，开了一个 Composer session 跑重构，吃完午饭回来配额提示框就弹出来了。</p>
+<p>第一反应是这哥们儿是不是误操作。</p>
+<p>然后下面跟的是几十条同款吐槽。「I&#x2F;O 之后我的 weekly quota 撑了 40 分钟」「Pro 订阅 22 美刀一个月，跑两个 multi-agent 任务就到顶了」「上周还能跑一整天，这周开两个 agent manager 同时跑就锁」。</p>
+<p>我去 X 上搜 Logan Kilpatrick 和 Varun Mohan 的最新 tweet，刚好赶上 Google 这一周内<strong>两次 3x</strong> 提升 Antigravity 内的 Gemini 配额。Logan 的原话是 「We just 3xed the Antigravity limits again, but this time, the weekly quotas. We want you to stay in flow state building with Gemini」。</p>
+<p>5 天内两次 3x，累积 9x。</p>
+<p>但你打开 Reddit 评论区往下翻第二条高赞 reply，写的是「even 9x is still less than what we had before May 19」。</p>
+<p>这件事不是单纯配额涨了 9 倍。</p>
+<p>这一篇我把 Reddit 大批用户烧光周配额的 timeline、Google 5 天 9x 的真实算法逻辑、跟 Cursor &#x2F; Claude Max 同档位的对比，还有国内 Pro 订阅用户接下来怎么决策，按「看到的现象 → 真实机制 → 国内影响」梳一遍。</p>
+<h2 id="I-O-之后的两天，Reddit-上集体炸了"><a href="#I-O-之后的两天，Reddit-上集体炸了" class="headerlink" title="I&#x2F;O 之后的两天，Reddit 上集体炸了"></a>I&#x2F;O 之后的两天，Reddit 上集体炸了</h2><p>5&#x2F;19 周二 keynote 直播上 Sundar 宣布 Antigravity 2.0 拆 5 surface 那一刻，全场 IDE 工程师在弹幕里欢呼。当天晚上社区氛围特别好，大家都在装 Antigravity 2.0 desktop app 准备试 Agent Manager。</p>
+<p>到周三凌晨 8 点开始，r&#x2F;google_antigravity 这个版块连续刷出「quota burned」帖。</p>
+<p>写代码的人都知道 agentic IDE 是个什么场景。</p>
+<p>你打开 Antigravity 2.0，丢一个目标（比如「帮我重构这个 React 组件的 props 管理」），Agent Manager 自动开 3-4 个子 agent 并行跑。一个改 hooks、一个改类型、一个跑测试、一个查文档。每个子 agent 都是完整的 Gemini 3 Pro context、都在做 tool calling、都在写文件。</p>
+<p>一次 work session 跑 30 分钟，消耗的 token 量可能等同于 ChatGPT 用一整天。</p>
+<p>但你的 dashboard 是按「周」计的。</p>
+<p>5&#x2F;19 之前的旧规则下，Pro 订阅一周大概能跑 100 个完整 Composer task。5&#x2F;19 当天 Google 静悄悄换了一套 <strong>compute-based</strong> 计费，相同的 100 个 task 在新算法下被判为消耗超额，账户提示 「weekly limit reached」。</p>
+<p>工程师不会忍这种事。</p>
+<p>Reddit 帖子 24 小时之内热度炸到论坛主页置顶，X 上 #antigravity 标签开始挂 quota 截图。Varun Mohan 周三下午就出来发声了。</p>
+<h2 id="Logan-那条-X-公告把-work-session-这件事重新定义了一遍"><a href="#Logan-那条-X-公告把-work-session-这件事重新定义了一遍" class="headerlink" title="Logan 那条 X 公告把 work session 这件事重新定义了一遍"></a>Logan 那条 X 公告把 work session 这件事重新定义了一遍</h2><p>Varun Mohan 周三晚上发的第一条 X 是这样：「If you are on a paid plan, your Gemini quota has been reset for the week and increased by 3x moving forward. Keep building!」</p>
+<p>这个解决方案乍一看够诚意。</p>
+<p>但 24 小时后 Reddit 上又开始第二轮吐槽：「3x 之后我又烧光了」「Pro 一档配额涨了，但跑 2 个并发 Composer 还是触顶」。</p>
+<p>周四晚上 Logan Kilpatrick 在 X 上贴了第二次公告：「We just 3xed the Antigravity limits again, but this time, the weekly quotas」。同时 Varun Mohan 补充：「acknowledging that users could hit their weekly limits after a couple work sessions」。</p>
+<p>这一句「couple work sessions」是 Google 这次最关键的一句话。</p>
+<p><strong>说白了</strong>，Google 内部以前的计费假设是「engineer 用 IDE 跟用 ChatGPT 一样，问一句答一句、间断使用」。但实际工程师把 Antigravity 当连续 8 小时高强度上下文窗口在用。一个 work session 就是 1-3 小时连续 agentic loop，里面有几十个子 agent 在跑，每个子 agent 都是完整 reasoning 链。</p>
+<p>5 天连刷两次 3x 这个动作，等于 Google 在 48 小时内承认自己计费 anchor 设错了。</p>
+<p>Google product team 在工程师群体集体反弹下，48 小时内把「engineer 怎么用 IDE」这个底层假设重新校准了一遍。这种响应速度在大厂里少见。</p>
+<h2 id="compute-based-这套算法在算什么"><a href="#compute-based-这套算法在算什么" class="headerlink" title="compute-based 这套算法在算什么"></a>compute-based 这套算法在算什么</h2><p>Google 这次新计费里 「compute-based」 这个词出现了无数次，但官方 blog 写得很模糊。我把 9to5google &#x2F; AndroidHeadlines &#x2F; Google blog feed 这几篇连起来读，反推出真实的算法构成。</p>
+<p>旧算法（5&#x2F;19 之前）：按 daily prompt 数算，简单粗暴。</p>
+<p>新算法（5&#x2F;19 之后）：compute-based，由 3 个维度共同决定。</p>
+<p><strong>请求复杂度</strong>：同样是问一句话，跑一次简单 chat completion 和触发一次 multi-step tool calling，消耗差几个数量级。Antigravity 2.0 里如果你的 prompt 触发 Agent Manager 并行开 4 个 sub-agent，这一次请求的 cost 等于以前 40 次普通 chat。</p>
+<p><strong>用到的功能</strong>：Browser integration 跑一次网页抓取加 DOM 解析、CLI 工具跑一次 bash command、File system 读写一次大目录，每个 surface 的 cost weight 都不一样。</p>
+<p><strong>聊天历史长度</strong>：每次请求都把整个对话 context 重传一遍，session 越长、context 越大，单次请求的 token cost 越高。</p>
+<p>Cursor 还在按 request 数算（Pro 一档每月 500 fast premium request）。Claude Code 按 token 算（input 和 output 两条独立曲线）。Google 这次直接对齐「代理实际产生的计算」，把 prompt 复杂度、surface 用量、context length 全揉进去。</p>
+<p><strong>本质上</strong>这是 agentic IDE 时代必然的范式转移。</p>
+<p>按 prompt 数算配额，是 chat 时代留下来的逻辑。agentic IDE 一次任务消耗的 compute 是 chat 一句话的几十倍上百倍，按 prompt 数算等于让 multi-agent loop 用户用很便宜的价格占用很贵的资源，平台经济学不成立。</p>
+<p>compute-based 是对的方向。Google 这次只是切换时间点没选好（I&#x2F;O 之后 5 小时内）加上起始 baseline 给得太低（被工程师当天就烧光），后面 5 天内两次 3x 是把 baseline 拉回合理位置。</p>
+<h2 id="Pro-和-Ultra-拿到的-5-小时滚动刷新，是-Anthropic-Claude-Max-同款机制"><a href="#Pro-和-Ultra-拿到的-5-小时滚动刷新，是-Anthropic-Claude-Max-同款机制" class="headerlink" title="Pro 和 Ultra 拿到的 5 小时滚动刷新，是 Anthropic Claude Max 同款机制"></a>Pro 和 Ultra 拿到的 5 小时滚动刷新，是 Anthropic Claude Max 同款机制</h2><p>Google 官方 blog 这次明确写：「Pro &#x2F; Ultra subscribers now receive priority access, featuring our highest, most generous rate limits with quotas that refresh every five hours」。</p>
+<p>每 5 小时刷新一次的机制不是 Google 原创。</p>
+<p>Anthropic Claude Max（200 美元 &#x2F; 月那个档）就是 5 小时滚动窗口刷新。Claude Max 用户每 5 小时拿一个 quota 重置，理论上一天能撑 4-5 轮高强度使用。Cursor Pro 还是按月计的 fast premium request 数，没有滚动窗口概念。</p>
+<p>Google 这次在 Antigravity 上把 Pro &#x2F; Ultra 改成 5h 滚动刷新，<strong>简单讲</strong>是抄 Claude Max 的玩法。</p>
+<p>这套机制对 agentic IDE 用户更友好的原因是：work session 是 1-3 小时高强度集中型，不是均匀分布。让你每 5 小时拿一次 quota 重置，比「每周给你一个大额度自己分配」对重度工程师更合理。</p>
+<p>但 Google 这次抄的是机制，不是数字。Claude Max 一个月 200 美元，Antigravity Pro 一个月 22 美元。同样的 5h 刷新机制下，22 美元档的 baseline 配额能拉到什么水平？9x 之后大概拉到 Cursor Pro 的同价位（20 美元）不相上下、比 Claude Max 同价位（不存在，Max 没有 20 档）便宜得多。</p>
+<p>但前提是 baseline 不再缩水。</p>
+<h2 id="国内开发者真正受影响的，就两类人"><a href="#国内开发者真正受影响的，就两类人" class="headerlink" title="国内开发者真正受影响的，就两类人"></a>国内开发者真正受影响的，就两类人</h2><p>国内 Pro 订阅 Antigravity 的用户我大概观察了几个圈子，真正会被 9x 这事影响决策的就两类。</p>
+<p><strong>重度 multi-agent 工程师</strong>：日常在 Antigravity 里跑 Composer 任务、连续 4-6 小时高强度编程。这类用户 Pro 一档 22 美元 &#x2F; 月在 9x 之前撑不过 3 天，9x 之后大概能撑到一周末。但如果你的 work session 是「打开 Antigravity → Agent Manager 同时开 4 个子 agent 重构整个 microservice → 跑 2 小时」这种规模，Pro 还是不够，得上 Ultra（250 美元 &#x2F; 月）。</p>
+<p><strong>轻度单文件 refactor 用户</strong>：日常只用 Antigravity 写 React 组件、改 SQL、跑单文件 refactor。这类用户其实没怎么感受到 5&#x2F;19 那次紧缩，9x 之后更是完全无压力。Pro 一档对你来说 quota 是冗余的。</p>
+<p>剩下中间那一档「想用但不知道值不值」的人，<strong>实话讲</strong>这次 9x 的信号是积极的，可以考虑订一档。但要注意：现在的 9x 是相对 5&#x2F;19 那个被骂回去的 baseline 的 9x，距离 5&#x2F;19 之前的旧水平还有 30-40% 的差距。这意味着 Google 后面如果工程师群体不再激烈反弹，可能不会再继续 3x。</p>
+<p>国内开发者的支付通路依旧是个坎：Wise、OneCard、美国 Apple ID 加美国信用卡。这条路径不变。Antigravity 也没有像 Cursor 一样开通过 GitHub Marketplace 等折中支付方式。</p>
+<h2 id="Free-tier-被甩进-weekly-cap，是-paid-first-模式定型的信号"><a href="#Free-tier-被甩进-weekly-cap，是-paid-first-模式定型的信号" class="headerlink" title="Free tier 被甩进 weekly cap，是 paid-first 模式定型的信号"></a>Free tier 被甩进 weekly cap，是 paid-first 模式定型的信号</h2><p>5&#x2F;19 之前 Antigravity 还有相对友好的 free tier 给开发者尝鲜。5&#x2F;19 之后 Google 官方 blog 写：「For users on the free plan, we’ve shifted to a larger, weekly based rate limit to minimize hitting rate limits quickly during a project」。</p>
+<p>中文翻一下：免费用户不再有 5h 滚动刷新，改成 weekly cap，每周给你一个大额度自己分配。</p>
+<p>这个变化对偶尔试 Antigravity 一下的开发者影响不大。但对希望「白嫖 Antigravity 跑一些日常开发」的人是个明显劝退信号。Google 在用产品分层把 Antigravity 推向 paid-first 工具，免费用户能用但不能日常用。</p>
+<p>跟 Cursor 走的同一条路。Cursor 在 2024 年底也做过类似切换，free 一档从「日常可用」压到「试用为主」，Pro 一档 20 美元变成日常用户的入门门槛。</p>
+<p>对 Google 来说这是个商业模型修正。Antigravity 2.0 的 IDE &#x2F; CLI &#x2F; SDK &#x2F; Web &#x2F; Agent Manager 5 个 surface 每个都烧 compute，没有 paid-first 模式平台经济学撑不住。</p>
+<p>但对国内开发者群体心理上的冲击不小：之前 Gemini 3 Pro 通过 AI Studio 拿到几乎是免费的，Antigravity 2.0 不能再走同套逻辑。要长期用，得付费。</p>
+<h2 id="9x-之后我要重新算的几笔账"><a href="#9x-之后我要重新算的几笔账" class="headerlink" title="9x 之后我要重新算的几笔账"></a>9x 之后我要重新算的几笔账</h2><p>发到 production 之前我自己接下来一周要做这几件事。</p>
+<p><strong>算 Pro 一档真实够不够</strong>：从今晚开始记录自己每次 Antigravity work session 的 compute 消耗（Antigravity 2.0 dashboard 里有详细 token usage 数据），跑一周下来看 Pro 22 美元那档真实能撑住几个连续 multi-agent session。稳稳够用就续 Pro，天花板还在频繁触发就上 Ultra。</p>
+<p><strong>对比 Cursor Pro 同价位</strong>：我手上同时有 Cursor Pro 订阅，下周打算做一个同任务对比。同一个 microservice 重构任务分别在 Antigravity Pro 9x 后和 Cursor Pro 500 fast premium 下各跑一遍，看真实 work session 完成数。</p>
+<p><strong>跑一次 Agent Manager 多 surface 并发实测</strong>：我之前一直只在 Antigravity IDE 里用，没有把 CLI、Web、IDE 同时跑过。9x 之后 baseline 够宽了，下周可以测一次极限：3 个 surface 并发加 Agent Manager 同时开 4 个子 agent，看真实压力下 compute 怎么走。</p>
+<p>跑完会写一篇实测报告，包括 token usage 真实数据、各 surface compute weight 估算、9x 之后真实能稳定撑多久。</p>
+<p>如果你也在订 Antigravity Pro 或 Ultra，9x 之后你的 work session 体感变化怎么样？周配额一周能撑几天？</p>
+<p>评论区告诉我，下一篇可以专门做一次跨平台同任务对比测试。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>Gemini</tag>
+        <tag>Google</tag>
+        <tag>Antigravity</tag>
+        <tag>Coding</tag>
+        <tag>Quota</tag>
+        <tag>Pricing</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Gemini Omni 上线一周，我把那些 viral 视频翻完之后看明白一件事</title>
+    <url>/2026/05/23/202605231400/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260523-20260523-gemini-omni-conversational.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>I&#x2F;O 2026 周二 keynote 上 Sundar 发 Gemini Omni 那一刻我就在直播间，但当时被 Antigravity 2.0 拆 5 surface 那条新闻压住，没仔细看 Omni 的视频。</p>
+<p>这一周陆陆续续刷到了一堆 Omni 创作，Logan Kilpatrick 周五在 X 上贴了一波”these are the standouts”，我点进去把 7 条视频翻完之后看明白一件事。</p>
+<p>Omni 这次的提升当然包括视频清晰度，物理 grounding 和 multi-turn 一致性维度也都比上一代更好。</p>
+<p>但核心变化在别处。</p>
+<p><strong>创作者跟视频的关系变了。</strong></p>
+<p>说白了，video editing 从”在 timeline 上拖 layer”变成了”我说一句话，模型把上一帧改一下”。</p>
+<p>这是一种新的交互范式，已经不只是又一个 video model。</p>
+<p>这一篇我挑 4 条这一周 viral 起来的 standout 视频，每条对应 Omni 一个真东西，按”看到的现象 + 真正在干什么 + 对国内创作者意味着什么”梳一遍。</p>
+<h2 id="Marble-world-那条-Omni-真正把”物理-grounding”做出来了"><a href="#Marble-world-那条-Omni-真正把”物理-grounding”做出来了" class="headerlink" title="Marble world 那条:Omni 真正把”物理 grounding”做出来了"></a>Marble world 那条:Omni 真正把”物理 grounding”做出来了</h2><p>最先 viral 的是 keynote 现场放的 marble 视频。</p>
+<p>一颗弹珠在一条复杂金属轨道上滚下来，途中撞到一个金属铃铛，弹珠继续往前滚，铃铛在它撞击的同一个瞬间发出”叮”的一声。</p>
+<p>听起来不奇怪？</p>
+<p>奇怪的地方在于:**这条视频是从一句 prompt 出来的，没有人工剪辑铃铛的音轨，没有人指定”撞到铃铛时播放声音”**。</p>
+<p>弹珠的运动轨迹符合重力、动量守恒、滚动摩擦。</p>
+<p>撞击的瞬间金属铃铛发声，声音的时间戳跟撞击帧完全对齐。</p>
+<p>弹珠继续滚动的时候铃铛持续震荡，声音衰减跟物理上的金属阻尼一致。</p>
+<p>这是 Omni 内部把”物理 simulation”和”audio synthesis”放在同一个 model pass 里，不是先生成视频再配音。</p>
+<p>Veo 3 做不到这件事。Sora 1 做不到。Luma Dream Machine 也做不到。</p>
+<p>国内创作者的实操含义:你不用再为”动画效果跟音效不同步”花两小时手动对帧。</p>
+<p>prompt 一句”金属球在木桌上滚落撞到玻璃杯发出清脆响声”，Omni 出来的视频物理和声音同步度已经够发短视频了。</p>
+<h2 id="黏土版蛋白质折叠-reasoning-比渲染更值钱"><a href="#黏土版蛋白质折叠-reasoning-比渲染更值钱" class="headerlink" title="黏土版蛋白质折叠:reasoning 比渲染更值钱"></a>黏土版蛋白质折叠:reasoning 比渲染更值钱</h2><p>DeepMind 发布会上还放过一条黏土风格的”蛋白质折叠科普”，这条的看点跟 marble 完全不同。</p>
+<p>prompt 是简单一句:<code>a claymation explainer of protein folding</code>。</p>
+<p>视频输出是一段 stop-motion 风格的黏土动画，开头是一串氨基酸”链”，中间慢慢折叠出 alpha helix（α 螺旋）和 beta sheet（β 折叠），旁白同步念出”Proteins start as chains of amino acids. They fold into patterns like the alpha helix and flat sections called beta sheets…”。</p>
+<p>我看这条视频的关键不是它好看，是它<strong>知道蛋白质折叠是怎么回事</strong>。</p>
+<p>它没把”alpha helix”画成抽象螺旋，而是画成生物学课本里那种规整的螺旋折叠形态。</p>
+<p>它没把 beta sheet 画成长条形，而是画成扁平的多链平行结构。</p>
+<p>旁白的术语顺序符合生物学教学顺序（先讲 amino acid chain → 再讲折叠模式 → 最后讲三维结构）。</p>
+<p><strong>本质上</strong>这是 Gemini 的”world knowledge”被注进了视频生成 pipeline。</p>
+<p>它在做的是 reason “what should happen next based on what I know about science”，不只是 fit pixel pattern。</p>
+<p>对国内做科普 &#x2F; 教育内容的同行实操含义很直接:原来要花 3 天找美术外包做的科普动画，现在 prompt 一句就出来一稿能用的版本。</p>
+<p>效率提升的量级到了 50 倍以上。</p>
+<h2 id="Violinist-4-步多轮编辑-Conversational-editing-是-Omni-的真东西"><a href="#Violinist-4-步多轮编辑-Conversational-editing-是-Omni-的真东西" class="headerlink" title="Violinist 4 步多轮编辑:Conversational editing 是 Omni 的真东西"></a>Violinist 4 步多轮编辑:Conversational editing 是 Omni 的真东西</h2><p>Logan 那条 violinist 多轮编辑视频，我觉得是这周被低估的一条。</p>
+<p>Logan Kilpatrick 在 X 上放过一个 4 步编辑的 demo:</p>
+<p>第一句:<code>A video of a violinist playing a song</code>，出来一条 10 秒的小提琴手演奏视频。</p>
+<p>第二句:<code>Transport the violinist to the image environment</code>（连同一张富丽宫廷的参考图），Omni 把那个演奏者搬到了宫廷里继续演奏，<strong>人物长相、衣着、动作姿态完全保留</strong>。</p>
+<p>第三句:<code>Make the violin invisible</code>，小提琴消失了，演奏者的手仍然保持着拉琴的姿势在演奏空气小提琴，<strong>人物没变形</strong>。</p>
+<p>第四句:<code>Change the camera angle to be over the violinist&#39;s shoulder</code>，镜头切到了演奏者背后越肩拍，<strong>身体姿势、宫廷场景、消失的小提琴都跟前一步对得上</strong>。</p>
+<p>每一步只改一件事，其余全部保留。</p>
+<p>这就是 conversational editing 的关键。</p>
+<p><strong>实话讲</strong>，Omni 的核心创新在剪辑界面这一层，而不在视频生成模型本身。</p>
+<p>Premiere &#x2F; DaVinci &#x2F; Final Cut 这些剪辑软件你打开是 timeline + tracks + keyframes + transitions 全堆在屏幕上。</p>
+<p>Omni 这边你打开是一个聊天框，第一句话出视频，第二句话改，第三句话再改。</p>
+<p>会用 Premiere 需要学习两个月。</p>
+<p>会用 Omni 只需要会说话。</p>
+<p>国内创作者短期的实操含义跟”AI 替代剪辑师”不挂钩。AI 替代是 5 年后的事。</p>
+<p>实操含义是:<strong>90% 不会用 Premiere 的人，第一次能”剪”视频了</strong>。</p>
+<p>这是 video 的 prompt 时刻，跟 2022 年 12 月 ChatGPT 是文字的 prompt 时刻一样。</p>
+<h2 id="镜面液化那条-视频特效门槛已经塌了"><a href="#镜面液化那条-视频特效门槛已经塌了" class="headerlink" title="镜面液化那条:视频特效门槛已经塌了"></a>镜面液化那条:视频特效门槛已经塌了</h2><p>Logan 那条镜面液化的视频是这周让我有”创意门槛塌了”感觉的那一条。</p>
+<p>prompt 是:<code>When the person touches the mirror, make the mirror ripple beautifully like liquid, and the person&#39;s arm turns into reflective mirror material</code>。</p>
+<p>输出视频:一个人伸手去摸镜子，触碰瞬间镜面像水面一样涟漪扩散，与此同时这个人的手臂从手腕开始向上液态化、表面变成镜面反射的金属质感。</p>
+<p>这一条视频如果用传统 VFX 流程做，需要的工作量是:</p>
+<p>3D 建模一个 ripple 表面（Houdini 或 Blender 几个小时）+ 关键帧动画从 mirror 到 liquid metal 的材质转变（After Effects 几个小时）+ 跟实拍视频精确对齐人物轮廓（roto + masking 几个小时）+ 渲染合成。</p>
+<p>VFX 团队报价能开到 5 万人民币起。</p>
+<p>Omni 用一句英文 prompt 在 30 秒内出来。</p>
+<p>视频质量当然还远没有替代 5 万的 VFX 团队，那是另一个话题。</p>
+<p>我想说的是:<strong>视频特效的门槛已经塌了</strong>。</p>
+<p>那种”想做但不会做”的创意，现在能在 30 秒内试一遍。</p>
+<p>这件事对国内做短视频内容的创作者影响最大的是创意试错成本。</p>
+<p>原来你要做一个”喝水的杯子里游出一条鱼”的镜头，得先评估”做不做得出来 &#x2F; 找谁做 &#x2F; 多少钱 &#x2F; 多久”。</p>
+<p>现在你直接 prompt 一句话，10 秒后看效果，不行就改 prompt 再来一遍。</p>
+<p>创意 → 视频之间的距离从”几周 + 几千元”变成了”几句话 + 几秒钟”。</p>
+<h2 id="数字-avatar-Sora-1-那条没走完的路-Google-接着走"><a href="#数字-avatar-Sora-1-那条没走完的路-Google-接着走" class="headerlink" title="数字 avatar:Sora 1 那条没走完的路 Google 接着走"></a>数字 avatar:Sora 1 那条没走完的路 Google 接着走</h2><p>Avatar 是 Omni 这次单独拿出来讲的一个功能。</p>
+<p>它让你录一段视频，对镜头读一组随机数字（防 deepfake），Google 把你的面部 + 声纹存下来，之后你的视频里可以让这个数字分身出场。</p>
+<p>OpenAI 去年在 Sora 1 上线过类似功能叫 Cameos，前段时间因为合规和创作者抗议把 Sora 1 app 下架了。</p>
+<p>Google 这次走的还是 Sora 1 那条路径，但加了几个安全锁:全程录制时必须念随机数 + 所有生成视频带 SynthID 数字水印 + 只有你自己能用你的 avatar（默认不公开）。</p>
+<p><strong>简单讲</strong>这是给 YouTube Shorts 创作者用的:你不想每条短视频都自己出镜，可以让 avatar 替你出镜，文案、动作、表情通过 prompt 控制。</p>
+<p>对国内的同行最大变化:你的”视频出镜 frequency”和”创作者人设建设”现在可以解耦。</p>
+<p>原来你想保持周更需要每周固定时间录视频，现在 prompt 一句话让 avatar 出镜。</p>
+<p>对人设打造重度依赖出镜的创作者（健身 &#x2F; 美妆 &#x2F; 知识科普）这是个真东西。</p>
+<p>但有一个边界:Omni 目前不允许 avatar 唱歌、不允许 avatar 说政治敏感内容、不允许 avatar 做明显的”角色扮演”。</p>
+<p>合规上比 Sora 1 上线时严了好几档。</p>
+<h2 id="Omni-跟-Veo-Luma-Sora-真正分开的地方在交互层"><a href="#Omni-跟-Veo-Luma-Sora-真正分开的地方在交互层" class="headerlink" title="Omni 跟 Veo &#x2F; Luma &#x2F; Sora 真正分开的地方在交互层"></a>Omni 跟 Veo &#x2F; Luma &#x2F; Sora 真正分开的地方在交互层</h2><p>把 4 条 standout 视频拼起来看，Omni 真正不一样的不在”模型能力”。</p>
+<p>模型能力上 Veo 3.1 &#x2F; Luma Dream Machine 2 &#x2F; Sora 1 互相之间已经追得很近，10 秒视频的清晰度、物理一致性、prompt 服从度差不多在同一档。</p>
+<p>Omni 不一样的是<strong>交互界面</strong>。</p>
+<p><strong>Veo</strong>:prompt → 视频，单次生成</p>
+<p><strong>Luma</strong>:prompt → 视频，可以 reference 图片，但每次重新出</p>
+<p><strong>Sora 1</strong>:prompt → 视频 + 简单 multi-turn，但一致性差</p>
+<p><strong>Omni</strong>:prompt → 视频 → 改一件事 → 视频再出来 → 再改 → 视频再出来，整个过程像 ChatGPT 一样</p>
+<p>Anthropic 在 Claude.ai 里早就把”对话 + artifact”这种交互打磨成熟了。</p>
+<p>Google 这次把同一套交互模式搬到视频生成里来。</p>
+<p>这是 2026 年 Q2 video 生成赛道最大的范式转移。</p>
+<p>不夸张地说，Omni 之后所有视频生成产品都会被迫往 conversational editing 这个方向靠。</p>
+<p>谁先把对话式编辑做顺、把 multi-turn 一致性做稳，谁就拿下 video 的 ChatGPT 时刻。</p>
+<h2 id="国内创作者怎么准备-别死磕-prompt，先练”对话编辑”的提问能力"><a href="#国内创作者怎么准备-别死磕-prompt，先练”对话编辑”的提问能力" class="headerlink" title="国内创作者怎么准备:别死磕 prompt，先练”对话编辑”的提问能力"></a>国内创作者怎么准备:别死磕 prompt，先练”对话编辑”的提问能力</h2><p>我自己这一周陆陆续续试了二十多条 Omni，最大的体会不是 prompt 工程要学新模板。</p>
+<p>是”对话编辑”的提问能力要刻意练。</p>
+<p>很多创作者第一次用 Omni 会把所有要求堆进一句 prompt:”一个穿白衬衫的男人在咖啡馆敲电脑，窗外下雨，画面是 cinematic 风格，10 秒，4k，杜比音效…”。</p>
+<p>这种 prompt 在 Veo &#x2F; Luma 上是对的写法，因为模型只能跑一次。</p>
+<p>在 Omni 上<strong>完全错了</strong>。</p>
+<p>Omni 正确的用法是分轮:第一轮先出基本场景（一个男人在咖啡馆敲电脑），第二轮加细节（窗外下雨），第三轮调风格（cinematic），第四轮改镜头（推到电脑屏幕）。</p>
+<p>每一轮只改一件事，剩下的全保留。</p>
+<p>这个工作流跟 Cursor 改代码一模一样。</p>
+<p>你不会让 Cursor 一次生成完整 app，你让它先出框架、再加功能、再修 bug。</p>
+<p>Omni 这条赛道接下来 6 个月，<strong>会”对话编辑”的人比”会写长 prompt”的人创作效率会差 3-5 倍</strong>。</p>
+<p>不需要英文好。中文 prompt Omni 同样支持。</p>
+<p>需要的是”我想改什么 &#x2F; 这一步改什么 &#x2F; 上一步保留什么”的清晰判断。</p>
+<h2 id="本周末跑-marble-物理复刻，下周录-avatar-数字分身实测"><a href="#本周末跑-marble-物理复刻，下周录-avatar-数字分身实测" class="headerlink" title="本周末跑 marble 物理复刻，下周录 avatar 数字分身实测"></a>本周末跑 marble 物理复刻，下周录 avatar 数字分身实测</h2><p>发到生产之前我自己还要再做两件事。</p>
+<p>一个是复刻那条 marble 弹珠的物理视频。</p>
+<p>我会用 prompt <code>A glass marble rolls down a wooden track on a rustic kitchen counter and hits a small bronze bell, the bell rings with the same physics as the marble&#39;s impact, soft natural lighting, 10 seconds</code>，看 Omni 出来的视频在国内的网络环境下生成时间多久、Token 消耗多少、声音同步精度怎样。</p>
+<p>另一个是录我自己的 avatar 数字分身。</p>
+<p>下周想让 avatar 替我出镜做一条”飞飞 5 分钟讲 Antigravity SDK”的解释视频，看看观众反馈是不是能分辨出来。</p>
+<p>两件事做完会写一篇实测，包括生成时间、Token 消耗、Avatar 真实度、观众识别率几个数据。</p>
+<p>你这一周看 Omni 的视频最让你震到的是哪一条？</p>
+<p>是 marble 那种物理 grounding，还是 violinist 多轮编辑的连贯性，还是镜面液化那种特效塌门槛？</p>
+<p>评论区告诉我，下一篇可以专门挑你最关心的那个深挖技术细节。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>Gemini</tag>
+        <tag>Google</tag>
+        <tag>Sora</tag>
+        <tag>Gemini Omni</tag>
+        <tag>AI 视频生成</tag>
+        <tag>多模态</tag>
+        <tag>conversational editing</tag>
+        <tag>Veo</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>I/O 2026 ICYMI：除了 Antigravity 2.0，Google 把 idea 到 production 这条链全填上了</title>
+    <url>/2026/05/23/202605231100/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260523-20260523-io-2026-icymi-stack.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>前两天我刚写过 Antigravity 拆成 IDE 和 2.0 这件事，本来以为 I&#x2F;O 2026 keynote 我已经看明白了。</p>
+<p>周末重新把 keynote 录像拉了一遍，又把 developers.googleblog.com 上当天发的 9 篇配套博文一篇一篇过完，我发现自己看漏了一大半。</p>
+<p>Antigravity 拆 5 个 surface 那件事只是棋盘中心一格。</p>
+<p>外围 Google 还动了 AI Studio、Managed Agents API、Android CLI、WebMCP、Chrome DevTools、Science Skills，至少 7 个方向。</p>
+<p>说白了，Google 这次不是发了一个产品，是把开发者**从”手机上想到一个 idea”到”agent 在生产环境跑”**整条链的所有空位都填上了。</p>
+<p>这一篇 ICYMI 我按”链路位置 + 对国内开发者的实操价值”把每个新东西梳一遍。</p>
+<p>链路顺序我画一下:<strong>AI Studio（抓 idea）→ Antigravity IDE&#x2F;2.0（写代码）→ Antigravity SDK（自部署 agent）→ Managed Agents API（产品上线）→ Android CLI &#x2F; WebMCP &#x2F; Chrome DevTools（移动+web 补齐）→ Science Skills（垂直领域 skill 包）</strong>。</p>
+<h2 id="AI-Studio-这一头：从手机上把-idea-直接接进-Antigravity"><a href="#AI-Studio-这一头：从手机上把-idea-直接接进-Antigravity" class="headerlink" title="AI Studio 这一头：从手机上把 idea 直接接进 Antigravity"></a>AI Studio 这一头：从手机上把 idea 直接接进 Antigravity</h2><p>AI Studio 这次的更新我个人觉得比 Antigravity 2.0 更值得国内开发者关心。</p>
+<p>它现在干了 4 件事一起放出来。</p>
+<p><strong>原生 Kotlin Android 支持</strong>:在 aistudio.google.com 里 prompt 一句话直接生成完整 Android app 代码，Workspace API 能直接调，Cloud Run 一键部署，Firebase 服务原生接，甚至能从 AI Studio 直接发布到 Google Play 的 Test Track。我自己测了一下，让它生成一个”用 Gemini API 做翻译的 Android demo”，从 prompt 到模拟器跑起来不到 5 分钟。</p>
+<p><strong>手机 app 即将上线</strong>:iOS 和 Android 版的 AI Studio 移动 app 这周开放预注册，Google 自己描述是”路上想到 idea 直接抓住，到桌面打开就有一个能用的原型”。这对内容创作者 &#x2F; PM 这种”灵感跑得比键盘快”的人是个真东西。</p>
+<p><strong>导出到 Antigravity</strong>:在 AI Studio 里写到一半的项目可以一键导出到本地的 Antigravity，<strong>包括所有上下文</strong>。这点 Google 在 keynote 里没强调，但其实是新链路的关键。它把 AI Studio 从孤岛实验场变成了一条进 IDE 的正式入口。</p>
+<p><strong>Workspace API 原生集成</strong>:agent 可以直接调 Gmail、Calendar、Drive、Docs 这些 Workspace API，不需要再走 OAuth dance。做企业内部工具的同行，这一项直接省掉了一大堆鉴权重复劳动。</p>
+<p>我自己接下来要试的就是 AI Studio app 装到手机上，看它能不能让我把通勤路上想到的 idea 在到家之前就跑出原型。</p>
+<h2 id="Antigravity-SDK-是给”想自部署”的人留的口子"><a href="#Antigravity-SDK-是给”想自部署”的人留的口子" class="headerlink" title="Antigravity SDK 是给”想自部署”的人留的口子"></a>Antigravity SDK 是给”想自部署”的人留的口子</h2><p>Antigravity 2.0 desktop app 适合普通开发者，但有一批人是不希望 agent 跑在 Google 服务器上的。</p>
+<p>国内做企业内部工具的、外贸 ERP 的、合规要求高的 SaaS 团队都属于这一批。</p>
+<p>Antigravity SDK 就是给这批人留的口子。</p>
+<p>它把 Google 自己产品里在用的同一套 agent harness（plan &#x2F; tool-use &#x2F; sandboxing &#x2F; git policy &#x2F; credential masking）抽成 SDK，你可以装到自己的服务器或者 Kubernetes 集群里跑。</p>
+<p><strong>实话讲</strong>，SDK 这条线的真正价值不在”开源”。它仍然是闭源 SDK，调用 Gemini API。</p>
+<p>真正价值是”你可以在 prompt &#x2F; tool 注册 &#x2F; memory 这一层完全自定义”。</p>
+<p>OpenAI 的 Codex CLI 走的是类似路线但更轻；Anthropic 的 Claude Agent SDK 这边的位置类似但 harness 更”硬”（自带 Hooks 系统）。</p>
+<p>Google 这次拉出 SDK，等于明确给开发者一个选择:<strong>要么用 Antigravity 桌面应用、要么用 SDK 自部署，但 agent harness 是同一套</strong>。</p>
+<h2 id="Managed-Agents-in-Gemini-API-是这次最重要的一颗棋"><a href="#Managed-Agents-in-Gemini-API-是这次最重要的一颗棋" class="headerlink" title="Managed Agents in Gemini API 是这次最重要的一颗棋"></a>Managed Agents in Gemini API 是这次最重要的一颗棋</h2><p>如果非要选 I&#x2F;O 2026 一个”对未来 12 个月最重要”的发布，我会选 Managed Agents。</p>
+<p>简单讲，它干的事是:<strong>一次 API 调用，你就拿到一个</strong>已经配好工具、已经隔离好沙箱、已经能联网、能跑代码的 agent。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">POST /v1/agents/interactions</span><br></pre></td></tr></table></figure>
+
+<p>这一个 endpoint 后面起一个 Linux 容器，里面装好 Antigravity agent harness，挂载 sandboxed shell + file system + browser，每次 interaction 是一个可恢复的 session，files 和 state 都留着，下一次 API 调用接着上一次跑。</p>
+<p>底下默认是 Gemini 3.5 Flash。</p>
+<p>Google 之前发布的 Deep Research 就是基于这个架构跑的，这次是把它开放给所有开发者。</p>
+<p><strong>本质上</strong>这是 OpenAI Assistants API + Code Interpreter + Browser 三件事打包，但比 OpenAI 那一套整合度更高（一次调用拿全套，不需要先创建 assistant 再 attach tools）。</p>
+<p>对国内 SaaS 团队的实操价值很直接:你想做”输入一段需求让 agent 跑出来一个数据分析报告 + 生成 PPT”这种产品，原来你要自己维护 Linux 沙箱 &#x2F; Docker orchestration &#x2F; 浏览器自动化 &#x2F; 文件 IO 安全策略，现在一个 API 全交给 Google。</p>
+<p>定义自己 agent 的方式也很轻量:写两个 markdown 文件，<code>AGENTS.md</code>（告诉 agent 它是谁 &#x2F; 怎么思考）和 <code>SKILL.md</code>（告诉它有哪些工具），注册一下就能跑。</p>
+<p>跟 Claude Agent Skills 的格式几乎完全对齐。</p>
+<h2 id="Android-CLI-1-0-把-Android-Studio-的能力开给所有-agent"><a href="#Android-CLI-1-0-把-Android-Studio-的能力开给所有-agent" class="headerlink" title="Android CLI 1.0 把 Android Studio 的能力开给所有 agent"></a>Android CLI 1.0 把 Android Studio 的能力开给所有 agent</h2><p>这是给 Android 开发者的一颗糖。</p>
+<p>Android CLI 是一个独立 binary，可以让任何 agent（Claude Code &#x2F; Codex CLI &#x2F; Antigravity CLI 都行）直接调用 Android Studio 里的能力。</p>
+<p>包括 <code>android studio analyze-file</code>（用 IDE 的静态分析跑代码诊断）、<code>android studio find-declaration</code>（找符号定义）、<code>android studio render-compose-preview</code>（让 agent 真的渲染出 Compose UI 预览图）。</p>
+<p><strong>这件事真的反直觉</strong>:Android Studio 是 Google 自家 IDE，但 Android CLI 这次明确支持 Claude Code 和 OpenAI Codex CLI 调用。</p>
+<p>Google 这次没有把 Android Studio 锁死给 Antigravity，是开放给所有 agent 的。</p>
+<p>包管理也铺得很全:apt-get、winget、homebrew 都能装，国内开发者最容易踩坑的”装不上”问题这次基本不会有。</p>
+<p>同时开源了一套 Android skill，覆盖 Jetpack Compose 迁移、CameraX 迁移、Display Glasses + Compose Glimmer for XR、Adaptive UI 等场景，github.com&#x2F;android&#x2F;skills 上能看全清单。</p>
+<p>对国内做 Android app 的同行最大变化:不需要再用 Gemini in Android Studio，可以保留你熟悉的 Claude Code &#x2F; Cursor 工作流，只是多加一个 <code>android</code> 命令让 agent 调。</p>
+<h2 id="WebMCP-在-Chrome-149-上-origin-trial-开了"><a href="#WebMCP-在-Chrome-149-上-origin-trial-开了" class="headerlink" title="WebMCP 在 Chrome 149 上 origin trial 开了"></a>WebMCP 在 Chrome 149 上 origin trial 开了</h2><p>WebMCP 是 web 这边今年最值得跟的一件事。</p>
+<p>它的设计想法是:网站作者主动暴露一组<strong>结构化工具</strong>给浏览器里的 AI agent 用，而不是让 agent 像现在一样去 click 来 click 去模拟用户。</p>
+<p>比如 Expedia 把”搜索航班 &#x2F; 选座 &#x2F; 改签”做成 WebMCP tool，你在 Chrome 里跟 Gemini 说”帮我订一张周六回北京的票”，Gemini 直接调 Expedia 的 backend API，不用模拟点击界面。</p>
+<p>Chrome 149 已经开了 origin trial，Expedia、Booking.com、Shopify、TurboTax、Redfin、Etsy、Instacart、Target 都在实验阶段。</p>
+<p>这是开放 web 标准，Anthropic 那边的 Claude for Chrome 应该也会支持。</p>
+<p>对国内 web 开发者的具体动作:你的网站如果想被 agent 友好访问，明年这个时候就要开始想 WebMCP tool 的设计了，跟 SEO 一样会变成”agent-SEO”标配。</p>
+<p>Chrome 那边同时还放了 Chrome DevTools for agents。agent 可以直接 attach 到 DevTools，拿 console log、network trace、accessibility tree 来做自主 debug。</p>
+<p>Google 在 keynote 里给了一个数据，日本 LY Corporation 用这个做自动 performance audit，节省了 96-98% 的手工分析时间。</p>
+<h2 id="Science-Skills-DeepMind-把领域知识做成-agent-skill-包"><a href="#Science-Skills-DeepMind-把领域知识做成-agent-skill-包" class="headerlink" title="Science Skills:DeepMind 把领域知识做成 agent skill 包"></a>Science Skills:DeepMind 把领域知识做成 agent skill 包</h2><p>Science Skills 这条容易被忽略但其实是个未来 anchor。</p>
+<p>DeepMind 这次开源了一个针对生物 &#x2F; 医学 &#x2F; 化学领域的 agent skill 包，把 30 多个数据库（UniProt、AlphaFold Database、AlphaGenome API、InterPro 等）打包成 skill，agent 可以直接调。</p>
+<p>效果是把”一个结构生物信息学分析”从原来的几小时人工压到几分钟全自动。</p>
+<p>Google 自己内部测试时用 Science Skills 跑了一个 AK2 基因突变的疾病机理分析，给出了新的潜在机理推断。</p>
+<p><strong>Science Skills 本身只是起点</strong>，关键是 Google 用它开了”specialized skills bundles”这个产品形态。下一波很可能是 Medical Skills、Legal Skills、Finance Skills、Game Dev Skills。</p>
+<p>每一个 skill bundle 都是 Google 跟领域专家合作做的”垂直 agent capability pack”。</p>
+<p>国内做垂类 AI 应用的团队应该认真看这个范式，它是 horizontal model + vertical skill pack 的一个 reference 实现。</p>
+<h2 id="拼起来看，这次-Google-在卷的是-idea-到-production-整条链"><a href="#拼起来看，这次-Google-在卷的是-idea-到-production-整条链" class="headerlink" title="拼起来看，这次 Google 在卷的是 idea 到 production 整条链"></a>拼起来看，这次 Google 在卷的是 idea 到 production 整条链</h2><p>把上面 6 个发布拼起来看，链路就清楚了。</p>
+<p><strong>手机抓 idea</strong>:AI Studio 移动 app</p>
+<p><strong>桌面写代码</strong>:Antigravity IDE（写）+ Antigravity 2.0（agent 跑）</p>
+<p><strong>自部署 agent</strong>:Antigravity SDK</p>
+<p><strong>生产上线</strong>:Managed Agents API</p>
+<p><strong>移动场景补齐</strong>:Android CLI 给所有 agent 用</p>
+<p><strong>Web 场景补齐</strong>:WebMCP + Chrome DevTools for agents</p>
+<p><strong>垂直深度</strong>:Science Skills 和后续 specialized bundles</p>
+<p>这次 Google 干的事情远不止补一个产品的缺。整条链上的每个节点都被填了一个自己的产品占位。</p>
+<p>这跟 OpenAI 一直只在 API + ChatGPT + Codex 这三个点上加码、Anthropic 在 Claude.ai + Claude Code + Claude API 三件套上往深走的策略完全不一样。</p>
+<p>不夸张地说，Google 这次把”端到端 stack”这张牌打到最满。</p>
+<p>要不要押 Google 这条链是各人选择，但<strong>链路完整这件事本身</strong>已经是个值得国内开发者认真考虑的信号。agent-first 时代的开发栈不会停在某一个工具上，整条链都要一起重画。</p>
+<h2 id="今晚跑-Managed-Agents-demo，明早注册-WebMCP-origin-trial"><a href="#今晚跑-Managed-Agents-demo，明早注册-WebMCP-origin-trial" class="headerlink" title="今晚跑 Managed Agents demo，明早注册 WebMCP origin trial"></a>今晚跑 Managed Agents demo，明早注册 WebMCP origin trial</h2><p>发到生产之前我自己还要再试两件事。</p>
+<p>一个是 Managed Agents API，我会用 Interactions API 起一个 agent 让它跑”读我桌面 desktop 上一个 CSV 然后生成一份 markdown 总结”这个最简单的 demo，看每次 API 调用的延迟、Token 消耗、session resume 是不是真的能跨调用保留状态。</p>
+<p>另一个是 WebMCP origin trial 注册申请，我有一个之前给读者做的小工具站，想把”搜索文章 &#x2F; 复制摘要 &#x2F; 导出 markdown” 三个动作暴露成 WebMCP tool 试一下，看 Chrome 149 + Gemini in Chrome 调用起来手感怎样。</p>
+<p>两件事跑完之后我会再写一篇实测。</p>
+<p>你最关心 I&#x2F;O 2026 这堆发布里的哪一个？是 Managed Agents、WebMCP、还是 Antigravity SDK 自部署？评论区告诉我，下一篇我可以专门挑你最想看的那个深挖。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI 编程</tag>
+        <tag>Google</tag>
+        <tag>Antigravity</tag>
+        <tag>Managed Agents</tag>
+        <tag>AI Studio</tag>
+        <tag>Gemini API</tag>
+        <tag>WebMCP</tag>
+        <tag>Android CLI</tag>
+        <tag>Chrome DevTools</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Karpathy 周二宣布加入 Anthropic，用 Claude 加速 Claude 的预训练</title>
+    <url>/2026/05/20/202605201430/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260520-20260520-karpathy-anthropic.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>今天下午我刷 X，看到 Karpathy 自己挂了一条三行推文。</p>
+<p>我盯着屏幕停了 30 秒。</p>
+<p>原文翻译过来是这样:「个人状态:我已经加入 Anthropic。我认为接下来几年在 LLM 前沿是特别 formative 的一段时间。我非常激动加入这边的团队，回到 R&amp;D。我对教育的热情没变，会在以后某个时点重新做。」</p>
+<p>formative 这个词很多人随手翻译成「关键」「重要」。我读完第一反应是「定型期」。说白了，他这话意思是 LLM 这件事还没结束，接下来几年是它变成什么形状的关键窗口，他要回到那个窗口里再亲手参与一次。</p>
+<h2 id="Karpathy-是谁，先从一段时间线讲起"><a href="#Karpathy-是谁，先从一段时间线讲起" class="headerlink" title="Karpathy 是谁，先从一段时间线讲起"></a>Karpathy 是谁，先从一段时间线讲起</h2><p>39 岁，斯洛伐克裔加拿大人，OpenAI 当年 11 个创始成员之一。</p>
+<p>2015 年 OpenAI 成立时他就在里面，2017 年离职去了特斯拉，挂的是 AI Director 头衔，主导 Full Self-Driving 和 Autopilot。在特斯拉那 5 年是他最被外界熟知的一段:每次 Tesla AI Day 上台讲 vision-only 的人就是他。</p>
+<p>2022 年 7 月他离开特斯拉。</p>
+<p>休息半年后 2023 年 2 月再回 OpenAI，干了一年，团队负责 midtraining 和 synthetic data。这一段履历后面会反复出现，因为跟今天的事情直接关联。</p>
+<p>2024 年 2 月他再次从 OpenAI 离开。</p>
+<p>2024 年 7 月，他在 Delaware 注册了 Eureka Labs，做 AI native school，第一个产品叫 LLM101n，是个本科生级别的 AI 课程，引导学生从零训练一个小型的 AI 助教。</p>
+<p>然后是今天，2026 年 5 月 19 日（北京时间 5&#x2F;20 凌晨），他在 X 上宣布加入 Anthropic。</p>
+<h2 id="我学-Karpathy-课程的三段亲身经历"><a href="#我学-Karpathy-课程的三段亲身经历" class="headerlink" title="我学 Karpathy 课程的三段亲身经历"></a>我学 Karpathy 课程的三段亲身经历</h2><p>2023 年 4 月，我刚开始看 Transformer 的源码，怎么看都不通。我搜到他在 YouTube 上的 nanoGPT 视频，4 小时一镜到底，从零开始写一个能跑通的小型 GPT。</p>
+<p>那 4 小时我反复看了三遍。</p>
+<p>第一遍跟着代码敲，第二遍暂停记笔记，第三遍只听他讲设计取舍。看完之后我第一次明白「Attention 不是黑魔法」这件事。</p>
+<p>2025 年 6 月他在 AI Startup School 做了一场 keynote，提出 Software 3.0 的说法。意思是 Software 1.0 是显式代码，Software 2.0 是神经网络权重，Software 3.0 是用英语写的 prompt 程序。</p>
+<p>那场 talk 我看完之后，整整一周在改自己的 prompt 风格。</p>
+<p>更早之前我在 2018 年读过他那篇 Software 2.0 的博客，当时他还在特斯拉。我把那篇文章打印出来贴在工位旁边，看了大半年。那时候我刚转 AI 方向，那篇文章帮我理解了为什么神经网络是「另一种程序」。</p>
+<p>Karpathy 的教育影响力很有重量。他不靠营销号风格圈粉，靠的是真的在用最朴素的方式教 AI，micrograd 全部源码不到 200 行，nanoGPT 也不到 300 行。所以今天他说「教育以后再做」，对我这种从他视频上学过东西的人冲击挺大。</p>
+<h2 id="岗位本身比「加入」这件事更值得读"><a href="#岗位本身比「加入」这件事更值得读" class="headerlink" title="岗位本身比「加入」这件事更值得读"></a>岗位本身比「加入」这件事更值得读</h2><p>Anthropic 发言人对 TechCrunch 证实，Karpathy 进的是 pre-training 团队，team lead 是 Nick Joseph，他将启动一个新团队，目标是「用 Claude 加速 pre-training research 本身」。</p>
+<p>这句话信息量很大。</p>
+<p>预训练（pre-training）是 Claude 这种模型最贵、最慢的阶段，一次完整的 train run 烧的钱和算力以亿美金计。「用 Claude 加速 pre-training」说白了就是让现役的 Claude 来辅助下一代 Claude 的训练:做数据筛选、生成合成数据、设计 ablation 实验、跑 sweep 之后帮人看 loss 曲线。</p>
+<p>这是当前所有前沿 lab 都在押的方向:让现有的模型反过来训练下一代模型。</p>
+<p>人不够用，数据快用完，就靠模型自己来扩产能。</p>
+<p>而 Karpathy 上一段在 OpenAI 干的事情就是 midtraining 和 synthetic data，刚好就是这个领域。这次他进 Anthropic 的岗位，本质上是把 OpenAI 内部那套 playbook 带过来，在 Anthropic 重新搭一遍，且规模可能更大。</p>
+<p>Nick Joseph 是 Anthropic 的 Head of Pretraining，也是原 OpenAI 出来的人。两个 OpenAI 老人在 Anthropic 一起搞下一代 Claude 的预训练，这件事比「Karpathy 跳槽」本身有更多解读空间。</p>
+<h2 id="Eureka-Labs-这件事我想冷静说几句"><a href="#Eureka-Labs-这件事我想冷静说几句" class="headerlink" title="Eureka Labs 这件事我想冷静说几句"></a>Eureka Labs 这件事我想冷静说几句</h2><p>Karpathy 2024 年 7 月公布 Eureka Labs 的时候，我和身边几个朋友群里都在转。一个深度懂 LLM 又会教书的人做 AI native 学校，这事光听就很值得期待。</p>
+<p>我去看了 GitHub 上 LLM101n 的 repo。</p>
+<p>截至今天（2026 年 5 月），README 顶上还挂着一句话:「This course will take time to build and there is no specific timeline.」（这门课需要时间来构建，没有具体时间表。）</p>
+<p>从 2024 年 7 月到现在快两年，承诺的那门课还没做出来。</p>
+<p>一个对教育有真感情、自己讲 nanoGPT 视频在 YouTube 上几百万播放的人，自己创业做 AI 教育做了快两年都做不出来 PMF。这件事说人话讲就是:AI native school 这个赛道目前供给端（怎么把 LLM 包装成靠谱的 AI 助教）和需求端（谁愿意为 AI 课程长期付费）都没成型。</p>
+<p>国内一票做「AI + 教育」的朋友，这是个冷静信号。</p>
+<p>不是 Karpathy 做得不好，是这件事本身比想象中难太多。</p>
+<h2 id="OpenAI-创始基因正在被系统性挖走"><a href="#OpenAI-创始基因正在被系统性挖走" class="headerlink" title="OpenAI 创始基因正在被系统性挖走"></a>OpenAI 创始基因正在被系统性挖走</h2><p>OpenAI 当年 11 个创始成员里，John Schulman 2024 年去了 Anthropic，Karpathy 今天进 Anthropic，等于 2 个原始创始成员现在在同一个对手公司。</p>
+<p>Jan Leike 也是 2024 年从 OpenAI 离职后进的 Anthropic。Andrea Vallone 是 OpenAI 的 safety lead，2025 年底进了 Anthropic，跟着 Jan Leike 干 alignment。</p>
+<p>这种节奏已经从单点跳槽演变成持续的、有方向性的虹吸。</p>
+<p>Anthropic 用三个东西撑这件事:研究优先的内部文化（不像 OpenAI 那么多政治拉扯）、2026 年 2 月刚完成的 Series G $380B 估值（现在 secondary market 报价已经隐含 1 万亿美金）、Bloomberg 报道说公司在准备 2026 年 10 月走 IPO。</p>
+<p>研究纯粹度 + 股权预期 + 退出在望，这套组合拳是其他对手现在很难复制的。</p>
+<p>OpenAI 那边今年也有动作，但流出去的人多数选了创业（Mira Murati 做 Thinking Machines、Liam Fedus 做 Periodic Labs），没有像 Anthropic 这样形成一个明确的「研究系老兵聚集地」。</p>
+<h2 id="对中国应用层开发者的几句话"><a href="#对中国应用层开发者的几句话" class="headerlink" title="对中国应用层开发者的几句话"></a>对中国应用层开发者的几句话</h2><p>底座加速迭代的真正影响在应用层。</p>
+<p>Karpathy 这种级别的人进 Anthropic pre-training，意味着下一代 Claude 的预训练流程会更高效，能力曲线会更陡，模型迭代速度还要再快一档。</p>
+<p>对应用层开发者来说，如果你在做的应用本质上是「拿 API 套一层 prompt + 一层 UI」，那这种应用的 moat 会被反复洗。今天你做的工作流，半年后可能模型自己就能干。Cursor、Windsurf、Devin 这些工具上半年还跑得猛，下半年遇到 Claude Code、Codex CLI 之后份额立刻被压。</p>
+<p>真正能活下来的应用，在我看来必须有三个东西里至少两个:领域专属的脏数据（行业人才库、医保病例、工程图纸）、用户的私域历史（多年的对话、笔记、行为）、深度嵌入的工作流（行业系统里跑了 5 年的审批链）。</p>
+<p>这三样东西模型短期挖不走。</p>
+<p>举个我身边正在发生的例子。我有个朋友去年做了个工具，本质上就是「Claude API + 一个针对法务合同的 prompt 库 + Web 界面」，去年这种产品月流水做到了七位数。今年 Claude Code 一升级，加上 Claude 自带的法务知识越来越扎实，他那个产品的付费用户连续 3 个月在掉，掉了 40%。</p>
+<p>光做 prompt 工程和界面包装的项目，得想清楚自己今年能不能赚到下半年的钱。</p>
+<h2 id="Anthropic-IPO-节奏和-Karpathy-个人博客这两件事"><a href="#Anthropic-IPO-节奏和-Karpathy-个人博客这两件事" class="headerlink" title="Anthropic IPO 节奏和 Karpathy 个人博客这两件事"></a>Anthropic IPO 节奏和 Karpathy 个人博客这两件事</h2><p>一个是 Anthropic 这次 IPO 的节奏。</p>
+<p>Bloomberg 报道说 2026 年 10 月，三大投行已经早期参与讨论。如果真按这个节奏走，那今年 Q3 会是行业一个明确节点。Karpathy 加入这一波等于给 IPO 故事再加一个研究背书，节点前后会有更多类似量级的人才动作。</p>
+<p>另一个是 Karpathy 自己。</p>
+<p>他在特斯拉时期就以写技术博客出名（写过 Software 2.0 那篇影响一代工程师的文章）。我会持续盯他个人博客和 X，看他多久会公开写一篇关于「Anthropic 内部怎么做 pre-training」的文章。如果他下半年发一篇技术博客，会比任何分析师报告都值钱。</p>
+<p>你呢，看过 Karpathy 的 Zero to Hero 吗？</p>
+<p>哪一集对你影响最大，micrograd、makemore、还是 build-nanogpt？</p>
+<p>评论区告诉我，我下次写「我用 nanoGPT 课程帮自己理解 Transformer 的笔记」的时候顺便聊。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>Anthropic</tag>
+        <tag>Karpathy</tag>
+        <tag>LLM</tag>
+        <tag>pre-training</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>微信读书出 Skill 了，我那 23 本书 366 条笔记，今天起 Agent 自己会翻</title>
+    <url>/2026/05/18/202605181500/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260518-20260518-weread-skills-agent.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>我在微信读书上一共有 23 本书做过笔记，总共 366 条。最多的一本是《如何让你爱的人爱上你》，120 条。这些数字我自己都记不清楚，但今天下午我打开 Claude Code，敲了一句”列一下我笔记最多的 10 本书”，Agent 三秒后把这张表吐给了我。</p>
+<p>微信读书今天上线了官方 Agent Skill。从今天起，我那 23 本书 366 条笔记可以被 Agent 直接翻。而且不止 Claude Code，OpenClaw、Codex CLI、Cursor、Gemini CLI 都能用同一份 skill。</p>
+<h2 id="装-skill-这一步比想象中傻瓜"><a href="#装-skill-这一步比想象中傻瓜" class="headerlink" title="装 skill 这一步比想象中傻瓜"></a>装 skill 这一步比想象中傻瓜</h2><p><img src="https://image.vance.xin/screenshots/20260518-20260518-weread-skills-install.webp" alt="Claude Code 终端装 weread-skills 的过程"></p>
+<p>截图 1 是我今天上午装的过程。Claude Code 终端里直接说一句”下载 <a href="https://cdn.weread.qq.com/skills/weread-skills.zip">https://cdn.weread.qq.com/skills/weread-skills.zip</a> 安装 skill”，Agent 自己跑了 curl + unzip，把 9 个 markdown 文件解压到 <code>~/.claude/skills/weread-skills/</code>。9 个文件分别是 SKILL.md、book.md、discover.md、notes.md、profile.md、readdata.md、review.md、search.md、shelf.md，对应 8 类能力 + 1 个主入口。</p>
+<p>老实讲，这种”发一句话就能给 Agent 装东西”的体验，半年前还不可能。这要感谢 Anthropic 2025 年 12 月把 Agent Skills 规范开源。截至今年 3 月，已经有 32 个 Agent 工具支持同一份 SKILL.md 格式，包括 Claude Code、Codex CLI、Cursor、Gemini CLI、JetBrains Junie、AWS Kiro、Block Goose。一份 skill 包，全行业通吃。</p>
+<p>我 5 月 8 号就拿到内测装上了本地版本（看文件 mtime 是 5&#x2F;8-5&#x2F;9 那两天的）。但今天 5 月 18 号 App 端的 API Key 入口才正式开放。</p>
+<h2 id="App-端的入口才是今天的真新闻"><a href="#App-端的入口才是今天的真新闻" class="headerlink" title="App 端的入口才是今天的真新闻"></a>App 端的入口才是今天的真新闻</h2><p><img src="https://image.vance.xin/screenshots/20260518-20260518-weread-skills-app-settings.webp" alt="微信读书 App 内的 Skill 设置页"></p>
+<p>截图 2 是微信读书 App 里”我 - 设置 - 微信读书 Skill”这个新页面。最上面 6 个能力卡片：查看书架、阅读统计、导出笔记、搜索书籍、书籍简介、好书推荐。中间是”复制 Skill 安装指令”按钮。最下面是 API Key，wrk-kdhs 开头那串。</p>
+<p>我的 API Key 创建于 2026-05-18，状态是”尚未使用”。说明 App 这边的开关今天才打开。把这串 key 存到 <code>WEREAD_API_KEY</code> 环境变量里，重启 Agent 就完了。没有 OAuth 流程，扫码和 callback 地址也都省了。国内大厂能把鉴权简化到这一步的少见。</p>
+<h2 id="试了三件-App-内-AI-问书做不到的事"><a href="#试了三件-App-内-AI-问书做不到的事" class="headerlink" title="试了三件 App 内 AI 问书做不到的事"></a>试了三件 App 内 AI 问书做不到的事</h2><p>微信读书自己有 AI 问书功能，但只能针对当前打开的某一本书提问。Skill 接进 Agent 之后，能干的是跨书跨账户的活。</p>
+<p>我让 Claude Code “列一下我最近读的 10 本书”。</p>
+<p><img src="https://image.vance.xin/screenshots/20260518-20260518-weread-skills-recent-books.webp" alt="Agent 返回的最近阅读 10 本书清单"></p>
+<p>截图 3 是结果：今年 2 月 12 号开始读的《胜算》刘润，去年 12 月 4 号读过的《清醒思考的艺术》罗尔夫·多贝里和《清醒思考：将平凡时刻转化为非凡成果》沙恩·帕里什，再往前是去年 8 月底的《人间失格》太宰治、《教育的本质》怀特海，5 月 24 号那两本《雪球专刊·特别版》段永平投资问答，1 月 25 号许知远的《十三邀3》。每条都带 <code>weread://reading?bId=xxx</code> 深度链接，点一下直接在 App 里继续读。</p>
+<p>翻完最近 10 本之后，我让它统计笔记数量。</p>
+<p><img src="https://image.vance.xin/screenshots/20260518-20260518-weread-skills-most-notes.webp" alt="Agent 返回的 23 本书 366 条笔记统计表"></p>
+<p>截图 4 是 23 本书 366 条笔记的统计表，按总笔记数倒序排。《如何让你爱的人爱上你》120 条划线 + 0 想法 + 1 书签，进度 27%。《颈椎病康复指南》25 条，进度 100%。从这张表能反推我每段时间在想什么。120 条笔记的那本书是我两年前刚毕业找对象那一阵看的，25 条颈椎病那本是写公众号写到颈椎报废那个月。</p>
+<p>看完静态数据之后，我开始玩跨书工作流，让 Agent 干了三件 App 本身做不到的事。</p>
+<p>让它从《如何让你爱的人爱上你》的 120 条划线里挑 10 条最有共鸣的，输出成一份 800 字的随笔素材。Agent 干完之后，连选哪条用了什么标准都告诉我。</p>
+<p>让它根据我笔记最多的 10 本书的主题推荐相似新书。它推了《亲密关系》《心理学与生活》《社会心理学》《非暴力沟通》《被讨厌的勇气》第二部。前 4 本我书架里没有，第五本我已经做过 26 条笔记。</p>
+<p>让它做一份这周读书周报。这周累计 2 小时 46 分钟，6 天阅读，日均 27 分钟，朋友里排第 198 名，比上周日均下降 35.5%。这种纵向自对比，App 端的”今年报告”做不到，需要 Agent 拿到原始数据自己算。</p>
+<h2 id="工程细节里藏着真功夫"><a href="#工程细节里藏着真功夫" class="headerlink" title="工程细节里藏着真功夫"></a>工程细节里藏着真功夫</h2><p>打开 SKILL.md 我才发现微信读书工程团队下了不少功夫。三个细节值得讲。</p>
+<p>所有能力走一个 POST 端点 <code>https://i.weread.qq.com/api/agent/gateway</code>，用 <code>api_name</code> 字段路由，Bearer 鉴权。这种”一个 gateway + N 个 api_name”的设计比”N 个 REST endpoint”更适合 Agent。Agent 不用记多个 URL，只要记一个端点和一个枚举值。</p>
+<p>SKILL.md 里反复强调”参数必须平铺到 body 顶层，不要包在 params 对象里”，还给了反例：</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 错误：被后端忽略</span></span><br><span class="line"><span class="punctuation">&#123;</span><span class="attr">&quot;api_name&quot;</span><span class="punctuation">:</span><span class="string">&quot;/user/notebooks&quot;</span><span class="punctuation">,</span><span class="attr">&quot;params&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;count&quot;</span><span class="punctuation">:</span><span class="number">100</span><span class="punctuation">,</span><span class="attr">&quot;lastSort&quot;</span><span class="punctuation">:</span><span class="number">1516907353</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="comment">// 正确：参数平铺</span></span><br><span class="line"><span class="punctuation">&#123;</span><span class="attr">&quot;api_name&quot;</span><span class="punctuation">:</span><span class="string">&quot;/user/notebooks&quot;</span><span class="punctuation">,</span><span class="attr">&quot;count&quot;</span><span class="punctuation">:</span><span class="number">100</span><span class="punctuation">,</span><span class="attr">&quot;lastSort&quot;</span><span class="punctuation">:</span><span class="number">1516907353</span><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>这种”反例先行”的写法，本质就是在踩过坑的地方留路标。Agent 不会读人类教程，但会读 SKILL.md 里的 few-shot。</p>
+<p>最后是深度链接。每条划线 &#x2F; 章节回包里 Agent 都会自动拼出 <code>weread://reading?bId=xxx&amp;chapterUid=xx&amp;rangeStart=xx&amp;rangeEnd=xx</code> 这种 schema。Agent 把链接当文本输出，读者点一下就能跳回 App 对应位置。这一步让”AI 翻笔记”和”我自己读”之间的衔接没有断点。</p>
+<h2 id="App-for-Agent-是个新形态"><a href="#App-for-Agent-是个新形态" class="headerlink" title="App for Agent 是个新形态"></a>App for Agent 是个新形态</h2><p>微信读书是国内第一家把自家 App 的全套数据用 SKILL.md 标准开放给 Agent 的内容平台。这件事说人话讲：从今天起，”读书”这件事的入口不再只是 App 图标，可以是任何一个 Agent 助手。</p>
+<p>腾讯 ima 同期出了 ima skill，可以跟微信读书联动把笔记同步到 Obsidian。墨问走的是 CLI 路线，比 Skill 灵活一档，能直接拼写自定义脚本。但 Skill 的好处是装一次 32 个 Agent 都能用，这种规模效应 CLI 暂时给不了。</p>
+<p>得到、喜马拉雅、网易蜗牛我估计今年会跟。它们的数据维度（音频时长、播放进度、订阅人数）跟微信读书很相似，技术栈也都成熟。差别只在产品负责人愿不愿意把自家 App 当 Agent 的后端。</p>
+<h2 id="我会持续盯着两件事"><a href="#我会持续盯着两件事" class="headerlink" title="我会持续盯着两件事"></a>我会持续盯着两件事</h2><p>一个关于使用频次。我自己一周后会不会还在用这个 skill。如果停留在今天试用的”哇好酷”，说明 App for Agent 这件事还在新鲜期。如果一周后我每隔几天就让 Agent 翻一遍笔记，那这个形态就立住了。</p>
+<p>另一个关于”墨问 CLI 路线 vs 微信读书 Skill 路线”哪条路更对。墨问的 CLI 给开发者更大的灵活度，代价是学习成本不低。Skill 这边刚好反过来，装一次 32 个 Agent 都能用，但能干什么完全被官方 9 个接口圈定。我下个月会写一篇对比，把两种路线在不同场景下的实际表现摸一遍。</p>
+<p>你呢，如果你也用微信读书，最想让 Agent 帮你做的第一件事是什么？翻笔记、推书单，还是给自己做一份私人书评？评论区告诉我，下次写跨书工作流的时候顺便聊。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>Skills</tag>
+        <tag>Anthropic</tag>
+        <tag>Agent</tag>
+        <tag>微信读书</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>微软 AI CEO 喊 18 个月白领灭绝，可他自己刚被 Nadella 调走</title>
+    <url>/2026/05/17/202605171430/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260517-20260517-suleyman-18m-white-collar.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>二月，Mustafa Suleyman 坐进 Financial Times 演播室。</p>
+<p>他说的话第二天让华尔街炸锅，让 Bernie Sanders 公开喊「economic earthquake」。</p>
+<p>原话两句，后面要用：「human-level performance on most, if not all professional tasks」、「fully automated by an AI within the next 12 to 18 months」。</p>
+<p>点名 4 个职业：律师、会计师、营销、项目经理。</p>
+<p>再补一句让人想笑又想哭的：「creating a new model is going to be like creating a podcast or writing a blog」。</p>
+<p>说人话讲，他的意思是：到 2027 年底，凡是坐电脑前敲键盘的工作，全归 AI。</p>
+<p>我看到这句话的第一反应是去翻他的日程表。</p>
+<h2 id="三个月后，他自己被-Nadella-从-Copilot-调走了"><a href="#三个月后，他自己被-Nadella-从-Copilot-调走了" class="headerlink" title="三个月后，他自己被 Nadella 从 Copilot 调走了"></a>三个月后，他自己被 Nadella 从 Copilot 调走了</h2><p>3 月 17 日。Suleyman 说完 18 个月那段话过了不到三个月，Satya Nadella 在 Microsoft 官方博客挂出 Copilot 领导层变动公告。</p>
+<p>Copilot 消费端和企业端合并，Jacob Andreou（前 Snap 高管）出任 EVP，直接向 Nadella 汇报。Suleyman 被「上调」到一个新岗位：专心带 superintelligence 团队，做 frontier model。</p>
+<p>The Register 当天报道的标题没绕弯：「rearranged the deckchairs on the RMS Copilot」（在 Copilot 这艘船上重新摆桌椅）。原文里那句最扎心的话写得很直接：「frees him from the pesky need to show a return on AI investments」。</p>
+<p>Suleyman 自己的内部信也很诚实。他写：「focus all my energy on our Superintelligence efforts and be able to deliver world class models for Microsoft over the next 5 years」。</p>
+<p>5 年。对外是 18 个月。同一个人，同一年，两个时间表。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260517-20260517-suleyman-18m-data-contrast.webp" alt="两条时间表 vs 真实数据"></p>
+<p>接下来的内容，就围绕这 4 个数字之间的张力展开。</p>
+<h2 id="真实数据：白领整体没塌，2026-上半年反而有点反向"><a href="#真实数据：白领整体没塌，2026-上半年反而有点反向" class="headerlink" title="真实数据：白领整体没塌，2026 上半年反而有点反向"></a>真实数据：白领整体没塌，2026 上半年反而有点反向</h2><p>把镜头挪到劳动力市场和企业财报。画面差得不像一回事。</p>
+<p>METR 做了一项实测。让一批资深开发者用 AI 工具跑自己日常项目里的真实任务。</p>
+<p>结果跑出来，AI 让任务平均<strong>多花 20% 时间</strong>。</p>
+<p>方向跟所有人的直觉相反。开发者自己事后估计 AI 让自己快了 20%，实际数据完全反方向。</p>
+<p>Apollo Global 首席经济学家 Torsten Slok 三月发了两份 note。一份指出：S&amp;P 500 里除了科技板块，没有任何行业看到 AI 带来的利润率提升。</p>
+<p>另一份更狠。他直接说 AI 会触发「Jevons employment effect」。便宜的法律、会计、咨询服务会催生更大的市场需求，岗位数不会少反而会多。</p>
+<p>Vanguard 2025 年 12 月发的报告里有一组数据值得记：AI 高曝光的约 100 个职业，2025 年的就业增长和真实工资跑赢市场平均。</p>
+<p>Salesforce CEO Benioff 4 月直接放话招 1000 个应届生 build AI 系统。IBM 2 月宣布把入门级招聘人数翻三倍。</p>
+<p>Thomson Reuters 2025 年那份关于律所和会计师事务所的调查更具体。律师和会计师确实在用 AI，但只用在文档审阅和例行分析上。</p>
+<p>生产力提升「marginal」（微弱），离「mass displacement」（大规模替代）差得很远。</p>
+<p>整体盘子上，Challenger Gray 算 2026 年截至 5 月有 49,135 个职位削减明确归因 AI。占美国非农就业不到 0.03%。这是「白领灭绝」该有的样子吗？</p>
+<h2 id="真正在塌方的，是-22-25-岁、AI-高曝光职业的应届生"><a href="#真正在塌方的，是-22-25-岁、AI-高曝光职业的应届生" class="headerlink" title="真正在塌方的，是 22-25 岁、AI 高曝光职业的应届生"></a>真正在塌方的，是 22-25 岁、AI 高曝光职业的应届生</h2><p>有一个细分群体的数据，看完后劲很大。</p>
+<p>Dallas Fed 2026 年 1 月发的研究：22-25 岁、AI 高曝光职业的年轻人，2022 年以来的就业率**累计跌了 13%**。</p>
+<p>注意，这是「累计跌」，不是同比波动。</p>
+<p>纽约 Fed 同期数据更扎眼。应届大学毕业生的 underemployment 率（找到工作但屈就低于学历的岗位），2025 年第四季度达到 **42.5%**。</p>
+<p>是 2020 年疫情以来的最高点。</p>
+<p>还有一条更让人坐不住。Dallas Fed 同一份报告里指出，本科学历持有者占美国失业人口的比重，达到了<strong>历史最高</strong>。</p>
+<p>高中毕业生的求职速度，第一次跑赢了本科毕业生。</p>
+<p>机制说白了不是「裁员」。是「不招了」。</p>
+<p>老员工的岗位还在。空缺出现时不再招新人，而是塞给现有员工外加一个 Copilot 订阅。</p>
+<p>Baker McKenzie 这家律所 2 月一次性砍掉 700 个岗位。KPMG 直接把自家审计费砍下去，逼底层人员消化。</p>
+<p>CNBC 两个没工程背景的记者 vibe-coding 1 小时复刻了 Monday.com 的核心功能。文章发出当天 Monday 股票跳水。</p>
+<p>每一个动作做的事情都一样：在告诉新人，这扇门以后会越来越窄。</p>
+<p>我身边今年想进咨询和市场的应届生朋友，简历投出去后基本没什么动静。前两届的师兄师姐在群里复盘，普遍说同期同岗的回信率比他们当年差一截。同一个学校同一个专业，差了一两届，那扇门就紧了一档。</p>
+<p>实话讲，Suleyman 那句「18 个月白领工作被自动化」放在 22-25 岁这一段人群身上，时间表不夸张。</p>
+<p>可放在 35-45 岁、手上有项目、能跑客户、签得了合同的那一批人身上，看数据完全是另一回事。</p>
+<h2 id="顺便看一下其他-AI-CEO-的时间表"><a href="#顺便看一下其他-AI-CEO-的时间表" class="headerlink" title="顺便看一下其他 AI CEO 的时间表"></a>顺便看一下其他 AI CEO 的时间表</h2><p>把 Suleyman 的 18 个月放回业内一对比，位置就清楚了。Anthropic 的 Dario Amodei 在给美国 OSTP 的官方文件里写：「we expect powerful AI systems will emerge in late 2026 or early 2027」。他叫这个状态「country of geniuses in the data center」。</p>
+<p>Sam Altman 最近开始说「AGI is not a super useful term」（AGI 不是一个特别有用的词）。一个十亿美金估值都靠 AGI 这个词撑起来的人，突然不爱用这个词了。</p>
+<p>Elon Musk 在 Davos 喊「AGI 可能今年就来」。但他去年 Davos 喊的是 2025。每年推一年，已经推了三年。</p>
+<p>DeepMind 的 Shane Legg 给「最低 AGI」打 50% 概率落在 2028 年。Kurzweil 一如既往咬定 2029。</p>
+<p>Suleyman 的 18 个月看起来是最激进的。但他用的是「tasks 自动化」这个说法，并没有说 AGI。媒体标题把 tasks 偷偷换成 jobs，是这一波传播变形里最关键的一步。</p>
+<h2 id="我自己看完一圈，得到的判断"><a href="#我自己看完一圈，得到的判断" class="headerlink" title="我自己看完一圈，得到的判断"></a>我自己看完一圈，得到的判断</h2><p>CEO 喊出激进时间表，背后通常有两个动机叠加。</p>
+<p>一个是兜售产品。</p>
+<p>微软自家 AI 产品要打企业市场。「这玩意 18 个月就能干你 80% 的活」比「这玩意能帮你提速 15%」好卖太多。</p>
+<p>Anthropic、OpenAI、Suleyman 自己，过去 12 个月轮流喊过相似剧本。</p>
+<p>另一个是侧岗保命。</p>
+<p>Suleyman 在 Copilot 上没做出 Nadella 想要的 ROI。被「上调」到 superintelligence 团队后，他向 Nadella 要兑现的就从季度营收，换成了「5 年内带出 frontier model」。</p>
+<p>同一个 5 年里，对外讲一句「18 个月白领灭绝」并不冲突。一条是 KPI，一条是市场预期管理。</p>
+<p>但应届生那条 13% 不会骗人。它跟 CEO 在台上说什么没关系，是雇主一笔一笔做出来的招聘决策。</p>
+<p>今天还在干律所合伙人、跨国市场总监、IBM 项目交付的人，被 18 个月推平的概率很低。</p>
+<p>但今年从 LSE、Wharton、清华、北大毕业、想进这些岗位的年轻人，门已经开始关。</p>
+<p>Suleyman 没说错有大事在发生，他说错的是这件大事会发生在谁身上。</p>
+<h2 id="两件我会一直盯的事"><a href="#两件我会一直盯的事" class="headerlink" title="两件我会一直盯的事"></a>两件我会一直盯的事</h2><p>18 个月这个数字是市场话术，13% 这个数字是真问题。接下来 12 个月，有两件事我会一直盯。</p>
+<p>一件，22-25 岁、AI 高曝光职业的就业率，会不会在 Salesforce、IBM 反向招聘的拉动下从 -13% 反弹，还是继续往下掉。</p>
+<p>另一件，Suleyman 那封内部信里说的「5 年内交付世界级 frontier model」到 2027 中能不能兑现。如果这条 5 年的兑现度很差，对外那条 18 个月的话术就会被打脸。</p>
+<p>你身边的白领朋友，有没有在 2026 年开始切身感受到 AI 对自己岗位的压力？是被压成生产力工具用得更狠了，还是真的开始裁岗、不再补人？评论区告诉我，我把你们的反馈攒着，下次写应届生这条曲线的更新时一起聊。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>就业</tag>
+        <tag>Microsoft</tag>
+        <tag>Suleyman</tag>
+        <tag>AGI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Codex 进了 ChatGPT 手机 app，开盖步行者们可以合电脑了</title>
+    <url>/2026/05/15/202605151130/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260515-codex-mobile-chatgpt-app.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上个月 Business Insider 写了一篇报道，给一群开发者起了个名字，open-laptop walkers，中文意思是「开盖步行者」。报道里说，这些人半开着 MacBook 在办公室走廊里走、在学校教室里走，Business Insider 的记者甚至在滑冰场里都遇到过。理由很简单：本地的 AI agent 在跑长任务，合上盖就掐了。</p>
+<p>我看到这个名字的时候笑了几秒，又有点尴尬。因为最近自己也在干同样的事。MacBook 抱在怀里，屏幕翻到 30 度，因为 Codex 还在跑一个 PR review，没耐心等它跑完再出门。</p>
+<p>5 月 14 日，OpenAI 把这事正式写进了产品。Codex 进了 ChatGPT 手机 app，iOS、Android 同步预览，连免费用户都能用。当天 OpenAI 官方 X 账号发了一张图，几台 MacBook 半开着摆在桌上，配文是 “Step away from your laptop”。翻译过来：现在可以合上电脑了。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260515-codex-mobile-intro.webp" alt="ChatGPT 手机 app 里的 Codex 入口：Introducing Codex mobile"></p>
+<p>说人话讲，OpenAI 这次干的事，是把开盖步行者这个梗正式收编成产品功能。</p>
+<h2 id="开盖步行者是怎么变成一个亚文化的"><a href="#开盖步行者是怎么变成一个亚文化的" class="headerlink" title="开盖步行者是怎么变成一个亚文化的"></a>开盖步行者是怎么变成一个亚文化的</h2><p>想搞懂为什么有人愿意举着电脑走两站地铁，得先看一眼 AI agent 现在长什么样。</p>
+<p>传统的开发工具是同步的，你点回车，编译器立刻吐结果，你能盯着屏幕等。Codex、Claude Code 这一代不一样，它们更像一个远程实习生。你丢一个任务过去，它可能花 20 分钟去读项目、跑测试、写代码、提 commit。过程中还会停下来问你”我看到两种实现路径，要走哪条”。</p>
+<p>你不可能盯着屏幕看 20 分钟。你会去倒杯水、去开会、去接孩子。但如果中途合上电脑，agent 就被 macOS 暂停了。</p>
+<p>开盖步行者就是这么逼出来的。说白了就是工具链跟不上 AI 了：AI 已经能跑 20 分钟的长任务，但电脑还是那台合盖就掐的电脑。</p>
+<p>OpenAI 自己也清楚这个梗。发布前一天还在 TikTok 上发了一条：”iykyk but we may be in for a treat soon 👀”，一边跟梗一边卖关子。</p>
+<h2 id="这次到底发了什么"><a href="#这次到底发了什么" class="headerlink" title="这次到底发了什么"></a>这次到底发了什么</h2><p>我把 OpenAI 的官方博客和帮助文档对照着看了一遍，挑几条最实在的。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260515-codex-mobile-setup-features.webp" alt="设置 Codex 移动版的三个动作：接续 / 跟进 / 起新任务"></p>
+<p>手机这一端做的不是”在手机上写代码”。代码、凭据、本地配置全留在你那台 Mac mini 或 MacBook 上，手机收到的是截图、终端输出、diff、测试结果、审批请求。OpenAI 给这套架构起了个名字叫 “secure relay layer”，关键作用是让你那台机器跨设备可达，但不暴露公网。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260515-codex-mobile-chatgpt-app-architecture.webp" alt="架构示意：手机—relay—电脑三方控制流"></p>
+<p>授权页长这样，整套设置流程不到一分钟：</p>
+<p><img src="https://image.vance.xin/aigc/image/20260515-codex-mobile-authorize.webp" alt="允许 Codex 手机版访问这台电脑"></p>
+<p>具体能做的事情有这些：</p>
+<ul>
+<li>看到电脑上所有正在跑的 thread，从一个切到另一个</li>
+<li>看每个 thread 的当前 diff、终端输出、测试结果</li>
+<li>在 agent 卡壳的时候补一句话给方向</li>
+<li>审批一条 agent 想跑的命令</li>
+<li>换一个模型继续跑</li>
+<li>起一个全新的任务</li>
+</ul>
+<p>要注意一个限制。今天这套手机端只能连 macOS 上的 Codex 桌面 app，Windows 的支持 OpenAI 说”coming soon”，Linux 暂时没提。</p>
+<p>OpenAI 在公告里强调过一句话：”More than the ability to remotely control a single task”。这话其实直接指向 Anthropic。</p>
+<h2 id="跟-Anthropic-那套比，差在哪儿"><a href="#跟-Anthropic-那套比，差在哪儿" class="headerlink" title="跟 Anthropic 那套比，差在哪儿"></a>跟 Anthropic 那套比，差在哪儿</h2><p>去年秋天，Anthropic 给 Claude Code 出过一个叫 Dispatch 的远程控制功能。也是手机连到桌面、可以远程发指令。我自己用过几次，体验不算差。</p>
+<p>Dispatch 跟这次 Codex 手机端的差别，主要在一点。Dispatch 是单线程遥控，每次远程发一个任务它独立跑；Codex 这次是把桌面端的整片工作面同步到手机，可以切多个并行的 thread，能看到桌面在同时跑的所有 agent 的当前状态。</p>
+<p>打个不太准确的比方。Dispatch 像微信里发一条遥控命令，回个执行结果。Codex 手机端像随身带了一个真正的 dashboard，桌面有几个 worktree 在并行就有几个 worktree 出现在你手机上。</p>
+<p>我自己用 Dispatch 遇到过最闹心的一个 bug。Claude 在电脑端弹出来的选择器，到了手机上没正确渲染，手指点哪儿都没反应，最后只能跑回电脑去 force quit。Codex 这次手机端我用了一晚上，至少这种渲染断层暂时没遇到。</p>
+<p>这个差异值不值得换工具，看你怎么用。如果你平时只让 AI 串行跑任务，Dispatch 完全够用。如果你已经习惯桌面端开 3 个 worktree 同时让 agent 干活，那 Codex 这次的手机体验确实更顺。</p>
+<p>背景顺带提一句。发布前一天，Sam Altman 在 X 上宣布”换 Codex 送两个月免费用量”，那是对 Anthropic 之前涨价的回应。两家在编程 agent 赛道的拉锯，已经从产品打到了价格上。</p>
+<h2 id="OpenAI-这两个月在-Codex-上为什么这么猛"><a href="#OpenAI-这两个月在-Codex-上为什么这么猛" class="headerlink" title="OpenAI 这两个月在 Codex 上为什么这么猛"></a>OpenAI 这两个月在 Codex 上为什么这么猛</h2><p>回头看一眼 Codex 最近的更新节奏，就能感觉到 OpenAI 这次是真急了。</p>
+<p>四月之前，Codex 还只是终端里的一个 CLI 工具。</p>
+<p>四月之后，几乎每两周一个大功能：</p>
+<ul>
+<li><strong>Computer Use</strong>：Codex 接管电脑光标，自己看、点、敲键盘</li>
+<li><strong>内置浏览器</strong>：在网页上指哪改哪，不用再截图描述</li>
+<li><strong>Codex for Chrome</strong>：扩展用你已经登录的浏览器状态，开 Tab Group 干活不抢前台</li>
+<li><strong>直接生图</strong>：调用 gpt-image-2 把图丢进项目目录，代码引用路径自动改好</li>
+<li><strong>Hooks</strong>：自定义触发点，跑自己的脚本</li>
+<li><strong>手机端</strong>：今天这一串里最新的</li>
+</ul>
+<p><img src="https://image.vance.xin/aigc/image/20260515-codex-mobile-connected-toggles.webp" alt="已连接：电脑保持唤醒 + Computer Use + Chrome 扩展三个开关"></p>
+<p>为什么 OpenAI 这么猛，看一组数据就明白。</p>
+<p>ChatGPT 周活逼近 10 亿，C 端是碾压式领先 Anthropic。但 4 月份 Anthropic 的 ARR 跑到了 300 亿美元，反过来超了 OpenAI。增长几乎全靠企业付费用 Claude Code。</p>
+<p>OpenAI 的处境其实挺尴尬。C 端用户多到吓人，但 B 端营收被一家做 Coding Agent 的公司反超了。</p>
+<p>Codex 这一连串猛更新，本质就是要把 ChatGPT 那 10 亿周活里的开发者，转化成持续付费的 Codex 用户。</p>
+<p>身边已经有团队在切。理由意外朴素，就三个字：不封号。</p>
+<p>之前同事在 Claude 上经常干到一半就被封号，全员切到 ChatGPT 生态之后，这事就再没出现过。</p>
+<h2 id="Mac-mini-当-24-7-devbox，值不值得跟"><a href="#Mac-mini-当-24-7-devbox，值不值得跟" class="headerlink" title="Mac mini 当 24&#x2F;7 devbox，值不值得跟"></a>Mac mini 当 24&#x2F;7 devbox，值不值得跟</h2><p>整个发布里我最感兴趣的一个细节，是 OpenAI 反复在文案里点名 Mac mini。</p>
+<blockquote>
+<p>“Codex will keep running on your laptop, Mac mini, or devbox.”</p>
+</blockquote>
+<p>这是把一种玩法明确写进了产品定位。意思是：你可以买一台 Mac mini 放家里 24&#x2F;7 开着，Codex 在上面长跑，本人随便拿手机指挥。</p>
+<p>这套玩法之前要在云端 devbox 上干。每月几十刀租一台云机器，自己配 SSH 和 tmux 把 agent 挂着。要会运维、要会处理网络断连，新手门槛不低。</p>
+<p>Mac mini 这条路对独立开发者来说省事很多。今年 M4 Mac mini 起售价 4500 块左右，按一个月 50 刀算云端 devbox 的话，半年硬件钱就回来了。家里有一台一直开着的 Mac mini，本身也能当 Time Machine、文件服务器、Plex，用途不止跑 Codex 一个。</p>
+<p>要泼一盆冷水。如果你今天就想买一台 Mac mini 上车，先想清楚两件事。</p>
+<p>一是网络。Codex 的 relay layer 虽然不要求公网 IP，但要求 Mac mini 长时间在线、不睡眠，路由器最好能给固定内网地址。二是模型用量。Codex 跑 24&#x2F;7 长任务时 token 消耗肉眼可见，按 OpenAI 现在的套餐结构，Pro 才有比较安心的额度，Plus 用户跑两天可能会被限速。</p>
+<p>实话讲，建议先用本人 MacBook 跑通工作流，确认每天真的有几个小时是”出门在外想接着干活”，再考虑 Mac mini。先把工作流跑通，再花这笔钱。</p>
+<h2 id="这次更新其实是工作节奏在变"><a href="#这次更新其实是工作节奏在变" class="headerlink" title="这次更新其实是工作节奏在变"></a>这次更新其实是工作节奏在变</h2><p>OpenAI 在公告里留了一句话，我觉得是整篇博客里最值得划重点的：</p>
+<blockquote>
+<p>“As agents take on longer-running work, a new rhythm for collaboration is emerging.”</p>
+</blockquote>
+<p>这个节奏长什么样，我最近半年用 Claude Code 已经有体感。</p>
+<p>早上起来在地铁上拍板昨晚跑过夜的 PR，午饭排队时让 agent 开始查一个昨天没解决的 bug，下班路上批准一个 migration 命令。人不再坐在工位上盯着 AI 写代码，而是在生活的缝隙里做关键决策点的审批。</p>
+<p>这个节奏的好处显而易见：有效工作时间从”在工位的 8 小时”扩展到”清醒着的 16 小时”。但 Axios 在报道里点了一个真问题：在小屏幕上做多任务审批，误操作的风险也在涨。一个手指头点错，可能让 agent 跑一段 rm -rf 你没看清的命令。</p>
+<p>这是 OpenAI 和 Anthropic 接下来都要面对的工程题。误审批怎么回滚、危险命令怎么二次确认、跨设备审计日志怎么留底，两家都没拿出完整方案。</p>
+<h2 id="Mac-mini-普及和手机审批兜底，是我没想明白的两件事"><a href="#Mac-mini-普及和手机审批兜底，是我没想明白的两件事" class="headerlink" title="Mac mini 普及和手机审批兜底，是我没想明白的两件事"></a>Mac mini 普及和手机审批兜底，是我没想明白的两件事</h2><p>开盖步行者可以合上电脑了，但电脑还得在家或办公室开着。开盖这个动作没消失，只是从随身换成了固定。</p>
+<p>留两件我自己也没想清楚的事。</p>
+<p>一件关于 Mac mini。如果家用 Mac mini 当 devbox 真的开始普及，独立开发者的小作坊会不会变得比以前更卷？以前一个人一台 MacBook 同时干一件事，以后一个人一台 Mac mini 同时挂 5 个 agent 干 5 件事。生产力拉满之后，自由职业者的接单上限是不是会重新被定义？</p>
+<p>另一件关于审批 UX。手机审批今天能接受的命令上限到底是什么？是 git push 之前点一下，还是 rm -rf 之前点一下？万一手指头一抖怎么撤回？这事 OpenAI 在今天的发布里没讲清楚。</p>
+<p>你最近开盖步行过吗？或者已经在用别的方式让本地 agent 长跑？我自己也在琢磨 Mac mini 这条路要不要走，评论区交流交流。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI编程</tag>
+        <tag>OpenAI</tag>
+        <tag>Codex</tag>
+        <tag>ChatGPT</tag>
+        <tag>异步开发</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>我用 iPhone 15 Pro + Gemma 4 跑通 3 个 Agent Skill，本地 LLM 第一次会调工具</title>
+    <url>/2026/05/13/202605131529/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260513-gemma4-edge-gallery-agent-skills.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天我刚发完 PocketPal + Qwen3.5-0.8B 在 iPhone 15 Pro 上跑 27 tok&#x2F;sec 那篇，今天又被 Google 这个 Edge Gallery 拽了进去。</p>
+<p>这次不一样。手机上第一次有了能调工具的本地 LLM app。</p>
+<p>今天下午 1:53 我在 iPhone 15 Pro 上装好 Edge Gallery、下了 Gemma-4-E4B-it、跑了 3 个 Agent Skill：QR 码生成、Google 地图嵌入、Mood Tracker 心情记录。每一个都跑通了。</p>
+<p>5 张截图我会按顺序贴进来。</p>
+<p>Simon Willison 公开评价这件事：「first time I’ve seen a local model vendor release an official app for trying out their models on iPhone」。</p>
+<p>我同意他的判断，但还想加一句：这是 mobile on-device AI 的分水岭。</p>
+<h2 id="今天下午-1-53-我跑的第一个-prompt，自我介绍那-7-5-秒让我重写本地-LLM-的判断"><a href="#今天下午-1-53-我跑的第一个-prompt，自我介绍那-7-5-秒让我重写本地-LLM-的判断" class="headerlink" title="今天下午 1:53 我跑的第一个 prompt，自我介绍那 7.5 秒让我重写本地 LLM 的判断"></a>今天下午 1:53 我跑的第一个 prompt，自我介绍那 7.5 秒让我重写本地 LLM 的判断</h2><p>打开 Edge Gallery、选 Gemma-4-E4B-it 模型、点 Agent Skills 模式、输入「你好，请介绍下你自己」。</p>
+<p>7.5 秒后模型回答:「I am an AI assistant designed to help you by answering questions and completing tasks using a set of specialized skills.」</p>
+<p>这句回答有一个细节我盯着看了 30 秒：「a set of specialized skills」。</p>
+<p>PocketPal 跑 Qwen3.5-0.8B 的时候，同样问”介绍你自己”，模型回答的是「我是通义千问，擅长 Python &#x2F; JavaScript &#x2F; Java、多模态分析」。这是一个聊天助手的自我介绍。</p>
+<p>Gemma 4 的回答里「a set of specialized skills」是真有所指的。下面 chat 输入框旁边那个 Skills 按钮，点开就是已注册的 skill 清单。<strong>模型知道自己手里有工具可调</strong>。</p>
+<p><img src="https://image.vance.xin/screenshots/20260513-gemma4-intro-and-loading.webp" alt="Edge Gallery 上 Gemma-4-E4B-it 自我介绍 + 第二个 prompt 触发 qr-code skill 加载"></p>
+<p>下面那个第二个 prompt 触发的 Loaded skill “qr-code” 加载动画就是这件事的实锤。</p>
+<h2 id="Gemma-4-的-“E”-不是-Edge，是-Effective-parameters"><a href="#Gemma-4-的-“E”-不是-Edge，是-Effective-parameters" class="headerlink" title="Gemma 4 的 “E” 不是 Edge，是 Effective parameters"></a>Gemma 4 的 “E” 不是 Edge，是 Effective parameters</h2><p><strong>Gemma 4 的 “E” 不是 Edge，是 Effective parameters</strong>。这句话我反复确认过 Google 官方博客和 DeepMind 模型卡，没看错。</p>
+<p>Per-Layer Embeddings (PLE) 架构是怎么回事?说人话：每层 decoder 自带一份小 embedding 表，把「加更多层」换成「每层更聪明」。结果是 4B 参数的模型能塞下 vision + audio + 128K context + tool calling，跑赢比它大 20 倍的同代模型。</p>
+<p>Gemma 4 家族 4 个尺寸：E2B &#x2F; E4B 给手机和 edge 设备、26B A4B (MoE) &#x2F; 31B (dense) 给 PC 和工作站。Apache 2.0 license，2026-04-02 官方发布。</p>
+<p>E2B 内存占用小于 1.5 GB RAM，128K context，全模态（text + image + audio + video）。这个尺寸塞进 iPhone 是真的塞得下，不是宣传。</p>
+<p>一个 Play Store 用户实测 E2B 在 Snapdragon 旗舰上跑出 142 tok&#x2F;s。Raspberry Pi 5 也能跑（prefill 133 tok&#x2F;s、decode 7.6 tok&#x2F;s），上限够低。</p>
+<p>跟前代 Gemma 3 比，Gemma 4 最大的差别是「entire family moves beyond simple chat to handle complex logic and agentic workflows」（Google 官方原话）。<strong>不再是聊天模型，是 agent 模型。</strong> E2B 和 E4B 原生支持 tool calling，这是 PocketPal 上跑的 Qwen 3.5-0.8B 做不到的事。</p>
+<h2 id="iOS-走-App-Store-装、Android-走-Play-Store-或-GitHub-APK-两条路"><a href="#iOS-走-App-Store-装、Android-走-Play-Store-或-GitHub-APK-两条路" class="headerlink" title="iOS 走 App Store 装、Android 走 Play Store 或 GitHub APK 两条路"></a>iOS 走 App Store 装、Android 走 Play Store 或 GitHub APK 两条路</h2><p><strong>iOS 端</strong>：App Store 搜「Google AI Edge Gallery」（开发者 Google LLC，App Store ID 6749645337）。</p>
+<p>免费下，要求 iOS 17 或更新版本。iPhone 15 Pro 及以上（8GB RAM）才能流畅跑 E4B。Apple Intelligence 也是这个硬件门槛，不是巧合。</p>
+<p>我自己的 iPhone 15 Pro 装好之后第一次开 app 时 prompt 让我选模型下载。Gemma 4 E4B 大约 3.6 GB，Wi-Fi 下载 4 分钟。下完点 Load Model 就能聊。</p>
+<p><strong>Android 端</strong>：Play Store 搜同名 app，要求 Android 12+。</p>
+<p>或者去 <code>github.com/google-ai-edge/gallery/releases</code> 直装 APK（最新版本 1.0.11，加入了 Gemma 4 + Agent Skills + Thinking Mode）。Play Store 稳但版本慢一档；GitHub 直装最快但要自己开「未知来源安装」权限。</p>
+<p>Snapdragon 8 Gen 3 及以上的 Android 旗舰跑 E4B 比 iPhone 15 Pro 还快。Qualcomm Dragonwing IQ8 NPU（说人话就是手机里专门跑 AI 的加速芯片）实测 prefill 3700 tok&#x2F;sec、decode 31 tok&#x2F;sec，比 iPhone 15 Pro 走 GPU 那条路快一个数量级。</p>
+<h2 id="QR-码-skill-13-2-秒把-vance-xin-印成二维码"><a href="#QR-码-skill-13-2-秒把-vance-xin-印成二维码" class="headerlink" title="QR 码 skill 13.2 秒把 vance.xin 印成二维码"></a>QR 码 skill 13.2 秒把 vance.xin 印成二维码</h2><p>第一个 skill 我让它做了件低门槛的事：把 <code>https://www.vance.xin</code> 生成二维码。</p>
+<p>prompt 一行:「请帮我将下面的网址生成二维码：<a href="https://www.vance.xin」./">https://www.vance.xin」。</a></p>
+<p>Gemma 4 识别意图、加载 qr-code skill、调用 JS 函数、把生成的二维码作为消息回给我。整个过程 13.2 秒。</p>
+<p><img src="https://image.vance.xin/screenshots/20260513-gemma4-qr-code-result.webp" alt="Edge Gallery 跑 qr-code skill 生成 vance.xin 二维码，耗时 13.2 秒"></p>
+<p>完整结果是:二维码 + 模型说的「I have successfully generated a QR code for the URL <a href="https://www.vance.xin」.chat/">https://www.vance.xin」。chat</a> 上方还能看到「Called JS skill “qr-code&#x2F;index.html”」标识告诉你模型确实调了这个 skill。</p>
+<p>13.2 秒不算快。但这件事里 GPU 跑了两段推理（识别意图调 skill + 生成解释文本）+ 一段 JS 执行 + 一次 webview 渲染。同样的活在 Snapdragon NPU 上 &lt; 3 秒能跑完。</p>
+<p>awesomeagents.ai 的实测原话:「LiteRT-LM runtime processes 4,000 tokens across two Agent Skills in under 3 seconds」on NPU。这是 Google 给这套系统设计的目标速度，iPhone 15 Pro 走 GPU 通道是这个目标的 4-5 倍慢。</p>
+<p>但慢不影响这件事成立。</p>
+<p>二维码本身用扫码 app 扫一遍，能跳转到 vance.xin。这件事说明 skill 跑出来的是真东西，能扫能用。</p>
+<p>云端 GPT-4o 也能生成二维码，但这次是 4B 参数的本地模型在没网的手机上做完。</p>
+<h2 id="interactive-map-skill-把-Google-地图嵌进-chat"><a href="#interactive-map-skill-把-Google-地图嵌进-chat" class="headerlink" title="interactive-map skill 把 Google 地图嵌进 chat"></a>interactive-map skill 把 Google 地图嵌进 chat</h2><p>第二个 skill 更狠。</p>
+<p>我输入「请帮我搜索并打开上海市的地图」。Gemma 4 调用 interactive-map skill，<strong>直接把 Google 地图作为 widget 渲染在 chat 里</strong>。</p>
+<p><img src="https://image.vance.xin/screenshots/20260513-gemma4-map-shanghai.webp" alt="Edge Gallery 跑 interactive-map skill 在 chat 里嵌入上海市 Google 地图"></p>
+<p>嘉定区、宝山区、徐汇区、青浦区、松江区都清晰显示，地图带 +&#x2F;- 缩放、4 个方向键、全屏切换按钮、「在 Google 地图中打开」链接。</p>
+<p>这是我第一次看到本地 LLM 把外部 webview 嵌入对话。</p>
+<p>以往要做这件事得走两段:聊天 app 让 LLM 输出地图链接、用户复制到浏览器打开。Agent Skills 把这两段连成一段，<strong>LLM 调 skill、skill 把 widget 渲染回 chat</strong>，整个流程不用切 app。</p>
+<p>这个 skill 的实现:skill 目录里有 SKILL.md（告诉模型这个 skill 干什么）+ index.html（嵌入 Google Maps iframe）+ JS 暴露 <code>ai_edge_gallery_get_result</code> 函数返回结果。简单粗暴。</p>
+<p>实际场景我能想到的:出差查机场附近酒店密度、跑步前看路况、给朋友指路。每一件事在 iPhone 上现在都要切到地图 app，Edge Gallery 把这步省了。</p>
+<p>但慢仍然是问题。我在 iPhone 15 Pro 上跑这个 prompt 用了 11 秒（模型决策 + skill 加载 + Google Maps iframe 初始化）。如果走 Snapdragon 旗舰 NPU，这件事 &lt; 3 秒能跑完。</p>
+<h2 id="mood-tracker-skill-一次-prompt-记两天心情-渲染-dashboard"><a href="#mood-tracker-skill-一次-prompt-记两天心情-渲染-dashboard" class="headerlink" title="mood-tracker skill 一次 prompt 记两天心情 + 渲染 dashboard"></a>mood-tracker skill 一次 prompt 记两天心情 + 渲染 dashboard</h2><p>第三个 skill 是我刻意挑的「多步任务」测试。</p>
+<p>我输入一句话:「Log yesterday’s mood as 2 because it was raining quite heavily, and log today’s mood as 9 because I had a great time playing pickleball again. Then show me my mood dashboard.」</p>
+<p>这句 prompt 里实际是 3 个动作:记昨天心情 2 分、记今天心情 9 分、显示 dashboard。</p>
+<p><img src="https://image.vance.xin/screenshots/20260513-gemma4-mood-tracker-prompt.webp" alt="Edge Gallery 跑 mood-tracker skill 一次 prompt 记两天心情 + 渲染 dashboard"></p>
+<p>Gemma 4 调用 mood-tracker skill 一次性把三件事都干了。</p>
+<p><img src="https://image.vance.xin/screenshots/20260513-gemma4-mood-dashboard.webp" alt="Mood Tracker dashboard 全屏视图:May 13 得 9 + May 12 得 2"></p>
+<p>dashboard 全屏视图里有绿色 9 SCORE + 「I had a great time playing pickleball again」、Mood Journey 列出 May 13 得 9 &#x2F; May 12 得 2「it was raining quit…」。</p>
+<p>这件事的技术含量在哪里:本地 LLM 把三个动作翻译成 skill API 调用 + 三次 state mutation + 一次 UI 渲染，全程无网络。</p>
+<p>比对 ChatGPT 网页版的 GPT-4o，同样的 prompt 它也能干，但要走 OpenAI 服务器一圈。Gemma 4 在我手机上完成。</p>
+<p>跑完这个 prompt 我做了一件事:把 Wi-Fi 关了再重试。dashboard 还在、记录还在、能继续 log 心情。这套 mood-tracker skill 把数据存在 webview 的 localStorage 里，跟模型一样在手机本地。</p>
+<p>这跟 Apple Health 或者 iOS 自带的 Mood 应用对照看，价值在哪里:Health 那一套用 iCloud 同步，Mood 跟 Apple ID 绑定。Edge Gallery 这个 mood-tracker skill 是开源的（GitHub 上看得到代码），数据完全在你 webview 沙箱里。</p>
+<h2 id="Agent-Skill-怎么写-SKILL-md-JS-HTML-ai-edge-gallery-get-result"><a href="#Agent-Skill-怎么写-SKILL-md-JS-HTML-ai-edge-gallery-get-result" class="headerlink" title="Agent Skill 怎么写:SKILL.md + JS&#x2F;HTML + ai_edge_gallery_get_result"></a>Agent Skill 怎么写:SKILL.md + JS&#x2F;HTML + ai_edge_gallery_get_result</h2><p>讲到这里说说 skill 怎么自己写。</p>
+<p>每个 skill 是一个文件夹，里面有两份东西。</p>
+<p><code>SKILL.md</code> 是 metadata + 激活描述（activation description）。激活描述是写给模型看的，告诉它「什么 prompt 应该调这个 skill」。例子:「When the user wants to generate a QR code from a URL or text, call this skill」。</p>
+<p><code>scripts/index.html</code> 是 JS 实现（也可以是 React&#x2F;Vue 打包后的 HTML）。skill 被调用时 Edge Gallery 把这个 HTML 加载到一个隐藏 webview，全局调用 <code>ai_edge_gallery_get_result</code> 这个 async 函数，函数返回的 HTML 渲染回 chat。</p>
+<p>需要 API key 的 skill 怎么处理?走 native dialog 提示用户输入，<strong>不通过 LLM prompt 传</strong>。这条设计避免了 key 被模型 leak 的问题。</p>
+<p>加载 custom skill 有两条路:URL 加载（适合公共 skill）、push 到设备 Download 目录（适合私有 skill）。</p>
+<p>GitHub 已经有 StrinGhost&#x2F;gemma-skills 这种第三方 skill 仓库在长。Edge Gallery 内置 8 个 official skill:interactive-map &#x2F; wikipedia &#x2F; qr-code &#x2F; hash &#x2F; mood-tracker &#x2F; mnemonic-password-generator &#x2F; text-spinner &#x2F; kitchen-adventure。</p>
+<p>每个 skill 用户都可以单独开关。点 chat 输入框旁边的 Skills 按钮，会弹出已注册 skill 清单，每个 skill 旁边是 toggle 开关。模型只会调当下打开的 skill，关掉的不会被选中。这个细节是给 reliability 兜底的。</p>
+<h2 id="Edge-Gallery-5-13-这一天跟-Anthropic-Agent-View-5-11-是同一周的同一条线"><a href="#Edge-Gallery-5-13-这一天跟-Anthropic-Agent-View-5-11-是同一周的同一条线" class="headerlink" title="Edge Gallery 5&#x2F;13 这一天跟 Anthropic Agent View 5&#x2F;11 是同一周的同一条线"></a>Edge Gallery 5&#x2F;13 这一天跟 Anthropic Agent View 5&#x2F;11 是同一周的同一条线</h2><p>我手机上跑 Gemma 4 Agent Skills 的时候，电脑上还开着我前天刚写的 Anthropic Agent View 文章草稿。</p>
+<p>5&#x2F;11 Anthropic 发 Agent View:把 CLI 上多 agent 管理收编成一个 dashboard。</p>
+<p>5&#x2F;13 我装 Edge Gallery（4 月发的、今天第一次认真上手）:把本地 LLM 升级成 agent 调工具。</p>
+<p>两件事方向完全一致:<strong>把 LLM 从 chat tool 升级成 agent operations layer</strong>。</p>
+<p>一个在 CLI、一个在手机。一个让你管多个 cloud agent、一个让你的本地 LLM 调工具。</p>
+<p>放在同一周里看，2026 年的 5 月可能会被记成「LLM 全面 agent 化」的转折周。PocketPal 还在做聊天的事（快、好用、能力上限就是聊天）；Edge Gallery + Gemma 4 跨过了那条线。</p>
+<h2 id="HealthKit-skill-和-skill-chain-这两个具体问题我还没回答"><a href="#HealthKit-skill-和-skill-chain-这两个具体问题我还没回答" class="headerlink" title="HealthKit skill 和 skill chain 这两个具体问题我还没回答"></a>HealthKit skill 和 skill chain 这两个具体问题我还没回答</h2><p>Skill 能不能调 Apple HealthKit 是一个。</p>
+<p>我手机上有半年的步数、心率、睡眠数据。如果有个 skill 能在 Edge Gallery 里跑 Gemma 4 + 读 HealthKit + 渲染健康 dashboard，整套全在手机本地、数据不上云，这才是 on-device AI 的真用场。</p>
+<p>skill chain 能不能链多个是另一个。我让 mood-tracker 记心情 + 让 wikipedia skill 查「为什么下雨人会抑郁」+ 让 hash skill 把结果加密，这 3 个 skill 能不能在一句 prompt 里串起来跑?</p>
+<p>我下午试了一次失败，但不确定是 prompt 写法不对，还是 Gemma 4 E4B 的 chain 能力还有上限。</p>
+<p>留个问题给你:<strong>你手机上现在装着哪个本地 LLM app?聊天用的是 PocketPal &#x2F; MLC &#x2F; Ollama 这种纯聊天 app，还是已经在试 Edge Gallery 这种带 skill 的?</strong></p>
+<p>或者反过来:**如果让你写一个 Agent Skill，你最想做什么?**（我自己最想做的是把 Things 3 的 todo 列出来 + 自动调度）</p>
+<p>评论区告诉我你的答案。</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>iOS</tag>
+        <tag>Google</tag>
+        <tag>Agent Skills</tag>
+        <tag>本地大模型</tag>
+        <tag>Gemma 4</tag>
+        <tag>Edge Gallery</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>我每天开 6 个 Claude Code，昨天 Agent View 一行命令收编了</title>
     <url>/2026/05/12/202605121809/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260512-claude-code-agent-view.webp" alt="cover"></p>
@@ -8404,9 +9477,9 @@
       <tags>
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>开发者工具</tag>
         <tag>Agent框架</tag>
         <tag>LangChain</tag>
-        <tag>开发者工具</tag>
       </tags>
   </entry>
   <entry>
@@ -8482,9 +9555,9 @@
       <tags>
         <tag>AI</tag>
         <tag>AI编程</tag>
-        <tag>开发者工具</tag>
         <tag>ChatGPT</tag>
         <tag>Claude</tag>
+        <tag>开发者工具</tag>
       </tags>
   </entry>
   <entry>
@@ -8688,8 +9761,8 @@
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
         <tag>Remote Control</tag>
-        <tag>远程开发</tag>
         <tag>Channels</tag>
+        <tag>远程开发</tag>
       </tags>
   </entry>
   <entry>
@@ -22806,9 +23879,9 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>AI编程</tag>
+        <tag>Prompt Engineering</tag>
         <tag>Meta-Prompt</tag>
         <tag>元提示词</tag>
-        <tag>Prompt Engineering</tag>
         <tag>自然语言编程</tag>
       </tags>
   </entry>
@@ -25733,7 +26806,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#109;">&#103;&#105;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#116;&#x40;&#x67;&#105;&#x74;&#x68;&#117;&#x62;&#46;&#99;&#x6f;&#x6d;">&#x67;&#x69;&#116;&#x40;&#x67;&#105;&#x74;&#x68;&#117;&#x62;&#46;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -26259,76 +27332,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android adb 命令</title>
-    <url>/2017/09/24/201709242350/</url>
-    <content><![CDATA[<h2 id="1-查看当前adb版本"><a href="#1-查看当前adb版本" class="headerlink" title="1.查看当前adb版本"></a>1.查看当前adb版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb version</span><br><span class="line">Android Debug Bridge version 1.0.36</span><br><span class="line">Revision 0e9850346394-android</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-查看当前已连接的设备"><a href="#2-查看当前已连接的设备" class="headerlink" title="2.查看当前已连接的设备"></a>2.查看当前已连接的设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb devices</span><br><span class="line">f414ec93        device</span><br><span class="line">20080411        device</span><br></pre></td></tr></table></figure>
-
-<p>##3.安装apk文件</p>
-<p>直接安装：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb install + apk文件的路径</span><br></pre></td></tr></table></figure>
-
-<p>一般在安装的时候先敲出<strong>adb install</strong>然后直接将apk文件拖到MS Dos窗口中即可,然后点击回车即可自动安装。</p>
-<p>提示：有时候有的安装时会失败，因为有可能包含中文路径，建议最好不要包含中文路径！</p>
-<p>保留数据和缓存文件，重新安装apk：<br><code>adb install -r hello.apk</code></p>
-<p>安装apk到sd卡：<br><code>adb install -s hello.apk</code></p>
-<h2 id="4-拉取文件到电脑"><a href="#4-拉取文件到电脑" class="headerlink" title="4.拉取文件到电脑"></a>4.拉取文件到电脑</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb pull +手机文件路径/目录 + 空格 + 电脑目录 </span><br><span class="line">adb pull /data/data/com.xpf.demo/files/20171031.txt c:/Users/xin/</span><br><span class="line">[100%] /data/data/com.xpf.demo/files/20171031.txt</span><br></pre></td></tr></table></figure>
-
-<h2 id="5-从电脑复制文件到手机"><a href="#5-从电脑复制文件到手机" class="headerlink" title="5.从电脑复制文件到手机"></a>5.从电脑复制文件到手机</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb push + 电脑文件路径 + 空格 + 手机文件路径/目录</span><br><span class="line">$adb push hello.txt /sdcard/mydir/</span><br></pre></td></tr></table></figure>
-
-<h2 id="6-卸载已安装的app"><a href="#6-卸载已安装的app" class="headerlink" title="6.卸载已安装的app"></a>6.卸载已安装的app</h2><p>直接卸载：<code>adb uninstall &lt;package&gt;</code></p>
-<p>卸载App但保留数据和缓存文件：<br><code>adb uninstall -k com.xpf.demo</code></p>
-<h2 id="7-adb-Server"><a href="#7-adb-Server" class="headerlink" title="7.adb Server"></a>7.adb Server</h2><p>我们在调试的时候，偶尔也会遇到手机adb连接不上的情况，我们先kill掉server在start server就好了<br>启动adb server ：<br><code>adb start-server</code><br>停止adb server ：<br><code>adb kill-server</code></p>
-<h2 id="8-查看手机屏幕分辨率"><a href="#8-查看手机屏幕分辨率" class="headerlink" title="8.查看手机屏幕分辨率"></a>8.查看手机屏幕分辨率</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell wm size</span><br><span class="line">Physical size: 1080x1920</span><br></pre></td></tr></table></figure>
-
-<h2 id="9-查看adb命令帮助信息"><a href="#9-查看adb命令帮助信息" class="headerlink" title="9.查看adb命令帮助信息"></a>9.查看adb命令帮助信息</h2><p><code>adb help</code></p>
-<h2 id="10-在命令行中查看LOG日志"><a href="#10-在命令行中查看LOG日志" class="headerlink" title="10.在命令行中查看LOG日志"></a>10.在命令行中查看LOG日志</h2><p><code>adb logcat -s 标签名</code></p>
-<p>温馨提示：加入标签名可以进行log打印过滤，不然打印出来的日志太多不方便查看</p>
-<h2 id="11-发布端口"><a href="#11-发布端口" class="headerlink" title="11.发布端口"></a>11.发布端口</h2><p>可以设置任意的端口号作为主机向模拟器或设备的请求端口。</p>
-<p><code>adb forward tcp:5555 tcp:8000</code></p>
-<h2 id="12-查看bug报告"><a href="#12-查看bug报告" class="headerlink" title="12.查看bug报告"></a>12.查看bug报告</h2><p><code>adb bugreport</code></p>
-<h2 id="13-屏幕录像"><a href="#13-屏幕录像" class="headerlink" title="13.屏幕录像"></a>13.屏幕录像</h2><p>例如，开始录制屏幕并储存到&#x2F;sdcard根目录，同时名字为video.mp4</p>
-<p><code>adb shell screenrecord /sdcard/video.mp4</code></p>
-<h2 id="14-关闭设备请求，开启设备"><a href="#14-关闭设备请求，开启设备" class="headerlink" title="14.关闭设备请求，开启设备"></a>14.关闭设备请求，开启设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell stop</span><br><span class="line">adb shell start</span><br></pre></td></tr></table></figure>
-
-<h2 id="15-设备关机以及重启"><a href="#15-设备关机以及重启" class="headerlink" title="15.设备关机以及重启"></a>15.设备关机以及重启</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb reboot</span><br><span class="line">adb shutdown</span><br></pre></td></tr></table></figure>
-
-<h2 id="16-获取已连接的手机序列号"><a href="#16-获取已连接的手机序列号" class="headerlink" title="16.获取已连接的手机序列号"></a>16.获取已连接的手机序列号</h2><p><code>adb get-serialno</code></p>
-<h2 id="17-获取设备的连接状态"><a href="#17-获取设备的连接状态" class="headerlink" title="17.获取设备的连接状态"></a>17.获取设备的连接状态</h2><p><code>adb -s f414ec93 get-state</code></p>
-<p>其中<strong>f414ec93</strong>为手机序列号（获取序列号参考16）</p>
-<h2 id="18-查看目录下的所有文件及文件夹"><a href="#18-查看目录下的所有文件及文件夹" class="headerlink" title="18.查看目录下的所有文件及文件夹"></a>18.查看目录下的所有文件及文件夹</h2><p><code>adb shell ls</code></p>
-<p>##19.查看文件夹内容</p>
-<p><code>adb shell cd &lt;folder&gt; </code></p>
-<h2 id="20-新建文件夹（目录）"><a href="#20-新建文件夹（目录）" class="headerlink" title="20.新建文件夹（目录）"></a>20.新建文件夹（目录）</h2><p><code>adb shell mkdir path/floldername</code></p>
-<p>##21.发送文件内容</p>
-<p><code>adb  shell input text &lt;context&gt;</code></p>
-<h2 id="22-通过adb命令发送键盘按键事件"><a href="#22-通过adb命令发送键盘按键事件" class="headerlink" title="22.通过adb命令发送键盘按键事件"></a>22.通过adb命令发送键盘按键事件</h2><p><code>adb shell input keyevent &lt;keycode&gt;</code></p>
-<h2 id="23-获取设备参数信息"><a href="#23-获取设备参数信息" class="headerlink" title="23.获取设备参数信息"></a>23.获取设备参数信息</h2><p><code>adb shell getprop &lt;key&gt;</code></p>
-<h2 id="24-设置设备的参数信息"><a href="#24-设置设备的参数信息" class="headerlink" title="24.设置设备的参数信息"></a>24.设置设备的参数信息</h2><p><code>adb shell setprop &lt;key&gt; &lt;value&gt;</code></p>
-<h2 id="25-使用adb命令进行截屏操作"><a href="#25-使用adb命令进行截屏操作" class="headerlink" title="25.使用adb命令进行截屏操作"></a>25.使用adb命令进行截屏操作</h2><p><code>adb shell screencap -p &lt;path/file&gt;</code></p>
-<h2 id="26-查看内存情况，如果有number表示查看多少条数据"><a href="#26-查看内存情况，如果有number表示查看多少条数据" class="headerlink" title="26.查看内存情况，如果有number表示查看多少条数据"></a>26.查看内存情况，如果有number表示查看多少条数据</h2><p><code>adb shell top [-m &lt;number&gt;]</code></p>
-<h2 id="27-查看进程列表数据"><a href="#27-查看进程列表数据" class="headerlink" title="27.查看进程列表数据"></a>27.查看进程列表数据</h2><p><code>adb shell ps</code></p>
-<h2 id="28-杀死对应pid的进程"><a href="#28-杀死对应pid的进程" class="headerlink" title="28.杀死对应pid的进程"></a>28.杀死对应pid的进程</h2><p><code>adb shell kill &lt;pid&gt;</code></p>
-<h2 id="29-查看指定pid进行的运行状态"><a href="#29-查看指定pid进行的运行状态" class="headerlink" title="29.查看指定pid进行的运行状态"></a>29.查看指定pid进行的运行状态</h2><p><code>adb shell ps -x &lt;pid&gt;</code></p>
-<h2 id="30-查看后台服务信息"><a href="#30-查看后台服务信息" class="headerlink" title="30.查看后台服务信息"></a>30.查看后台服务信息</h2><p><code>adb shell service list</code></p>
-<h2 id="31-查看当前内存占用情况"><a href="#31-查看当前内存占用情况" class="headerlink" title="31.查看当前内存占用情况"></a>31.查看当前内存占用情况</h2><p><code>adb shell cat /proc/meminfo</code></p>
-<h2 id="32-查看io内存分区情况"><a href="#32-查看io内存分区情况" class="headerlink" title="32.查看io内存分区情况"></a>32.查看io内存分区情况</h2><p><code>adb shell cat /proc/iomen</code></p>
-<h2 id="33-将system分区重新挂载为可读写分区"><a href="#33-将system分区重新挂载为可读写分区" class="headerlink" title="33.将system分区重新挂载为可读写分区"></a>33.将system分区重新挂载为可读写分区</h2><p><code>adb remount</code></p>
-<h2 id="34-列出除了系统应用的第三方应用包名"><a href="#34-列出除了系统应用的第三方应用包名" class="headerlink" title="34.列出除了系统应用的第三方应用包名"></a>34.列出除了系统应用的第三方应用包名</h2><p><code>adb shell pm list packages -3</code></p>
-<h2 id="35-清除应用数据与缓存"><a href="#35-清除应用数据与缓存" class="headerlink" title="35.清除应用数据与缓存"></a>35.清除应用数据与缓存</h2><p><code>adb shell pm clear &lt;packagename&gt;</code></p>
-<p>好了，就写到这里吧，其实ADB命令有很多，我只整理了一些大家比较常用的一些命令，当然我们有时候要记忆的东西太多了，记不住有些命令，你需要做的就是点击收藏按钮，当用的时候就可以方便自己查找了，如果你觉得文本不错，请您点个赞，码字不易，且行且珍惜！</p>
-<p>再小的点赞也是对博主的莫大鼓励！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 最全 Intent 传递数据姿势</title>
     <url>/2017/09/24/201709242349/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center><center>置顶公众号（**ID：ITBigFly**）第一时间收到推送</center>
@@ -26410,6 +27413,76 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Intent</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android adb 命令</title>
+    <url>/2017/09/24/201709242350/</url>
+    <content><![CDATA[<h2 id="1-查看当前adb版本"><a href="#1-查看当前adb版本" class="headerlink" title="1.查看当前adb版本"></a>1.查看当前adb版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb version</span><br><span class="line">Android Debug Bridge version 1.0.36</span><br><span class="line">Revision 0e9850346394-android</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-查看当前已连接的设备"><a href="#2-查看当前已连接的设备" class="headerlink" title="2.查看当前已连接的设备"></a>2.查看当前已连接的设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb devices</span><br><span class="line">f414ec93        device</span><br><span class="line">20080411        device</span><br></pre></td></tr></table></figure>
+
+<p>##3.安装apk文件</p>
+<p>直接安装：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb install + apk文件的路径</span><br></pre></td></tr></table></figure>
+
+<p>一般在安装的时候先敲出<strong>adb install</strong>然后直接将apk文件拖到MS Dos窗口中即可,然后点击回车即可自动安装。</p>
+<p>提示：有时候有的安装时会失败，因为有可能包含中文路径，建议最好不要包含中文路径！</p>
+<p>保留数据和缓存文件，重新安装apk：<br><code>adb install -r hello.apk</code></p>
+<p>安装apk到sd卡：<br><code>adb install -s hello.apk</code></p>
+<h2 id="4-拉取文件到电脑"><a href="#4-拉取文件到电脑" class="headerlink" title="4.拉取文件到电脑"></a>4.拉取文件到电脑</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb pull +手机文件路径/目录 + 空格 + 电脑目录 </span><br><span class="line">adb pull /data/data/com.xpf.demo/files/20171031.txt c:/Users/xin/</span><br><span class="line">[100%] /data/data/com.xpf.demo/files/20171031.txt</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-从电脑复制文件到手机"><a href="#5-从电脑复制文件到手机" class="headerlink" title="5.从电脑复制文件到手机"></a>5.从电脑复制文件到手机</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb push + 电脑文件路径 + 空格 + 手机文件路径/目录</span><br><span class="line">$adb push hello.txt /sdcard/mydir/</span><br></pre></td></tr></table></figure>
+
+<h2 id="6-卸载已安装的app"><a href="#6-卸载已安装的app" class="headerlink" title="6.卸载已安装的app"></a>6.卸载已安装的app</h2><p>直接卸载：<code>adb uninstall &lt;package&gt;</code></p>
+<p>卸载App但保留数据和缓存文件：<br><code>adb uninstall -k com.xpf.demo</code></p>
+<h2 id="7-adb-Server"><a href="#7-adb-Server" class="headerlink" title="7.adb Server"></a>7.adb Server</h2><p>我们在调试的时候，偶尔也会遇到手机adb连接不上的情况，我们先kill掉server在start server就好了<br>启动adb server ：<br><code>adb start-server</code><br>停止adb server ：<br><code>adb kill-server</code></p>
+<h2 id="8-查看手机屏幕分辨率"><a href="#8-查看手机屏幕分辨率" class="headerlink" title="8.查看手机屏幕分辨率"></a>8.查看手机屏幕分辨率</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell wm size</span><br><span class="line">Physical size: 1080x1920</span><br></pre></td></tr></table></figure>
+
+<h2 id="9-查看adb命令帮助信息"><a href="#9-查看adb命令帮助信息" class="headerlink" title="9.查看adb命令帮助信息"></a>9.查看adb命令帮助信息</h2><p><code>adb help</code></p>
+<h2 id="10-在命令行中查看LOG日志"><a href="#10-在命令行中查看LOG日志" class="headerlink" title="10.在命令行中查看LOG日志"></a>10.在命令行中查看LOG日志</h2><p><code>adb logcat -s 标签名</code></p>
+<p>温馨提示：加入标签名可以进行log打印过滤，不然打印出来的日志太多不方便查看</p>
+<h2 id="11-发布端口"><a href="#11-发布端口" class="headerlink" title="11.发布端口"></a>11.发布端口</h2><p>可以设置任意的端口号作为主机向模拟器或设备的请求端口。</p>
+<p><code>adb forward tcp:5555 tcp:8000</code></p>
+<h2 id="12-查看bug报告"><a href="#12-查看bug报告" class="headerlink" title="12.查看bug报告"></a>12.查看bug报告</h2><p><code>adb bugreport</code></p>
+<h2 id="13-屏幕录像"><a href="#13-屏幕录像" class="headerlink" title="13.屏幕录像"></a>13.屏幕录像</h2><p>例如，开始录制屏幕并储存到&#x2F;sdcard根目录，同时名字为video.mp4</p>
+<p><code>adb shell screenrecord /sdcard/video.mp4</code></p>
+<h2 id="14-关闭设备请求，开启设备"><a href="#14-关闭设备请求，开启设备" class="headerlink" title="14.关闭设备请求，开启设备"></a>14.关闭设备请求，开启设备</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb shell stop</span><br><span class="line">adb shell start</span><br></pre></td></tr></table></figure>
+
+<h2 id="15-设备关机以及重启"><a href="#15-设备关机以及重启" class="headerlink" title="15.设备关机以及重启"></a>15.设备关机以及重启</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adb reboot</span><br><span class="line">adb shutdown</span><br></pre></td></tr></table></figure>
+
+<h2 id="16-获取已连接的手机序列号"><a href="#16-获取已连接的手机序列号" class="headerlink" title="16.获取已连接的手机序列号"></a>16.获取已连接的手机序列号</h2><p><code>adb get-serialno</code></p>
+<h2 id="17-获取设备的连接状态"><a href="#17-获取设备的连接状态" class="headerlink" title="17.获取设备的连接状态"></a>17.获取设备的连接状态</h2><p><code>adb -s f414ec93 get-state</code></p>
+<p>其中<strong>f414ec93</strong>为手机序列号（获取序列号参考16）</p>
+<h2 id="18-查看目录下的所有文件及文件夹"><a href="#18-查看目录下的所有文件及文件夹" class="headerlink" title="18.查看目录下的所有文件及文件夹"></a>18.查看目录下的所有文件及文件夹</h2><p><code>adb shell ls</code></p>
+<p>##19.查看文件夹内容</p>
+<p><code>adb shell cd &lt;folder&gt; </code></p>
+<h2 id="20-新建文件夹（目录）"><a href="#20-新建文件夹（目录）" class="headerlink" title="20.新建文件夹（目录）"></a>20.新建文件夹（目录）</h2><p><code>adb shell mkdir path/floldername</code></p>
+<p>##21.发送文件内容</p>
+<p><code>adb  shell input text &lt;context&gt;</code></p>
+<h2 id="22-通过adb命令发送键盘按键事件"><a href="#22-通过adb命令发送键盘按键事件" class="headerlink" title="22.通过adb命令发送键盘按键事件"></a>22.通过adb命令发送键盘按键事件</h2><p><code>adb shell input keyevent &lt;keycode&gt;</code></p>
+<h2 id="23-获取设备参数信息"><a href="#23-获取设备参数信息" class="headerlink" title="23.获取设备参数信息"></a>23.获取设备参数信息</h2><p><code>adb shell getprop &lt;key&gt;</code></p>
+<h2 id="24-设置设备的参数信息"><a href="#24-设置设备的参数信息" class="headerlink" title="24.设置设备的参数信息"></a>24.设置设备的参数信息</h2><p><code>adb shell setprop &lt;key&gt; &lt;value&gt;</code></p>
+<h2 id="25-使用adb命令进行截屏操作"><a href="#25-使用adb命令进行截屏操作" class="headerlink" title="25.使用adb命令进行截屏操作"></a>25.使用adb命令进行截屏操作</h2><p><code>adb shell screencap -p &lt;path/file&gt;</code></p>
+<h2 id="26-查看内存情况，如果有number表示查看多少条数据"><a href="#26-查看内存情况，如果有number表示查看多少条数据" class="headerlink" title="26.查看内存情况，如果有number表示查看多少条数据"></a>26.查看内存情况，如果有number表示查看多少条数据</h2><p><code>adb shell top [-m &lt;number&gt;]</code></p>
+<h2 id="27-查看进程列表数据"><a href="#27-查看进程列表数据" class="headerlink" title="27.查看进程列表数据"></a>27.查看进程列表数据</h2><p><code>adb shell ps</code></p>
+<h2 id="28-杀死对应pid的进程"><a href="#28-杀死对应pid的进程" class="headerlink" title="28.杀死对应pid的进程"></a>28.杀死对应pid的进程</h2><p><code>adb shell kill &lt;pid&gt;</code></p>
+<h2 id="29-查看指定pid进行的运行状态"><a href="#29-查看指定pid进行的运行状态" class="headerlink" title="29.查看指定pid进行的运行状态"></a>29.查看指定pid进行的运行状态</h2><p><code>adb shell ps -x &lt;pid&gt;</code></p>
+<h2 id="30-查看后台服务信息"><a href="#30-查看后台服务信息" class="headerlink" title="30.查看后台服务信息"></a>30.查看后台服务信息</h2><p><code>adb shell service list</code></p>
+<h2 id="31-查看当前内存占用情况"><a href="#31-查看当前内存占用情况" class="headerlink" title="31.查看当前内存占用情况"></a>31.查看当前内存占用情况</h2><p><code>adb shell cat /proc/meminfo</code></p>
+<h2 id="32-查看io内存分区情况"><a href="#32-查看io内存分区情况" class="headerlink" title="32.查看io内存分区情况"></a>32.查看io内存分区情况</h2><p><code>adb shell cat /proc/iomen</code></p>
+<h2 id="33-将system分区重新挂载为可读写分区"><a href="#33-将system分区重新挂载为可读写分区" class="headerlink" title="33.将system分区重新挂载为可读写分区"></a>33.将system分区重新挂载为可读写分区</h2><p><code>adb remount</code></p>
+<h2 id="34-列出除了系统应用的第三方应用包名"><a href="#34-列出除了系统应用的第三方应用包名" class="headerlink" title="34.列出除了系统应用的第三方应用包名"></a>34.列出除了系统应用的第三方应用包名</h2><p><code>adb shell pm list packages -3</code></p>
+<h2 id="35-清除应用数据与缓存"><a href="#35-清除应用数据与缓存" class="headerlink" title="35.清除应用数据与缓存"></a>35.清除应用数据与缓存</h2><p><code>adb shell pm clear &lt;packagename&gt;</code></p>
+<p>好了，就写到这里吧，其实ADB命令有很多，我只整理了一些大家比较常用的一些命令，当然我们有时候要记忆的东西太多了，记不住有些命令，你需要做的就是点击收藏按钮，当用的时候就可以方便自己查找了，如果你觉得文本不错，请您点个赞，码字不易，且行且珍惜！</p>
+<p>再小的点赞也是对博主的莫大鼓励！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>adb</tag>
       </tags>
   </entry>
   <entry>
@@ -26789,6 +27862,23 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android SharedPreferences 工具类</title>
+    <url>/2017/09/24/201709242400/</url>
+    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>###注：在MyApplication中获取上下文</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>SharedPreferences</tag>
+        <tag>工具类</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>用起来贼爽的 Android Studio 插件推荐</title>
     <url>/2017/09/24/201709242401/</url>
     <content><![CDATA[<blockquote>
@@ -26851,23 +27941,6 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>Plugin</tag>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android SharedPreferences 工具类</title>
-    <url>/2017/09/24/201709242400/</url>
-    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>###注：在MyApplication中获取上下文</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>SharedPreferences</tag>
-        <tag>工具类</tag>
       </tags>
   </entry>
   <entry>
@@ -27475,41 +28548,6 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
-    <title>Android 检测 Activity 或者 Service 是否运行</title>
-    <url>/2017/09/24/201709242421/</url>
-    <content><![CDATA[<blockquote>
-<p>需求：假设我们的APP有3个页面AActivity,BActivity,CActivity,我们的APP需要一直运行在前台（特殊设备），要求实现一个监控服务，来监视APP是否运行，如果有3个页面都不运行了就说明这个APP已经挂掉了，否则说明APP在运行状态，不做处理，挂掉之后，我们需要重新启动App来让它继续处理运行状态，对外暴露一个来停止监控服务的广播，这样我们想停止监控服务时，发送一个广播即可。</p>
-</blockquote>
-<p>思路：实现一个双进程的监控服务，服务中写一个定时器 <strong>Timer</strong> 来重复进行检测是否正在运行，如果否就直接重新启动APP。</p>
-<p>##1.定义一个监控服务</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.nfcservice;</span><br><span class="line"></span><br><span class="line">import android.app.Service;</span><br><span class="line">import android.content.BroadcastReceiver;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.content.Intent;</span><br><span class="line">import android.content.IntentFilter;</span><br><span class="line">import android.os.IBinder;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import com.anloq.MyApplication;</span><br><span class="line">import com.anloq.activity.AdActivity;</span><br><span class="line">import com.anloq.utils.DetectionASUtils;</span><br><span class="line"></span><br><span class="line">import java.text.SimpleDateFormat;</span><br><span class="line">import java.util.Date;</span><br><span class="line">import java.util.Locale;</span><br><span class="line">import java.util.Timer;</span><br><span class="line">import java.util.TimerTask;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/6/3 :)</span><br><span class="line"> * 检测APP页面是否一直运行,不运行就直接启动</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class MonitoringService extends Service &#123;</span><br><span class="line"></span><br><span class="line">    private final static String TAG = &quot;MonitoringService&quot;;</span><br><span class="line"></span><br><span class="line">    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void onReceive(Context context, Intent intent) &#123;</span><br><span class="line">            if (&quot;kill_self&quot;.equals(intent.getAction())) &#123;</span><br><span class="line">                Log.e(TAG, &quot;onReceive:杀死自己的进程！&quot;);</span><br><span class="line">                killMyselfPid(); // 杀死自己的进程</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    private Timer timer = new Timer();</span><br><span class="line">    private TimerTask task = new TimerTask() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            checkIsAlive();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 检测应用是否活着</span><br><span class="line">     */</span><br><span class="line">    private void checkIsAlive() &#123;</span><br><span class="line">        String format = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;,</span><br><span class="line">                Locale.CHINA).format(new Date());</span><br><span class="line">        Log.e(TAG, &quot;CustodyService Run: &quot; + format);</span><br><span class="line"></span><br><span class="line">        boolean AIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.AActivity&quot;);</span><br><span class="line">        boolean BIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.BActivity&quot;);</span><br><span class="line">        boolean b = (AIsRunning || BIsRunning);</span><br><span class="line">        boolean CIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.CActivity&quot;);</span><br><span class="line"></span><br><span class="line">        Log.e(TAG, &quot;AIsRunning || BIsRunning is running:&quot; + b + &quot;,CIsRunning:&quot; + CIsRunning);</span><br><span class="line"></span><br><span class="line">        if (!CIsRunning) &#123;</span><br><span class="line">            if (!b) &#123; //如果界面挂掉直接启动AActivity</span><br><span class="line">                Intent intent = new Intent();</span><br><span class="line">                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">                intent.setClass(MonitoringService.this, AActivity.class);</span><br><span class="line">                startActivity(intent);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate() &#123;</span><br><span class="line">        super.onCreate();</span><br><span class="line">        Log.e(TAG, &quot;onCreate: 启动监控服务! &quot;);</span><br><span class="line">        IntentFilter intentFilter = new IntentFilter();</span><br><span class="line">        intentFilter.addAction(&quot;kill_self&quot;);</span><br><span class="line">        registerReceiver(broadcastReceiver, intentFilter);</span><br><span class="line">        timer.schedule(task, 0, 10000);// 设置检测的时间周期(毫秒数)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public int onStartCommand(Intent intent, int flags, int startId) &#123;</span><br><span class="line">        return START_STICKY;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public IBinder onBind(Intent arg0) &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 杀死自身的进程</span><br><span class="line">     */</span><br><span class="line">    private void killMyselfPid() &#123;</span><br><span class="line">        int pid = android.os.Process.myPid();</span><br><span class="line">        String command = &quot;kill -9 &quot; + pid;</span><br><span class="line">        Log.e(TAG, &quot;killMyselfPid: &quot; + command);</span><br><span class="line">        stopService(new Intent(MonitoringService.this, MonitoringService.class));</span><br><span class="line">        try &#123;</span><br><span class="line">            Runtime.getRuntime().exec(command);</span><br><span class="line">            System.exit(0);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onDestroy() &#123;</span><br><span class="line">        super.onDestroy();</span><br><span class="line">        unregisterReceiver(broadcastReceiver);</span><br><span class="line">        if (task != null) &#123;</span><br><span class="line">            task.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">        if (timer != null) &#123;</span><br><span class="line">            timer.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##2.注册双进程Service</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;service</span><br><span class="line">          android:name=&quot;com.xpf.monitor.MonitoringService&quot;</span><br><span class="line">          android:enabled=&quot;true&quot;</span><br><span class="line">          android:label=&quot;MonitoringService&quot;</span><br><span class="line">          android:process=&quot;:gray&quot;&gt;</span><br><span class="line">          &lt;intent-filter&gt;</span><br><span class="line">              &lt;action android:name=&quot;android.intent.action.RESPOND_VIA_MESSAGE&quot; /&gt;</span><br><span class="line">          &lt;/intent-filter&gt;</span><br><span class="line">      &lt;/service&gt;</span><br></pre></td></tr></table></figure>
-
-<p>##3.检测是否活着的工具类CheckUtil</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class CheckUtil &#123;</span><br><span class="line">    //检测service是否在运行</span><br><span class="line">    public static boolean isServiceWorked(Context context, String serviceName) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        ArrayList&lt;ActivityManager.RunningServiceInfo&gt; runningService = (ArrayList&lt;ActivityManager.RunningServiceInfo&gt;) myManager.getRunningServices(Integer.MAX_VALUE);</span><br><span class="line">        for (int i = 0; i &lt; runningService.size(); i++) &#123;</span><br><span class="line">            if (runningService.get(i).service.getClassName().toString().equals(serviceName)) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //检测activity是否存在再栈顶</span><br><span class="line">    public static boolean isForeground(Context context, String PackageName) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningTaskInfo&gt; task = myManager.getRunningTasks(1);</span><br><span class="line">        ComponentName componentInfo = task.get(0).topActivity;</span><br><span class="line">        if (componentInfo.getPackageName().equals(PackageName))</span><br><span class="line">            return true;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 判断某个app进程是否在运行</span><br><span class="line">     *</span><br><span class="line">     * @param context</span><br><span class="line">     * @param appInfo</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static boolean isRunningProcess(Context context, String appInfo) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningAppProcessInfo&gt; runningAppPs = myManager.getRunningAppProcesses();</span><br><span class="line">        if (runningAppPs != null &amp;&amp; runningAppPs.size() &gt; 0) &#123;</span><br><span class="line">            if (runningAppPs.contains(appInfo)) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 判断一个Activity是否正在运行</span><br><span class="line">     *</span><br><span class="line">     * @param pkg     pkg为应用包名</span><br><span class="line">     * @param cls     cls为类名eg</span><br><span class="line">     * @param context</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static boolean isClsRunning(Context context, String pkg, String cls) &#123;</span><br><span class="line">        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningTaskInfo&gt; tasks = am.getRunningTasks(1);</span><br><span class="line">        ActivityManager.RunningTaskInfo task = tasks.get(0);</span><br><span class="line">        if (task != null) &#123;</span><br><span class="line">            return TextUtils.equals(task.topActivity.getPackageName(), pkg) &amp;&amp;</span><br><span class="line">                    TextUtils.equals(task.topActivity.getClassName(), cls);</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##4.MainActivity中启动监控服务</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent(MainActivity.this, MonitoringService.class);</span><br><span class="line">   intent.setAction(&quot;android.intent.action.RESPOND_VIA_MESSAGE&quot;);</span><br><span class="line">   startService(intent);</span><br></pre></td></tr></table></figure>
-
-<p>##5.停止监控服务</p>
-<p>发送一个杀死进程广播即可，action值如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent();</span><br><span class="line">   intent.setAction(&quot;kill_self&quot;);</span><br><span class="line">   sendOrderedBroadcast(intent, null);</span><br></pre></td></tr></table></figure>
-
-<p>好了，今天就分享到这里了。。。</p>
-<p>欢迎评论和点赞！！！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Activity</tag>
-        <tag>Service</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 实现帧动画</title>
     <url>/2017/09/24/201709242419/</url>
     <content><![CDATA[<h2 id="1-在res的drawable下新建一个布局animation-xml-文件"><a href="#1-在res的drawable下新建一个布局animation-xml-文件" class="headerlink" title="1.在res的drawable下新建一个布局animation.xml*文件"></a>1.在res的drawable下新建一个布局<strong>animation.xml</strong>*文件</h2><figure class="highlight plaintext"><figcaption><span>version</span></figcaption><table><tr><td class="code"><pre><span class="line">&lt;animation-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    android:oneshot=&quot;true&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image1&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image2&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image3&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image4&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image5&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image6&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image7&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image8&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image9&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image10&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image11&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image12&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image13&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image14&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image15&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image16&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image17&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image18&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image19&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image20&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image21&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image22&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image23&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image24&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image25&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image26&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image27&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image28&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image29&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image30&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image31&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image32&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image33&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image34&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image35&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image36&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image37&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image38&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image39&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image40&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image41&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image42&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image43&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image44&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image45&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image46&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image47&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image48&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image49&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image50&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image51&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image52&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image53&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image54&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image55&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image56&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image57&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image58&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image59&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image60&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line"></span><br><span class="line">&lt;/animation-list&gt;</span><br></pre></td></tr></table></figure>
@@ -27552,6 +28590,41 @@ public static boolean isChinaPhoneLegal(String str)
         <tag>GitHub</tag>
         <tag>Exception</tag>
         <tag>EventBus</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 检测 Activity 或者 Service 是否运行</title>
+    <url>/2017/09/24/201709242421/</url>
+    <content><![CDATA[<blockquote>
+<p>需求：假设我们的APP有3个页面AActivity,BActivity,CActivity,我们的APP需要一直运行在前台（特殊设备），要求实现一个监控服务，来监视APP是否运行，如果有3个页面都不运行了就说明这个APP已经挂掉了，否则说明APP在运行状态，不做处理，挂掉之后，我们需要重新启动App来让它继续处理运行状态，对外暴露一个来停止监控服务的广播，这样我们想停止监控服务时，发送一个广播即可。</p>
+</blockquote>
+<p>思路：实现一个双进程的监控服务，服务中写一个定时器 <strong>Timer</strong> 来重复进行检测是否正在运行，如果否就直接重新启动APP。</p>
+<p>##1.定义一个监控服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.nfcservice;</span><br><span class="line"></span><br><span class="line">import android.app.Service;</span><br><span class="line">import android.content.BroadcastReceiver;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.content.Intent;</span><br><span class="line">import android.content.IntentFilter;</span><br><span class="line">import android.os.IBinder;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import com.anloq.MyApplication;</span><br><span class="line">import com.anloq.activity.AdActivity;</span><br><span class="line">import com.anloq.utils.DetectionASUtils;</span><br><span class="line"></span><br><span class="line">import java.text.SimpleDateFormat;</span><br><span class="line">import java.util.Date;</span><br><span class="line">import java.util.Locale;</span><br><span class="line">import java.util.Timer;</span><br><span class="line">import java.util.TimerTask;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/6/3 :)</span><br><span class="line"> * 检测APP页面是否一直运行,不运行就直接启动</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class MonitoringService extends Service &#123;</span><br><span class="line"></span><br><span class="line">    private final static String TAG = &quot;MonitoringService&quot;;</span><br><span class="line"></span><br><span class="line">    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void onReceive(Context context, Intent intent) &#123;</span><br><span class="line">            if (&quot;kill_self&quot;.equals(intent.getAction())) &#123;</span><br><span class="line">                Log.e(TAG, &quot;onReceive:杀死自己的进程！&quot;);</span><br><span class="line">                killMyselfPid(); // 杀死自己的进程</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    private Timer timer = new Timer();</span><br><span class="line">    private TimerTask task = new TimerTask() &#123;</span><br><span class="line">        @Override</span><br><span class="line">        public void run() &#123;</span><br><span class="line">            checkIsAlive();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 检测应用是否活着</span><br><span class="line">     */</span><br><span class="line">    private void checkIsAlive() &#123;</span><br><span class="line">        String format = new SimpleDateFormat(&quot;yyyy-MM-dd HH:mm:ss&quot;,</span><br><span class="line">                Locale.CHINA).format(new Date());</span><br><span class="line">        Log.e(TAG, &quot;CustodyService Run: &quot; + format);</span><br><span class="line"></span><br><span class="line">        boolean AIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.AActivity&quot;);</span><br><span class="line">        boolean BIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.BActivity&quot;);</span><br><span class="line">        boolean b = (AIsRunning || BIsRunning);</span><br><span class="line">        boolean CIsRunning = CheckUtil.isClsRunning(</span><br><span class="line">                MonitoringService.this, &quot;com.xpf.monitor&quot;, &quot;com.xpf.monitor.activity.CActivity&quot;);</span><br><span class="line"></span><br><span class="line">        Log.e(TAG, &quot;AIsRunning || BIsRunning is running:&quot; + b + &quot;,CIsRunning:&quot; + CIsRunning);</span><br><span class="line"></span><br><span class="line">        if (!CIsRunning) &#123;</span><br><span class="line">            if (!b) &#123; //如果界面挂掉直接启动AActivity</span><br><span class="line">                Intent intent = new Intent();</span><br><span class="line">                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">                intent.setClass(MonitoringService.this, AActivity.class);</span><br><span class="line">                startActivity(intent);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onCreate() &#123;</span><br><span class="line">        super.onCreate();</span><br><span class="line">        Log.e(TAG, &quot;onCreate: 启动监控服务! &quot;);</span><br><span class="line">        IntentFilter intentFilter = new IntentFilter();</span><br><span class="line">        intentFilter.addAction(&quot;kill_self&quot;);</span><br><span class="line">        registerReceiver(broadcastReceiver, intentFilter);</span><br><span class="line">        timer.schedule(task, 0, 10000);// 设置检测的时间周期(毫秒数)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public int onStartCommand(Intent intent, int flags, int startId) &#123;</span><br><span class="line">        return START_STICKY;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public IBinder onBind(Intent arg0) &#123;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 杀死自身的进程</span><br><span class="line">     */</span><br><span class="line">    private void killMyselfPid() &#123;</span><br><span class="line">        int pid = android.os.Process.myPid();</span><br><span class="line">        String command = &quot;kill -9 &quot; + pid;</span><br><span class="line">        Log.e(TAG, &quot;killMyselfPid: &quot; + command);</span><br><span class="line">        stopService(new Intent(MonitoringService.this, MonitoringService.class));</span><br><span class="line">        try &#123;</span><br><span class="line">            Runtime.getRuntime().exec(command);</span><br><span class="line">            System.exit(0);</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void onDestroy() &#123;</span><br><span class="line">        super.onDestroy();</span><br><span class="line">        unregisterReceiver(broadcastReceiver);</span><br><span class="line">        if (task != null) &#123;</span><br><span class="line">            task.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">        if (timer != null) &#123;</span><br><span class="line">            timer.cancel();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##2.注册双进程Service</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;service</span><br><span class="line">          android:name=&quot;com.xpf.monitor.MonitoringService&quot;</span><br><span class="line">          android:enabled=&quot;true&quot;</span><br><span class="line">          android:label=&quot;MonitoringService&quot;</span><br><span class="line">          android:process=&quot;:gray&quot;&gt;</span><br><span class="line">          &lt;intent-filter&gt;</span><br><span class="line">              &lt;action android:name=&quot;android.intent.action.RESPOND_VIA_MESSAGE&quot; /&gt;</span><br><span class="line">          &lt;/intent-filter&gt;</span><br><span class="line">      &lt;/service&gt;</span><br></pre></td></tr></table></figure>
+
+<p>##3.检测是否活着的工具类CheckUtil</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class CheckUtil &#123;</span><br><span class="line">    //检测service是否在运行</span><br><span class="line">    public static boolean isServiceWorked(Context context, String serviceName) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        ArrayList&lt;ActivityManager.RunningServiceInfo&gt; runningService = (ArrayList&lt;ActivityManager.RunningServiceInfo&gt;) myManager.getRunningServices(Integer.MAX_VALUE);</span><br><span class="line">        for (int i = 0; i &lt; runningService.size(); i++) &#123;</span><br><span class="line">            if (runningService.get(i).service.getClassName().toString().equals(serviceName)) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //检测activity是否存在再栈顶</span><br><span class="line">    public static boolean isForeground(Context context, String PackageName) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningTaskInfo&gt; task = myManager.getRunningTasks(1);</span><br><span class="line">        ComponentName componentInfo = task.get(0).topActivity;</span><br><span class="line">        if (componentInfo.getPackageName().equals(PackageName))</span><br><span class="line">            return true;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 判断某个app进程是否在运行</span><br><span class="line">     *</span><br><span class="line">     * @param context</span><br><span class="line">     * @param appInfo</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static boolean isRunningProcess(Context context, String appInfo) &#123;</span><br><span class="line">        ActivityManager myManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningAppProcessInfo&gt; runningAppPs = myManager.getRunningAppProcesses();</span><br><span class="line">        if (runningAppPs != null &amp;&amp; runningAppPs.size() &gt; 0) &#123;</span><br><span class="line">            if (runningAppPs.contains(appInfo)) &#123;</span><br><span class="line">                return true;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 判断一个Activity是否正在运行</span><br><span class="line">     *</span><br><span class="line">     * @param pkg     pkg为应用包名</span><br><span class="line">     * @param cls     cls为类名eg</span><br><span class="line">     * @param context</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static boolean isClsRunning(Context context, String pkg, String cls) &#123;</span><br><span class="line">        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);</span><br><span class="line">        List&lt;ActivityManager.RunningTaskInfo&gt; tasks = am.getRunningTasks(1);</span><br><span class="line">        ActivityManager.RunningTaskInfo task = tasks.get(0);</span><br><span class="line">        if (task != null) &#123;</span><br><span class="line">            return TextUtils.equals(task.topActivity.getPackageName(), pkg) &amp;&amp;</span><br><span class="line">                    TextUtils.equals(task.topActivity.getClassName(), cls);</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##4.MainActivity中启动监控服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent(MainActivity.this, MonitoringService.class);</span><br><span class="line">   intent.setAction(&quot;android.intent.action.RESPOND_VIA_MESSAGE&quot;);</span><br><span class="line">   startService(intent);</span><br></pre></td></tr></table></figure>
+
+<p>##5.停止监控服务</p>
+<p>发送一个杀死进程广播即可，action值如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent();</span><br><span class="line">   intent.setAction(&quot;kill_self&quot;);</span><br><span class="line">   sendOrderedBroadcast(intent, null);</span><br></pre></td></tr></table></figure>
+
+<p>好了，今天就分享到这里了。。。</p>
+<p>欢迎评论和点赞！！！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Activity</tag>
+        <tag>Service</tag>
       </tags>
   </entry>
   <entry>
@@ -27645,6 +28718,49 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
+    <title>Android 加载 GIF 图片的两种方式</title>
+    <url>/2017/09/24/201709242427/</url>
+    <content><![CDATA[<p>##方式一：使用第三开源框架直接在布局文件中加载gif</p>
+<p>###1.在工程的build.gradle中添加如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">buildscript &#123;</span><br><span class="line">        repositories &#123;</span><br><span class="line">            mavenCentral()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    allprojects &#123;</span><br><span class="line">        repositories &#123;</span><br><span class="line">            mavenCentral()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>###2.在app的build.gradle中添加依赖</p>
+<p><code>compile &#39;pl.droidsonroids.gif:android-gif-drawable:1.2.1&#39;</code></p>
+<p>###3.布局文件中就可以直接写你需要加载的gif图片即可</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;pl.droidsonroids.gif.GifImageView</span><br><span class="line">        android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">        android:src=&quot;@drawable/gif2&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>##方式二：使用Glide加载gif</p>
+<p>这种方式就比较简单了，直接看代码↓</p>
+<p>###1.添加Glide图片加载框架依赖</p>
+<p><code>compile &#39;com.github.bumptech.glide:glide:3.7.0&#39;</code></p>
+<p>###2.布局文件中写一个普通的Imageview</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;ImageView</span><br><span class="line">        android:id=&quot;@+id/ivGif&quot;</span><br><span class="line">        android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>###3.代码中直接加载本地的gif图片到Imageview上即可</p>
+<pre><code>Glide.with(MainActivity.this).load(R.drawable.gif1)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL).into(ivGif);```
+
+以上就是加载gif图片的两种方式，我写的都是加载本地的gif，加载网络的gif图片应该也差不多一样，自己尝试吧...
+
+代码比较简单，为了照顾初学者，需要的同学 ![戳这里](https://github.com/xinpengfei520/Android-GIF-Loader.git) 下载
+
+Thanks all.
+
+2017.5.30日  农历：五月初五 端午节
+
+最后祝大家端午节快乐！！！大家记得吃粽子哦 ：)
+</code></pre>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+        <tag>GIF</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>《Android源码设计模式》学习笔记之 ImageLoader</title>
     <url>/2017/09/24/201709242428/</url>
     <content><![CDATA[<blockquote>
@@ -27691,66 +28807,6 @@ public static boolean isChinaPhoneLegal(String str)
       <tags>
         <tag>GitHub</tag>
         <tag>ImageLoader</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 加载 GIF 图片的两种方式</title>
-    <url>/2017/09/24/201709242427/</url>
-    <content><![CDATA[<p>##方式一：使用第三开源框架直接在布局文件中加载gif</p>
-<p>###1.在工程的build.gradle中添加如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">buildscript &#123;</span><br><span class="line">        repositories &#123;</span><br><span class="line">            mavenCentral()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    allprojects &#123;</span><br><span class="line">        repositories &#123;</span><br><span class="line">            mavenCentral()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<p>###2.在app的build.gradle中添加依赖</p>
-<p><code>compile &#39;pl.droidsonroids.gif:android-gif-drawable:1.2.1&#39;</code></p>
-<p>###3.布局文件中就可以直接写你需要加载的gif图片即可</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;pl.droidsonroids.gif.GifImageView</span><br><span class="line">        android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot;</span><br><span class="line">        android:src=&quot;@drawable/gif2&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>##方式二：使用Glide加载gif</p>
-<p>这种方式就比较简单了，直接看代码↓</p>
-<p>###1.添加Glide图片加载框架依赖</p>
-<p><code>compile &#39;com.github.bumptech.glide:glide:3.7.0&#39;</code></p>
-<p>###2.布局文件中写一个普通的Imageview</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;ImageView</span><br><span class="line">        android:id=&quot;@+id/ivGif&quot;</span><br><span class="line">        android:layout_width=&quot;wrap_content&quot;</span><br><span class="line">        android:layout_height=&quot;wrap_content&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>###3.代码中直接加载本地的gif图片到Imageview上即可</p>
-<pre><code>Glide.with(MainActivity.this).load(R.drawable.gif1)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL).into(ivGif);```
-
-以上就是加载gif图片的两种方式，我写的都是加载本地的gif，加载网络的gif图片应该也差不多一样，自己尝试吧...
-
-代码比较简单，为了照顾初学者，需要的同学 ![戳这里](https://github.com/xinpengfei520/Android-GIF-Loader.git) 下载
-
-Thanks all.
-
-2017.5.30日  农历：五月初五 端午节
-
-最后祝大家端午节快乐！！！大家记得吃粽子哦 ：)
-</code></pre>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
-        <tag>GIF</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 追加换行写入内容到 txt 文件中</title>
-    <url>/2017/09/24/201709242430/</url>
-    <content><![CDATA[<p>实现思路为：使用 Context.MODE_APPEND 属性将每次内容的写入到上次内容的尾部，然后在每次写入内容完成之后写入一个回车换行符**fos.write(“\r\n”.getBytes());**即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/10/31 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class FileHelper &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public FileHelper(Context mContext) &#123;</span><br><span class="line">        this.mContext = mContext;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件保存的方法，写入到文件中，所以是输出流</span><br><span class="line">     */</span><br><span class="line">    public void save(String adNum, String time) &#123;</span><br><span class="line">        String content = &quot;广告位编号：&quot; + adNum + &quot;，播放时长：&quot; + time;</span><br><span class="line">        FileOutputStream fos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            // Context.MODE_PRIVATE私有权限，Context.MODE_APPEND追加写入到已有内容的后面</span><br><span class="line">            fos = mContext.openFileOutput(getFileName(), Context.MODE_APPEND);</span><br><span class="line">            fos.write(content.getBytes());</span><br><span class="line">            fos.write(&quot;\r\n&quot;.getBytes());//写入换行</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (fos != null) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    fos.close();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件读取的方法</span><br><span class="line">     */</span><br><span class="line">    public String read(String filename) throws IOException &#123;</span><br><span class="line">        FileInputStream fis = mContext.openFileInput(filename);</span><br><span class="line">        byte[] buff = new byte[1024];</span><br><span class="line">        StringBuilder sb = new StringBuilder(&quot;&quot;);</span><br><span class="line">        int len = 0;</span><br><span class="line">        while ((len = fis.read(buff)) &gt; 0) &#123;</span><br><span class="line">            sb.append(new String(buff, 0, len));</span><br><span class="line">        &#125;</span><br><span class="line">        fis.close();</span><br><span class="line">        return sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get file name such as 20171031.txt</span><br><span class="line">     *</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private String getFileName() &#123;</span><br><span class="line">        return TimeUtil.getCurrentDay() + &quot;.txt&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>转载请注明出处，谢谢！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>txt</tag>
-        <tag>文件读写</tag>
       </tags>
   </entry>
   <entry>
@@ -28039,6 +29095,23 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>Android 追加换行写入内容到 txt 文件中</title>
+    <url>/2017/09/24/201709242430/</url>
+    <content><![CDATA[<p>实现思路为：使用 Context.MODE_APPEND 属性将每次内容的写入到上次内容的尾部，然后在每次写入内容完成之后写入一个回车换行符**fos.write(“\r\n”.getBytes());**即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/10/31 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class FileHelper &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public FileHelper(Context mContext) &#123;</span><br><span class="line">        this.mContext = mContext;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件保存的方法，写入到文件中，所以是输出流</span><br><span class="line">     */</span><br><span class="line">    public void save(String adNum, String time) &#123;</span><br><span class="line">        String content = &quot;广告位编号：&quot; + adNum + &quot;，播放时长：&quot; + time;</span><br><span class="line">        FileOutputStream fos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            // Context.MODE_PRIVATE私有权限，Context.MODE_APPEND追加写入到已有内容的后面</span><br><span class="line">            fos = mContext.openFileOutput(getFileName(), Context.MODE_APPEND);</span><br><span class="line">            fos.write(content.getBytes());</span><br><span class="line">            fos.write(&quot;\r\n&quot;.getBytes());//写入换行</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (fos != null) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    fos.close();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 定义文件读取的方法</span><br><span class="line">     */</span><br><span class="line">    public String read(String filename) throws IOException &#123;</span><br><span class="line">        FileInputStream fis = mContext.openFileInput(filename);</span><br><span class="line">        byte[] buff = new byte[1024];</span><br><span class="line">        StringBuilder sb = new StringBuilder(&quot;&quot;);</span><br><span class="line">        int len = 0;</span><br><span class="line">        while ((len = fis.read(buff)) &gt; 0) &#123;</span><br><span class="line">            sb.append(new String(buff, 0, len));</span><br><span class="line">        &#125;</span><br><span class="line">        fis.close();</span><br><span class="line">        return sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get file name such as 20171031.txt</span><br><span class="line">     *</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private String getFileName() &#123;</span><br><span class="line">        return TimeUtil.getCurrentDay() + &quot;.txt&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>转载请注明出处，谢谢！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>txt</tag>
+        <tag>文件读写</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>CentOS7.x 搭建 GitLab 教程</title>
     <url>/2017/09/24/201709242431/</url>
     <content><![CDATA[<p>今天闲来无事，想起之前买了一个阿里云 ECS，一直闲置着没用，一时兴起就想搭个自己的 GitLab 玩玩，GitLab 官网也提供了安装教程，很简单，照着步骤一步步基本没什么问题，可能安装的过程中有一些坑需要自己去解决。</p>
@@ -28169,27 +29242,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
-    <url>/2017/09/24/201709242433/</url>
-    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
-<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
-<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
-<p>解决方法：</p>
-<p>参考：</p>
-<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
-<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
-<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
-<p>Thanks.</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>串口</tag>
-        <tag>NDK</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>error please select android sdk</title>
     <url>/2017/09/24/201709242434/</url>
     <content><![CDATA[<p>点app运行时报如下错：</p>
@@ -28216,6 +29268,27 @@ Thanks all.
       <tags>
         <tag>Android</tag>
         <tag>SDK</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
+    <url>/2017/09/24/201709242433/</url>
+    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
+<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
+<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
+<p>解决方法：</p>
+<p>参考：</p>
+<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
+<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
+<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
+<p>Thanks.</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>串口</tag>
+        <tag>NDK</tag>
       </tags>
   </entry>
   <entry>
@@ -28662,22 +29735,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>java.lang.IllegalStateException commit already called</title>
-    <url>/2017/09/24/201709242438/</url>
-    <content><![CDATA[<p>今天使用Fragment时报如下图错误：</p>
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061539406.png" alt="这里写图片描述"></p>
-<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><p>之所以报该错误，是因为 <strong>Fragment</strong> 事务是全局的变量，只能commit一次。</p>
-<h2 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a>解决方法：</h2><p>将获取Fragment事务定义为局部变量，每次提交时都去获取新的事务去commit即可。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Exception</tag>
-        <tag>IllegalStateException</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>不可错过的几款GitHub开源项目</title>
     <url>/2017/09/24/201709242437/</url>
     <content><![CDATA[<p>工作之余或者周末感觉无聊？不知道干什么？想继续提高技术，但是不知道做什么的同学，看过来，不妨利用闲暇时间来撸几个 GitHub 上还不错的开源项目，本文推荐的开源项目比较适合新手、及对MVP设计模式不太熟练的同学练习之用，下面逐一进行简单介绍。</p>
@@ -28895,6 +29952,22 @@ Thanks all.
         <tag>Retrofit 2.x</tag>
         <tag>RxJava 2.x</tag>
         <tag>GreenDao</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>java.lang.IllegalStateException commit already called</title>
+    <url>/2017/09/24/201709242438/</url>
+    <content><![CDATA[<p>今天使用Fragment时报如下图错误：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061539406.png" alt="这里写图片描述"></p>
+<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><p>之所以报该错误，是因为 <strong>Fragment</strong> 事务是全局的变量，只能commit一次。</p>
+<h2 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a>解决方法：</h2><p>将获取Fragment事务定义为局部变量，每次提交时都去获取新的事务去commit即可。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Exception</tag>
+        <tag>IllegalStateException</tag>
       </tags>
   </entry>
   <entry>

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Claude Code v2.1.101 加了一个新命令 &#x2F;team-onboarding，把过去 30 天的会话历史、命令、MCP 配置揉成一份 ONBOARDING.md。我在主仓库跑完一遍才发现，它真正的价值不是替你写新人文档，是把团队隐性知识从老同事脑子里抖出来。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="详解 Claude Code 的 &#x2F;team-onboarding 命令：我跑完才明白它在替团队干什么">
+<meta property="og:url" content="https://www.vance.xin/2026/05/21/202605211033/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Claude Code v2.1.101 加了一个新命令 &#x2F;team-onboarding，把过去 30 天的会话历史、命令、MCP 配置揉成一份 ONBOARDING.md。我在主仓库跑完一遍才发现，它真正的价值不是替你写新人文档，是把团队隐性知识从老同事脑子里抖出来。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260521-20260521-team-onboarding.webp">
+<meta property="article:published_time" content="2026-05-21T10:33:00.000Z">
+<meta property="article:modified_time" content="2026-05-26T08:54:21.650Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="团队协作">
+<meta property="article:tag" content="team-onboarding">
+<meta property="article:tag" content="AI 工具">
+<meta property="article:tag" content="工程实践">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260521-20260521-team-onboarding.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/05/21/202605211033/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/05/21/202605211033/","path":"2026/05/21/202605211033/","title":"详解 Claude Code 的 /team-onboarding 命令：我跑完才明白它在替团队干什么"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>详解 Claude Code 的 /team-onboarding 命令：我跑完才明白它在替团队干什么 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#team-onboarding-%E5%88%B0%E5%BA%95%E5%9C%A8%E7%94%9F%E6%88%90%E4%BB%80%E4%B9%88"><span class="nav-text">&#x2F;team-onboarding 到底在生成什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E8%B7%91%E5%AE%8C%E9%82%A3%E4%B8%80%E4%BB%BD-ONBOARDING-md-%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7"><span class="nav-text">我跑完那一份 ONBOARDING.md 长什么样</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ShareOnboardingGuide-%E8%BF%99%E4%B8%AA%E5%B7%A5%E5%85%B7%E5%8D%95%E7%8B%AC%E8%AF%B4%E4%B8%80%E4%B8%8B"><span class="nav-text">ShareOnboardingGuide 这个工具单独说一下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ONBOARDING-md-%E8%B7%9F-CLAUDE-md-%E5%90%84%E8%87%AA%E7%AE%A1%E7%9A%84%E4%BA%8B%E6%83%85%E4%B8%8D%E4%B8%80%E6%A0%B7"><span class="nav-text">ONBOARDING.md 跟 CLAUDE.md 各自管的事情不一样</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E4%BA%AB%E5%89%8D%E5%BF%85%E6%9F%A5%E7%9A%84%E4%B8%89%E4%BB%B6%E4%BA%8B"><span class="nav-text">分享前必查的三件事</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A%E5%AE%83%E5%BD%93%E6%8E%A2%E6%B5%8B%E5%99%A8%E7%94%A8%EF%BC%8C%E4%BC%9A%E6%AF%94%E5%BD%93%E7%94%9F%E6%88%90%E5%99%A8%E7%94%A8%E8%B5%B0%E5%BE%97%E8%BF%9C"><span class="nav-text">把它当探测器用，会比当生成器用走得远</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E8%87%AA%E5%B7%B1%E8%B7%91%E4%B8%8B%E6%9D%A5%E8%B8%A9%E8%BF%87%E7%9A%84%E4%B8%A4%E4%B8%AA%E5%B0%8F%E5%9D%91"><span class="nav-text">我自己跑下来踩过的两个小坑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AB%A0%E8%8A%82%E7%BB%93%E6%9E%84%E4%BC%9A%E4%B8%8D%E4%BC%9A%E8%BF%AD%E4%BB%A3%E5%92%8C%E7%9F%AD%E7%A0%81%E4%BC%9A%E4%B8%8D%E4%BC%9A%E6%8C%82-dashboard"><span class="nav-text">章节结构会不会迭代和短码会不会挂 dashboard</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">320</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">571</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/05/21/202605211033/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="详解 Claude Code 的 &#x2F;team-onboarding 命令：我跑完才明白它在替团队干什么 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Claude Code v2.1.101 加了一个新命令 &#x2F;team-onboarding，把过去 30 天的会话历史、命令、MCP 配置揉成一份 ONBOARDING.md。我在主仓库跑完一遍才发现，它真正的价值不是替你写新人文档，是把团队隐性知识从老同事脑子里抖出来。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          详解 Claude Code 的 /team-onboarding 命令：我跑完才明白它在替团队干什么
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-05-21 10:33:00" itemprop="dateCreated datePublished" datetime="2026-05-21T10:33:00+00:00">2026-05-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-05-26 08:54:21" itemprop="dateModified" datetime="2026-05-26T08:54:21+00:00">2026-05-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Claude Code v2.1.101 加了一个新命令 /team-onboarding，把过去 30 天的会话历史、命令、MCP 配置揉成一份 ONBOARDING.md。我在主仓库跑完一遍才发现，它真正的价值不是替你写新人文档，是把团队隐性知识从老同事脑子里抖出来。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260521-20260521-team-onboarding.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上周三晚上我升级了 Claude Code 到 v2.1.101，看到 changelog 里多了一行：「Added &#x2F;team-onboarding command」。</p>
+<p>我习惯性在主仓库里跑了一次。</p>
+<p>输出贴到屏幕上那一瞬间我有点尴尬。</p>
+<p>里面挂着我自己写的好几条绝对路径，挂着我个人 dev 环境的 MCP 配置，挂着一堆我习惯性给自己开的 allow 权限。</p>
+<p>如果我把这份直接发给团队新人，他们会以为这就是团队标准。</p>
+<p>那一刻我才反应过来，这个命令真正在干的事，是替我审视自己留在这个仓库里的隐性习惯。</p>
+<h2 id="team-onboarding-到底在生成什么"><a href="#team-onboarding-到底在生成什么" class="headerlink" title="&#x2F;team-onboarding 到底在生成什么"></a>&#x2F;team-onboarding 到底在生成什么</h2><p>先把命令本身讲清楚。</p>
+<p><code>/team-onboarding</code> 是 Claude Code v2.1.101 在 2026 年 4 月 10 日（Week 15 release）加进来的内置斜杠命令，调用方式就一行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/team-onboarding</span><br></pre></td></tr></table></figure>
+
+<p>不带参数，在任何活跃的 Claude Code 会话里直接输入即可。</p>
+<p>它会做一件事，扫你过去 30 天在这个项目里的会话历史、用过的斜杠命令、配置过和实际调用过的 MCP 服务器，把这些行为揉成一份结构化的 Markdown 草稿。</p>
+<p>说白了就是，它把”老同事最近一个月在这个项目里都用了哪些工具，写过哪些 prompt 模板，跑过哪些自定义 workflow”显式地写成文档，让新人能直接拿来用。</p>
+<p>为什么是 30 天而不是 7 天或 90 天？</p>
+<p>7 天太短，刚好覆盖一个 sprint，抓到的多是临时实验和一次性脚本。</p>
+<p>90 天太长，会把项目早期的试错噪音也拖进来。</p>
+<p>30 天卡在一个”稳定使用期”的窗口上，既能反映真实习惯，也能过滤掉早期摸索。</p>
+<p>这个数字本身是设计选择，不是随便定的。</p>
+<h2 id="我跑完那一份-ONBOARDING-md-长什么样"><a href="#我跑完那一份-ONBOARDING-md-长什么样" class="headerlink" title="我跑完那一份 ONBOARDING.md 长什么样"></a>我跑完那一份 ONBOARDING.md 长什么样</h2><p>回到我自己那次。</p>
+<p>跑完之后 Claude Code 在会话里直接吐出一份完整的 Markdown，大概 600 行，分了 6 个章节。</p>
+<p>开头是项目快速 setup，里面挂了我装 hexo CLI 用的 npm 命令、本地起服务的端口、一条我个人习惯的 hexo clean → hexo g → hexo s 三连命令链。</p>
+<p>往下是我在这个项目里高频用过的斜杠命令，<code>/content-director</code>、<code>/content-publisher</code>、<code>/content-researcher</code>，加上每条命令的典型触发语和我自己最近一次的实际调用。</p>
+<p>再往下挂了我配置过的 MCP 服务器，包括 banana-image 这套生成封面图的私有 MCP、brave-search 拉行业资料用的 MCP。</p>
+<p>然后是我反复使用的 prompt 模板，包括我跟 polisher skill 沟通时几乎每次都会带的”扫一遍 grep 硬规则”那条引导句。</p>
+<p>倒数第二段叫”常见陷阱”，列了我自己之前踩过的几次：一次是把封面图上传顺序搞反了，一次是 hexo new 之后忘了改 frontmatter 的 date。</p>
+<p>最后一段是”团队约定”，这段比较空，因为我这个仓库其实是单人维护，没什么团队约定可以抽取。</p>
+<p>整份文档读下来的感觉很直接，它确实能让一个新人在 20 分钟内知道我在这个仓库里”日常都在干什么”。</p>
+<p>但它也很赤裸地把我个人的本地习惯暴露了出来。</p>
+<h2 id="ShareOnboardingGuide-这个工具单独说一下"><a href="#ShareOnboardingGuide-这个工具单独说一下" class="headerlink" title="ShareOnboardingGuide 这个工具单独说一下"></a>ShareOnboardingGuide 这个工具单独说一下</h2><p>光生成一份 Markdown 不算稀奇。</p>
+<p><code>/team-onboarding</code> 真正配套的是一个叫 <code>ShareOnboardingGuide</code> 的内置工具，它负责把这份 ONBOARDING.md 上传到 Anthropic 的 guide 服务，换一个短码（short_code）出来。</p>
+<p>短码长这样：6 到 8 位字母数字混合，团队成员拿到短码后可以直接在自己的 Claude Code 里打开对应链接，guide 内容会作为新会话的首条上下文加载进去。</p>
+<p>这个工具有 4 个模式。</p>
+<p><code>check</code> 是默认模式，本地有 ONBOARDING.md 文件就上传到组织里最近一份 guide，没有就返回已有链接。</p>
+<p><code>update</code> 是用短码指定某一份 guide 覆盖更新，适合 ONBOARDING.md 改版后同步。</p>
+<p><code>create</code> 是强制新建一条 guide，每次拿到新短码。</p>
+<p><code>delete</code> 是按短码删一条 guide。</p>
+<p>我自己实际用 <code>check</code>，每次 ONBOARDING.md 改了跑一次就把同一条链接内容更新掉，团队成员收藏的旧链接还能继续用，体验比群里反复贴新链接舒服多了。</p>
+<p>权限上，目前看起来 Pro &#x2F; Max &#x2F; Team &#x2F; Enterprise 几种付费 plan 都能用，免费 plan 是否开放还没看到明确说法。</p>
+<h2 id="ONBOARDING-md-跟-CLAUDE-md-各自管的事情不一样"><a href="#ONBOARDING-md-跟-CLAUDE-md-各自管的事情不一样" class="headerlink" title="ONBOARDING.md 跟 CLAUDE.md 各自管的事情不一样"></a>ONBOARDING.md 跟 CLAUDE.md 各自管的事情不一样</h2><p>这是最容易被搞混的一点。</p>
+<p>CLAUDE.md 是项目根目录下那份每次会话启动都会自动加载的指令文件，里面写的是项目架构、命名规则、构建命令、Git 工作流这种长期不变的硬性规范。</p>
+<p>ONBOARDING.md 不一样，它是 <code>/team-onboarding</code> 跑出来的产物，反映的是过去 30 天最近的使用习惯，是一份动态快照。</p>
+<p>我用一张表对照一下：</p>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>内容性质</th>
+<th>加载时机</th>
+<th>更新频率</th>
+<th>权威性</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CLAUDE.md</td>
+<td>规范、规则</td>
+<td>每次会话自动加载</td>
+<td>手动维护，半年改一次</td>
+<td>团队标准，Claude 必须遵循</td>
+</tr>
+<tr>
+<td>ONBOARDING.md</td>
+<td>实践、发现</td>
+<td>新人手动加载或通过短码链接</td>
+<td>自动重生成，可频繁刷新</td>
+<td>入职辅助，不是规范</td>
+</tr>
+<tr>
+<td>settings.json</td>
+<td>配置</td>
+<td>启动时加载</td>
+<td>跟着权限变更走</td>
+<td>权限和 hook 边界</td>
+</tr>
+<tr>
+<td>skills</td>
+<td>程序性知识</td>
+<td>按需触发</td>
+<td>跟着任务模式沉淀</td>
+<td>重复任务专用</td>
+</tr>
+</tbody></table>
+<p>CLAUDE.md 是”团队应该怎么做”的规范，ONBOARDING.md 是”老同事最近实际怎么做”的快照。</p>
+<p>这两份文件不该混在一起，也不该一份替代另一份。</p>
+<p>CLAUDE.md 一旦写好就要被严格遵守，ONBOARDING.md 反过来，跑一次看一次，能看到什么就是什么。</p>
+<h2 id="分享前必查的三件事"><a href="#分享前必查的三件事" class="headerlink" title="分享前必查的三件事"></a>分享前必查的三件事</h2><p>回到我那次的初跑。</p>
+<p>输出文档里挂的那些本地路径、MCP 配置、宽松权限，是 <code>/team-onboarding</code> 这个命令本身没办法替你过滤的。</p>
+<p>分享给团队之前，你必须自己 review 三个区域。</p>
+<p>先说本地机器假设这一块。</p>
+<p>绝对路径（<code>/Users/vancexin/Documents/...</code>）、临时目录（<code>/tmp/cache-xxx</code>）、私人 shell 别名，这些只对你自己有意义，新人拿到会一脸懵。</p>
+<p>我那次扫了一遍，把 4 处绝对路径全部替换成项目相对路径或环境变量。</p>
+<p>MCP 假设那一项更隐蔽。</p>
+<p>我自己装的 banana-image MCP 是私有的，团队新人没有，文档里挂着这个 MCP 的调用会让对方以为这是项目标配。</p>
+<p>正确做法是在 ONBOARDING.md 里给每个 MCP 加一行说明，标注”团队必装”还是”我个人在用”。</p>
+<p>权限和安全这块最容易被忽略。</p>
+<p>我个人开发环境里给 Claude Code 的 allow 列表特别宽松，连 <code>rm</code> 都直接放行。</p>
+<p>这份默认设置一旦被新人当成团队标准抄过去，刚入职那周可能就会出事。</p>
+<p>所以 ONBOARDING.md 里凡是碰到 settings，必须按”最严格的团队默认”重写一遍，把个人宽松设置剔除。</p>
+<p>这三件事 SmartScope 那篇评测文章总结得很到位，他们叫”local-machine assumptions &#x2F; MCP assumptions &#x2F; permissions and safety”，跟我的实际遭遇完全对得上。</p>
+<h2 id="把它当探测器用，会比当生成器用走得远"><a href="#把它当探测器用，会比当生成器用走得远" class="headerlink" title="把它当探测器用，会比当生成器用走得远"></a>把它当探测器用，会比当生成器用走得远</h2><p>跑过几次之后我形成了一个新理解。</p>
+<p>实话讲，<code>/team-onboarding</code> 真正值钱的地方在于它逼你看清你团队的隐性知识到底卡在哪几个人脑子里。</p>
+<p>每次跑出来的那份 ONBOARDING.md，本质上是一面镜子，照的是过去 30 天在这个仓库里最活跃的那个人的工作流。</p>
+<p>如果你跑出来看了之后觉得”嗯这就是我团队的标准做法”，那说明你的团队工作流已经够清晰了。</p>
+<p>但如果你看了之后惊呆，发现”原来我每天都在用这么多本地路径”、”原来这个 MCP 只是我一个人装了”、”原来我给自己开了这么多宽 allow”，那才是这个命令命中目标的时刻。</p>
+<p>惊呆的那一刻，就是你应该把这些隐性习惯升级成显性规范的时刻。</p>
+<p>SmartScope 把这套用法叫”tribal-knowledge detector”（部落知识探测器），我觉得这个词比”onboarding guide generator”准确得多。</p>
+<p>操作上的最佳循环大概是这样。</p>
+<p>让最活跃的成员先在成熟仓库里跑一次 <code>/team-onboarding</code>，然后人工 review 一遍，把本地路径、私有 MCP、宽权限这些个人化的东西全部剔除。</p>
+<p>剔除下来发现的稳定规范，挪进 CLAUDE.md 或 .claude&#x2F;settings.json，让它们正式成为团队规则。</p>
+<p>清洗过的 ONBOARDING.md 通过 ShareOnboardingGuide 上传，发短码链接给新人。</p>
+<p>新人入职几周后，再跑一次 <code>/team-onboarding</code>，看新的输出里还有没有从老同事那继承下来的本地噪音，没有就说明知识沉淀已经落地。</p>
+<p>这套流程跑两轮，团队隐性知识基本就被显式化了。</p>
+<h2 id="我自己跑下来踩过的两个小坑"><a href="#我自己跑下来踩过的两个小坑" class="headerlink" title="我自己跑下来踩过的两个小坑"></a>我自己跑下来踩过的两个小坑</h2><p>再说两个我跑这个命令时撞到的具体障碍。</p>
+<p>一个是老版本看不到这个命令。</p>
+<p>我同事的 Claude Code 还是 v2.0.x 的版本，我跟他说”你跑一下 &#x2F;team-onboarding”，他在自己机器上敲完发现命令根本不存在。</p>
+<p>解决办法是先 <code>claude --version</code> 看版本，低于 2.1.101 就先升级。</p>
+<p>另一个是新项目跑出来的内容会很稀薄。</p>
+<p>我在一个刚建两周的新仓库里跑了一次，输出只有不到 100 行，因为 30 天会话历史里没多少东西可抓。</p>
+<p>这个命令的产出质量跟项目使用历史强相关，越成熟、越活跃的仓库跑出来越饱满。</p>
+<p>如果是新项目想做入职引导，老老实实手写 CLAUDE.md 更合适，<code>/team-onboarding</code> 留到项目跑了三个月再用。</p>
+<h2 id="章节结构会不会迭代和短码会不会挂-dashboard"><a href="#章节结构会不会迭代和短码会不会挂-dashboard" class="headerlink" title="章节结构会不会迭代和短码会不会挂 dashboard"></a>章节结构会不会迭代和短码会不会挂 dashboard</h2><p>下个月我自己想观察的是这两个具体动向。</p>
+<p>一个是 <code>/team-onboarding</code> 输出的章节结构会不会再加一层。</p>
+<p>目前 6 个章节里”团队约定”那一段对单人维护的仓库基本是空的，等 Claude Code 能把多人协作的 PR 评论、Code Review 习惯也抓进去，这段就会真的有内容。</p>
+<p>另一个是 ShareOnboardingGuide 的短码会不会向团队管理工具方向延伸。</p>
+<p>现在短码只是一个 URL，等它能挂到企业级 dashboard 上做版本追踪和访问统计，团队就能看到”新人入职 7 天内有几个人打开了这份指南”，入职效果第一次有了可观测的指标。</p>
+<p>你呢，升级到 v2.1.101 了吗？</p>
+<p>如果你在自己最常用的那个仓库里跑了一次 <code>/team-onboarding</code>，输出里有没有让你尴尬到想立刻删的几行？</p>
+<p>评论区告诉我，下次我可以聊一篇”我清理 ONBOARDING.md 的具体改动日记”。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E5%9B%A2%E9%98%9F%E5%8D%8F%E4%BD%9C/" rel="tag"># 团队协作</a>
+              <a href="/tags/team-onboarding/" rel="tag"># team-onboarding</a>
+              <a href="/tags/AI-%E5%B7%A5%E5%85%B7/" rel="tag"># AI 工具</a>
+              <a href="/tags/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/" rel="tag"># 工程实践</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/05/20/202605201430/" rel="prev" title="Karpathy 周二宣布加入 Anthropic，用 Claude 加速 Claude 的预训练">
+                  <i class="fa fa-angle-left"></i> Karpathy 周二宣布加入 Anthropic，用 Claude 加速 Claude 的预训练
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/05/21/202605211530/" rel="next" title="Google 在 I&#x2F;O 2026 把 Antigravity 拆成两个产品了：Antigravity IDE 和 Antigravity 2.0 各自管什么">
+                  Google 在 I/O 2026 把 Antigravity 拆成两个产品了：Antigravity IDE 和 Antigravity 2.0 各自管什么 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">17:16</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

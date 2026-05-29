@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="哈喽，我是飞飞。 上周我干了件蠢事。手头一个功能，给一个列表页加批量导出，我懒得多想，一句「给这个列表加个导出 Excel 的功能」丢给 Claude Code 就让它开跑。四十分钟后回来，它确实把活干完了，代码也能跑。可方案整个拧了，它做成了同步阻塞式的，数据量一大整个接口直接卡死，而我要的是后台异步生成再下载。前后它按自己的理解改了七八个文件，跟我真正想要的差了十万八千里。 那一刻我没法只改">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用好 Coding Agent 的关键不在写代码，在你按回车前那几分钟">
+<meta property="og:url" content="https://www.vance.xin/2026/05/28/202605281812/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="哈喽，我是飞飞。 上周我干了件蠢事。手头一个功能，给一个列表页加批量导出，我懒得多想，一句「给这个列表加个导出 Excel 的功能」丢给 Claude Code 就让它开跑。四十分钟后回来，它确实把活干完了，代码也能跑。可方案整个拧了，它做成了同步阻塞式的，数据量一大整个接口直接卡死，而我要的是后台异步生成再下载。前后它按自己的理解改了七八个文件，跟我真正想要的差了十万八千里。 那一刻我没法只改">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260528-20260528-coding-agent-plan-first.webp">
+<meta property="article:published_time" content="2026-05-28T18:12:00.000Z">
+<meta property="article:modified_time" content="2026-05-29T03:21:58.146Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Cursor">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Plan Mode">
+<meta property="article:tag" content="Codex">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260528-20260528-coding-agent-plan-first.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/05/28/202605281812/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/05/28/202605281812/","path":"2026/05/28/202605281812/","title":"用好 Coding Agent 的关键不在写代码，在你按回车前那几分钟"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>用好 Coding Agent 的关键不在写代码，在你按回车前那几分钟 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E3%80%8C%E4%B8%80%E5%BC%80%E5%A7%8B%E8%B5%B0%E5%81%8F%EF%BC%8C%E5%90%8E%E9%9D%A2%E6%80%8E%E4%B9%88%E6%94%B9%E9%83%BD%E6%94%B9%E4%B8%8D%E5%A5%BD%E3%80%8D%EF%BC%8C%E8%BF%99%E5%8F%A5%E8%AF%9D%E6%88%B3%E4%BA%86%E6%88%91%E5%BE%88%E4%B9%85"><span class="nav-text">「一开始走偏，后面怎么改都改不好」，这句话戳了我很久</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E8%B6%8A%E5%BC%BA%EF%BC%8C%E5%BC%80%E5%A4%B4%E6%B2%A1%E8%A7%84%E5%88%92%E5%A5%BD%E7%9A%84%E4%BB%A3%E4%BB%B7%E5%8F%8D%E8%80%8C%E8%B6%8A%E5%A4%A7"><span class="nav-text">模型越强，开头没规划好的代价反而越大</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E5%AE%B6%E7%9A%84-Plan-%E6%A8%A1%E5%BC%8F%E6%88%91%E9%83%BD%E7%94%A8%E8%BF%87%EF%BC%8C%E6%89%8B%E6%84%9F%E5%B7%AE%E6%8C%BA%E5%A4%9A"><span class="nav-text">三家的 Plan 模式我都用过，手感差挺多</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%8E%B0%E5%9C%A8%E5%9B%BA%E5%AE%9A%E4%B8%8B%E6%9D%A5%E7%9A%84-plan-first-%E5%B7%A5%E4%BD%9C%E6%B5%81%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7"><span class="nav-text">我现在固定下来的 plan-first 工作流长什么样</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E8%AF%9D%E8%AE%B2%EF%BC%8C%E8%A7%84%E5%88%92%E6%95%91%E4%B8%8D%E4%BA%86%E6%89%80%E6%9C%89%E4%BA%8B%EF%BC%8C%E8%BF%99%E5%87%A0%E4%B8%AA%E5%9D%91%E6%88%91%E4%B9%9F%E8%B8%A9%E8%BF%87"><span class="nav-text">实话讲，规划救不了所有事，这几个坑我也踩过</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E6%8C%89%E5%9B%9E%E8%BD%A6%E4%B9%8B%E5%89%8D%EF%BC%8C%E4%BC%9A%E5%81%9C%E4%B8%8B%E6%9D%A5%E5%87%A0%E5%88%86%E9%92%9F%E5%90%97"><span class="nav-text">你按回车之前，会停下来几分钟吗</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">324</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">575</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/05/28/202605281812/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="用好 Coding Agent 的关键不在写代码，在你按回车前那几分钟 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          用好 Coding Agent 的关键不在写代码，在你按回车前那几分钟
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-05-28 18:12:00" itemprop="dateCreated datePublished" datetime="2026-05-28T18:12:00+00:00">2026-05-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-05-29 03:21:58" itemprop="dateModified" datetime="2026-05-29T03:21:58+00:00">2026-05-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260528-20260528-coding-agent-plan-first.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上周我干了件蠢事。手头一个功能，给一个列表页加批量导出，我懒得多想，一句「给这个列表加个导出 Excel 的功能」丢给 Claude Code 就让它开跑。四十分钟后回来，它确实把活干完了，代码也能跑。可方案整个拧了，它做成了同步阻塞式的，数据量一大整个接口直接卡死，而我要的是后台异步生成再下载。前后它按自己的理解改了七八个文件，跟我真正想要的差了十万八千里。</p>
+<p>那一刻我没法只改一两行收场。它太勤快了，错误的方案被它高效地铺满了半个 codebase，我盯着 diff 看了半天，最后干脆 git reset 全推倒重来。四十分钟白费不说，我还得再花二十分钟把它生成的一堆错文件清干净。</p>
+<p>那天晚上我想明白一件事：用 coding agent 这一年多，我踩过的大坑，几乎都不在它写代码的过程里，而在我按下回车之前那几分钟。</p>
+<h2 id="「一开始走偏，后面怎么改都改不好」，这句话戳了我很久"><a href="#「一开始走偏，后面怎么改都改不好」，这句话戳了我很久" class="headerlink" title="「一开始走偏，后面怎么改都改不好」，这句话戳了我很久"></a>「一开始走偏，后面怎么改都改不好」，这句话戳了我很久</h2><p>前几天刷到宝玉一条分享，大意是用好 coding agent 重点在两头，尤其是开头，一开始走偏了，后面怎么改都改不好。</p>
+<p>我盯着这句话看了好一会儿。它把我那次推倒重来的根本原因点破了。</p>
+<p>agent 的产出上限，在你按回车那一刻就定了大半。需求里没讲清的地方，它会拿自己的理解去补，补出来的方向大概率不是你要的。等它哗哗写完几百行你才发现不对，这时候沟通成本比一开始讲清楚高十倍。</p>
+<p>说白了，我们这些人用 AI 写代码，省掉的是敲键盘的时间，省不掉的是想清楚要什么的时间。后者你不在开头花，就得在返工时加倍还。</p>
+<h2 id="模型越强，开头没规划好的代价反而越大"><a href="#模型越强，开头没规划好的代价反而越大" class="headerlink" title="模型越强，开头没规划好的代价反而越大"></a>模型越强，开头没规划好的代价反而越大</h2><p>这事还有个反直觉的地方。很多人默认模型越强越聪明，我就能越偷懒，含糊说两句它也能猜对。实际恰恰反过来。</p>
+<p>模型越强，它执行你那个错误方案的效率就越高。弱模型可能写两个文件就卡住，你还有机会喊停。强模型像 Opus 4.7、GPT-5.5 这种，你一句话它能一口气改十几个文件，等它停下来，错误已经渗透进整个项目了。</p>
+<p>说真的，模型能力每涨一截，开头规划的权重就再重一分。它越能干，你越要在它动手前把方向卡准，不然它就是台开足马力往错误方向狂奔的推土机。</p>
+<p>行业里其实早有共识。有个做 spec-first 开发的统计说，先规划再动手能减掉七成左右的无效返工。GitHub 的 Spec Kit 干脆把流程拆成 specify、plan、tasks、implement，先定规格再写代码。有句话我特别认同：快不是瓶颈，对才是。AI 把写代码变得这么快之后，瓶颈早从「写得快不快」挪到了「方向对不对」。</p>
+<h2 id="三家的-Plan-模式我都用过，手感差挺多"><a href="#三家的-Plan-模式我都用过，手感差挺多" class="headerlink" title="三家的 Plan 模式我都用过，手感差挺多"></a>三家的 Plan 模式我都用过，手感差挺多</h2><p>好在三家主流工具都把「先规划」做成了正经功能，不用自己硬憋。</p>
+<p><strong>Claude Code</strong> 的 Plan Mode 我用得最多。Shift+Tab 切进去就是只读，它读完相关文件、推理一遍，给我一份编号的执行计划，在我点头之前一个字都不会改。这个只读是工具层面强制的，不是嘴上说说。我可以对着计划挑刺、让它改，确认了再放它执行。四月还出了个 Ultraplan，规划时挖的上下文更深、计划更细。我拿它跑过一次大重构，它先把要动的十几个文件列出来、标好每个改什么，我当场就发现它准备动一个我不想让它碰的核心模块，提前拦了下来。要是直接让它写，这种事得等它改完才暴露。</p>
+<p><strong>Cursor</strong> 这边规划藏在 Composer 里，偏可视化，多文件改动它会一步步让我确认，适合我想边看边批的时候。</p>
+<p><strong>Codex</strong> 更自主，给它方案它自己往下闯的劲头更足，我反而要把缰绳收紧点用。</p>
+<p>我现在养成的习惯是，稍微复杂点的需求，先让两家各出一版方案，对着看哪个想得更周全，取长补短再动手。一个需求出两版规划成本很低，却能帮我提前照见自己没想到的边界情况。</p>
+<h2 id="我现在固定下来的-plan-first-工作流长什么样"><a href="#我现在固定下来的-plan-first-工作流长什么样" class="headerlink" title="我现在固定下来的 plan-first 工作流长什么样"></a>我现在固定下来的 plan-first 工作流长什么样</h2><p>踩了足够多坑之后，我把开头这段固化成了一套动作。</p>
+<p>动手前我会先把需求自己写一遍。与其说写给 agent 看，不如说逼自己先想清楚。哪怕就三五句话，把要做什么、不碰什么、边界在哪列出来，光这一步就能筛掉一半的跑偏。还是上面那个导出功能，我现在会先写明白：异步生成、走消息队列、不许阻塞主接口、复用已有的文件存储模块、先只支持 Excel 一种格式。就这么几行，agent 能跑偏的空间一下小了很多。</p>
+<p>然后我一定先进 Plan 模式让它出方案，绝不让它直接写。它出的计划我当草稿审，重点不看它写得对不对，看它有没有理解我没明说的那部分。它要是把我心里默认的前提漏了，说明我需求没讲清，回去补。</p>
+<p>方案我认可了，才放它执行。执行中它撞到计划没覆盖的岔路，好的 agent 会停下来问。这时候我宁可它多问一句，也不要它自作主张往下冲。</p>
+<p>这套流程听起来慢，实际比「上来就让它写、写完再返工」快得多。我现在很少再有那种推倒重来的下午了。</p>
+<h2 id="实话讲，规划救不了所有事，这几个坑我也踩过"><a href="#实话讲，规划救不了所有事，这几个坑我也踩过" class="headerlink" title="实话讲，规划救不了所有事，这几个坑我也踩过"></a>实话讲，规划救不了所有事，这几个坑我也踩过</h2><p>plan-first 不是银弹，丑话得讲在前头。</p>
+<p>一个是上下文窗口变大不等于它真会照做。我写过特别详尽的计划，结果 agent 执行到一半还是漏了其中几条。窗口塞得下不代表它会逐条遵守，关键的约束我现在会在执行中再单独强调一遍。</p>
+<p>另一个是规划过度反而绑手。我有阵子矫枉过正，把每个实现细节都在计划里写死，结果 agent 被框得死死的，丧失了它本来能帮我优化的空间。有次我连变量命名、函数怎么拆都写进了计划，它老老实实照做，反倒没提醒我有个现成的工具函数可以复用，最后还是我自己 review 时才发现。后来我学乖了，规划只定方向和边界。</p>
+<p>分寸大概是这样：方向和边界你来定，实现细节交给它。讲清楚要去哪、哪些地方不能碰，至于路怎么走，强模型往往比你想得周全。</p>
+<h2 id="你按回车之前，会停下来几分钟吗"><a href="#你按回车之前，会停下来几分钟吗" class="headerlink" title="你按回车之前，会停下来几分钟吗"></a>你按回车之前，会停下来几分钟吗</h2><p>其实这套方法都很朴素，难的是改掉「上来就让 AI 写」的肌肉记忆。</p>
+<p>我到现在还在跟自己较劲的一件事，是怎么判断一个需求到底值不值得先规划。太小的活进 Plan 模式反而啰嗦，太大的活不规划必翻车，中间那条线我还在凭手感摸。</p>
+<p>你用 coding agent 的时候，是直接开干的多，还是会先停下来让它出个方案？有没有哪次没规划好、被 agent 反向坑惨的经历？评论区聊聊，我挺好奇大家都是怎么跟自己那股「想直接开写」的冲动相处的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Cursor/" rel="tag"># Cursor</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/Plan-Mode/" rel="tag"># Plan Mode</a>
+              <a href="/tags/Codex/" rel="tag"># Codex</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/05/28/202605281524/" rel="prev" title="我基本放弃了 Android Studio：从装 Copilot 到对着豆包口喷的 5 个阶段">
+                  <i class="fa fa-angle-left"></i> 我基本放弃了 Android Studio：从装 Copilot 到对着豆包口喷的 5 个阶段
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/05/29/202605291019/" rel="next" title="Opus 4.8 上手实测：同价升级，老用户该不该立刻从 4.7 切过去">
+                  Opus 4.8 上手实测：同价升级，老用户该不该立刻从 4.7 切过去 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">17:27</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

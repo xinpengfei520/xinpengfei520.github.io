@@ -256,6 +256,219 @@
       </tags>
   </entry>
   <entry>
+    <title>Opus 4.8 上手实测：同价升级，老用户该不该立刻从 4.7 切过去</title>
+    <url>/2026/05/29/202605291019/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260529-opus-4-8-should-you-switch.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天打开 Claude Code，顶上提示 Opus 4.8 可用了。说实话，我没急着点升级。用过几代模型的人都有这条件反射：新版本一冒头，心里先打鼓的是切过去会不会更慢、更贵，把顺手的工作流搞乱。强不强是后面的事，能不能平滑切过去才是当下最关心的。</p>
+<p>我盯着那行价格看了两秒，松了口气。常规价格跟 4.7 一模一样，输入 5 美元、输出 25 美元，每百万 token。也就是说，切过去这件事，几乎不要钱。</p>
+<p>这两天我把日常的活儿都搬到 4.8 上跑了一遍，从写代码、做 review 到跑一次性脚本。该不该切，我心里已经有答案了。</p>
+<h2 id="切过去几乎零成本，这是让我最先松口气的地方"><a href="#切过去几乎零成本，这是让我最先松口气的地方" class="headerlink" title="切过去几乎零成本，这是让我最先松口气的地方"></a>切过去几乎零成本，这是让我最先松口气的地方</h2><p>价格不变，这次升级就没有「要不要为新模型多掏钱」的纠结。</p>
+<p>我用的是 Claude Code，切模型就是在配置里把模型 id 从 claude-opus-4-7 改成 claude-opus-4.8，存盘、重启一下就生效，前后不到一分钟。切之前我还特意留了条后路：万一手感不对，把那行改回去也是几秒钟的事，之前跑了一半的项目不会受影响。说白了，这是一次可以随时反悔的升级。</p>
+<p><img src="https://image.vance.xin/screenshots/20260529-opus-4-8-should-you-switch-screenshot-1-cli-model.webp" alt="Claude Code 里 /model 切换：Opus 4.8 已是默认模型，还能调 effort"></p>
+<p>我想起前两年换模型那阵子，光是担心「新版本是不是更贵」「上下文是不是变小了」就要纠结半天，有时候还得重新调一遍 prompt。这次完全没有这些负担。价格那一栏数字没动，等于把决策里最让人犹豫的那一项直接划掉了。</p>
+<p>除了价格不变，还有个意外的福利：每次 Anthropic 发新模型，你的用量额度会跟着重置一次。我切到 4.8 顺手打开用量面板，当前会话和每周的限额全归零了，等于白送一波额度。发版即清零，这点确实挺良心。</p>
+<p><img src="https://image.vance.xin/screenshots/20260529-opus-4-8-should-you-switch-screenshot-3-usage.webp" alt="切到 Opus 4.8 后我的 Max（5x）用量面板，会话与每周额度全部归零"></p>
+<p>对老用户来说，门槛低到这种程度，基本就没有「再等等看」的理由。你等着观望的那几天，别人已经在用新版本干活了，等的成本反而比切的成本高。</p>
+<h2 id="真正让我觉得切对了的，是代码漏检这件事"><a href="#真正让我觉得切对了的，是代码漏检这件事" class="headerlink" title="真正让我觉得切对了的，是代码漏检这件事"></a>真正让我觉得切对了的，是代码漏检这件事</h2><p>切过去半天，速度我没太大感觉，倒是它挑错的能力先让我注意到了。</p>
+<p>Anthropic 给的数字是，4.8 漏掉代码缺陷的概率比 4.7 低了大约 4 倍。这种数字听着抽象，但落到具体的活儿上，体感很直接。</p>
+<p>我手上有个跑了一年多的老项目，前阵子让 4.7 做 code review。有一处多线程读写共享变量的地方没加锁，它扫过去没吭声，我也就放过了。结果上线之后那块逻辑在高峰期偶发崩了一次，日志里只留下一行看不出头绪的报错。这种漏报是最磨人的，因为你以为它已经替你看过了，心里那道防线就松了。</p>
+<p>换到 4.8，我把同一段逻辑重新丢给它过了一遍。它这回直接点出那个共享变量没加锁，还顺手提醒我隔壁有个边界条件没覆盖，传进来的列表为空时会越界。两个坑，一次性都给我指出来了。</p>
+<p>就这一件事，对天天靠它兜底 review 的人来说，比任何榜单分数都实在。少漏一个坑，可能就是少一次半夜被电话叫起来排查线上故障的经历。做大重构的时候这种差别更明显，几百行改动里只要它能多盯出一两个隐患，省下的回滚和返工时间就够本了。</p>
+<h2 id="effort-这个旋钮，把「快还是准」的决定权交回给我"><a href="#effort-这个旋钮，把「快还是准」的决定权交回给我" class="headerlink" title="effort 这个旋钮，把「快还是准」的决定权交回给我"></a>effort 这个旋钮，把「快还是准」的决定权交回给我</h2><p>4.8 还多了个我挺喜欢的开关，叫 effort，也就是任务投入度。</p>
+<p>简单讲，就是你能告诉它这活儿值得花多大力气。调高，它会多想几轮、多花点 token，答案更稳更细；调低，它回得更快、也更省钱。以前这件事是模型自己拿主意，你只能被动接受它给的节奏，现在这个旋钮攥在我手里了。</p>
+<p><img src="https://image.vance.xin/screenshots/20260529-opus-4-8-should-you-switch-screenshot-2-effort.webp" alt="Claude 网页端：Opus 4.8 配合 Effort 投入度，可按 thoroughness 或 speed 来调"></p>
+<p>我现在的用法是分着来。让它改个变量名、补段注释、写个一次性的小脚本，这种不烧脑的琐事我把 effort 压到低档，图的就是个快，秒回。碰上要重构一整个模块，或者捋一段我自己都没完全想明白的业务逻辑，我就把它拉满，泡杯茶让它慢慢来，回来再看它给的方案。</p>
+<p>这种掌控感，比模型一刀切舒服太多。以前要么嫌它想得太久、简单的活也磨叽，要么嫌它想得不够、复杂的活给得潦草。现在我能按活儿的轻重自己配，钱和时间都花在该花的地方。</p>
+<h2 id="那个降价到三分之一的快速模式，得看场景算账"><a href="#那个降价到三分之一的快速模式，得看场景算账" class="headerlink" title="那个降价到三分之一的快速模式，得看场景算账"></a>那个降价到三分之一的快速模式，得看场景算账</h2><p>除了 effort，4.8 还带了个快速模式。</p>
+<p>它按 2.5 倍速度出结果，token 单价是常规的两倍，输入 10 美元、输出 50 美元。单看单价是涨了，但关键在后半句：这个价格，只有上一代同类快速模式的三分之一。也就是说，同样图快，现在花的钱比以前少了一大截。</p>
+<p>值不值，得看你拿它干什么。我自己的账是这么算的。补全、改个小 bug、跑个一次性脚本这种高频又不费脑子的活，我愿意开快速模式。单次省下的那几秒看着不起眼，可一天下来我要跟它来回几十趟，累积起来省的时间相当可观，写代码的节奏明显更跟手。</p>
+<p>但要让它做深度推理、啃复杂架构，我就不开了。那种活慢一点没关系，我图的是它想得准、想得全。为了快多掏一倍单价，去赌一个本来就该慢慢想的任务，反而容易因小失大。快速模式适合「我现在就要结果」的小事，真正烧脑的大活还是交给常规模式慢慢磨。</p>
+<h2 id="别神化：它不会的活，4-8-照样不会"><a href="#别神化：它不会的活，4-8-照样不会" class="headerlink" title="别神化：它不会的活，4.8 照样不会"></a>别神化：它不会的活，4.8 照样不会</h2><p>说了这么多好话，也得泼盆冷水。</p>
+<p>4.8 是升级，不是换了个脑子。Simon Willison 试完给了句很克制的评价，说这是一次「不大但实在的进步」。我用下来基本同意。</p>
+<p>它擅长的地方更稳了，挑错更准、判断更靠谱、工具调用更利索。但它本来搞不定的领域，照样搞不定。</p>
+<p>我让它帮我重构一个老模块，它兴冲冲建议把一个底层接口的返回结构改了，看着挺合理。问题是那个接口还有另一个端在用，改了对面就崩。这种藏在业务里、只有我自己知道的隐性约束，它不可能凭代码看出来。</p>
+<p>还有那些需要我自己拍板的架构取舍，它能给你列选项，但替你下决定这一步，永远得你自己来。能力天花板没被掀翻，被磨平的是毛刺。</p>
+<p>这次还顺手在 Claude Code 里上了个「动态工作流」，号称一个会话能并行调度几百个子 agent 去啃跨库迁移这种大活。我还没摸到，它现在是研究预览阶段，得账号有权限才能开。等我能用上了再单独跟你聊。</p>
+<h2 id="切，但当它是补丁：effort-档位和动态工作流是我还在试的两件事"><a href="#切，但当它是补丁：effort-档位和动态工作流是我还在试的两件事" class="headerlink" title="切，但当它是补丁：effort 档位和动态工作流是我还在试的两件事"></a>切，但当它是补丁：effort 档位和动态工作流是我还在试的两件事</h2><p>绕了一圈，结论其实很简单。</p>
+<p>常规价格没涨，挑错明显变准，还多了 effort 和快速模式两个能省时省钱的开关。对每天用 Claude Code 干活的老用户，我实在想不出不切的理由。改一行配置的事，切了不亏，最差也能改回去。</p>
+<p>但你也别指望它把你不会的活变会。把它当成一次把工具磨利的补丁升级，心态会舒服很多。省下纠结「要不要切」的那点劲，花在打磨自己的工作流上，回报高得多。</p>
+<p>我自己接下来还在试两件具体的事：一个是 effort 到底调到哪一档，能在省钱和不掉链子之间找到那个甜点；另一个是那个动态工作流真拿到权限之后，跟我现在手搓的 agent 编排比，到底能帮我省下多少事。</p>
+<p>你切了吗？切过去之后，哪类活让你觉得这钱花得值，哪类又让你觉得其实没差？评论区告诉我，我想对照下自己的判断准不准。</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[[opus-4-8-anthropic-newsroom]]</li>
+<li>[[opus-4-8-simon-willison]]</li>
+</ul>
+<h2 id="相关洞察"><a href="#相关洞察" class="headerlink" title="相关洞察"></a>相关洞察</h2><ul>
+<li>[[opus-4-8-should-you-switch]]</li>
+</ul>
+]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>AI编程</tag>
+        <tag>Claude Code</tag>
+        <tag>Opus</tag>
+        <tag>大模型</tag>
+        <tag>Claude</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>用好 Coding Agent 的关键不在写代码，在你按回车前那几分钟</title>
+    <url>/2026/05/28/202605281812/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260528-20260528-coding-agent-plan-first.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上周我干了件蠢事。手头一个功能，给一个列表页加批量导出，我懒得多想，一句「给这个列表加个导出 Excel 的功能」丢给 Claude Code 就让它开跑。四十分钟后回来，它确实把活干完了，代码也能跑。可方案整个拧了，它做成了同步阻塞式的，数据量一大整个接口直接卡死，而我要的是后台异步生成再下载。前后它按自己的理解改了七八个文件，跟我真正想要的差了十万八千里。</p>
+<p>那一刻我没法只改一两行收场。它太勤快了，错误的方案被它高效地铺满了半个 codebase，我盯着 diff 看了半天，最后干脆 git reset 全推倒重来。四十分钟白费不说，我还得再花二十分钟把它生成的一堆错文件清干净。</p>
+<p>那天晚上我想明白一件事：用 coding agent 这一年多，我踩过的大坑，几乎都不在它写代码的过程里，而在我按下回车之前那几分钟。</p>
+<h2 id="「一开始走偏，后面怎么改都改不好」，这句话戳了我很久"><a href="#「一开始走偏，后面怎么改都改不好」，这句话戳了我很久" class="headerlink" title="「一开始走偏，后面怎么改都改不好」，这句话戳了我很久"></a>「一开始走偏，后面怎么改都改不好」，这句话戳了我很久</h2><p>前几天刷到宝玉一条分享，大意是用好 coding agent 重点在两头，尤其是开头，一开始走偏了，后面怎么改都改不好。</p>
+<p>我盯着这句话看了好一会儿。它把我那次推倒重来的根本原因点破了。</p>
+<p>agent 的产出上限，在你按回车那一刻就定了大半。需求里没讲清的地方，它会拿自己的理解去补，补出来的方向大概率不是你要的。等它哗哗写完几百行你才发现不对，这时候沟通成本比一开始讲清楚高十倍。</p>
+<p>说白了，我们这些人用 AI 写代码，省掉的是敲键盘的时间，省不掉的是想清楚要什么的时间。后者你不在开头花，就得在返工时加倍还。</p>
+<h2 id="模型越强，开头没规划好的代价反而越大"><a href="#模型越强，开头没规划好的代价反而越大" class="headerlink" title="模型越强，开头没规划好的代价反而越大"></a>模型越强，开头没规划好的代价反而越大</h2><p>这事还有个反直觉的地方。很多人默认模型越强越聪明，我就能越偷懒，含糊说两句它也能猜对。实际恰恰反过来。</p>
+<p>模型越强，它执行你那个错误方案的效率就越高。弱模型可能写两个文件就卡住，你还有机会喊停。强模型像 Opus 4.7、GPT-5.5 这种，你一句话它能一口气改十几个文件，等它停下来，错误已经渗透进整个项目了。</p>
+<p>说真的，模型能力每涨一截，开头规划的权重就再重一分。它越能干，你越要在它动手前把方向卡准，不然它就是台开足马力往错误方向狂奔的推土机。</p>
+<p>行业里其实早有共识。有个做 spec-first 开发的统计说，先规划再动手能减掉七成左右的无效返工。GitHub 的 Spec Kit 干脆把流程拆成 specify、plan、tasks、implement，先定规格再写代码。有句话我特别认同：快不是瓶颈，对才是。AI 把写代码变得这么快之后，瓶颈早从「写得快不快」挪到了「方向对不对」。</p>
+<h2 id="三家的-Plan-模式我都用过，手感差挺多"><a href="#三家的-Plan-模式我都用过，手感差挺多" class="headerlink" title="三家的 Plan 模式我都用过，手感差挺多"></a>三家的 Plan 模式我都用过，手感差挺多</h2><p>好在三家主流工具都把「先规划」做成了正经功能，不用自己硬憋。</p>
+<p><strong>Claude Code</strong> 的 Plan Mode 我用得最多。Shift+Tab 切进去就是只读，它读完相关文件、推理一遍，给我一份编号的执行计划，在我点头之前一个字都不会改。这个只读是工具层面强制的，不是嘴上说说。我可以对着计划挑刺、让它改，确认了再放它执行。四月还出了个 Ultraplan，规划时挖的上下文更深、计划更细。我拿它跑过一次大重构，它先把要动的十几个文件列出来、标好每个改什么，我当场就发现它准备动一个我不想让它碰的核心模块，提前拦了下来。要是直接让它写，这种事得等它改完才暴露。</p>
+<p><strong>Cursor</strong> 这边规划藏在 Composer 里，偏可视化，多文件改动它会一步步让我确认，适合我想边看边批的时候。</p>
+<p><strong>Codex</strong> 更自主，给它方案它自己往下闯的劲头更足，我反而要把缰绳收紧点用。</p>
+<p>我现在养成的习惯是，稍微复杂点的需求，先让两家各出一版方案，对着看哪个想得更周全，取长补短再动手。一个需求出两版规划成本很低，却能帮我提前照见自己没想到的边界情况。</p>
+<h2 id="我现在固定下来的-plan-first-工作流长什么样"><a href="#我现在固定下来的-plan-first-工作流长什么样" class="headerlink" title="我现在固定下来的 plan-first 工作流长什么样"></a>我现在固定下来的 plan-first 工作流长什么样</h2><p>踩了足够多坑之后，我把开头这段固化成了一套动作。</p>
+<p>动手前我会先把需求自己写一遍。与其说写给 agent 看，不如说逼自己先想清楚。哪怕就三五句话，把要做什么、不碰什么、边界在哪列出来，光这一步就能筛掉一半的跑偏。还是上面那个导出功能，我现在会先写明白：异步生成、走消息队列、不许阻塞主接口、复用已有的文件存储模块、先只支持 Excel 一种格式。就这么几行，agent 能跑偏的空间一下小了很多。</p>
+<p>然后我一定先进 Plan 模式让它出方案，绝不让它直接写。它出的计划我当草稿审，重点不看它写得对不对，看它有没有理解我没明说的那部分。它要是把我心里默认的前提漏了，说明我需求没讲清，回去补。</p>
+<p>方案我认可了，才放它执行。执行中它撞到计划没覆盖的岔路，好的 agent 会停下来问。这时候我宁可它多问一句，也不要它自作主张往下冲。</p>
+<p>这套流程听起来慢，实际比「上来就让它写、写完再返工」快得多。我现在很少再有那种推倒重来的下午了。</p>
+<h2 id="实话讲，规划救不了所有事，这几个坑我也踩过"><a href="#实话讲，规划救不了所有事，这几个坑我也踩过" class="headerlink" title="实话讲，规划救不了所有事，这几个坑我也踩过"></a>实话讲，规划救不了所有事，这几个坑我也踩过</h2><p>plan-first 不是银弹，丑话得讲在前头。</p>
+<p>一个是上下文窗口变大不等于它真会照做。我写过特别详尽的计划，结果 agent 执行到一半还是漏了其中几条。窗口塞得下不代表它会逐条遵守，关键的约束我现在会在执行中再单独强调一遍。</p>
+<p>另一个是规划过度反而绑手。我有阵子矫枉过正，把每个实现细节都在计划里写死，结果 agent 被框得死死的，丧失了它本来能帮我优化的空间。有次我连变量命名、函数怎么拆都写进了计划，它老老实实照做，反倒没提醒我有个现成的工具函数可以复用，最后还是我自己 review 时才发现。后来我学乖了，规划只定方向和边界。</p>
+<p>分寸大概是这样：方向和边界你来定，实现细节交给它。讲清楚要去哪、哪些地方不能碰，至于路怎么走，强模型往往比你想得周全。</p>
+<h2 id="你按回车之前，会停下来几分钟吗"><a href="#你按回车之前，会停下来几分钟吗" class="headerlink" title="你按回车之前，会停下来几分钟吗"></a>你按回车之前，会停下来几分钟吗</h2><p>其实这套方法都很朴素，难的是改掉「上来就让 AI 写」的肌肉记忆。</p>
+<p>我到现在还在跟自己较劲的一件事，是怎么判断一个需求到底值不值得先规划。太小的活进 Plan 模式反而啰嗦，太大的活不规划必翻车，中间那条线我还在凭手感摸。</p>
+<p>你用 coding agent 的时候，是直接开干的多，还是会先停下来让它出个方案？有没有哪次没规划好、被 agent 反向坑惨的经历？评论区聊聊，我挺好奇大家都是怎么跟自己那股「想直接开写」的冲动相处的。</p>
+]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>AI编程</tag>
+        <tag>Cursor</tag>
+        <tag>Claude Code</tag>
+        <tag>Plan Mode</tag>
+        <tag>Codex</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>我基本放弃了 Android Studio：从装 Copilot 到对着豆包口喷的 5 个阶段</title>
+    <url>/2026/05/28/202605281524/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260528-20260528-quit-android-studio-5-stages.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上周末清 Mac 硬盘，鼠标划过 Android Studio 那个图标，我愣了半秒：自己有快一个月没主动打开它写过代码了。</p>
+<p>做 Android 这些年，我写代码的方式被 AI 换了五茬。Android Studio 从我每天盯八小时的主战场，一点点退到了后台，现在基本只是个偶尔点开看看文件的工具。这五茬怎么换的，我捋了一遍，发现自己几乎是被工具推着走的。你大概率也正卡在这条路的某一段。</p>
+<h2 id="最早在-Android-Studio-里装-Copilot，AI-就是个高级补全"><a href="#最早在-Android-Studio-里装-Copilot，AI-就是个高级补全" class="headerlink" title="最早在 Android Studio 里装 Copilot，AI 就是个高级补全"></a>最早在 Android Studio 里装 Copilot，AI 就是个高级补全</h2><p>最早那会儿很朴素。我在 Android Studio 里装了 GitHub Copilot，后来又试了 Gemini 的代码补全插件。</p>
+<p>那时候 AI 干的活很有限。我敲一个方法名，它帮我补全后面几行；我写个循环开头，它猜出循环体。补全质量比原来的自动提示强不少，但主导权百分之百在我手里。它只是个反应更快的副驾。</p>
+<p>它能补的，都是我心里已经想好、只是懒得一个字一个字敲出来的东西。真正难的那部分，比如一个页面的状态该怎么拆、一段异步逻辑的边界在哪，它一点忙都帮不上。</p>
+<p>我当时还真觉得，AI 编程也就这样了，顶多是个聪明点的输入助手。Android Studio 该怎么用还怎么用，Logcat、布局预览、断点调试，一个都没少。</p>
+<h2 id="主力挪到-Cursor-之后，Android-Studio-退成了编译打包机"><a href="#主力挪到-Cursor-之后，Android-Studio-退成了编译打包机" class="headerlink" title="主力挪到 Cursor 之后，Android Studio 退成了编译打包机"></a>主力挪到 Cursor 之后，Android Studio 退成了编译打包机</h2><p>转折从 Cursor 开始。</p>
+<p>我把项目用 Cursor 打开来写，那种整段整段生成、能跨文件理解上下文的体验，跟插件式补全完全不在一个量级。敲代码的地方，第一次从 Android Studio 搬了出去。</p>
+<p>但 Android Studio 还丢不掉。编译、跑模拟器、签名打包这些活，Cursor 接不住，得切回去。而且那会儿 Cursor 对 Kotlin 和 Gradle 这套的理解，也没 Android Studio 顺，补全和跳转偶尔会错。所以它俩得搭着用。</p>
+<p>那段时间我屏幕上永远开着两个窗口，Cursor 写完，切到 Android Studio 按编译，报错了再切回来改。</p>
+<p>来回切窗口挺累的。可我第一次清楚地意识到，敲代码这件事，已经不在 Android Studio 里发生了。</p>
+<h2 id="真正的分水岭，是-Claude-Code-跑进了内置-Terminal"><a href="#真正的分水岭，是-Claude-Code-跑进了内置-Terminal" class="headerlink" title="真正的分水岭，是 Claude Code 跑进了内置 Terminal"></a>真正的分水岭，是 Claude Code 跑进了内置 Terminal</h2><p>真正的变化是 Claude Code 出现之后。</p>
+<p>Android Studio 底层基于 JetBrains，能装 Claude Code 的插件。我直接在它的内置 Terminal 里跑 <code>claude</code>，再用 <code>/ide</code> 把终端和编辑器连起来，diff 和选区上下文都能打通。</p>
+<p>这一下，开发调试的主力从「我自己写」变成了「我跟 Claude Code 说，它来写」。我描述需求，它改代码、跑命令、看结果，我在旁边盯着方向。</p>
+<p>举个具体的。有次我让它给一个列表页加下拉刷新和分页。放以前，我得自己翻 Paging 库的文档、改 Adapter、配 ViewModel，零零碎碎得忙一下午。那次我把需求讲清楚，它把好几个文件一起改了，我就在 Logcat 里看着请求一页页发出来，基本没动手敲。</p>
+<p>不过这阶段 Android Studio 还在认真干活。日志我盯着 Logcat 面板看，遇到诡异问题我打断点单步跟，UI 改完我开布局预览瞄一眼。说白了，是人和 agent 各管一摊：写代码靠 Claude Code，看现场靠 Android Studio。</p>
+<h2 id="换到-iterm2-以后，布局预览和模拟器我很久没开了"><a href="#换到-iterm2-以后，布局预览和模拟器我很久没开了" class="headerlink" title="换到 iterm2 以后，布局预览和模拟器我很久没开了"></a>换到 iterm2 以后，布局预览和模拟器我很久没开了</h2><p>后来我把项目干脆从 Android Studio 里挪了出来，用 iterm2 起 Claude Code，整个开发就在一个纯终端窗口里跑。</p>
+<p>这阶段最大的变化，是我开始用微信输入法的语音功能打需求。懒得敲字，对着麦克风把要做的事讲清楚，比手打快得多。刚开始对着电脑说话还挺别扭，尤其在工位上，总觉得旁边同事在看我。习惯了之后才发现，讲一句话的信息量比敲半天键盘大多了，思路也更连贯。</p>
+<p>更微妙的是 Android Studio 的功能在一项项变得多余。布局预览我基本不开了，让 AI 把改了什么描述清楚，跑起来直接在手机上看就行；调试运行也很少碰，有问题丢给 Claude Code 自己分析。Android Studio 偶尔点开，纯粹是想在项目视图里翻一下文件结构，图个方便。</p>
+<h2 id="现在我对着豆包口喷，Claude-自己开后台盯日志"><a href="#现在我对着豆包口喷，Claude-自己开后台盯日志" class="headerlink" title="现在我对着豆包口喷，Claude 自己开后台盯日志"></a>现在我对着豆包口喷，Claude 自己开后台盯日志</h2><p>到了现在这套，我连 Android Studio 都不打开了。</p>
+<p>输入法从微信换成了豆包，需求基本靠口喷。脑子里想到哪说到哪，豆包语音转得挺准，Claude Code 接住就开干。键盘从主输入工具，降级成偶尔改个错别字的备用件。比如我靠在椅子上说一句「把设置页那个深色模式开关挪到顶部，顺手加个跟随系统的选项」，话音刚落它就开始翻布局文件了。</p>
+<p>最值得说的是日志这块的变化。以前查 Logcat，是我盯着面板，出问题手动复制一段贴给 AI。现在 Claude Code 能自己开一个后台 shell 把日志 tail 住，自己读、自己定位、自己改，整个过程我不用当搬运工。</p>
+<p>我印象最深的一次，是一个只在特定机型上崩的 bug。我开着后台 shell，让它一边触发场景一边盯日志，它自己从一堆 log 里捞出那条空指针，定位到具体哪一行，改完让我重跑一遍就过了。换以前，光是我复制粘贴 Logcat、再把堆栈喂给 AI，来回就得折腾好几趟。</p>
+<p>还有个藏得更深的变化。模型强到代码改完基本一次过，编译报错越来越少。前阵子我连着改了一周需求，印象里红色编译错误就蹦出来过两三次，剩下基本是我说完、它改完、跑一遍就过。原来那个「写代码、编译、看红色报错、再改」的循环被压扁了，而那个循环恰恰是最依赖 IDE 的地方。循环没了，IDE 当「报错可视化中心」的价值自然就缩水了。</p>
+<h2 id="Android-Studio-没死，只是从主舞台退到了后台"><a href="#Android-Studio-没死，只是从主舞台退到了后台" class="headerlink" title="Android Studio 没死，只是从主舞台退到了后台"></a>Android Studio 没死，只是从主舞台退到了后台</h2><p>我得说清楚，Android Studio 并没有变差。</p>
+<p>它仍然是编译、签名、跑模拟器、出安装包的底座，这些活终端 agent 现在还接不住。我电脑里它一直装着，真要打正式包还得靠它。真要说它现在还牢牢卡着哪个环节，是出包前的签名配置和多渠道打包脚本，那套东西藏在 Gradle 和 IDE 的菜单里，终端 agent 还摸不太熟。</p>
+<p>变的是注意力的重心。我每天眼睛盯的地方，从编辑器窗口挪到了终端对话框。这也不是我一个人的错觉。Tembo 那篇 CLI 工具盘点里有句话我很认同：被各种 IDE 堆得越来越重的这十年之后，命令行重新成了 AI 编程的重心。Firecrawl 一个工程师也写过，他半年里把主力工作流从 Cursor 搬到了 Claude Code，发现自己远不是个例。Claude Code 在 GitHub 上 12 万多 star，开源的 OpenCode 据说月活开发者到了几百万。</p>
+<p>说到底，重型 GUI IDE 在 AI 时代的角色，正从主舞台往后台退。Android 这个垂直领域，只是这股潮水里普通的一朵浪。</p>
+<h2 id="你的工具链现在停在第几茬"><a href="#你的工具链现在停在第几茬" class="headerlink" title="你的工具链现在停在第几茬"></a>你的工具链现在停在第几茬</h2><p>这五茬，我走了两年多。没有一步是我提前规划好的。每次都是某个工具突然好用到让上一套显得笨重，我自然就换了过去。</p>
+<p>我现在还在犹豫一件事：要不要把布局这块也彻底交出去，让 AI 直接截图识别 UI 效果，连手机都不用拿起来看。这步要是走通，Android Studio 在我这儿大概真就只剩个打包按钮了。</p>
+<p>你呢，现在停在第几茬？还在 IDE 里装补全插件，还是已经开始对着麦克风讲需求了？评论区聊聊你的工具链，我挺好奇大家脱离 IDE 走到哪一步了。</p>
+]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>Android Studio</tag>
+        <tag>Android</tag>
+        <tag>AI编程</tag>
+        <tag>Claude Code</tag>
+        <tag>开发工作流</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Qwen3.7-Max 冲到 Code Arena 全球第 2，1M context 跑 35 小时不掉线</title>
+    <url>/2026/05/27/202605271400/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260527-20260527-qwen37-max-code-arena-2nd.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>上周阿里 Qwen 团队 push 出了 Qwen3.7-Max，编程能力直接冲到 Code Arena 全球第 2，前面只剩 Claude 系列。这个分数本身已经够上新闻头条，但真正让我盯着 blog 看了半天的，是后面那串数据。连续 35 小时自主运行、1158 次 tool calls 不掉上下文、在阿里自家从未训过的芯片上拿到 10 倍加速。加上价格比 Claude Opus 4.7 便宜 6 倍这一刀，国内开发者第一次有了能跟客户报价的长链路 agent 模型。</p>
+<h2 id="上周阿里-Qwen-团队发的那篇-blog-我盯着屏幕坐了一会儿"><a href="#上周阿里-Qwen-团队发的那篇-blog-我盯着屏幕坐了一会儿" class="headerlink" title="上周阿里 Qwen 团队发的那篇 blog 我盯着屏幕坐了一会儿"></a>上周阿里 Qwen 团队发的那篇 blog 我盯着屏幕坐了一会儿</h2><p>5 月 20 号阿里 Qwen 团队推出 Qwen3.7-Max，blog 标题就一句话：「The Agent Frontier」。我点进去先扫了一遍 benchmark，看到 Code Arena 1541 排第 2 的时候说真的没怎么动心。国产模型冲榜这两年看得太多了，今天第 8、明天第 5、后天又掉回来，已经审美疲劳。</p>
+<p>让我坐住的是后面那块内容。35 小时连续自主跑，1158 次 tool calls 不掉链，价格比 Claude Opus 4.7 便宜 6 倍。我第一反应是去翻知乎和即刻，国内的讨论度跟英文圈完全不成正比。AIbase 和 36 氪发了快讯但深度复盘几乎没有，Reddit 那边已经一堆 hands-on 评测，老外讨论得比中文圈热闹得多。</p>
+<p>这事我得自己写一篇捋一下。</p>
+<h2 id="1541-分这个位置，阿里以前没在编程榜爬到过"><a href="#1541-分这个位置，阿里以前没在编程榜爬到过" class="headerlink" title="1541 分这个位置，阿里以前没在编程榜爬到过"></a>1541 分这个位置，阿里以前没在编程榜爬到过</h2><p>Code Arena 是 LMArena 体系下的编程子榜，跟 Text Arena 一样走人类盲测投票，比静态 benchmark 难刷分得多。Qwen3.7-Max 拿到 1541 分排全球第 2，前面只剩 Claude 系列那一档。GPT-5.5、Gemini 3.5 Flash 都在它后面。</p>
+<p>阿里以前不是没冲过榜。Qwen3.6-Max-Preview 4 月在 Text Arena 上拿过第 3，但那是综合榜，里面 chat、写作、reasoning 摊薄了。Code Arena 这种纯编程加 agent 工具调用的子榜，国产模型从来没有摸到过 1541 这个位置。Artificial Analysis Intelligence Index v4.0 给的分是 56.6，也是国产模型历史最高。</p>
+<p>但分数只是面子。Anthropic 自己出新版本，Code Arena 排名几周就洗一次牌。这次值得拉出来单写的是底下那个 demo。</p>
+<h2 id="Hero-demo-是连续跑-35-小时、1158-次-tool-calls，这个数据比分数更狠"><a href="#Hero-demo-是连续跑-35-小时、1158-次-tool-calls，这个数据比分数更狠" class="headerlink" title="Hero demo 是连续跑 35 小时、1158 次 tool calls，这个数据比分数更狠"></a>Hero demo 是连续跑 35 小时、1158 次 tool calls，这个数据比分数更狠</h2><p>阿里把整个 demo 复盘写在 blog 里，我读完三遍才确认数字是认真的。任务是在阿里自家 T-Head ZW-M890 PPU 上优化 SGLang 里的 Extend Attention Kernel。这颗芯片在模型训练数据里没出现过，对它来说是「day-zero unseen hardware」。</p>
+<p>Qwen3.7-Max 跑了大约 35 小时，完成 1158 次 tool calls 和 432 次 kernel evaluations，最终拿到相对 Triton reference 10 倍的几何平均加速。同条件下其它模型对比也放出来了：</p>
+<ul>
+<li>GLM 5.1：7.3 倍</li>
+<li>Kimi K2.6：5.0 倍</li>
+<li>DeepSeek V4 Pro：3.3 倍</li>
+<li>Qwen3.6-Plus：1.1 倍</li>
+</ul>
+<p>这些模型停下来的原因都一样：连续 5 轮没发起 tool call，模型自己得出结论「干不动了」然后退出。Qwen3.7-Max 跑到 30 小时还在找有意义的优化方向。</p>
+<p>除了这个 hero demo，阿里在 Terminal-Bench 2.0 上拿到 69.7，超过 DeepSeek-V4-Pro 的 67.9 和 Qwen3.6-Plus 的 61.6。SWE-Bench Pro 60.6 也是国产历史最高。最离谱的是 YC-Bench 那条：阿里让模型模拟一年期 startup 经营，需要做人事决策、筛合同、辨识恶意客户、维持利润率。Qwen3.7-Max 跑出 $2.08M 模拟营收，是 Qwen3.6-Plus（$1.05M）的 2 倍，Qwen3.5-Plus（$352K）的 5.9 倍。</p>
+<p>不夸张地讲，这是 Anthropic 之外第一次有公司公开把 30 小时以上单 session agent 跑通。阿里官方原话叫「Complex projects that typically require one to two weeks of specialized team effort can now be completed end-to-end within hours」，听起来像营销话术，但 35 小时加 1158 tool calls 是有数据兜底的。</p>
+<h2 id="国内开发者真正该关注的是价格：input-2-50、cached-0-25，比-Claude-便宜-6-倍"><a href="#国内开发者真正该关注的是价格：input-2-50、cached-0-25，比-Claude-便宜-6-倍" class="headerlink" title="国内开发者真正该关注的是价格：input $2.50、cached $0.25，比 Claude 便宜 6 倍"></a>国内开发者真正该关注的是价格：input $2.50、cached $0.25，比 Claude 便宜 6 倍</h2><p>Qwen3.7-Max 的定价表是这样的：input $2.50、output $7.50（per 1M tokens），cached input 降到 $0.25。</p>
+<p>Claude Opus 4.7 是 $15 input &#x2F; $75 output。GPT-5.5 是 $10 &#x2F; $30。Qwen3.7-Max 比 Claude 便宜 6 倍，比 GPT-5.5 便宜 4 倍。</p>
+<p>便宜 6 倍这件事对长链路 agent 是杀招。你想象一下，1M context 铺满 codebase，前面 80 万 token 都进 cache，每轮调用走 $0.25 而不是 $2.50。一个 35 小时 agent 跑完，原来要花 $300 现在 $40 多就搞定。</p>
+<p>国内创业团队这两年算 agent 账一直卡在「Claude 用得起 demo 用不起客户」。Qwen3.7-Max 第一次把这道账拉到了能跟客户报价的位置。我跟一个在做企业 agent 的朋友聊，他原话是：「之前我每个客户 demo 单次 token 成本 $5，跑长任务直接劝退老板。现在算下来 $0.8 一次，能直接打包卖了」。</p>
+<h2 id="Anthropic-协议兼容这一步棋下得有点意思"><a href="#Anthropic-协议兼容这一步棋下得有点意思" class="headerlink" title="Anthropic 协议兼容这一步棋下得有点意思"></a>Anthropic 协议兼容这一步棋下得有点意思</h2><p>阿里这次最聪明的动作不在模型本身，在 API 兼容性。Qwen3.7-Max 原生支持 Anthropic 协议，你拿现有的 Claude Code，把 base URL 切到阿里云 dashscope，模型立刻能跑，一行客户端代码都不用改。</p>
+<p>同时它也兼容 OpenAI 协议，Aider、Cursor、Cline 这些走 OpenAI SDK 的工具都能直接接。你 Claude Code 装得好好的，结果今天跑 Anthropic、明天跑 Qwen、后天跑 DeepSeek，客户端不用动。</p>
+<p>说白了，阿里在 Anthropic 自建的 Claude Code 护城河上挖了一道暗渠。用户用着 Anthropic 的工具，下面跑的是 Qwen。这跟 OpenRouter 那种「我帮你做模型路由」是两回事。阿里直接在协议层把自己装成 Anthropic 的兼容供应商，等于在原产地复刻了一个 Claude API 出口。</p>
+<p>我那个朋友补了一句：「我们公司禁海外 API 但允许接阿里云，现在 Claude Code 终于不用被组里 ban 了」。这种用户阿里直接收了一波。</p>
+<p>实操层面其实很简单，Claude Code 配置文件里把 <code>ANTHROPIC_BASE_URL</code> 改成阿里云 dashscope 的 Anthropic 兼容入口（<code>https://dashscope.aliyuncs.com/api/v2/apps/...</code>），把 API key 换成阿里云的，模型名换成 <code>qwen3.7-max</code>，就跑起来了。Cursor 那边走 OpenAI 兼容设置类似，base URL 改一行就能用。整个切换成本几分钟，没有客户端代码改动。</p>
+<h2 id="Qwen3-Coder-和-Qwen3-Max-是两条产品线，国内圈很多人混着叫"><a href="#Qwen3-Coder-和-Qwen3-Max-是两条产品线，国内圈很多人混着叫" class="headerlink" title="Qwen3-Coder 和 Qwen3-Max 是两条产品线，国内圈很多人混着叫"></a>Qwen3-Coder 和 Qwen3-Max 是两条产品线，国内圈很多人混着叫</h2><p>写这篇之前我刷了一圈中文圈讨论，发现一半的人在把 Qwen3-Coder 和 Qwen3-Max 当一个东西聊。这俩完全是两条不同的产品线，得先分清楚。</p>
+<p>Qwen3-Coder（旗舰版 480B-A35B）是 Qwen 团队的专用编程模型，open-weight、Apache 2.0 协议，你能下下来在自己机器上跑。Mac M3 Ultra 或者 Blackwell GB10 之类的高配硬件能本地拉起来，配 Cursor、Cline 当本地补全后端。</p>
+<p>Qwen3-Max 是通用 agent 旗舰，闭源、API-only、目前没有开源计划。1M context、Anthropic 协议兼容、走的是云端长时程 agent 路线。你拿不到 weights，只能通过阿里云 Model Studio 调。</p>
+<p>本地开发追求补全速度加数据不出门就选 Coder。Max 是另一条线，跑云端长时程 agent + 1M context 这类自部署跑不动的场景。两个都需要的话可以全接进 Claude Code 切着用。</p>
+<h2 id="35-小时-demo-是阿里自家数据，目前还没独立复现这条要先说清楚"><a href="#35-小时-demo-是阿里自家数据，目前还没独立复现这条要先说清楚" class="headerlink" title="35 小时 demo 是阿里自家数据，目前还没独立复现这条要先说清楚"></a>35 小时 demo 是阿里自家数据，目前还没独立复现这条要先说清楚</h2><p>前面的数字很猛，但有几条 caveat 我得先讲清楚。</p>
+<p>35 小时跑 1158 次 tool calls 是阿里官方在自家芯片上跑的内部 demo。T-Head ZW-M890 是阿里自家芯片，SGLang Extend Attention Kernel 是阿里自家有深度参与的开源库。这个组合属于「模型加硬件加任务」全在阿里生态内部。截止到我写这篇文章，第三方实验室还没有人在中立环境下复现这个数字。</p>
+<p>另外还有一条我特别在意。AA-Omniscience（factual recall benchmark）显示，Qwen3.7-Max 的 attempt rate 从 Qwen3.6-Plus 的 67.3% 跌到 48%。说人话就是模型变得更倾向于回答「我不知道」而不是硬猜。</p>
+<p>这对 agent 长链路是好事，错答 100 个不如直接 abstain 50 个再答对 150 个。但对 QA、客服、文档检索类应用来说就是退步，你要的是答案而不是「我不知道」。所以这模型适不适合你的业务得看具体场景，不能只盯 1541 分这一个数字。</p>
+<p>还有一条小坑要提，Qwen3.7-Max 是 text-only 模型。要图像理解你得另接 Qwen3.7-Plus（vision 配套版本）。我们项目里有不少 PDF 截图分析的场景，最后只能两个模型混着用，对 prompt orchestration 增加了点复杂度。</p>
+<h2 id="我下周一开始用-Claude-Code-接-Qwen3-7-Max-跑一个-80-万-token-的长项目"><a href="#我下周一开始用-Claude-Code-接-Qwen3-7-Max-跑一个-80-万-token-的长项目" class="headerlink" title="我下周一开始用 Claude Code 接 Qwen3.7-Max 跑一个 80 万 token 的长项目"></a>我下周一开始用 Claude Code 接 Qwen3.7-Max 跑一个 80 万 token 的长项目</h2><p>光看官方 demo 没用，下周一开始我自己跑一遍。</p>
+<p>任务是手头一个长期跑的中文文档分析项目，素材体量大概 80 万 token，过去一直靠 Claude Sonnet 分批处理。下周用 Claude Code 客户端，base URL 切到阿里云 dashscope，模型用 Qwen3.7-Max。两个关心的点：</p>
+<p>cached input 在 80 万 token 这个量级上实际命中率多少。官方说 $0.25 &#x2F; 1M token，但实测能不能稳住缓存命中是另一回事，长 prompt cache 跟 Anthropic 的实现机制不一定一样。</p>
+<p>长链路 agent 连续跑 4 到 5 小时不掉链稳不稳。35 小时是 hero demo 数据，普通用户在普通任务上能不能复现这个稳定性才是真考验。</p>
+<p>跑完写一篇实测对比报告。如果你在等这种实测内容，留言里说一下你最想看哪个维度，我跑的时候会重点测一下。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>MCP</tag>
+        <tag>Agent</tag>
+        <tag>国产大模型</tag>
+        <tag>Qwen3-Max</tag>
+        <tag>Alibaba</tag>
+        <tag>Code Arena</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Anthropic 官方搞了 17 门免费 AI 课程加证书，国内开发者基本没人在聊</title>
     <url>/2026/05/25/202605251500/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260525-20260525-anthropic-academy-17-free-courses.webp" alt="cover"></p>
@@ -3631,8 +3844,8 @@
       <tags>
         <tag>AI</tag>
         <tag>Claude Code</tag>
-        <tag>gstack</tag>
         <tag>Skill</tag>
+        <tag>gstack</tag>
         <tag>Token</tag>
       </tags>
   </entry>
@@ -6848,9 +7061,9 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>OpenClaw</tag>
-        <tag>企业级AI</tag>
         <tag>百度</tag>
         <tag>DuMate</tag>
+        <tag>企业级AI</tag>
       </tags>
   </entry>
   <entry>
@@ -7134,8 +7347,8 @@
         <tag>AI Agent</tag>
         <tag>OpenClaw</tag>
         <tag>腾讯</tag>
-        <tag>WorkBuddy</tag>
         <tag>企业级AI</tag>
+        <tag>WorkBuddy</tag>
       </tags>
   </entry>
   <entry>
@@ -26806,7 +27019,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#116;&#x40;&#x67;&#105;&#x74;&#x68;&#117;&#x62;&#46;&#99;&#x6f;&#x6d;">&#x67;&#x69;&#116;&#x40;&#x67;&#105;&#x74;&#x68;&#117;&#x62;&#46;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#116;&#x40;&#103;&#x69;&#x74;&#x68;&#117;&#98;&#46;&#x63;&#111;&#109;">&#103;&#105;&#116;&#x40;&#103;&#x69;&#x74;&#x68;&#117;&#98;&#46;&#x63;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -27416,6 +27629,20 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android Base64 和 Bitmap 相互转换类</title>
+    <url>/2017/09/24/201709242351/</url>
+    <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.util.Base64;</span><br><span class="line"></span><br><span class="line">import java.io.ByteArrayOutputStream;</span><br><span class="line">import java.io.IOException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/7 :)</span><br><span class="line"> * Function:Base64和Bitmap相互转换类</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class Base64BitmapUtil &#123;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * bitmap转为base64</span><br><span class="line">     *</span><br><span class="line">     * @param bitmap</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static String bitmapToBase64(Bitmap bitmap) &#123;</span><br><span class="line"></span><br><span class="line">        String result = null;</span><br><span class="line">        ByteArrayOutputStream baos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (bitmap != null) &#123;</span><br><span class="line">                baos = new ByteArrayOutputStream();</span><br><span class="line">                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);</span><br><span class="line"></span><br><span class="line">                baos.flush();</span><br><span class="line">                baos.close();</span><br><span class="line"></span><br><span class="line">                byte[] bitmapBytes = baos.toByteArray();</span><br><span class="line">                result = Base64.encodeToString(bitmapBytes, Base64.DEFAULT);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                if (baos != null) &#123;</span><br><span class="line">                    baos.flush();</span><br><span class="line">                    baos.close();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * base64转为bitmap</span><br><span class="line">     *</span><br><span class="line">     * @param base64Data</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static Bitmap base64ToBitmap(String base64Data) &#123;</span><br><span class="line">        byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);</span><br><span class="line">        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Base64</tag>
+        <tag>Bitmap</tag>
+        <tag>utils</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android adb 命令</title>
     <url>/2017/09/24/201709242350/</url>
     <content><![CDATA[<h2 id="1-查看当前adb版本"><a href="#1-查看当前adb版本" class="headerlink" title="1.查看当前adb版本"></a>1.查看当前adb版本</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$adb version</span><br><span class="line">Android Debug Bridge version 1.0.36</span><br><span class="line">Revision 0e9850346394-android</span><br></pre></td></tr></table></figure>
@@ -27483,20 +27710,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>adb</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Base64 和 Bitmap 相互转换类</title>
-    <url>/2017/09/24/201709242351/</url>
-    <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.util.Base64;</span><br><span class="line"></span><br><span class="line">import java.io.ByteArrayOutputStream;</span><br><span class="line">import java.io.IOException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/4/7 :)</span><br><span class="line"> * Function:Base64和Bitmap相互转换类</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class Base64BitmapUtil &#123;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * bitmap转为base64</span><br><span class="line">     *</span><br><span class="line">     * @param bitmap</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static String bitmapToBase64(Bitmap bitmap) &#123;</span><br><span class="line"></span><br><span class="line">        String result = null;</span><br><span class="line">        ByteArrayOutputStream baos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (bitmap != null) &#123;</span><br><span class="line">                baos = new ByteArrayOutputStream();</span><br><span class="line">                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);</span><br><span class="line"></span><br><span class="line">                baos.flush();</span><br><span class="line">                baos.close();</span><br><span class="line"></span><br><span class="line">                byte[] bitmapBytes = baos.toByteArray();</span><br><span class="line">                result = Base64.encodeToString(bitmapBytes, Base64.DEFAULT);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            try &#123;</span><br><span class="line">                if (baos != null) &#123;</span><br><span class="line">                    baos.flush();</span><br><span class="line">                    baos.close();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; catch (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * base64转为bitmap</span><br><span class="line">     *</span><br><span class="line">     * @param base64Data</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static Bitmap base64ToBitmap(String base64Data) &#123;</span><br><span class="line">        byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);</span><br><span class="line">        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Base64</tag>
-        <tag>Bitmap</tag>
-        <tag>utils</tag>
       </tags>
   </entry>
   <entry>
@@ -27818,21 +28031,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android Runtime(ART) 介绍</title>
-    <url>/2017/09/24/201709242358/</url>
-    <content><![CDATA[<h2 id="1-English原版"><a href="#1-English原版" class="headerlink" title="1.English原版"></a>1.English原版</h2><p><a href="https://www.anandtech.com/print/8231/a-closer-look-at-android-runtime-art-in-android-l">https://www.anandtech.com/print/8231/a-closer-look-at-android-runtime-art-in-android-l</a></p>
-<h2 id="2-翻译版本"><a href="#2-翻译版本" class="headerlink" title="2.翻译版本"></a>2.翻译版本</h2><p><a href="http://tieba.baidu.com/p/3149769993">http://tieba.baidu.com/p/3149769993</a></p>
-<p>感谢贴吧的楼主翻译，很详细、很标准，大赞！！!</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Runtime</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android Service 启动到 Activity</title>
     <url>/2017/09/24/201709242359/</url>
     <content><![CDATA[<p>从Service启动到Activity基本可以分为两类：<br>1.从自己应用的Service启动自己应用的Activity,即显式意图；<br>2.从自己应用的Service启动到其他应用的Activity,或者从别的应用的Service启动到自己应用的Activity，即隐式意图；  </p>
@@ -27859,6 +28057,21 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>Activity</tag>
         <tag>Service</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android Runtime(ART) 介绍</title>
+    <url>/2017/09/24/201709242358/</url>
+    <content><![CDATA[<h2 id="1-English原版"><a href="#1-English原版" class="headerlink" title="1.English原版"></a>1.English原版</h2><p><a href="https://www.anandtech.com/print/8231/a-closer-look-at-android-runtime-art-in-android-l">https://www.anandtech.com/print/8231/a-closer-look-at-android-runtime-art-in-android-l</a></p>
+<h2 id="2-翻译版本"><a href="#2-翻译版本" class="headerlink" title="2.翻译版本"></a>2.翻译版本</h2><p><a href="http://tieba.baidu.com/p/3149769993">http://tieba.baidu.com/p/3149769993</a></p>
+<p>感谢贴吧的楼主翻译，很详细、很标准，大赞！！!</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Runtime</tag>
       </tags>
   </entry>
   <entry>
@@ -29242,6 +29455,27 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
+    <url>/2017/09/24/201709242433/</url>
+    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
+<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
+<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
+<p>解决方法：</p>
+<p>参考：</p>
+<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
+<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
+<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
+<p>Thanks.</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>串口</tag>
+        <tag>NDK</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>error please select android sdk</title>
     <url>/2017/09/24/201709242434/</url>
     <content><![CDATA[<p>点app运行时报如下错：</p>
@@ -29268,27 +29502,6 @@ Thanks all.
       <tags>
         <tag>Android</tag>
         <tag>SDK</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
-    <url>/2017/09/24/201709242433/</url>
-    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
-<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
-<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
-<p>解决方法：</p>
-<p>参考：</p>
-<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
-<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
-<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
-<p>Thanks.</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>串口</tag>
-        <tag>NDK</tag>
       </tags>
   </entry>
   <entry>

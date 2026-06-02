@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="哈喽，我是飞飞。 昨天晚上，我正开着两三个 agent 同时改一个项目，中途去厨房热了碗饭。回来一坐下，电脑卡成了 PPT。鼠标拖一下等三秒，风扇狂转得像要起飞。 我打开活动监视器一看，整个人麻了。 一个叫 Antigravity IDE 的编辑器，光它一个，吃掉了 140.20GB 内存。 我这台电脑，物理内存满打满算才 32G。 截图 1 就是当时弹出来的窗口，macOS 在哭喊「您的系统已">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Antigravity IDE 把我坑惨了：32G 内存的电脑，被它一个软件吃到 140GB">
+<meta property="og:url" content="https://www.vance.xin/2026/06/01/202606011101/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="哈喽，我是飞飞。 昨天晚上，我正开着两三个 agent 同时改一个项目，中途去厨房热了碗饭。回来一坐下，电脑卡成了 PPT。鼠标拖一下等三秒，风扇狂转得像要起飞。 我打开活动监视器一看，整个人麻了。 一个叫 Antigravity IDE 的编辑器，光它一个，吃掉了 140.20GB 内存。 我这台电脑，物理内存满打满算才 32G。 截图 1 就是当时弹出来的窗口，macOS 在哭喊「您的系统已">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260601-antigravity-140gb-memory-leak.webp">
+<meta property="og:image" content="https://image.vance.xin/screenshots/20260601-antigravity-140gb-memory-leak-screenshot-1.webp">
+<meta property="og:image" content="https://image.vance.xin/screenshots/20260601-antigravity-140gb-memory-leak-screenshot-2.webp">
+<meta property="og:image" content="https://image.vance.xin/screenshots/20260601-antigravity-140gb-memory-leak-screenshot-3.webp">
+<meta property="og:image" content="https://image.vance.xin/screenshots/20260601-antigravity-140gb-memory-leak-screenshot-4.webp">
+<meta property="article:published_time" content="2026-06-01T11:01:00.000Z">
+<meta property="article:modified_time" content="2026-06-02T11:14:02.175Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Antigravity">
+<meta property="article:tag" content="踩坑">
+<meta property="article:tag" content="内存泄漏">
+<meta property="article:tag" content="Electron">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260601-antigravity-140gb-memory-leak.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/06/01/202606011101/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/06/01/202606011101/","path":"2026/06/01/202606011101/","title":"Antigravity IDE 把我坑惨了：32G 内存的电脑，被它一个软件吃到 140GB"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Antigravity IDE 把我坑惨了：32G 内存的电脑，被它一个软件吃到 140GB | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E8%AF%B4%E6%98%A8%E5%A4%A9%EF%BC%9A%E4%B8%80%E4%B8%AA%E7%BC%96%E8%BE%91%E5%99%A8%EF%BC%8C%E5%87%AD%E4%BB%80%E4%B9%88%E6%8A%8A-32G-%E7%9A%84%E7%94%B5%E8%84%91%E8%A6%81%E5%88%B0-140GB"><span class="nav-text">先说昨天：一个编辑器，凭什么把 32G 的电脑要到 140GB</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%83%E5%86%85%E5%AD%98%E8%BF%98%E4%B8%8D%E7%AE%97%E5%AE%8C%EF%BC%8C%E5%AE%83%E8%BF%98%E5%8A%A8%E4%B8%8D%E5%8A%A8%E7%BB%99%E6%88%91%E8%8A%B1%E5%B1%8F"><span class="nav-text">吃内存还不算完，它还动不动给我花屏</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%80%E5%9B%9E%E5%80%92%EF%BC%8C%E5%89%8D%E9%9D%A2%E5%85%B6%E5%AE%9E%E8%BF%98%E6%A0%BD%E8%BF%87%E4%B8%A4%E6%AC%A1%EF%BC%9A%E7%BB%88%E7%AB%AF%E9%85%8D%E7%BD%AE%E8%A2%AB%E6%B8%85%E7%A9%BA%EF%BC%8C%E5%88%86%E5%AE%B6%E5%8F%88%E4%B8%A2%E5%85%89%E8%AE%BE%E7%BD%AE"><span class="nav-text">往回倒，前面其实还栽过两次：终端配置被清空，分家又丢光设置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E6%AC%A1%E5%9D%91%E4%B8%80%E4%B8%AA%E7%97%85%E6%A0%B9%EF%BC%9A%E5%85%8D%E8%B4%B9-preview-%E7%9A%84%E4%BB%A3%E4%BB%B7%EF%BC%8C%E6%98%AF%E6%8B%BF%E4%BD%A0%E5%BD%93%E5%B0%8F%E7%99%BD%E9%BC%A0"><span class="nav-text">三次坑一个病根：免费 preview 的代价，是拿你当小白鼠</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%98%E6%83%B3%E6%8E%A5%E7%9D%80%E7%94%A8%E7%9A%84%E8%AF%9D%EF%BC%8C%E8%BF%99%E5%87%A0%E6%9D%A1%E8%83%BD%E8%AE%A9%E4%BD%A0%E5%B0%91%E8%B8%A9%E7%82%B9%E9%9B%B7"><span class="nav-text">还想接着用的话，这几条能让你少踩点雷</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-text">写在最后</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">332</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">586</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/06/01/202606011101/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Antigravity IDE 把我坑惨了：32G 内存的电脑，被它一个软件吃到 140GB | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Antigravity IDE 把我坑惨了：32G 内存的电脑，被它一个软件吃到 140GB
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-06-01 11:01:00" itemprop="dateCreated datePublished" datetime="2026-06-01T11:01:00+00:00">2026-06-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-02 11:14:02" itemprop="dateModified" datetime="2026-06-02T11:14:02+00:00">2026-06-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260601-antigravity-140gb-memory-leak.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天晚上，我正开着两三个 agent 同时改一个项目，中途去厨房热了碗饭。回来一坐下，电脑卡成了 PPT。鼠标拖一下等三秒，风扇狂转得像要起飞。</p>
+<p>我打开活动监视器一看，整个人麻了。</p>
+<p>一个叫 Antigravity IDE 的编辑器，光它一个，吃掉了 140.20GB 内存。</p>
+<p>我这台电脑，物理内存满打满算才 32G。</p>
+<p>截图 1 就是当时弹出来的窗口，macOS 在哭喊「您的系统已用完应用程序内存」。你看那个红框，Antigravity IDE 140.20GB，旁边 Android Studio 才 4.42GB，剩下 Chrome、Claude、Gemini 那些加起来都没它一个零头。</p>
+<p><img src="https://image.vance.xin/screenshots/20260601-antigravity-140gb-memory-leak-screenshot-1.webp" alt="macOS 内存告急弹窗，Antigravity IDE 占用 140.20GB"></p>
+<p>我试了半天什么都点不动，最后只能强制退出。开了快二十分钟、跑了一半的那几个 agent 任务，进度全没了，白干一场。</p>
+<p>这已经是它第三回坑我了。前两回我忍了，这回我真忍不住，得跟你好好说道说道，顺便让你避避坑。</p>
+<h2 id="先说昨天：一个编辑器，凭什么把-32G-的电脑要到-140GB"><a href="#先说昨天：一个编辑器，凭什么把-32G-的电脑要到-140GB" class="headerlink" title="先说昨天：一个编辑器，凭什么把 32G 的电脑要到 140GB"></a>先说昨天：一个编辑器，凭什么把 32G 的电脑要到 140GB</h2><p>我先解释一下这个 140GB 是怎么回事，免得你以为我电脑偷偷插了内存条。</p>
+<p>物理内存只有 32G，软件却张口要 140GB。这中间的差额，是 macOS 拿「内存压缩」和硬盘上的 swap 硬扛出来的。swap 就是拿硬盘临时顶内存用。系统先把不常用的内存压一压、再往硬盘上挪，挪到最后实在扛不住，就弹出那个「内存已用完」的窗口。所以 140.20GB 是它张嘴要的量，我那 32G 物理内存早被榨干了。</p>
+<p>那它为什么这么能吃？这事得从 Antigravity 的出身说起。</p>
+<p>它是 Google 去年 11 月跟 Gemini 3 一起发的 AI 编辑器，底子是 VS Code 改的，用的是 Electron。Electron 说人话就是给一个桌面软件套了个浏览器内核，好处是跨平台开发快，坏处是天生吃内存。</p>
+<p>Antigravity 在这之上还玩 agent-first，主打让你同时开好几个 AI agent 并行干活。问题就出在这。每开一个 agent，它在后台就单独起一个语言分析进程，一个就吃几百兆。几个叠一块，再加上那层浏览器开销，内存噌噌往上走。</p>
+<p>更要命的是内存泄漏。正常软件用完的内存该还给系统，泄漏就是占着不还，越积越多。Electron 这类编辑器开久了，光各种缓存就能堆到 8G 下不来，我昨天那台估计是泄漏叠并行 agent，一路冲到了 140G。</p>
+<p>说真的，我一开始也以为是自己电脑的问题。结果我去翻了一圈，发现根本不是我一个人，而且有人比我惨多了。</p>
+<p>Google 自己的开发者论坛里挂着一个帖子，标题写得触目惊心：单个 agent 就能让 Antigravity 泄漏 130GB 内存、CPU 空转 100%，还把 macOS 干到内核崩溃。发帖那哥们用的是 64G 内存的 M4 Pro Mac mini，配置比我高一截。结果他只是跑一个十来个文件的小项目、生成一份代码报告，IDE 就一路飙到 130G，逼着系统连续内核崩溃、硬重启了十次。</p>
+<p><img src="https://image.vance.xin/screenshots/20260601-antigravity-140gb-memory-leak-screenshot-2.webp" alt="Google 开发者论坛 bug 帖：Antigravity 单 agent 泄漏 130GB 内存并触发 macOS 内核崩溃"></p>
+<p>最离谱的是他那句话：哪怕 agent 完全闲着没活干，后台那个进程照样把 CPU 占到 100%。Reddit 上也有人晒出跟我一模一样的「内存已用完」弹窗，配了一句「我的 SSD 在受苦」。</p>
+<p><img src="https://image.vance.xin/screenshots/20260601-antigravity-140gb-memory-leak-screenshot-3.webp" alt="Reddit 网友晒出同样的 macOS 内存告急弹窗"></p>
+<p>评论区有两条我印象很深。一条说：「说不定就是内存泄漏导致的，Antigravity 的设计非常差劲，而且好像也放弃修补了。」另一条更狠：「可能谷歌里有人在 vibe 编程，像疯了一样推送没测试过的代码。哈哈！」</p>
+<p>这话是糙了点，但截图 1 摆在这，我还真没法反驳。</p>
+<h2 id="吃内存还不算完，它还动不动给我花屏"><a href="#吃内存还不算完，它还动不动给我花屏" class="headerlink" title="吃内存还不算完，它还动不动给我花屏"></a>吃内存还不算完，它还动不动给我花屏</h2><p>光吃内存我也就忍了，Antigravity 还有个折磨我很久的老毛病：花屏。</p>
+<p>开着它写一会儿代码，编辑器区域会突然糊成一片，红一块绿一块，跟信号坏掉的老电视似的。代码其实还在，但你啥也看不清，只能干瞪眼。</p>
+<p><img src="https://image.vance.xin/screenshots/20260601-antigravity-140gb-memory-leak-screenshot-4.webp" alt="macOS 上 Antigravity 编辑器区域花屏，糊成红绿色块"></p>
+<p>我一开始还以为是自己显卡的事。结果上 LINUX DO 一搜，好家伙，一堆 macOS 用户都在说同一件事：反重力用着用着就花屏，放那儿跑一段时间几乎必现，唯一的解法还是重启 Antigravity。</p>
+<p>一个 2026 年的旗舰 AI 编辑器，日常操作变成了卡了重启、花了再重启，你说讽不讽刺。</p>
+<h2 id="往回倒，前面其实还栽过两次：终端配置被清空，分家又丢光设置"><a href="#往回倒，前面其实还栽过两次：终端配置被清空，分家又丢光设置" class="headerlink" title="往回倒，前面其实还栽过两次：终端配置被清空，分家又丢光设置"></a>往回倒，前面其实还栽过两次：终端配置被清空，分家又丢光设置</h2><p>要不是有前两次垫底，我也不至于这回这么上火。</p>
+<p>往回倒到 4 月。我更新完 Antigravity，打开终端，傻眼了。我攒了两年的别名全没了，<code>gp</code> 不认识，<code>ll</code> 不认识，连 <code>JAVA_HOME</code> 都空了。我打开 <code>~/.zshrc</code>，这是 macOS 终端的核心配置文件，里面只剩两行，是 Antigravity 自己写进去的 PATH。</p>
+<p>我当时就一个想法：一个编辑器更新，凭什么动我的 shell 配置？你自己的路径加到你自己的地方去啊，往我的 <code>.zshrc</code> 里写什么。这跟你装了个 App，结果它顺手把你电脑桌面壁纸换了，有什么区别。</p>
+<p>那次我盯着只剩两行的 <code>.zshrc</code>，手心都凉了。幸好有个旧终端窗口一直没关，里头还留着更新前的环境，我赶紧把别名一条条从内存里导出来抢救，前后折腾到大半夜才弄回来，还专门写了篇文章记录。</p>
+<p>再往后到 5 月 19 号，Google I&#x2F;O 上 Antigravity 突然分家。原来一个产品，被拆成了 Antigravity IDE、Antigravity 2.0，外加 CLI、SDK 一堆东西。听起来很热闹，落到我头上就是一地鸡毛。</p>
+<p>2.0 把配置文件存到了一个跟老版本完全不同的文件夹，老配置不迁移、直接就读不到了，等于凭空蒸发。更绝的是它还卡死，根本启动不了。我折腾了半天紧急修复，它才慢悠悠地把老 Antigravity 的配置自动导回到新的 Antigravity IDE 里。</p>
+<p>那一刻我没觉得是它救了我，我只觉得这套自动导入，本来就该在更新那一下无感做完，而不是先把我坑进坑里、再让我自己爬出来。</p>
+<h2 id="三次坑一个病根：免费-preview-的代价，是拿你当小白鼠"><a href="#三次坑一个病根：免费-preview-的代价，是拿你当小白鼠" class="headerlink" title="三次坑一个病根：免费 preview 的代价，是拿你当小白鼠"></a>三次坑一个病根：免费 preview 的代价，是拿你当小白鼠</h2><p>清空配置、分家丢设置、内存撑爆，再加上时不时的花屏，桩桩件件看着不相干，但你把它们摆一起就会发现，病根是同一个：我的稳定，永远给它的激进让路。</p>
+<p>它要快速上新功能，于是更新敢动你的系统配置，分家敢不管老用户的迁移，新版本敢带着没测出来的内存泄漏就推给你。它跑得越猛，踩在脚下的就是早期用户那台真在干活的机器。</p>
+<p>我得说句公道话，agent-first 这个方向我是真觉得香。能同时开五个 agent，派完活去倒杯咖啡，回来挨个收结果，这种爽我体验过，也写过。Antigravity 的设计思路没毛病。</p>
+<p>可问题就在，它是个免费的 preview 版。免费听着是白嫖，其实代价藏在后面：你省下的订阅费，是用你的时间和数据在还。我救配置、重装、强制退出、重新配环境，这些工时加起来一点都不便宜。说白了，所谓 preview，就是把本该自己做的测试，外包给了我们这些真金白银在用它干活的人。</p>
+<p>越是真心拿它当主力、配置堆得越重的人，被坑得越狠。这不是我一个人的倒霉，是所有抢先上车的早期用户的共同处境。</p>
+<h2 id="还想接着用的话，这几条能让你少踩点雷"><a href="#还想接着用的话，这几条能让你少踩点雷" class="headerlink" title="还想接着用的话，这几条能让你少踩点雷"></a>还想接着用的话，这几条能让你少踩点雷</h2><p>骂归骂，agent-first 确实有它的好，我知道你们里头不少人还想接着用。那就说几条我用血换来的避坑动作。</p>
+<p>把你的终端配置备份好，这是底线。我现在把 <code>.zshrc</code> 这类 dotfiles 全扔进了一个 git 仓库，哪天再被谁清空，一条命令就拉回来，不用再靠运气从内存里抢。</p>
+<p>preview 阶段的工具，别让它进你的主力生产环境。拿它跑跑玩具项目、试试新功能可以，真正吃饭的活，还是放在你信得过的成熟工具里。</p>
+<p>内存这块也有招。开着 Antigravity 干活，记得定时重启它，别指望它自己把内存还回来；用不上的并行 agent 和扩展随手关掉，每关一个就少一个偷偷吃内存的进程。</p>
+<p>要是你跟我一样图个稳定大于尝鲜，那就老老实实把主力挪回 Claude Code、Cursor 这种成熟的。等 Antigravity 把这些基本功补齐了，再回来也不迟。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>回到截图 1 那个画面。一个编辑器，在一台 32G 的电脑上张口要 140GB，这事本身就挺荒诞的。</p>
+<p>我不是要劝你别碰 Antigravity，它后面大概率会越改越好。我只是想说，在它把质量这关补上之前，请你把自己的配置和数据看牢一点，别像我一样，靠一次次翻车攒经验。</p>
+<p>这个 Antigravity 踩坑连载，我会接着写下去，盯着它到底改不改。</p>
+<p>最后想问问你：你有没有被哪个工具坑过配置或者数据？当时是怎么救回来的？评论区聊聊，我们互相提个醒，下次都少踩一脚。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Antigravity/" rel="tag"># Antigravity</a>
+              <a href="/tags/%E8%B8%A9%E5%9D%91/" rel="tag"># 踩坑</a>
+              <a href="/tags/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/" rel="tag"># 内存泄漏</a>
+              <a href="/tags/Electron/" rel="tag"># Electron</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/01/202606011030/" rel="prev" title="Copilot 把包月改成按 token 计费惹翻开发者，我这种早跳车的来算笔账">
+                  <i class="fa fa-angle-left"></i> Copilot 把包月改成按 token 计费惹翻开发者，我这种早跳车的来算笔账
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/06/02/202606021407/" rel="next" title="MiniMax M3 跑分逼到 Opus 门口，但我这个天天用 Claude Code 的人没急着切">
+                  MiniMax M3 跑分逼到 Opus 门口，但我这个天天用 Claude Code 的人没急着切 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">17:49</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

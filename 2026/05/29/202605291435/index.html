@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="哈喽，我是飞飞。 昨天那篇 Opus 4.8 的结尾，我留了个钩子，说等摸到动态工作流再单独跟你聊。今天就来兑现。 我开了 Max 的权限点进去，找了个真实任务试手，盯着它自己写脚本、一口气铺开几十个子 agent 分头干活。 这东西到底是真能打还是噱头，我盯了两天，心里大概有数了。 先说它到底在干嘛：Claude 自己写脚本，把活拆给几十个分身说白了，动态工作流就是把「开很多分身一起干活」这件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Code 动态工作流上手：一个会话铺开几百个子 agent，是真能打还是噱头">
+<meta property="og:url" content="https://www.vance.xin/2026/05/29/202605291435/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="哈喽，我是飞飞。 昨天那篇 Opus 4.8 的结尾，我留了个钩子，说等摸到动态工作流再单独跟你聊。今天就来兑现。 我开了 Max 的权限点进去，找了个真实任务试手，盯着它自己写脚本、一口气铺开几十个子 agent 分头干活。 这东西到底是真能打还是噱头，我盯了两天，心里大概有数了。 先说它到底在干嘛：Claude 自己写脚本，把活拆给几十个分身说白了，动态工作流就是把「开很多分身一起干活」这件">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260529-claude-code-dynamic-workflows.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260529-claude-code-dynamic-workflows-diagram.webp">
+<meta property="article:published_time" content="2026-05-29T14:35:00.000Z">
+<meta property="article:modified_time" content="2026-06-02T11:14:02.174Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="动态工作流">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260529-claude-code-dynamic-workflows.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/05/29/202605291435/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/05/29/202605291435/","path":"2026/05/29/202605291435/","title":"Claude Code 动态工作流上手：一个会话铺开几百个子 agent，是真能打还是噱头"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Claude Code 动态工作流上手：一个会话铺开几百个子 agent，是真能打还是噱头 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E8%AF%B4%E5%AE%83%E5%88%B0%E5%BA%95%E5%9C%A8%E5%B9%B2%E5%98%9B%EF%BC%9AClaude-%E8%87%AA%E5%B7%B1%E5%86%99%E8%84%9A%E6%9C%AC%EF%BC%8C%E6%8A%8A%E6%B4%BB%E6%8B%86%E7%BB%99%E5%87%A0%E5%8D%81%E4%B8%AA%E5%88%86%E8%BA%AB"><span class="nav-text">先说它到底在干嘛：Claude 自己写脚本，把活拆给几十个分身</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%9F%E6%AD%A3%E8%AE%A9%E6%88%91%E8%A7%89%E5%BE%97%E6%9C%89%E7%82%B9%E4%B8%9C%E8%A5%BF%E7%9A%84%EF%BC%8C%E6%98%AF%E5%AE%83%E8%AE%A9-agent-%E4%BA%92%E7%9B%B8%E6%8C%91%E5%88%BA"><span class="nav-text">真正让我觉得有点东西的，是它让 agent 互相挑刺</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%8B%BF%E5%AE%83%E6%89%AB%E4%BA%86%E9%81%8D%E8%80%81%E9%A1%B9%E7%9B%AE%E6%89%BE%E9%9A%90%E6%82%A3%EF%BC%8C%E7%9C%81%E7%9A%84%E6%98%AF%E7%BC%96%E6%8E%92%E9%82%A3%E6%AE%B5%E5%8A%9B%E6%B0%94"><span class="nav-text">我拿它扫了遍老项目找隐患，省的是编排那段力气</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E7%83%A7-token-%E7%83%A7%E5%BE%97%E5%87%B6%EF%BC%8C%E6%89%80%E4%BB%A5%E6%88%91%E5%8F%AA%E5%9C%A8%E5%A4%A7%E6%B4%BB%E4%B8%8A%E5%BC%80"><span class="nav-text">它烧 token 烧得凶，所以我只在大活上开</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%AB%E7%A5%9E%E5%8C%96%EF%BC%9A%E5%AE%83%E6%8E%A5%E8%B5%B0%E7%9A%84%E6%98%AF%E4%BD%93%E5%8A%9B%E6%B4%BB%EF%BC%8C%E6%B2%A1%E6%8E%A5%E8%B5%B0%E4%BD%A0%E7%9A%84%E5%88%A4%E6%96%AD"><span class="nav-text">别神化：它接走的是体力活，没接走你的判断</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E4%B8%80%E4%B8%AA%E6%83%B3%E6%8B%BF%E5%AE%83%E5%BC%80%E5%88%80%E7%9A%84%EF%BC%8C%E6%98%AF%E6%88%91%E9%82%A3%E4%B8%AA%E6%94%92%E4%BA%86%E5%8D%8A%E5%B9%B4%E7%9A%84%E8%B7%A8%E5%BA%93%E9%87%8D%E6%9E%84"><span class="nav-text">下一个想拿它开刀的，是我那个攒了半年的跨库重构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">参考资料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%B4%9E%E5%AF%9F"><span class="nav-text">相关洞察</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">332</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">586</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/05/29/202605291435/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Claude Code 动态工作流上手：一个会话铺开几百个子 agent，是真能打还是噱头 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Claude Code 动态工作流上手：一个会话铺开几百个子 agent，是真能打还是噱头
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-05-29 14:35:00" itemprop="dateCreated datePublished" datetime="2026-05-29T14:35:00+00:00">2026-05-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-02 11:14:02" itemprop="dateModified" datetime="2026-06-02T11:14:02+00:00">2026-06-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260529-claude-code-dynamic-workflows.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天那篇 Opus 4.8 的结尾，我留了个钩子，说等摸到动态工作流再单独跟你聊。今天就来兑现。</p>
+<p>我开了 Max 的权限点进去，找了个真实任务试手，盯着它自己写脚本、一口气铺开几十个子 agent 分头干活。</p>
+<p>这东西到底是真能打还是噱头，我盯了两天，心里大概有数了。</p>
+<h2 id="先说它到底在干嘛：Claude-自己写脚本，把活拆给几十个分身"><a href="#先说它到底在干嘛：Claude-自己写脚本，把活拆给几十个分身" class="headerlink" title="先说它到底在干嘛：Claude 自己写脚本，把活拆给几十个分身"></a>先说它到底在干嘛：Claude 自己写脚本，把活拆给几十个分身</h2><p>说白了，动态工作流就是把「开很多分身一起干活」这件事自动化了。</p>
+<p>你给它一个任务，它先自己规划，写出一段编排脚本。然后在同一个会话里同时拉起几十到几百个子 agent，每个啃一小块。跑完汇总给你之前，它还会自己验一遍。</p>
+<p>以前这套编排是我手搓的体力活。一个大任务，我得自己拆成几块，开好几个会话分头让它看不同的目录，最后再一段段把结果拼起来。现在这部分它自己包圆了。</p>
+<p>我点完任务退到一边，眼看着它在终端里先吐出一段规划，把大任务切成一格一格，然后唰地一下并行拉起一片 agent，每个头上挂着自己负责的那块。那一刻确实有点科幻感，像看一个工头当场招了一群临时工，分完活就各自埋头干了。</p>
+<p>官方放了个挺唬人的案例：把 Bun 这个项目从 Zig 移植到 Rust，整整 75 万行 Rust 代码，从首次提交到合并只花了 11 天，跑完原有测试套件 99.8% 通过，过程里几百个 agent 并行干，每个文件还配两个 agent 互相 review。</p>
+<p>这个数字是 Anthropic 自己晒的，不是我跑出来的，你听个量级就行。但它至少说明一件事：这功能瞄准的是那种一个人短时间根本啃不动的大活。</p>
+<h2 id="真正让我觉得有点东西的，是它让-agent-互相挑刺"><a href="#真正让我觉得有点东西的，是它让-agent-互相挑刺" class="headerlink" title="真正让我觉得有点东西的，是它让 agent 互相挑刺"></a>真正让我觉得有点东西的，是它让 agent 互相挑刺</h2><p>光是「开几百个分身」其实不稀奇，我自己手动也能开一堆会话。</p>
+<p>它真正不一样的地方在验证这块。一批 agent 从不同角度去找问题，另一批 agent 专门盯着前面那批的结论挑刺、试图反驳，两边来回顶，一直顶到答案收敛了才算数。</p>
+<p>这套机制治的是单趟跑最容易犯的毛病：自说自话。一个 agent 自己找、自己确认，很容易把「看着对其实站不住」的结论也当成数。多塞一组专门唱反调的进去，那些虚的 finding 当场就被筛掉了。</p>
+<p>简单讲，它不是让更多人一起点头，是让一拨人专门负责摇头。这一下就比我手搓那套「开几个会话各看各的、最后我自己拍板」靠谱多了，因为交叉验证这步以前全压在我一个人身上。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260529-claude-code-dynamic-workflows-diagram.webp" alt="一个会话里，Claude 先把大任务铺给几十个并行子 agent，再让另一批 agent 交叉验证、互相反驳，最后收敛成一个结果"></p>
+<h2 id="我拿它扫了遍老项目找隐患，省的是编排那段力气"><a href="#我拿它扫了遍老项目找隐患，省的是编排那段力气" class="headerlink" title="我拿它扫了遍老项目找隐患，省的是编排那段力气"></a>我拿它扫了遍老项目找隐患，省的是编排那段力气</h2><p>我手上有个跑了一年多的老项目，正好拿它试水。</p>
+<p>我让它在整个库里找并发和边界上的隐患。点下去之后，它自己铺开了十几个子 agent，分头去扒不同模块。我起身倒了杯咖啡，回来的时候候选问题已经列出来了，每一条边上还标着「另一组验过」。</p>
+<p>其中有一条我印象挺深：它揪出某个缓存的读写在高并发下会脏读，还顺手把触发它的那条调用链贴了出来，从入口一路标到出问题的那行。这种藏在三四层调用底下的坑，我自己肉眼扫一遍很难逮着。</p>
+<p>这事我自己也能干，但得全程盯着。开几个会话分头让它看不同目录，中间防着它跑偏，最后一条条汇总、再自己复核有没有误报。动态工作流把拆活、铺 agent、交叉验证、汇总这一整串体力活都接走了，我只要在最后看它端上来的结果。</p>
+<p>我得说句实话，它列的问题我还是逐条核了一遍，不是条条都对。有两条它判成隐患的，我点进去一看其实早加过锁了，属于误报，我手动划掉了。但跟我上次手搓那回比，真漏掉的明显少。对一个天天靠它兜底 review 的人来说，少漏一个并发的坑，可能就少一次半夜被报警电话薅起来的经历。</p>
+<h2 id="它烧-token-烧得凶，所以我只在大活上开"><a href="#它烧-token-烧得凶，所以我只在大活上开" class="headerlink" title="它烧 token 烧得凶，所以我只在大活上开"></a>它烧 token 烧得凶，所以我只在大活上开</h2><p>爽归爽，有个代价得说在前面：它特别费 token。</p>
+<p>官方自己都写明了，动态工作流消耗的 token 比一次普通的 Claude Code 会话多得多。毕竟几十上百个 agent 同时跑，每个都在烧。</p>
+<p>所以我给自己立了条规矩：小活绝对不开它。改个变量名、补段注释、写个一次性的小脚本，这种几秒钟的事开动态工作流，光是它规划、写脚本、调度的开销就够你等半天，token 还白烧一大把，纯属杀鸡用牛刀。</p>
+<p>我现在愿意开它的，基本都是这几类：跨好几个仓库或者整个服务去找 bug、做安全审计，要的就是它铺得开还每条都验；几千个文件起步的大迁移，框架切换、API 弃用替换、语言移植；还有那种单趟跑一遍肯定会漏、必须多角度交叉看的活。</p>
+<p>反过来，有两种活我试都不试。一种是单点的深度推理，比如一个难算法、一段绕人的业务逻辑，这种活靠的是往深里想，几十个分身铺得再开也帮不上忙。另一种是我自己都没想清楚要什么的探索性任务，需求一含糊，它写出来的编排脚本就跟着跑偏，越并行越离谱。</p>
+<h2 id="别神化：它接走的是体力活，没接走你的判断"><a href="#别神化：它接走的是体力活，没接走你的判断" class="headerlink" title="别神化：它接走的是体力活，没接走你的判断"></a>别神化：它接走的是体力活，没接走你的判断</h2><p>说了这么多好话，还是得接着昨天那盆冷水往下泼。</p>
+<p>动态工作流再能并行，它自动化掉的也只是「拆任务、铺 agent、交叉验证、汇总结果」这一串体力活。至于你到底要解决什么问题、问题该怎么拆、最后端上来的结果信不信，这些还是你的事，一样也甩不掉。</p>
+<p>还是我那个老项目，它跑完顺手建议我把一处底层接口的返回结构统一改掉，理由列得头头是道。可那个接口还有另一个端在用，真按它说的改，对面立马崩。我是因为早年在这个接口上栽过一次，才一眼看出来不能动；换个不熟这块的人，很可能就真顺着它的建议改下去了。这种藏在业务里、只有我自己知道的隐性约束，它铺再多 agent 也扒不出来。</p>
+<p>另外提醒一句，这功能现在还是研究预览阶段，开放给 Max、Team 和企业版，企业版还得管理员手动打开、默认是关着的。所以不是你想点就一定点得开，得先看自己的账号在不在范围里。</p>
+<h2 id="下一个想拿它开刀的，是我那个攒了半年的跨库重构"><a href="#下一个想拿它开刀的，是我那个攒了半年的跨库重构" class="headerlink" title="下一个想拿它开刀的，是我那个攒了半年的跨库重构"></a>下一个想拿它开刀的，是我那个攒了半年的跨库重构</h2><p>绕回最开始那个问题：真能打还是噱头？我的答案是，看你拿它干什么。大活上它是真省事，把我以前最烦的编排和交叉验证全接走了；小活上它就是个烧钱的累赘。能不能用好它，关键不在它多能并行，在你分不分得清手上这活到底配不配开它。</p>
+<p>我自己接下来想拿它啃的，是一个攒了半年没敢动的跨库重构。一直拖着，就是因为手搓编排太累。这回正好拿它跟我那套手工流程正面比一比，看到底能省下多少事。等跑完我再回来跟你交底。</p>
+<p>你拿动态工作流跑过什么活吗？哪类让你觉得这 token 烧得值，哪类又纯粹是烧钱玩？评论区聊聊，我想对一对自己的判断。</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[[claude-code-dynamic-workflows-official]]</li>
+</ul>
+<h2 id="相关洞察"><a href="#相关洞察" class="headerlink" title="相关洞察"></a>相关洞察</h2><ul>
+<li>[[claude-code-dynamic-workflows]]</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E5%8A%A8%E6%80%81%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 动态工作流</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/05/29/202605291019/" rel="prev" title="Opus 4.8 上手实测：同价升级，老用户该不该立刻从 4.7 切过去">
+                  <i class="fa fa-angle-left"></i> Opus 4.8 上手实测：同价升级，老用户该不该立刻从 4.7 切过去
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/05/29/202605291918/" rel="next" title="我扒了 Claude Code 源码，挖出一堆文档里根本没写的隐藏配置">
+                  我扒了 Claude Code 源码，挖出一堆文档里根本没写的隐藏配置 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">17:49</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

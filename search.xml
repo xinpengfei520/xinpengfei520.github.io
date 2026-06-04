@@ -256,6 +256,238 @@
       </tags>
   </entry>
   <entry>
+    <title>Codex 这次能 pip install 进我的脚本了，但我没打算换掉天天用的 Claude Code</title>
+    <url>/2026/06/04/202606041836/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260604-codex-sdk-toolbox.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>这两天微软 Build 开着，各家都在抢台面，OpenAI 趁这股热闹给 Codex 放了一波更新。一口气三样东西：一个能 pip install 进你代码的 Python SDK、一个把想法直接变成网页的 Sites、还有六个分工种的角色插件。</p>
+<p>我是天天用 Claude Code 写代码、跑写作流水线的人，之前也用过一阵 Codex CLI。三样里头，前两样我扫一眼就划过去了，唯独那行 <code>pip install openai-codex</code> 让我停了下来，当晚就装上跑了一圈。</p>
+<h2 id="三样东西，对开发者真正有用的就一样"><a href="#三样东西，对开发者真正有用的就一样" class="headerlink" title="三样东西，对开发者真正有用的就一样"></a>三样东西，对开发者真正有用的就一样</h2><p>实话讲，OpenAI 这波更新的重心，根本不在开发者身上。</p>
+<p>官方自己说，现在大概两成的 Codex 用户已经不写代码了，是做分析、做设计、跑销售、看投资的人。Sites 和那六个插件，摆明了冲这两成人去的。</p>
+<p>对我这种靠写代码吃饭的人，能立刻拿来用、还能改我工作流的，就剩那个 Python SDK 一样。所以这个 SDK 我想多聊几句，Sites 和插件后面带一下就够了。</p>
+<h2 id="把-Codex-装进自己的-Python-脚本，是什么手感"><a href="#把-Codex-装进自己的-Python-脚本，是什么手感" class="headerlink" title="把 Codex 装进自己的 Python 脚本，是什么手感"></a>把 Codex 装进自己的 Python 脚本，是什么手感</h2><p>以前想在程序里调 Codex，要么走 API 按 token 另算钱，要么自己写 subprocess 去裹命令行，绕得很。这次官方直接给了 SDK。</p>
+<p>装起来是一句 <code>pip install openai-codex</code>，要 Python 3.10 往上。它在背后通过 JSON-RPC 控制你本地的 Codex app-server，发布版自带了一个钉死版本的运行时，装完就能用，不用你再去对 CLI 的版本。</p>
+<p>最小的用法长这样：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> openai_codex <span class="keyword">import</span> Codex, Sandbox</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> Codex() <span class="keyword">as</span> codex:</span><br><span class="line">    thread = codex.thread_start(model=<span class="string">&quot;gpt-5.4&quot;</span>, sandbox=Sandbox.workspace_write)</span><br><span class="line">    result = thread.run(<span class="string">&quot;帮我定位并修掉 CI 里挂掉的那几个测试&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(result.final_response)</span><br></pre></td></tr></table></figure>
+
+<p>逻辑很清爽。开一个 thread，往里 <code>run</code> 一段话，它干完把结果给你。同一个 thread 可以接着 <code>run</code> 第二句、第三句，让它顺着上一轮往下做。手头是异步程序的话，换成 <code>AsyncCodex</code> 配 <code>await</code> 就行。</p>
+<p>沙箱给了三档，<code>read_only</code> 只读、<code>workspace_write</code> 能在工作区里写、<code>full_access</code> 完全放开，而且能按轮次切。比如先用 <code>workspace_write</code> 让它改代码，下一轮收紧成 <code>read_only</code> 只让它审一遍 diff，挺实用。</p>
+<p>我照着官方的最小示例跑了一遍，把那句 prompt 换成中文，让它去翻我一个老项目里挂掉的测试。它真就自己开了 thread，读文件、给方案、动手改，最后 <code>final_response</code> 把干了啥讲清楚。整个过程我一次命令行都没碰，全在 Python 里走完了。</p>
+<h2 id="复用登录态这一下，省的是真金白银"><a href="#复用登录态这一下，省的是真金白银" class="headerlink" title="复用登录态这一下，省的是真金白银"></a>复用登录态这一下，省的是真金白银</h2><p>这个 SDK 最戳我的地方，是它复用登录态。</p>
+<p>Codex 是跟着 ChatGPT 账号走的，你订阅里本来就含它，登录信息存在 <code>~/.codex/auth.json</code> 那个文件里。SDK 直接认这套登录，不用你再去开发者后台单独申一把按量计费的 API Key，塞进环境变量。</p>
+<p>这一下省的是真钱。我之前为了在脚本里调一个编程 agent，专门开过一把 API Key，跑几天回头一看账单，零零碎碎也是一笔。现在装完直接拿到 thread 接口，跑在我订阅本来就有的额度里，心理上轻松不少。</p>
+<p>对想把 agent 缝进自家内部工具、接进 CI、或者干脆做成一个小服务的人，这一步省掉的不只是钱，还有那串配 Key、管 Key、怕 Key 泄漏的破事。</p>
+<h2 id="它跟我天天用的-Claude-Agent-SDK，厚薄不一样"><a href="#它跟我天天用的-Claude-Agent-SDK，厚薄不一样" class="headerlink" title="它跟我天天用的 Claude Agent SDK，厚薄不一样"></a>它跟我天天用的 Claude Agent SDK，厚薄不一样</h2><p>这套东西 Claude 早就有了，叫 Claude Agent SDK，一行 <code>pip install claude-agent-sdk</code> 装上，同样跑订阅、同样 Python 和 TS 都给、同样是 thread 模型。两家在「把自家编程 agent 做成能嵌的 SDK」这件事上，基本是对称的。</p>
+<p>差别在控制的细。Codex SDK 给的是三档操作系统级沙箱，薄薄一层，直给。Claude Agent SDK 那边给的是 hooks、子 agent 编排、<code>allowedTools</code> 和 <code>canUseTool</code> 这种一个工具一个工具卡的治理，明显更厚。一句话，Codex SDK 走的是薄而直接的路子，Claude Agent SDK 这边刚好反过来，把治理做得很重。</p>
+<p>说到底，这俩对我不冲突。我手上的活大半在 Claude 生态里，CLAUDE.md、memory、一堆 skill 都是按 Claude Code 那套攒下来的，真要嵌 agent 进脚本，我自然先伸手够 Claude Agent SDK。但哪天接一个本来就绑 OpenAI 模型的项目，又只想要个薄包装加个系统沙箱，Codex SDK 就是顺手的那把。</p>
+<p>我得说句公道话，Codex 这个 SDK 做得是真利索。装完即用、复用登录、三档沙箱划得清楚，OpenAI 把「让你把 Codex 嵌进任何地方」这件事想得很明白。</p>
+<h2 id="能嵌进脚本，不代表能让它在循环里闷头跑"><a href="#能嵌进脚本，不代表能让它在循环里闷头跑" class="headerlink" title="能嵌进脚本，不代表能让它在循环里闷头跑"></a>能嵌进脚本，不代表能让它在循环里闷头跑</h2><p>但有个坑我得拍着良心提醒你，免得你像我一样差点想当然。</p>
+<p>复用订阅登录确实省了 API 那笔钱，可订阅是有额度的。你把这个 SDK 接进 CI，或者塞进一个 while 循环让它反复跑，等于让一个 agent 替你连着烧额度。</p>
+<p>跑测试、改代码、再跑一轮，几个回合下来，额度掉得比你手动用快得多。等哪天发现订阅到顶了、连手动那边都跟着用不了，才反应过来是后台脚本在默默烧。</p>
+<p>Claude 那边已经把这事摆到明面上了。从 6 月 15 号起，Agent SDK 和 <code>claude -p</code> 的用量，会从一笔单独的月度额度里扣，跟你平时手动聊天的额度分开算。说白了，官方也看明白了，能嵌进程序的 agent 烧起额度来是另一个量级，得单独圈块地给它。</p>
+<p>所以这把螺丝刀好用，但别当永动机使。我设想过把它接进我那条写作流水线的某个环节，让它夜里自己跑，转念一想还是先手动盯几轮，摸清楚一轮大概吃多少额度再说。能嵌进脚本，不代表能让它在没人看着的循环里闷头跑。</p>
+<h2 id="Sites-和那六个插件，是-Codex-想长成的另一个样子"><a href="#Sites-和那六个插件，是-Codex-想长成的另一个样子" class="headerlink" title="Sites 和那六个插件，是 Codex 想长成的另一个样子"></a>Sites 和那六个插件，是 Codex 想长成的另一个样子</h2><p>回头说说前面被我划过去的那两样。</p>
+<p>Sites 是让 Codex 把你的想法、计划、手头的活，直接产出成一个网页或者小应用。OpenAI 帮你托管，你甩个链接给同事，对方点开就能用、能改、能一起批注。</p>
+<p>以前 Codex 给你的是一摞代码文件，你还得自己跑起来；现在它直接给你端上一个能用的东西。有人比喻得挺准，这是从给你食材，变成端上一整盘菜。</p>
+<p>配套还有六个角色插件，数据分析、创意制作、销售、产品设计、股权投资、投行各一个，从插件目录里装，打包好了对应岗位要的上下文。另外那个叫 Annotations 的，能让你选中文档或表格里的某一块，让它只改这块，不用把整个任务重跑一遍。</p>
+<p>这些功能的指向很清楚，OpenAI 想把 Codex 从一个写代码的 agent，做成一个白领干活的平台。野心是有的。</p>
+<p>但现实是，Sites 还在 preview，先开给 ChatGPT 的 Business 和 Enterprise 计划，我这种个人开发者短期摸不到，东西还跑在人家托管的环境里。所以这块我现在只当个信号看，没法上手评。</p>
+<h2 id="我不会换，但桌上会多放一把螺丝刀"><a href="#我不会换，但桌上会多放一把螺丝刀" class="headerlink" title="我不会换，但桌上会多放一把螺丝刀"></a>我不会换，但桌上会多放一把螺丝刀</h2><p>绕回最开头那个问题，这波更新会不会让我把 Codex 切成主力，把 Claude Code 换下来。</p>
+<p>答案是不会。我的活、我攒的那套 skill 和记忆，根都扎在 Claude 生态里，换一次的成本远大过 Codex SDK 带来的那点新鲜。但我会把 Codex Python SDK 这把螺丝刀，认认真真放进工具箱。哪天项目本来就绑着 OpenAI，或者我只想要个薄薄的嵌入层加个系统沙箱，我会直接抄它。</p>
+<p>工具这东西，到了某个阶段就不该是二选一。能嵌进自己脚本的编程 agent 越来越多，怎么按项目挑、按成本算，反倒成了新的手艺。</p>
+<p>所以最后想认真问问你：你会把一个编程 agent 用 SDK 嵌进自己的脚本里吗？如果会，你最想让它在哪个环节替你自动跑起来，又是哪一步你怎么都不敢撒手、非得自己盯着？评论区聊聊。</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[[Codex-Python-SDK官方文档]]</li>
+<li>[[Codex-Sites插件Annotations]]</li>
+</ul>
+<h2 id="相关洞察"><a href="#相关洞察" class="headerlink" title="相关洞察"></a>相关洞察</h2><ul>
+<li>[[Codex这波更新平台化与SDK]]</li>
+</ul>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>SDK</tag>
+        <tag>AI编程</tag>
+        <tag>Claude Code</tag>
+        <tag>开发工具</tag>
+        <tag>Codex</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>内容工厂能一键发公众号了，但我故意没让它直接群发</title>
+    <url>/2026/06/03/202606032229/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260603-content-factory-publish.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天那篇文章的末尾，我老实交代过一件事：一键发布、多平台一稿多发这些功能，我公测前临时下线了，正在打磨，没敢上线。当时还补了句，不想让你满怀期待进来，结果发现没有。</p>
+<p>结果今天，它就上线了。</p>
+<p>内容工厂 0.28.1 更新，补上了一键发布这条。你在编辑器里写完、配完图，点一下，就能把整篇稿子连排版带封面，直接送进你自己公众号后台的草稿箱。</p>
+<p>但我做这个功能的时候，留了个心眼：它只发到草稿箱，不替你直接群发。</p>
+<h2 id="昨天还在打磨的那一步，今天接上了"><a href="#昨天还在打磨的那一步，今天接上了" class="headerlink" title="昨天还在打磨的那一步，今天接上了"></a>昨天还在打磨的那一步，今天接上了</h2><p>内容工厂原本这条线是顺的。内容雷达帮你盯热点选题，创作页多模型把长文扩出来，编辑器左边写右边手机实时预览，再一键配图。</p>
+<p>但走到最后就断了。稿子在内容工厂里排得好好的，你还得手动复制，切到公众号后台，粘进去，再对一遍样式。这一段我自己每天都在走，烦了很久。前面那几步内容工厂都给我包圆了，偏偏卡在最后这道复制粘贴上，每次都像跑完全程，在终点线前被绊了一跤。</p>
+<p>0.28.1 就是把最后这段接上。从雷达里看到一个选题，到稿子躺进公众号草稿箱，中间不用再离开内容工厂。说白了，以前是写完自己搬，现在是写完它帮你送进门。</p>
+<h2 id="先绑号：填一次-API-Key，验证过了就行"><a href="#先绑号：填一次-API-Key，验证过了就行" class="headerlink" title="先绑号：填一次 API Key，验证过了就行"></a>先绑号：填一次 API Key，验证过了就行</h2><p>要一键发布，得先让内容工厂知道发到哪个号。</p>
+<p>进设置，有个新的发布账号页。把你公众号的 API Key 填进去，它会去验一下。验证通过，这个页面就标成已绑定，下面列出你可用的公众号。想换个号或者不想绑了，旁边有换绑和解绑。</p>
+<p><img src="https://image.vance.xin/screenshots/20260603-content-factory-publish-screenshot-1.webp" alt="内容工厂设置里的发布账号管理：填入 API Key 绑定公众号，验证通过后显示已绑定"></p>
+<p>我自己拿「飞飞的AI实验室」这个号试的，填完 Key 点验证，几秒钟就绿了。这一步是一次性的，绑过之后就不用再碰，往后每次发文都认这个号。</p>
+<p>有一点得提醒：这个能力走的是微信认证公众号的接口，个人主体没认证的号接不进来。这是微信那边定的规矩，内容工厂这边松不了。</p>
+<h2 id="写完弹个窗就发，不用再切回后台"><a href="#写完弹个窗就发，不用再切回后台" class="headerlink" title="写完弹个窗就发，不用再切回后台"></a>写完弹个窗就发，不用再切回后台</h2><p>绑好号，回到编辑器，真正省事的地方在这儿。</p>
+<p>稿子写完、图配好，点发布，弹出来一个窗。里头能选发到哪个号，填封面图、作者、摘要，确认一下标题。都对了，点那个发布。</p>
+<p><img src="https://image.vance.xin/screenshots/20260603-content-factory-publish-screenshot-2.webp" alt="内容工厂的发布到公众号弹窗：选公众号、填封面图、作者、摘要，确认后一键发布"></p>
+<p>我上一篇写 Mac 清理的那篇文，就是这么发出去的。在编辑器里改完最后一个字，弹窗里把封面链接一贴，几秒钟，系统回了句发布成功。我切到公众号后台的草稿箱，那篇 Mac 清理就静静躺在那儿，标题、正文、封面全在，连绿黄红那几个小标题、命令行那几段都没乱。</p>
+<p>那感觉是真省心。以前我从内容工厂复制一篇长文粘进后台，遇上代码块、加粗、引用多的，样式偶尔会跑位。</p>
+<p>上周排一篇带四五段代码的文章，粘过去之后加粗全成了普通字，代码块的灰底也掉了，我对着后台编辑器一处处补，磨了快二十分钟。现在这一段彻底没了。</p>
+<h2 id="但它只发到草稿箱，没做直接群发"><a href="#但它只发到草稿箱，没做直接群发" class="headerlink" title="但它只发到草稿箱，没做直接群发"></a>但它只发到草稿箱，没做直接群发</h2><p>这是我做这个功能时想得最久的地方。</p>
+<p>技术上，让它发完直接群发、推给你所有粉丝，并不难。但我没做，只做到草稿箱这一步就停了。</p>
+<p>我做的时候，脑子里过了一遍最坏的画面：我正低头调模型参数，手一抖触发了发布，一篇只写了一半、标题还挂着草稿记号的东西，直接推到了几千个订阅这个号的人手机上。这玩意儿撤都撤不回来。想到这儿，我就把直接群发那条砍了。</p>
+<p>把这事掰开，有两层。一层是微信本身的规矩：订阅号群发，一天只有一次机会，而且推出去就收不回来。你想想，要是 AI 哪天抽了风，把一篇还没改完的稿子替你推了出去，这一天的群发就废了，粉丝那头还得平白吃一条尴尬的推送。</p>
+<p>另一层是我自己的想法。发到草稿箱，意味着稿子进了你的后台，但推不推、什么时候推，还是你说了算。你可以在微信原生后台再扫一眼排版，确认无误，自己点那一下群发。说到底，那个不可逆的动作，我留在了你手里。</p>
+<h2 id="那最后一下，我不敢替你按"><a href="#那最后一下，我不敢替你按" class="headerlink" title="那最后一下，我不敢替你按"></a>那最后一下，我不敢替你按</h2><p>写上一篇 Mac 清理的时候，我聊过一个观点：AI 给的建议得可看、可逆、可控，别让它自己闷头跑一条删除命令。</p>
+<p>发文章这事，其实是一个道理。</p>
+<p>AI 能帮你把选题、写稿、配图、排版、连送进后台这一长串都提速，但「对外发出去」这一下，性质不一样。它面对的是你那几千上万个读者，是你这个号的脸面。这种一锤子的事，我觉得就该攥在人自己手里。</p>
+<p>我自己现在的流程是，内容工厂把稿子发进草稿箱，我趁泡水的功夫，在手机上把那条推送预览拉出来，从头到尾扫一遍，确认没问题了，才回后台点群发。多这一步，我心里才踏实。</p>
+<p>所以内容工厂的边界我划得很清楚：它负责把稿子做好、送到你后台门口，门里那一下，你自己开。这条线我暂时不打算挪。</p>
+<h2 id="还没做完的，我也照实说"><a href="#还没做完的，我也照实说" class="headerlink" title="还没做完的，我也照实说"></a>还没做完的，我也照实说</h2><p>发布弹窗里，你可能会瞄到发布类型那栏，还列着「小红书」。</p>
+<p>实话讲，这个我得交代清楚：公众号这条我跑通了，小红书那条还在做，现在点了不一定顺。我自己试过把一篇公众号长文原样塞进小红书那条，发出来又臭又长，话题标签也没带上，根本不是小红书该有的调性。这条得单独打磨，急不得。</p>
+<p>我没把它藏起来，是想让你知道这是接下来的方向。但你也先别拿它当现成功能用，免得试了发现不对劲，回头怪我虚标。</p>
+<p>这是我做产品的一条底线。能用的我才说能用；还在做的，我也不藏着，直接告诉你它还在做。0.28.1 这次，真正能放心用的，就是公众号一键发到草稿箱这一条，我自己天天在用。</p>
+<p>打开 aigc.vance.xin，绑上你的号，下一篇写完就能直接送进草稿箱试试。</p>
+<h2 id="你会放心让-AI-替你按下群发那一下吗"><a href="#你会放心让-AI-替你按下群发那一下吗" class="headerlink" title="你会放心让 AI 替你按下群发那一下吗"></a>你会放心让 AI 替你按下群发那一下吗</h2><p>把群发那一下留给人，是我现在的判断。但我也挺好奇你怎么想。</p>
+<p>如果有个工具，能在你设好规则之后，写完自动就把文章群发出去，一个字都不用你再点，你会用吗？还是说，对外发布这种事，你也跟我一样，想把最后那一下留给自己按？</p>
+<p>评论区告诉我。你的答案，可能直接决定内容工厂下一步要不要做「定时自动发布」。</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[[内容工厂0281更新与截图]]</li>
+<li>[[微信公众号草稿箱与发布机制]]</li>
+</ul>
+<h2 id="相关洞察"><a href="#相关洞察" class="headerlink" title="相关洞察"></a>相关洞察</h2><ul>
+<li>[[内容工厂0281一键发布草稿箱]]</li>
+</ul>
+]]></content>
+      <categories>
+        <category>产品</category>
+      </categories>
+      <tags>
+        <tag>独立开发</tag>
+        <tag>公众号</tag>
+        <tag>内容工厂</tag>
+        <tag>AI写作</tag>
+        <tag>一键发布</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>我这台 Mac 只剩 83G，自己扫了遍盘才发现：吃硬盘的全是我天天用的 AI 工具</title>
+    <url>/2026/06/03/202606031440/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260603-mac-cleanup-skill.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天刷推，看到卡兹克发了条东西，标题就够狠：为了不花那 120 刀，他把电脑清理软件做成了一个开源 skill。点进去看，更上头。他让 Codex 对自己的 MacBook 做了一次只读扫描，扫出一堆能清的东西，激进点能腾出 140G。而他原本想买的那个收费软件 CleanMyMac，扫了半天只认出 15.8G。</p>
+<p>同一台机器，一个说能清 140G，一个说只有 15.8G，差了快十倍。我看到这个数字，第一反应是：不至于吧？</p>
+<p>然后我想起来，我这台 Mac 也好久没收拾了，最近存储一直在飘红。干脆，我也照他这个思路，自己跑一遍。</p>
+<h2 id="卡兹克那个-skill，戳中我的是三色分级"><a href="#卡兹克那个-skill，戳中我的是三色分级" class="headerlink" title="卡兹克那个 skill，戳中我的是三色分级"></a>卡兹克那个 skill，戳中我的是三色分级</h2><p>他这个 skill 的路子不复杂。</p>
+<p>Codex 先对硬盘做一次只读扫描，把哪些目录占了多少空间摸清楚，然后生成一个能点的 HTML 报告。报告里每一项都标了颜色：绿灯是可以放心清的，黄灯是得你自己拿主意的，红灯是碰都别碰的。最后给你一个按钮，确认了再动手删。</p>
+<p>我盯着那个三色分级看了一会儿，越想越觉得这才是重点。我自己写 skill 的时候最头疼的也是这一步，怎么让模型把”拿不准的”老老实实标成拿不准，而不是硬给你一个结论。</p>
+<p>清理硬盘这件事，难的从来不是”删”，是”判断哪些能删”。一个 rm 命令谁都会敲，可哪个目录删了明天电脑照常开机、哪个删了某个 app 直接打不开，这中间的判断才值钱。卡兹克这个 skill，等于把这层判断摊开给你看。CleanMyMac 把这层判断锁进了一个黑盒，只敢清它有把握的那一小撮。</p>
+<h2 id="我这台-Mac-已经红了，先-df-看一眼"><a href="#我这台-Mac-已经红了，先-df-看一眼" class="headerlink" title="我这台 Mac 已经红了，先 df 看一眼"></a>我这台 Mac 已经红了，先 df 看一眼</h2><p>动手之前，我先敲了个 <code>df -h</code> 看总账。</p>
+<p>数据卷 926G，已经用掉 822G，占用率 91%，只剩 83G。难怪最近 Xcode 一编译就提示空间不足。再往前几天，我用 hexo 生成博客那次还报过一次磁盘写入失败，当时只当是权限问题，压根没往”存储满了”上想。</p>
+<p>接着我用 <code>du -sh</code> 把家目录里那几个老牌空间杀手挨个量了一遍。量完我自己都想笑：吃掉我硬盘的，几乎全是我天天在用的那些 AI 开发工具。</p>
+<p>光一个 <code>~/Library/Caches</code> 就 29G，<code>~/Library/Application Support</code> 更夸张，92G。主目录下还藏着个 21G 的 <code>.gradle</code>、10G 的 <code>.cache</code>。这堆东西平时根本不会进我视线，全在后台默默长大。这些大头里，有的能放心删，有的得掂量，有的碰都不能碰。</p>
+<h2 id="绿灯：删了它自己会长回来"><a href="#绿灯：删了它自己会长回来" class="headerlink" title="绿灯：删了它自己会长回来"></a>绿灯：删了它自己会长回来</h2><p>绿灯这类最省心，删了下次用到时工具自己会重新拉，不用心疼。</p>
+<p><strong>各种包管理器缓存</strong>。说白了就是下载过的依赖包存档。我 <code>.cache/uv</code> 一个就 5.2G，看到这个数我愣了下，uv 我满打满算才用两个多月，下载的 Python 包缓存就堆到这么高。<code>.npm</code> 2.7G，<code>Caches/Yarn</code> 1.8G，pip 还有 515M，删了顶多下次 install 慢一点。</p>
+<p><strong>Homebrew 的下载缓存</strong> 1.3G，一句 <code>brew cleanup</code> 全清。</p>
+<p><strong>Xcode 的 DerivedData</strong> 1.7G，编译中间产物，删完重新 build 一遍就回来了。</p>
+<p><strong>Playwright 和 Puppeteer 下载的浏览器</strong> 加起来快 3G。这俩是我跑自动化脚本时装的 Chromium，删了脚本再跑会自己重下。</p>
+<p>这一档加起来，我估摸着轻松能腾出十几个 G，而且基本零风险，是我最先会动手的一批。像 DerivedData，我以前手动删过好几回，从来没出过岔子。</p>
+<h2 id="黄灯：删之前得想想你还用不用"><a href="#黄灯：删之前得想想你还用不用" class="headerlink" title="黄灯：删之前得想想你还用不用"></a>黄灯：删之前得想想你还用不用</h2><p>黄灯这档就得过过脑子了。</p>
+<p><strong>iOS DeviceSupport 5.6G、CoreSimulator 3.3G</strong>。这俩是 Xcode 真机调试和模拟器留下的。我最近基本不碰 iOS 原生开发，这 8 个多 G 删了很安全，里头还躺着好几个十几版之前的 iOS 真机符号表，留着纯占地方。但你要还在做 iOS，删了下次连真机得重新拉一遍符号表，等得肉疼。</p>
+<p>**那个 21G 的 <code>.gradle</code>**。这是我做安卓欠下的债，剪流那个 RPA 项目跟着 Gradle 版本来回折腾了大半年，缓存就这么滚到了 21G。但这里有个坑：千万别把整个 <code>.gradle</code> 文件夹删了，里头还存着你的 wrapper 和配置。只清它下面的 <code>caches</code> 子目录就行，不然你所有安卓项目下次编译都要把依赖重新下一遍，那才叫灾难。</p>
+<p>黄灯的判断标准就一句话：这条工具链你还在用吗？在用就留，长期不碰再清。</p>
+<h2 id="红灯：手一抖就是事故"><a href="#红灯：手一抖就是事故" class="headerlink" title="红灯：手一抖就是事故"></a>红灯：手一抖就是事故</h2><p>现在轮到最唬人的大头了。</p>
+<p>我 <code>Application Support</code> 那 92G 里，Google 一家占了 48G，Claude 9.9G，飞书 9.5G，Cursor 5G。<code>Containers</code> 那边还有 46G。</p>
+<p>数字是大，但这些基本都是红灯。它们不算缓存，而是这些 app 攒下来的真实数据：账号、配置、本地数据库、聊天记录。那个 48G 的 Google 我特意点进去翻了翻，里头是 Chrome 给我登的七八个账号各存的一份缓存，加上 Drive 同步下来的离线文件，全是真东西。</p>
+<p>你把 Cursor 那 5G 删了，下次打开可能就要重新登录、插件配置全没；动了 Containers 里的东西，有些 app 直接起不来。</p>
+<p>我硬盘里最大的那一坨，压根不能算垃圾，里头全是我这些天干活攒下的真数据。这也是为什么 CleanMyMac 不敢碰它们，它同样分不清这里头哪些是你真能丢的。</p>
+<h2 id="CleanMyMac-也有它的用，但天花板很明显"><a href="#CleanMyMac-也有它的用，但天花板很明显" class="headerlink" title="CleanMyMac 也有它的用，但天花板很明显"></a>CleanMyMac 也有它的用，但天花板很明显</h2><p>我得替 CleanMyMac 说句公道话。</p>
+<p>它一次性买断要 119.95 美元，国行差不多 569 块，订阅版一年也得两百多。对一个完全不懂命令行的普通用户，实话讲这钱花得不算冤：一键扫描、一键清理，还有安全护栏拦着你别误删，省心。</p>
+<p>但它的天花板也在这。它只清它”认识”的那些标准垃圾，系统日志、浏览器缓存、聊天软件的本地残留。少数派之前实测过，用它全盘清一遍，最后也就多腾出不到 5G。</p>
+<p>对我们这些开发者，真正吃硬盘的是 <code>.gradle</code>、是各种包管理器缓存、是一堆 AI 工具的后台缓存，这些它基本不碰。所以同一台机器，它只看到 15.8G，而你自己摸进去能找出十倍的量。它清的是它那张清单，可你的硬盘比清单脏得多。</p>
+<h2 id="为什么一个-skill-就能把它平替"><a href="#为什么一个-skill-就能把它平替" class="headerlink" title="为什么一个 skill 就能把它平替"></a>为什么一个 skill 就能把它平替</h2><p>从这个清理 skill 往外看，有个趋势这两年我体感越来越明显。</p>
+<p>越来越多原来要花钱买的小工具，现在一个开源 skill 加一个 AI agent 就能顶上。清理、截图标注、格式转换、排版，凡是逻辑不算复杂、主要靠打磨交互的单点软件，都在被慢慢蚕食。门槛从”你得会写一个完整 app”，降到了”你能写清楚一份 SKILL.md”。我自己之前就顺手做过一个排版的 skill，体感确实是这样。</p>
+<p>但有一条底线我想提醒一下：AI 给的清理建议，必须可看、可逆、可控。只读扫描先行，给你一份能逐项确认的报告，而不用担心它自己闷头跑一条 <code>rm -rf</code>。清理这种事说到底，删错了就是不可逆的事故，把判断权和确认权留在你手里，这套东西才敢用。</p>
+<h2 id="你硬盘里最大的那个目录，是哪个"><a href="#你硬盘里最大的那个目录，是哪个" class="headerlink" title="你硬盘里最大的那个目录，是哪个"></a>你硬盘里最大的那个目录，是哪个</h2><p>绕了一圈我才想明白，卡兹克那条帖子真正打动我的不是 140G 那个数字。他把”哪些能删”这个判断做成了能看见、能逐项确认的东西，这才是我想抄的地方。</p>
+<p>我没真去把那 83G 抢救回来多少，红灯的我一个都没动。但光是把 <code>du -sh ~/Library/Caches/*</code> 跑一遍、看清楚谁在偷偷吃我的硬盘，这件事本身就够值了。</p>
+<p>你也可以现在就试试，终端里敲一句 <code>du -sh ~/Library/Caches/* | sort -rh | head</code>，看看排在最前面的是谁。我赌至少一半人，第一名要么是某个浏览器，要么是某个你天天用的 AI 工具。评论区告诉我，你那台机器上的冠军是哪个？</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[[卡兹克清理skill]]</li>
+<li>[[CleanMyMac定价与清理风险]]</li>
+</ul>
+<h2 id="相关洞察"><a href="#相关洞察" class="headerlink" title="相关洞察"></a>相关洞察</h2><ul>
+<li>[[AI-skill替代收费清理工具]]</li>
+</ul>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>Codex</tag>
+        <tag>skill</tag>
+        <tag>磁盘清理</tag>
+        <tag>CleanMyMac</tag>
+        <tag>macOS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>我把每天用的 Claude Code 写作流水线，做成了一个网页工具</title>
+    <url>/2026/06/02/202606022156/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260602-content-factory-beta.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>做公众号这一年多，我最怕的不是写，是打开后台那一刻，光标在标题栏闪着，我不知道今天该写什么。</p>
+<p>等我刷完五六个平台、好不容易锁定一个选题，热点已经凉了一半。就算选题定了，找资料一个钟头，写稿两三个钟头，写完还要找图、抠图、做封面，再去后台一遍遍调样式。一篇文章，一个下午就没了。</p>
+<p>真正让我动手的是今年三月的一个晚上。我刷到一个特别好的选题，想着第二天写，结果第二天一忙就忘了。等我再想起来，这事已经被七八个号写过了，热度全过去了。那天我盯着自己空荡荡的文档坐了快二十分钟，心里特别不是滋味。</p>
+<p>这套循环我受够了。所以过去几个月，我把自己天天在用的那套 AI 写作流水线，做成了一个网页工具，叫「内容工厂」。今天开放公测。</p>
+<p>熟悉我的朋友知道，我之前写过好几篇用 Claude Code 搭写作流水线的文章，从选题、搜资料、写稿、润色到配图，七个环节串成一条线。那套东西好用，但门槛不低，得装环境、懂点命令行，还得自己维护一堆配置文件。身边好几个写公众号的朋友看我演示完都说想要，可一听要折腾命令行就打了退堂鼓。</p>
+<p>内容工厂就是把那套东西搬上了网页。不用装环境，不用懂命令行，打开浏览器就能用。说白了，就是我自己每天在用的工具，顺手做成了你也能用的样子。</p>
+<h2 id="热点不用自己刷，雷达替我盯着"><a href="#热点不用自己刷，雷达替我盯着" class="headerlink" title="热点不用自己刷，雷达替我盯着"></a>热点不用自己刷，雷达替我盯着</h2><p>进去第一个页面就是内容雷达。</p>
+<p>它把 AI 圈的热点资讯聚合到一条时间线上，预置了 Claude、OpenAI、Gemini、DeepSeek、Cursor 五个主题，顶部点一下关键词就能切。新用户第一次进来会自动开采，几十秒就能看到当天 AI 圈在聊什么，不用做任何配置。</p>
+<p>下面这张就是我今天打开时的样子。Claude 31 条、OpenAI 26 条、Gemini 23 条，每条都标了来源，扫一眼就知道这条值不值得写。</p>
+<p><img src="https://image.vance.xin/screenshots/20260602-content-factory-beta-screenshot-2.webp" alt="内容工厂的内容雷达：聚合当日 AI 圈热点的时间线"></p>
+<p>对我来说，这一步省掉的就是每天早上刷五个平台那半小时。我现在的习惯是早上泡杯咖啡，打开雷达扫一眼当天的时间线，看到哪条眼睛一亮，直接拎去创作页。三月那次错过选题的事，自从用上雷达就再没发生过。热点不用我自己刷，雷达替我盯着，这是整条流水线的起点。</p>
+<h2 id="描述一句话，AI-把长文扩出来"><a href="#描述一句话，AI-把长文扩出来" class="headerlink" title="描述一句话，AI 把长文扩出来"></a>描述一句话，AI 把长文扩出来</h2><p>选题有了，点进创作页，迎面是一句「今天想写点什么呢」。</p>
+<p>你把选题描述一句，或者粘一段参考素材进去，AI 就能扩写成一篇完整的公众号长文。推荐选题直接来自你刚在雷达里追的那些关键词，省掉来回切换的功夫。</p>
+<p>我自己最看重的是多模型这块。下拉框里 GLM-5、DeepSeek V4、Gemini 3、MiniMax M2 几个模型随便切。国内能直连的 DeepSeek、GLM、MiniMax 都在，不用信用卡，也不用担心连不上。每个模型旁边标着费率倍率，按性价比挑就行。</p>
+<p>同一个选题，我会让两三个模型各写一版，挑最顺眼的那篇接着改。我自己的体感是，写偏技术的内容 DeepSeek 和 GLM 的逻辑更稳，写偏故事、偏情绪的段落 Gemini 的语感更松弛。换着用，比死磕一个模型出来的东西灵活得多。不被一家 AI 锁死，写出来的东西才不至于千篇一律。</p>
+<h2 id="左边写字，右边就是公众号里的样子"><a href="#左边写字，右边就是公众号里的样子" class="headerlink" title="左边写字，右边就是公众号里的样子"></a>左边写字，右边就是公众号里的样子</h2><p>稿子出来了，进编辑器。这是我花心思最多的地方。</p>
+<p>左边写 Markdown，右边是一个手机预览，公众号的原生样式实时显示，所见即所得。再也不用在后台调一次样式、刷新一次、跳一次。</p>
+<p>下面这张就是我用它写上一篇 Claude Code 文章时的界面。左边是正文，右边手机里已经排好版，连封面图都带上了。</p>
+<p><img src="https://image.vance.xin/screenshots/20260602-content-factory-beta-screenshot-1.webp" alt="内容工厂的公众号编辑器：左边写 Markdown，右边手机实时预览"></p>
+<p>以前我在公众号后台改个字号、调个行距，得保存、刷新、再划到对应段落看效果，一篇长文来回折腾几十次。现在右边那个手机预览实时跟着动，改一个字立刻就能看到最终样子。</p>
+<p>配图也在这儿。点一下一键配图，AI 按文章内容生成封面或者流程图，背后用的是 Gemini 的图像模型。我最近几篇文章的封面，基本都是它出的，省掉了我以前满网站找图、再担心版权的麻烦。还有 20 多套主题样式，技术、生活、商业三类都覆盖，深色浅色都能切，长文写久了眼睛不那么累。</p>
+<p>写完一键复制，排版样式带着走，粘进公众号后台不塌。这一步省掉的，是我以前在后台跟样式较劲的那一个钟头。</p>
+<h2 id="注册送-1000-积分，但我得说几句实话"><a href="#注册送-1000-积分，但我得说几句实话" class="headerlink" title="注册送 1000 积分，但我得说几句实话"></a>注册送 1000 积分，但我得说几句实话</h2><p>公测期注册就送 1000 积分，大概够生成 50 篇文章再配几十张图。每天登录再 +100，邀请一个朋友 +100，长期用基本不怎么花钱。</p>
+<p>每一笔消费都有明细，每生成一篇、每出一张图扣了多少积分，列得清清楚楚，不会莫名其妙扣。站内支持微信赞助换积分，自愿、只能站内消费、不能提现，这点我先讲清楚，免得有人误会成充值理财。</p>
+<p>有句实话我得放前面：内容工厂现在只做了公众号一个平台。</p>
+<p>做的过程里我最纠结的就是这件事。一开始我也想贪多，小红书、X、视频脚本、知识星球一稿多发，听起来特别诱人。但真动手就发现，每个平台的调性、字数、排版差得太远，一稿多发要么哪个都不顺手，要么质量全打折。我想了很久，决定先把公众号这一个平台做深做稳，别的等做扎实了再说。</p>
+<p>你可能在别处见过「一键发布」「多平台一稿多发」这类说法。那些功能我公测前临时下线了，正在打磨，还没正式上线。我不想让你满怀期待进来，结果发现没有，那种落差比不宣传更伤人。所以现在能用的，就是上面这些，一个都没虚标。</p>
+<h2 id="它能帮你提速，定稿还得是你"><a href="#它能帮你提速，定稿还得是你" class="headerlink" title="它能帮你提速，定稿还得是你"></a>它能帮你提速，定稿还得是你</h2><p>最后说点心里话。</p>
+<p>内容工厂能帮你把选题、写稿、配图、排版这几个环节提速，但它替代不了你的判断和审美。AI 负责出稿，你负责定稿，这个顺序我觉得不能反。我自己用它出的初稿，每次也都要再逐句改一遍，把那些套话删掉、把只有我才有的体感和观点加进去。一篇文章里真正打动人的那句话，机器替不了，还得你自己写。</p>
+<p>这是我的第一款产品，还在打磨，肯定有不少别扭的地方，说不定你点开就能踩到一两个 bug。公测期我最缺的就是真实反馈。你用着哪儿不顺、想要什么功能，直接在评论区或者后台告诉我，我看到都会认真记下来，能改的会很快迭代。</p>
+<p>打开 aigc.vance.xin，注册就送 1000 积分，今天就能写第一篇。</p>
+<p>你写公众号时，选题、写稿、配图、排版这四件事，最拖你时间的是哪一个？评论区告诉我，我看看内容工厂现在能不能帮上忙。</p>
+]]></content>
+      <categories>
+        <category>产品</category>
+      </categories>
+      <tags>
+        <tag>独立开发</tag>
+        <tag>公众号</tag>
+        <tag>内容工厂</tag>
+        <tag>AIGC</tag>
+        <tag>AI写作</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>我天天用 Claude Code 写代码，它母公司 9650 亿美元要上市了</title>
     <url>/2026/06/02/202606021723/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260602-anthropic-ipo-claude-code.webp" alt="cover"></p>
@@ -9371,8 +9603,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>Vibe Coding</tag>
         <tag>AI 编程</tag>
+        <tag>Vibe Coding</tag>
         <tag>代码质量</tag>
         <tag>开发者工具</tag>
       </tags>
@@ -21015,9 +21247,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
+        <tag>AI 编程</tag>
         <tag>Vibe Coding</tag>
         <tag>软件开发</tag>
-        <tag>AI 编程</tag>
         <tag>创业</tag>
       </tags>
   </entry>
@@ -27491,7 +27723,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#x69;&#116;&#64;&#x67;&#105;&#116;&#104;&#117;&#x62;&#x2e;&#99;&#x6f;&#x6d;">&#103;&#x69;&#116;&#64;&#x67;&#105;&#116;&#104;&#117;&#x62;&#x2e;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#98;&#x2e;&#99;&#x6f;&#x6d;">&#x67;&#x69;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#98;&#x2e;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -28380,20 +28612,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android MD5 加密工具类</title>
-    <url>/2017/09/24/201709242354/</url>
-    <content><![CDATA[<p>直接看代码：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class MD5Utils &#123;</span><br><span class="line"></span><br><span class="line">    public static String MD5(String sourceStr) &#123;</span><br><span class="line">        String result = &quot;&quot;;</span><br><span class="line">        try &#123;</span><br><span class="line">            MessageDigest md = MessageDigest.getInstance(&quot;MD5&quot;);</span><br><span class="line">            md.update(sourceStr.getBytes());</span><br><span class="line">            byte b[] = md.digest();</span><br><span class="line">            int i;</span><br><span class="line">            StringBuffer buf = new StringBuffer(&quot;&quot;);</span><br><span class="line">            for (int offset = 0; offset &lt; b.length; offset++) &#123;</span><br><span class="line">                i = b[offset];</span><br><span class="line">                if (i &lt; 0)</span><br><span class="line">                    i += 256;</span><br><span class="line">                if (i &lt; 16)</span><br><span class="line">                    buf.append(&quot;0&quot;);</span><br><span class="line">                buf.append(Integer.toHexString(i));</span><br><span class="line">            &#125;</span><br><span class="line">            result = buf.toString();</span><br><span class="line">        &#125; catch (NoSuchAlgorithmException e) &#123;</span><br><span class="line">            System.out.println(e);</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>utils</tag>
-        <tag>MD5</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 使用 Glide 实现圆形和圆角图片</title>
     <url>/2017/09/24/201709242353/</url>
     <content><![CDATA[<h2 id="1-实现圆形图片"><a href="#1-实现圆形图片" class="headerlink" title="1.实现圆形图片"></a>1.实现圆形图片</h2><h3 id="1-1自定义圆形处理工具类"><a href="#1-1自定义圆形处理工具类" class="headerlink" title="1.1自定义圆形处理工具类"></a>1.1自定义圆形处理工具类</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line"></span><br><span class="line">import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;</span><br><span class="line">import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by xpf on 2017/6/17 :)</span><br><span class="line"> * Function:Glide Transformation 实现圆形图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class GlideCircleTransform extends BitmapTransformation &#123;</span><br><span class="line"></span><br><span class="line">    public GlideCircleTransform(Context context) &#123;</span><br><span class="line">        super(context);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected Bitmap transform(BitmapPool pool, Bitmap toTransform, int outWidth, int outHeight) &#123;</span><br><span class="line">        return circleCrop(pool, toTransform);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static Bitmap circleCrop(BitmapPool pool, Bitmap source) &#123;</span><br><span class="line">        if (source == null) return null;</span><br><span class="line"></span><br><span class="line">        int size = Math.min(source.getWidth(), source.getHeight());</span><br><span class="line">        int x = (source.getWidth() - size) / 2;</span><br><span class="line">        int y = (source.getHeight() - size) / 2;</span><br><span class="line"></span><br><span class="line">        // TODO this could be acquired from the pool too</span><br><span class="line">        Bitmap squared = Bitmap.createBitmap(source, x, y, size, size);</span><br><span class="line"></span><br><span class="line">        Bitmap result = pool.get(size, size, Bitmap.Config.ARGB_8888);</span><br><span class="line">        if (result == null) &#123;</span><br><span class="line">            result = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(result);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        paint.setShader(new BitmapShader(squared, BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP));</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line">        float r = size / 2f;</span><br><span class="line">        canvas.drawCircle(r, r, r, paint);</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String getId() &#123;</span><br><span class="line">        return getClass().getName();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -28414,6 +28632,20 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Glide</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android MD5 加密工具类</title>
+    <url>/2017/09/24/201709242354/</url>
+    <content><![CDATA[<p>直接看代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class MD5Utils &#123;</span><br><span class="line"></span><br><span class="line">    public static String MD5(String sourceStr) &#123;</span><br><span class="line">        String result = &quot;&quot;;</span><br><span class="line">        try &#123;</span><br><span class="line">            MessageDigest md = MessageDigest.getInstance(&quot;MD5&quot;);</span><br><span class="line">            md.update(sourceStr.getBytes());</span><br><span class="line">            byte b[] = md.digest();</span><br><span class="line">            int i;</span><br><span class="line">            StringBuffer buf = new StringBuffer(&quot;&quot;);</span><br><span class="line">            for (int offset = 0; offset &lt; b.length; offset++) &#123;</span><br><span class="line">                i = b[offset];</span><br><span class="line">                if (i &lt; 0)</span><br><span class="line">                    i += 256;</span><br><span class="line">                if (i &lt; 16)</span><br><span class="line">                    buf.append(&quot;0&quot;);</span><br><span class="line">                buf.append(Integer.toHexString(i));</span><br><span class="line">            &#125;</span><br><span class="line">            result = buf.toString();</span><br><span class="line">        &#125; catch (NoSuchAlgorithmException e) &#123;</span><br><span class="line">            System.out.println(e);</span><br><span class="line">        &#125;</span><br><span class="line">        return result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>utils</tag>
+        <tag>MD5</tag>
       </tags>
   </entry>
   <entry>
@@ -28564,6 +28796,42 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android Studio 曲折更新之路</title>
+    <url>/2017/09/24/201709242402/</url>
+    <content><![CDATA[<blockquote>
+<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
+</blockquote>
+<p>##1.开始更新</p>
+<p>打开AS 点击Help –&gt; Check for Updates…</p>
+<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
+<p>###1.1找到最新的版本号对应的串号</p>
+<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
+<p>如下图所示：</p>
+<p>###1.2下载你对应版本的到最新版本的补丁包</p>
+<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
+<p>然后拼接出一个下载补丁包的url:如下</p>
+<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
+<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
+<p>###1.3手动安装AS补丁包</p>
+<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
+<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
+<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
+<p>稍等一会更新包就安装完成了</p>
+<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
+<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
+<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
+<p>另外，感谢下面博主的博客：</p>
+<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android Studio</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>用起来贼爽的 Android Studio 插件推荐</title>
     <url>/2017/09/24/201709242401/</url>
     <content><![CDATA[<blockquote>
@@ -28624,42 +28892,6 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>Plugin</tag>
-        <tag>GitHub</tag>
-        <tag>Android Studio</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Studio 曲折更新之路</title>
-    <url>/2017/09/24/201709242402/</url>
-    <content><![CDATA[<blockquote>
-<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
-</blockquote>
-<p>##1.开始更新</p>
-<p>打开AS 点击Help –&gt; Check for Updates…</p>
-<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
-<p>###1.1找到最新的版本号对应的串号</p>
-<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
-<p>如下图所示：</p>
-<p>###1.2下载你对应版本的到最新版本的补丁包</p>
-<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
-<p>然后拼接出一个下载补丁包的url:如下</p>
-<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
-<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
-<p>###1.3手动安装AS补丁包</p>
-<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
-<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
-<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
-<p>稍等一会更新包就安装完成了</p>
-<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
-<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
-<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
-<p>另外，感谢下面博主的博客：</p>
-<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
       </tags>
@@ -28893,19 +29125,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android 使用原生动画工具类实现平移动画</title>
-    <url>/2017/09/24/201709242411/</url>
-    <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 向右边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, true));</span><br><span class="line">// 向右边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, true));</span><br><span class="line"> </span><br><span class="line">llVideo.setVisibility(View.VISIBLE);</span><br><span class="line">llVideo.setVisibility(View.GONE);</span><br><span class="line">// 向左边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, false));</span><br><span class="line">// 向左边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, false));</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>动画</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 点击其他地方隐藏软键盘</title>
     <url>/2017/09/24/201709242410/</url>
     <content><![CDATA[<p>##1.第一种：隐藏页面一进来EditText获取焦点就弹出软键盘</p>
@@ -28926,6 +29145,19 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>Android</tag>
         <tag>软键盘</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 使用原生动画工具类实现平移动画</title>
+    <url>/2017/09/24/201709242411/</url>
+    <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 向右边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, true));</span><br><span class="line">// 向右边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, true));</span><br><span class="line"> </span><br><span class="line">llVideo.setVisibility(View.VISIBLE);</span><br><span class="line">llVideo.setVisibility(View.GONE);</span><br><span class="line">// 向左边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, false));</span><br><span class="line">// 向左边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, false));</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>动画</tag>
       </tags>
   </entry>
   <entry>
@@ -29021,6 +29253,27 @@ public static boolean isChinaPhoneLegal(String str)
       <tags>
         <tag>Android Studio</tag>
         <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 产生随机数</title>
+    <url>/2017/09/24/201709242415/</url>
+    <content><![CDATA[<p>##1.产生指定位数的随机数</p>
+<p>以产生6位数随机数为例</p>
+<p><code>int num = (int) ((Math.random() * 9 + 1) * 100000);</code></p>
+<p>产生其他位数随机数在最后面要乘的数即 <em>100000</em> 后加0即可</p>
+<p>##2.产生指定范围的随机数</p>
+<p>以产生[10,99]范围内的随机数为例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">int min=10;</span><br><span class="line">int max=99;</span><br><span class="line">Random random = new Random();</span><br><span class="line">int num = random.nextInt(max)%(max-min+1) + min;</span><br></pre></td></tr></table></figure>
+
+<p>end ~</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>随机数</tag>
       </tags>
   </entry>
   <entry>
@@ -29130,27 +29383,6 @@ public static boolean isChinaPhoneLegal(String str)
         <tag>Android</tag>
         <tag>RGB</tag>
         <tag>ARGB</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 产生随机数</title>
-    <url>/2017/09/24/201709242415/</url>
-    <content><![CDATA[<p>##1.产生指定位数的随机数</p>
-<p>以产生6位数随机数为例</p>
-<p><code>int num = (int) ((Math.random() * 9 + 1) * 100000);</code></p>
-<p>产生其他位数随机数在最后面要乘的数即 <em>100000</em> 后加0即可</p>
-<p>##2.产生指定范围的随机数</p>
-<p>以产生[10,99]范围内的随机数为例</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">int min=10;</span><br><span class="line">int max=99;</span><br><span class="line">Random random = new Random();</span><br><span class="line">int num = random.nextInt(max)%(max-min+1) + min;</span><br></pre></td></tr></table></figure>
-
-<p>end ~</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>随机数</tag>
       </tags>
   </entry>
   <entry>

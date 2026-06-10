@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="哈喽，我是飞飞。 先说个我自己干的、听着有点离谱的事。 上周有一天，我让 AI 把一个老项目里 7600 行 Java，整库重写成了 Kotlin，顺带把构建工具从 Maven 换成了 Gradle。早上十点多动的手，下午六点多收工，当天晚上走 CI 直接上了生产。 九十来个接口，行为一个没变。 这项目是我 2022 年写的记账后端，最早是 Maven、Java 8、Spring Boot 2.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我让 AI 一天把 7600 行 Java 换成 Kotlin 上了线，最值钱的却不是它快">
+<meta property="og:url" content="https://www.vance.xin/2026/06/10/202606101355/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="哈喽，我是飞飞。 先说个我自己干的、听着有点离谱的事。 上周有一天，我让 AI 把一个老项目里 7600 行 Java，整库重写成了 Kotlin，顺带把构建工具从 Maven 换成了 Gradle。早上十点多动的手，下午六点多收工，当天晚上走 CI 直接上了生产。 九十来个接口，行为一个没变。 这项目是我 2022 年写的记账后端，最早是 Maven、Java 8、Spring Boot 2.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260610-claude-code-springboot-kotlin-migration.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260610-claude-code-springboot-kotlin-migration-flow.webp">
+<meta property="article:published_time" content="2026-06-10T13:55:37.000Z">
+<meta property="article:modified_time" content="2026-06-10T06:49:29.413Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Kotlin">
+<meta property="article:tag" content="ClaudeCode">
+<meta property="article:tag" content="SpringBoot">
+<meta property="article:tag" content="迁移">
+<meta property="article:tag" content="dynamicworkflow">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260610-claude-code-springboot-kotlin-migration.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/06/10/202606101355/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/06/10/202606101355/","path":"2026/06/10/202606101355/","title":"我让 AI 一天把 7600 行 Java 换成 Kotlin 上了线，最值钱的却不是它快"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>我让 AI 一天把 7600 行 Java 换成 Kotlin 上了线，最值钱的却不是它快 | 飞飞的AI实验室</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%80%81%E9%A1%B9%E7%9B%AE%E8%BF%81%E7%A7%BB%EF%BC%8C%E4%BC%A0%E7%BB%9F%E5%81%9A%E6%B3%95%E9%82%A3%E4%B9%88%E6%85%A2"><span class="nav-text">为什么老项目迁移，传统做法那么慢</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%BB%99%E8%BF%99%E5%9C%BA%E8%BF%81%E7%A7%BB%E8%AE%BE%E4%BA%86%E5%87%A0%E9%81%93%E3%80%8C%E9%AA%8C%E8%AF%81%E9%97%A8%E3%80%8D"><span class="nav-text">我给这场迁移设了几道「验证门」</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AI-%E6%9B%BF%E6%88%91%E6%8A%93%E5%87%BA%E5%87%A0%E4%B8%AA%E8%BF%9E%E7%BC%96%E8%AF%91%E5%99%A8%E9%83%BD%E7%9C%8B%E4%B8%8D%E8%A7%81%E7%9A%84%E5%9D%91"><span class="nav-text">AI 替我抓出几个连编译器都看不见的坑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%83%B3%E6%8A%84%E8%B5%B0%E7%9A%84%E8%AF%9D%EF%BC%8C%E8%BF%99%E5%A5%97%E6%89%93%E6%B3%95%E9%95%BF%E8%BF%99%E6%A0%B7"><span class="nav-text">想抄走的话，这套打法长这样</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%AB%EF%BC%8C%E6%98%AF%E5%9B%A0%E4%B8%BA%E3%80%8C%E8%AF%81%E6%98%8E%E6%B2%A1%E6%94%B9%E5%9D%8F%E3%80%8D%E5%8F%98%E4%BE%BF%E5%AE%9C%E4%BA%86"><span class="nav-text">快，是因为「证明没改坏」变便宜了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">参考资料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%B4%9E%E5%AF%9F"><span class="nav-text">相关洞察</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">344</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">611</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=x-sir123" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;x-sir123" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/06/10/202606101355/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="我让 AI 一天把 7600 行 Java 换成 Kotlin 上了线，最值钱的却不是它快 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我让 AI 一天把 7600 行 Java 换成 Kotlin 上了线，最值钱的却不是它快
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-06-10 13:55:37 / 修改时间：06:49:29" itemprop="dateCreated datePublished" datetime="2026-06-10T13:55:37+00:00">2026-06-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260610-claude-code-springboot-kotlin-migration.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>先说个我自己干的、听着有点离谱的事。</p>
+<p>上周有一天，我让 AI 把一个老项目里 7600 行 Java，整库重写成了 Kotlin，顺带把构建工具从 Maven 换成了 Gradle。早上十点多动的手，下午六点多收工，当天晚上走 CI 直接上了生产。</p>
+<p>九十来个接口，行为一个没变。</p>
+<p>这项目是我 2022 年写的记账后端，最早是 Maven、Java 8、Spring Boot 2.7。搁过去，这种换血是按「周」算的高风险体力活。多少人手里攥着这么个老项目，明知道该升级，就是不敢动。</p>
+<p>干这事的没什么黑科技，靠的是 Claude Code 的 dynamic workflow，加上一套我逼着自己守的纪律。</p>
+<p>但这回真正让我后劲很大的，不在「AI 写得多快」这件事上。这场迁移到底快在哪，其实挺反直觉的，根本不在打字这一下。</p>
+<h2 id="为什么老项目迁移，传统做法那么慢"><a href="#为什么老项目迁移，传统做法那么慢" class="headerlink" title="为什么老项目迁移，传统做法那么慢"></a>为什么老项目迁移，传统做法那么慢</h2><p>先想个问题：把 7600 行 Java 翻成 Kotlin，到底难在哪？</p>
+<p>逐行翻译这件事，其实不慢。难的是翻完之后，你怎么证明这一库代码跟原来行为一模一样。</p>
+<p>接口返回的结构有没有变？错误码还对不对？少传一个字段，老代码默认给 0，新代码会不会直接抛 500？这些东西编译器不报错，跑起来也「看着正常」，可线上的客户端就是会崩。</p>
+<p>我去翻了下行业里对 Spring Boot 2 升 3 的说法，官方和一堆老手的口径高度一致：javax 换 jakarta 那一步是「最繁琐、最容易出错」的，大代码库靠人手改「不可持续、人为出错风险极高」，是那种「明知道要做、又一直往后拖」的活。我这回是直接 2 升 4，比这还狠一档。</p>
+<p>所以传统迁移拖到好几周，时间根本没花在写代码上，全砸在逐个接口对齐行为、对齐依赖、补一摞回归测试上。</p>
+<p>说白了，迁移最贵的不是打字，是证明你没改坏。</p>
+<p>想明白这一层，你就知道 AI 的劲儿该往哪使了。</p>
+<h2 id="我给这场迁移设了几道「验证门」"><a href="#我给这场迁移设了几道「验证门」" class="headerlink" title="我给这场迁移设了几道「验证门」"></a>我给这场迁移设了几道「验证门」</h2><p>我没让 AI 一把梭。整场迁移拆成一串小步，每步中间卡一道「门」，过不了就不许往下走。</p>
+<p>有几道门我觉得特别值得抄。</p>
+<p><strong>依赖集逐一对齐</strong>。换 Gradle 的头一步，源码我一行没动，只要求新构建产出的包，跟原来 Maven 那版依赖一个不差。105 个依赖对 105 个，连被 BOM 偷偷抬上去的版本号都用 strictly 锁死。构建工具换了，吃进去的东西得分毫不差。</p>
+<p><strong>端点清单逐字节比对</strong>。把项目里 88 个路由全导成一份清单，迁移前后必须一模一样，连每个 Controller 注册的 Bean 名都不许变。客户端那头感知不到任何动静，才算真透明。</p>
+<p><strong>最骚的是这道：删旧代码之前，先让它招供</strong>。项目里有个 529 行的祖传 XSS 过滤器，谁也不敢保证 Kotlin 重写后那堆正则的行为还一致。我让 AI 先拿原来的 Java 版跑一批输入，抓下 19 条「黄金输出」，钉成断言。</p>
+<p>这样新版本任何一点行为漂移，测试立马变红。光靠「能编译、老测试也过」，这种坑根本兜不住。</p>
+<p><strong>最后还有真机冒烟</strong>。用真的 MySQL 和 Redis，把打好的包从头到尾跑一遍。就这一道，真抓出了两个藏得很深的 bug。</p>
+<p>对了，把这一大坨机械翻译干快的，正是 dynamic workflow 本身。清扫基础设施那批，我让它跑成六个小工作流，每批是一条流水线：一个 agent 把 Java 翻成 Kotlin，另一组 agent 跟在后头专挑行为漂移。能并行的全并行，墙上那个钟基本只跟最慢那条链走，而不用等所有活一件件排着干完。</p>
+<h2 id="AI-替我抓出几个连编译器都看不见的坑"><a href="#AI-替我抓出几个连编译器都看不见的坑" class="headerlink" title="AI 替我抓出几个连编译器都看不见的坑"></a>AI 替我抓出几个连编译器都看不见的坑</h2><p>这部分，实话讲是我最服气的。</p>
+<p>Java 翻 Kotlin，最阴的地方不在语法。真正咬人的是那些「看着一样、其实不一样」的语义差。我挑三个真在这次迁移里被抓出来的，你感受下有多细。</p>
+<p>一个是字段凭空消失。我有个 Int 字段叫 isLiability，Kotlin 生成的取值方法是 isLiability()，结果 Jackson 一看不是布尔类型的 isXxx，直接当它不存在，这字段在接口返回里就没了。老的 Java 版叫 getIsLiability，字段稳稳在。</p>
+<p>这种事编译器一声不吭，跑测试不挂、本地点一下也正常，等上了线，客户端那边解析少了个字段才发作。</p>
+<p>一个是少传字段直接 500。Kotlin 的 data class 被 Jackson 当构造器用，客户端少传一个原始类型字段，比如排序用的 sort，直接报错；老代码是漏传就给个默认 0，相安无事。</p>
+<p>还有个更绝的，入口类被悄悄改了名。Kotlin 把顶层的 main 函数编译成了一个带 Kt 后缀的类，jar 包的启动类名跟着变了，差点没起来。</p>
+<p>这些坑，每一个都能让线上出故障，每一个编译器都查不出来。把它们一条条钉成测试，是这次 AI 帮我做的最值钱的事，比它把代码写出来值钱多了。</p>
+<h2 id="想抄走的话，这套打法长这样"><a href="#想抄走的话，这套打法长这样" class="headerlink" title="想抄走的话，这套打法长这样"></a>想抄走的话，这套打法长这样</h2><p>把这次的经验拆开，其实是一套谁都能复用的迁移打法。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260610-claude-code-springboot-kotlin-migration-flow.webp" alt="五段式迁移流程"></p>
+<p>先定死「什么不许变」。动手前就把接口契约、错误码、依赖集、配置文件这些不变量写成硬约束。我这回甚至明文规定，yaml 配置一个字都不许动。</p>
+<p>让 AI 先出文档，别上来就写码。先一份设计 spec，再一份逐任务计划，每个任务都写清楚「做完怎么验证」。三场迁移我攒了差不多 4900 行这种 spec 和计划。</p>
+<p>拆成带门的小步，一步一提交，随时能退。机械的、能并行的翻译活，扇出去给好几个 subagent 同时干；有先后依赖、要动脑判断的，串起来用门一道道卡住。</p>
+<p>让评审唱反调。我专门让一组 agent 干挑刺的活，要求它默认怀疑、主动找茬，别回头顺着我刚写的代码夸。「看着对其实错了」就是这么防住的。</p>
+<p>顺序本身也是风控。我是先升框架、再换构建、最后换语言，一次只动一个变量。真要框架、构建、语言一起换，出了问题你都不知道该赖谁。</p>
+<h2 id="快，是因为「证明没改坏」变便宜了"><a href="#快，是因为「证明没改坏」变便宜了" class="headerlink" title="快，是因为「证明没改坏」变便宜了"></a>快，是因为「证明没改坏」变便宜了</h2><p>绕回开头那句。</p>
+<p>AI 让这场迁移从「按周算」变成「按天算」，我现在越想越清楚，快的根本不在打字那一下。</p>
+<p>真正被它压下来的，是迁移里最贵的两件事：大批量的机械翻译，能并行扇出去同时做；那些验证和校验，能提前变成一道道自动跑的门。后面这件，才是传统迁移拖上好几周的真正原因。</p>
+<p>换个说法，AI 没帮你跳过迁移里的任何一个难点。它做的是另一件事：让你终于负担得起，把每个难点都老老实实做对。</p>
+<p>最后得补一句免责：上面 AI 这边的数字，全是我项目真实 git 记录里抠出来的；传统那边的「几周」，是按行业经验估的。所以我说「保守十几倍」，是个数量级的感觉，不是拿秒表掐出来的精确值。这点咱得诚实。</p>
+<p>说到底，你手里大概也有那么一个明知道该升级、又一直不敢碰的老项目。下次动它之前，先别急着让 AI 开写，先把「什么绝对不许变」列清楚，再给每一步配一道能自动跑的验证门。</p>
+<p>想问问你：你手里那个最不敢动的老项目，是什么技术栈的？真正卡住你的，是改起来麻烦，还是不敢保证改完不出事？评论区聊聊。</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[[springboot-kotlin-migration-claude-code]]</li>
+</ul>
+<h2 id="相关洞察"><a href="#相关洞察" class="headerlink" title="相关洞察"></a>相关洞察</h2><ul>
+<li>[[ai迁移真正的杠杆是把验证变便宜]]</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Kotlin/" rel="tag"># Kotlin</a>
+              <a href="/tags/ClaudeCode/" rel="tag"># ClaudeCode</a>
+              <a href="/tags/SpringBoot/" rel="tag"># SpringBoot</a>
+              <a href="/tags/%E8%BF%81%E7%A7%BB/" rel="tag"># 迁移</a>
+              <a href="/tags/dynamicworkflow/" rel="tag"># dynamicworkflow</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/10/202606101155/" rel="prev" title="最强的 Claude 来了，可我盯着价格又把手缩了回来">
+                  <i class="fa fa-angle-left"></i> 最强的 Claude 来了，可我盯着价格又把手缩了回来
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">18:19</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

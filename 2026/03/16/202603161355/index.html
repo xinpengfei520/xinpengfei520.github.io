@@ -20,16 +20,16 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
 
-    <meta name="description" content="上周我在 CLAUDE.md 里写了一条规则：”每次修改代码后跑一下 TypeScript 类型检查”。 Claude 看到了。它确实会做。大部分时候。 但有一次对话拉得很长，上下文被压缩了一轮，它就悄悄跳过了这步。我没注意到，代码带着类型错误被提交了。第二天上线，炸了。 CLAUDE.md 里的规则是”建议”。Claude 会尽量遵守，但它终究是一个概率模型——它不保证每次都执行。 Hooks">
+    <meta name="description" content="面向新手讲解Claude Code的Hooks机制，对比CLAUDE.md建议式规则与Hooks确定性执行的区别，介绍22个生命周期事件中常用的PreToolUse、PostToolUse、Stop等节点，以及Command处理器用exit 2阻止操作的写法。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="写给小白的 Claude Code 进阶指南 - Hooks">
 <meta property="og:url" content="https://www.vance.xin/2026/03/16/202603161355/index.html">
 <meta property="og:site_name" content="飞飞的AI实验室">
-<meta property="og:description" content="上周我在 CLAUDE.md 里写了一条规则：”每次修改代码后跑一下 TypeScript 类型检查”。 Claude 看到了。它确实会做。大部分时候。 但有一次对话拉得很长，上下文被压缩了一轮，它就悄悄跳过了这步。我没注意到，代码带着类型错误被提交了。第二天上线，炸了。 CLAUDE.md 里的规则是”建议”。Claude 会尽量遵守，但它终究是一个概率模型——它不保证每次都执行。 Hooks">
+<meta property="og:description" content="面向新手讲解Claude Code的Hooks机制，对比CLAUDE.md建议式规则与Hooks确定性执行的区别，介绍22个生命周期事件中常用的PreToolUse、PostToolUse、Stop等节点，以及Command处理器用exit 2阻止操作的写法。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://image.vance.xin/blog-cover/20260409-20260316-software-automation-pipeline.webp">
 <meta property="article:published_time" content="2026-03-16T13:55:00.000Z">
-<meta property="article:modified_time" content="2026-06-11T08:07:16.461Z">
+<meta property="article:modified_time" content="2026-06-11T08:48:17.562Z">
 <meta property="article:author" content="飞飞的AI实验室">
 <meta property="article:tag" content="Claude Code">
 <meta property="article:tag" content="AI 编程">
@@ -91,7 +91,8 @@
   "url": "https://www.vance.xin/2026/03/16/202603161355/",
   "mainEntityOfPage": "https://www.vance.xin/2026/03/16/202603161355/",
   "datePublished": "2026-03-16T13:55:00.000Z",
-  "dateModified": "2026-06-11T08:07:16.461Z",
+  "dateModified": "2026-06-11T08:48:17.562Z",
+  "description": "面向新手讲解Claude Code的Hooks机制，对比CLAUDE.md建议式规则与Hooks确定性执行的区别，介绍22个生命周期事件中常用的PreToolUse、PostToolUse、Stop等节点，以及Command处理器用exit 2阻止操作的写法。",
   "inLanguage": "zh-CN",
   "author": {
     "@type": "Person",
@@ -290,7 +291,7 @@
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
       <meta itemprop="name" content="写给小白的 Claude Code 进阶指南 - Hooks | 飞飞的AI实验室">
-      <meta itemprop="description" content="">
+      <meta itemprop="description" content="面向新手讲解Claude Code的Hooks机制，对比CLAUDE.md建议式规则与Hooks确定性执行的区别，介绍22个生命周期事件中常用的PreToolUse、PostToolUse、Stop等节点，以及Command处理器用exit 2阻止操作的写法。">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -312,7 +313,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -349,6 +350,7 @@
     </span>
 </div>
 
+            <div class="post-description">面向新手讲解Claude Code的Hooks机制，对比CLAUDE.md建议式规则与Hooks确定性执行的区别，介绍22个生命周期事件中常用的PreToolUse、PostToolUse、Stop等节点，以及Command处理器用exit 2阻止操作的写法。</div>
         </div>
       </header>
 

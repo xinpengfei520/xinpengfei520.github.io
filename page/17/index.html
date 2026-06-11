@@ -295,7 +295,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -332,18 +332,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-dual-source-memory-system-architecture.webp" alt="cover"></p>
-<p>你让 OpenClaw 帮你写了一个 API，调了三轮才满意。第二天你说”昨天那个 API 还需要加个分页”——它完全不记得了。</p>
-<p>这是 AI Agent 最大的痛点之一：<strong>没有记忆，每次对话都从零开始。</strong></p>
-<p>OpenClaw 的解决方案是一个叫做”双源记忆系统”的架构。两个独立的记忆源——长期记忆（MEMORY.md）和每日日志（daily logs）——协同工作，让 Agent 既能记住长期偏好，又能回忆昨天的工作细节。</p>
-<p>这套系统在 2026 年初的 v0.5 版本中引入，3 月 7 日的 v2026.3.7-beta.1 又通过 ContextEngine 插件接口进行了重大升级。社区里有人说：**”这是 OpenClaw 和其他 Agent 框架拉开差距的关键设计。”**</p>
-<p>今天我们从架构到代码，完整拆解这套双源记忆系统。</p>
-<h2 id="为什么需要”双源”：单一记忆的困境"><a href="#为什么需要”双源”：单一记忆的困境" class="headerlink" title="为什么需要”双源”：单一记忆的困境"></a>为什么需要”双源”：单一记忆的困境</h2><p>在聊架构之前，先理解一个问题：为什么不用一个记忆源？</p>
-<p><strong>纯长期记忆的问题：</strong> 如果只有一个长期知识库，每次对话的临时信息——“刚才那个变量叫 userCount”、”上一轮我们决定用 PostgreSQL”——要么不存，要么全存。不存就丢失上下文，全存就把知识库变成垃圾场。</p>
-<p><strong>纯短期日志的问题：</strong> 如果只有逐日记录，Agent 知道你昨天做了什么，但不知道你”永远偏好 TypeScript 而不是 JavaScript”。每次都得重新告诉它你的偏好。</p>
+          <p>拆解 OpenClaw 的双源记忆系统，长期记忆 MEMORY.md 管偏好与项目约定、每日日志管工作细节，再以向量搜索加 BM25 的混合检索和 SQLite 向量库（约 400 Token 分块、80 Token 重叠）解决 AI Agent 每次对话从零开始的失忆问题。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191830/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191830/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -410,7 +402,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -447,56 +439,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-minimax-m27-openclaw-best-model.webp" alt="cover"></p>
-<p>跑 OpenClaw 最大的开销是什么？不是硬件，不是电费，是模型 API 的 Token 费用。</p>
-<p>一个活跃的 OpenClaw Agent 24 小时跑下来，上下文能膨胀到 20 万 Token 以上。用 Claude Opus 跑，一天烧掉几十美元是常事。用 Claude Sonnet 省一点，但一个月下来也是一笔不小的开销。</p>
-<p>有没有一个模型，能力接近 Claude，但价格只有它的零头？</p>
-<p>3 月 18 日，MiniMax 发布了 M2.7。在 Kilo 团队的 PinchBench（OpenClaw Agent 专用基准测试）上拿到了 **86.2%**，距离 Claude Opus 4.6 的 87.4% 只差 1.2 个百分点。价格呢？输入 $0.30&#x2F;M Token，输出 $1.20&#x2F;M Token——大约是 Claude 的 <strong>1&#x2F;20</strong>。</p>
-<p>更有意思的是，这个模型会”自我进化”。它参与了自己的训练过程，自主跑了 100 多轮优化，把内部评测分数提升了 30%。</p>
-<p>今天我们来聊聊：M2.7 到底有多强？它真的适合跑 OpenClaw 吗？和 DeepSeek、Qwen 比谁更值？</p>
-<h2 id="M2-7-核心数据：全面对标-Opus"><a href="#M2-7-核心数据：全面对标-Opus" class="headerlink" title="M2.7 核心数据：全面对标 Opus"></a>M2.7 核心数据：全面对标 Opus</h2><p>先看硬数据。M2.7 在多个关键基准测试上的表现：</p>
-<table>
-<thead>
-<tr>
-<th>基准测试</th>
-<th>M2.7</th>
-<th>参考对比</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>SWE-Pro（多语言编程）</td>
-<td>56.22%</td>
-<td>接近 Opus 最佳水平</td>
-</tr>
-<tr>
-<td>SWE Multilingual</td>
-<td>76.5%</td>
-<td>多语言代码能力突出</td>
-</tr>
-<tr>
-<td>VIBE-Pro（全栈项目交付）</td>
-<td>55.6%</td>
-<td>接近 Opus 4.6</td>
-</tr>
-<tr>
-<td>Terminal Bench 2（系统理解）</td>
-<td>57.0%</td>
-<td>复杂工程系统</td>
-</tr>
-<tr>
-<td>PinchBench（OpenClaw Agent）</td>
-<td>86.2%</td>
-<td>Opus 4.6 为 87.4%</td>
-</tr>
-<tr>
-<td>MLE Bench Lite（机器学习竞赛）</td>
-<td>66.6% 奖牌率</td>
-<td>追平 Gemini 3.1</td>
-</tr>
-</tbody></table>
+          <p>评测 MiniMax 于 3 月 18 日发布的 M2.7 模型，在 OpenClaw 专用基准 PinchBench 拿到 86.2%、距 Claude Opus 4.6 仅差 1.2 个百分点，输入价 0.30 美元每百万 Token 约为 Opus 的五十分之一，还通过上百轮自主优化实现自我进化，并对比 DeepSeek 与 Qwen 给出国产模型选型建议。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191800/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191800/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -563,7 +509,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -600,86 +546,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-google-antigravity-system-prompt-leaked.webp" alt="cover"></p>
-<p>你有没有想过一个问题：为什么同样是调用大模型，Cursor 写出来的代码像实习生的作品，而 Google Antigravity 生成的 Web 应用却自带”高级感”？</p>
-<p>答案不在模型里，在提示词里。</p>
-<p>2025 年底，Google 发布了代号”反重力”的 AI 编码 IDE——Antigravity。它基于 Gemini 3 Pro，被称为”Cursor 终结者”。公测期间全功能免费，一时间全网疯抢。</p>
-<p>然后，有人把它的<strong>系统提示词（System Prompt）全部扒了出来</strong>。</p>
-<p>GitHub 上至少有三份完整的泄露版本。安全研究员 Johann Rehberger（Embrace The Red 博主）、开发者 anthfgreco、CypherpunkSamurai 先后公开了从会话中提取的完整提示词。长度超过 2 万字，包含 20+ 个工具定义、完整的 Web 开发美学指南、工作流机制、安全策略——几乎是 Google 如何”调教”Gemini 做 Agent 的完整教科书。</p>
-<p>今天我们逐层拆解。看完这篇文章，你不仅能理解 Antigravity 为什么这么强，还能学到一套顶级提示词工程的方法论。</p>
-<h2 id="泄露了什么：12-层提示词架构"><a href="#泄露了什么：12-层提示词架构" class="headerlink" title="泄露了什么：12 层提示词架构"></a>泄露了什么：12 层提示词架构</h2><p>Antigravity 的系统提示词不是一段话，是一个<strong>分层架构</strong>。整理下来，大概分为 12 层：</p>
-<table>
-<thead>
-<tr>
-<th>层级</th>
-<th>内容</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1</td>
-<td>工具定义（Tools）</td>
-<td>20+ 个工具的完整参数描述</td>
-</tr>
-<tr>
-<td>2</td>
-<td>身份设定（Identity）</td>
-<td>“你是 Antigravity，由 Google DeepMind 设计”</td>
-</tr>
-<tr>
-<td>3</td>
-<td>工具调用指南</td>
-<td>路径必须是绝对路径等规则</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Web 应用开发指南</td>
-<td>美学标准、技术栈选择、SEO</td>
-</tr>
-<tr>
-<td>5</td>
-<td>临时消息机制</td>
-<td>系统注入的紧急指令</td>
-</tr>
-<tr>
-<td>6</td>
-<td>通信风格</td>
-<td>Markdown 格式、主动性边界</td>
-</tr>
-<tr>
-<td>7</td>
-<td>用户信息</td>
-<td>操作系统、工作区路径</td>
-</tr>
-<tr>
-<td>8</td>
-<td>用户自定义规则</td>
-<td>.agent&#x2F;rules&#x2F; 目录下的项目规则</td>
-</tr>
-<tr>
-<td>9</td>
-<td>工作流定义</td>
-<td>.agent&#x2F;workflows&#x2F; 下的可复用流程</td>
-</tr>
-<tr>
-<td>10</td>
-<td>上下文断点（Checkpoint）</td>
-<td>长对话的状态恢复机制</td>
-</tr>
-<tr>
-<td>11</td>
-<td>对话历史</td>
-<td>最近 20 次对话的摘要</td>
-</tr>
-<tr>
-<td>12</td>
-<td>消息元数据</td>
-<td>当前时间、光标位置、打开的文件</td>
-</tr>
-</tbody></table>
+          <p>逐层拆解被泄露的 Google Antigravity 系统提示词，全文超过 2 万字、分 12 层架构，包含 20 多个工具定义、browser_subagent 浏览器子代理与「界面看起来简单就算失败」的美学强制要求，从中提炼顶级提示词工程方法论。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191720/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191720/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -746,7 +616,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -783,18 +653,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-nvidia-nemoclaw-openshell-agent-sandbox.webp" alt="cover"></p>
-<p>你的 AI Agent 现在能访问什么？终端、文件系统、AWS 密钥、网络连接——全部。</p>
-<p>这不是危言耸听。过去三个月，AI Agent 安全事故密集爆发：Claude Code 沙箱逃逸、OpenClaw 130+ 安全漏洞、恶意 Skill 偷 API Key、安全厂商自己的安装包泄露 SSL 密钥。每一起事故的根因都一样——<strong>安全逻辑跑在 Agent 进程内部，Agent 自己负责约束自己。</strong></p>
-<p>这就像让一个实习生自己决定能不能进老板办公室。</p>
-<p>3 月 16 日，黄仁勋在 GTC 2026 大会上宣布了 NVIDIA 的回答：<strong>NemoClaw + OpenShell</strong>。一个开源安全栈，核心理念只有一句话——<strong>Agent 不该为自己的安全负责，基础设施应该替它做。</strong></p>
-<p>今天我们来拆解：这个大厂方案到底怎么玩，它真的能解决 AI Agent 的信任危机吗？</p>
-<h2 id="先搞清楚：NemoClaw-到底是什么"><a href="#先搞清楚：NemoClaw-到底是什么" class="headerlink" title="先搞清楚：NemoClaw 到底是什么"></a>先搞清楚：NemoClaw 到底是什么</h2><p>很多人以为 NemoClaw 是 OpenClaw 的竞品。不是。</p>
-<p>NemoClaw 是一个<strong>安装在 OpenClaw 上面的安全栈</strong>。一条命令，把 NVIDIA 的 Nemotron 开源模型和 OpenShell 安全运行时装到你现有的 OpenClaw 环境里。不用改代码，不用迁移数据，原来的 Agent 照跑，只是多了一层”笼子”。</p>
-<p>OpenClaw 的创始人 Peter Steinberger 自己参与了 NemoClaw 的开发。他在发布会上说：**”我们正在和 NVIDIA 一起，为 Claw 构建安全护栏。”**</p>
+          <p>解读 NVIDIA 在 GTC 2026 发布的 NemoClaw 与 OpenShell 安全栈，核心理念是进程外策略执行，靠 YAML 策略实现文件系统锁定、网络默认全阻断、进程级隔离与隐私推理路由四层防护，API Key 仅注入内存、永不落盘。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191640/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191640/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -861,7 +723,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -898,18 +760,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-ironclaw-rust-openclaw-alternative.webp" alt="cover"></p>
-<p>OpenClaw 火了，但骂它的人也越来越多。</p>
-<p>Gartner 分析师说它”默认不安全”。Cisco 安全团队称它为”安全噩梦”。Palo Alto Networks 警告说 43 万行 TypeScript 就是 43 万行潜在攻击面。ClawHub 上发现了 341 个恶意 Skills，有人的 API Key 被偷，有人的信用卡被刷爆。</p>
-<p>OpenClaw 的维护者自己也承认：**Prompt Injection 和网络暴露”不在安全范围内”**。</p>
-<p>这时候，一个人站了出来。</p>
-<p>他叫 Illia Polosukhin。你可能没听过这个名字，但你一定听过他的论文——**”Attention Is All You Need”**，Transformer 架构的八位作者之一，整个大模型时代的奠基人。</p>
-<p>他用 Rust 从零重写了 OpenClaw，项目叫 <strong>IronClaw</strong>。同时，另一个社区项目 <strong>ZeroClaw</strong> 也在用 Rust 重写 OpenClaw，走了一条完全不同的路。</p>
-<p>两个项目，两种哲学。一个追求极致安全，一个追求极致性能。今天我们一起拆解。</p>
-<h2 id="IronClaw：安全优先——“AI-永远看不到你的密码”"><a href="#IronClaw：安全优先——“AI-永远看不到你的密码”" class="headerlink" title="IronClaw：安全优先——“AI 永远看不到你的密码”"></a>IronClaw：安全优先——“AI 永远看不到你的密码”</h2><p>IronClaw 的核心设计原则只有一条：<strong>你的 AI 助手应该为你工作，而不是对抗你。</strong></p>
+          <p>对比两个用 Rust 重写 OpenClaw 的项目，Transformer 论文作者 Illia Polosukhin 的 IronClaw 主打 WASM 沙箱与 AES-256-GCM 凭证保险箱等三层安全防御，学生团队的 ZeroClaw 则以 3.4MB 单二进制、启动快 600 倍、内存省 194 倍取胜，分别代表安全优先与性能优先两条路线。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191600/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191600/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -976,7 +830,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1013,18 +867,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-nas-raspberrypi-local-deploy.webp" alt="cover"></p>
-<p>你有没有想过一个问题：你跟 AI 聊的每一句话，都去了哪里？</p>
-<p>你让 ChatGPT 帮你写一封辞职信，这封信的内容存在了 OpenAI 的服务器上。你让 Claude 帮你分析公司的财报数据，这些数据经过了 Anthropic 的 API。你让 AI 助手整理你的邮箱，它需要读取你所有的邮件内容。</p>
-<p>大多数时候，这不是问题。但如果你在处理商业机密、个人隐私、或者任何你不希望被第三方看到的信息——你确定要把这些数据发到大洋彼岸的服务器上吗？</p>
-<p>OpenClaw 的核心理念之一就是<strong>本地优先</strong>。它可以跑在你家里的树莓派上，跑在你的 NAS 里，配合 Ollama 本地模型，实现真正的<strong>数据零外泄</strong>。</p>
-<p>今天这篇文章，我分别演示树莓派和 NAS 两种部署方案，再配上 Ollama 本地模型，让你拥有一个完全属于自己的 AI 管家——数据不出家门，7×24 小时在线。</p>
-<h2 id="为什么一定要本地部署"><a href="#为什么一定要本地部署" class="headerlink" title="为什么一定要本地部署"></a>为什么一定要本地部署</h2><p>先说一个数据：2026 年 3 月中旬，中国政府要求国有企业和政府机构禁止在办公电脑上运行 OpenClaw。国家互联网应急中心发布了风险提示，其中一条核心风险就是**”核心数据泄露”**。</p>
-<p>这个风险不仅是 OpenClaw 的问题，而是所有依赖云端 API 的 AI 工具的通病。只要你的数据经过第三方服务器，就存在泄露的可能。</p>
-<p>本地部署解决了三个核心问题：</p>
+          <p>演示在树莓派与 NAS 上本地部署 OpenClaw 并配合 Ollama 实现数据不出家门，树莓派方案两三百元起即可 7×24 在线，但强调树莓派只跑 Gateway、模型推理交给云端或局域网设备，并给出 systemd 开机自启与 SSH 隧道访问的具体步骤。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191520/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191520/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1091,7 +937,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1128,18 +974,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-typescript-plugin-tutorial.webp" alt="cover"></p>
-<p>OpenClaw 装好了，模型也配了，Telegram 也接了。然后呢？</p>
-<p>你让它帮你查天气，它说”我没有这个能力”。你让它帮你管理 Notion 笔记，它也说不行。你去 ClawHub 搜，发现那个技能上次更新是一个月前，还不兼容最新版。</p>
-<p>这时候你有两个选择：等别人写，或者自己动手。</p>
-<p>今天这篇文章，我带你从零开始，用 TypeScript 给 OpenClaw 写一个自定义插件。不是那种”Hello World”级别的演示，而是一个真正能用的工具——<strong>一个 GitHub 仓库监控插件</strong>，能定时检查你关注的项目有没有新 Release，然后通过消息平台通知你。</p>
-<p>整个过程 10 分钟。代码不超过 100 行。</p>
-<h2 id="先搞清楚：Skill-和-Plugin-有什么区别"><a href="#先搞清楚：Skill-和-Plugin-有什么区别" class="headerlink" title="先搞清楚：Skill 和 Plugin 有什么区别"></a>先搞清楚：Skill 和 Plugin 有什么区别</h2><p>OpenClaw 有两套扩展机制，很多人搞混。</p>
-<p><strong>Skill（技能）</strong> 是自然语言驱动的。一个 Skill 就是一个文件夹，核心是 <code>SKILL.md</code> 文件——用 Markdown 写的”使用说明书”。你告诉 AI “这个工具是做什么的、什么时候该用、怎么用”，AI 自己判断何时调用。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">my-skill/</span><br><span class="line">└── SKILL.md    # 用自然语言告诉 AI 怎么用这个工具</span><br></pre></td></tr></table></figure>
+          <p>用 TypeScript 给 OpenClaw 写自定义 Plugin 的十分钟手把手教程，先厘清 Skill（SKILL.md 说明书）与 Plugin（跑在 Gateway 进程的代码）的分工，再用不到 100 行代码实现 GitHub 仓库 Release 监控插件，并讲解 registerTool 等核心注册 API 的用法。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191440/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191440/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1206,7 +1044,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1243,18 +1081,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-openclaw-cloudflare-workers-deploy.webp" alt="cover"></p>
-<p>你想让 OpenClaw 7×24 小时在线，但不想买 Mac Mini，也不想租一台月费几百块的云服务器。</p>
-<p>有没有办法？</p>
-<p>有。答案是 Cloudflare Workers。</p>
-<p>Cloudflare 官方在 2026 年 1 月底发布了 MoltWorker 项目——一个中间件方案，能让 OpenClaw 直接跑在 Cloudflare 的全球边缘网络上。不需要自己的硬件，不需要运维，不需要半夜起来重启服务器。整个部署过程 15 分钟，月费最低 5 美元（约 35 元人民币）。</p>
-<p>今天这篇文章，我把完整的部署流程、省钱策略、踩过的坑全部整理出来。即使你从来没用过 Cloudflare，也能跟着做。</p>
-<h2 id="为什么选-Cloudflare-Workers"><a href="#为什么选-Cloudflare-Workers" class="headerlink" title="为什么选 Cloudflare Workers"></a>为什么选 Cloudflare Workers</h2><p>先回答一个问题：跑 OpenClaw 的方案这么多，为什么偏偏选 Cloudflare？</p>
-<p><strong>第一，不用买硬件。</strong> 硅谷流行买 Mac Mini 跑 OpenClaw，一台 M4 版本至少 4000 元起步。Cloudflare Workers 每月 5 美元，一年的费用还不到一台 Mac Mini 的零头。</p>
-<p><strong>第二，天然 24 小时在线。</strong> 本地电脑关机就断了，VPS 偶尔会宕机。Cloudflare 在全球有 300 多个数据中心，你的 OpenClaw 跑在离用户最近的节点上，稳定性拉满。</p>
+          <p>实战演示用 Cloudflare 官方 MoltWorker 项目把 OpenClaw 部署到 Workers 边缘网络，采用 Worker 入口、Sandbox 容器、R2 存储三层架构，15 分钟完成部署、月费最低 5 美元，并附改接 DeepSeek 兼容接口等省钱攻略，不买服务器也能全天候在线。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191400/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191400/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1321,7 +1151,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1358,18 +1188,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-tencent-qclaw-qq-wechat-openclaw.webp" alt="cover"></p>
-<p>你在地铁上，掏出手机，打开微信，给”QClaw管家”发了一条消息：”把桌面上那个 Excel 文件整理一下，按销售额排序，生成一份图表，存到 Documents 目录。”</p>
-<p>手机揣回口袋。到公司打开电脑，文件已经做好了。</p>
-<p>这不是未来畅想。这是腾讯刚刚推出的 <strong>QClaw</strong> 正在做的事。</p>
-<p>3 月 9 日，腾讯开始内测 QClaw——一个基于 OpenClaw 的一键部署工具，直连微信和 QQ。3 月 18 日，公测版上线，微信小程序入口全面升级。南华早报（SCMP）的标题很直接：**”龙虾热潮席卷中国，腾讯把 OpenClaw 搬进了微信。”**</p>
-<p>Business Insider 的报道更猛：<strong>中国科技巨头正在疯抢 OpenClaw 的金矿。</strong></p>
-<p>今天我们来拆解：QClaw 到底是什么？腾讯凭什么切入这场”养龙虾”大战？这件事为什么比你想的重要得多？</p>
-<h2 id="QClaw-是什么：三层架构，一句话说清"><a href="#QClaw-是什么：三层架构，一句话说清" class="headerlink" title="QClaw 是什么：三层架构，一句话说清"></a>QClaw 是什么：三层架构，一句话说清</h2><p>QClaw 不是腾讯从零造的新框架。它是 <strong>围绕 OpenClaw 做的一次产品化封装</strong>。</p>
-<p>你可以把 QClaw 理解成三层东西叠在一起：</p>
+          <p>解析腾讯基于 OpenClaw 封装的 QClaw，三分钟三步完成部署后即可在微信小程序「QClaw管家」里发消息指挥电脑干活，内置 Kimi-2.5、GLM-5 等国产模型，并配套电脑管家团队的 AI 安全沙箱应对 Skills 供应链投毒风险。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191343/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191343/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1436,7 +1258,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2026-06-11 08:07:16" itemprop="dateModified" datetime="2026-06-11T08:07:16+00:00">2026-06-11</time>
+      <time title="修改时间：2026-06-11 08:48:17" itemprop="dateModified" datetime="2026-06-11T08:48:17+00:00">2026-06-11</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1473,20 +1295,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p><img src="https://image.vance.xin/blog-cover/20260319-anthropic-claude-dispatch-cowork-remote.webp" alt="cover"></p>
-<p>想象一个场景：你在地铁上，掏出手机，给 Claude 发了一条消息——“把上周的销售数据从 Notion 拉出来，做成一份 PPT，导出 PDF 放到桌面上。”</p>
-<p>你把手机揣回口袋。到家的时候，打开电脑，PDF 已经安安静静地躺在桌面上了。</p>
-<p>这不是科幻电影。3 月 17 日，Anthropic 在 Claude Cowork 里发布了一个新功能——<strong>Dispatch</strong>。它让你用手机远程指挥 Claude 在你的电脑上干活。你不在电脑前的时候，AI 帮你处理文件、整理邮件、生成报告、制作演示文稿。</p>
-<p>社区里有人直接说：**”Anthropic 比 OpenAI 更快地造出了 OpenClaw。”**</p>
-<p>今天我们来拆解：Dispatch 到底怎么用？它和 Claude Code Remote Control 有什么区别？这个功能意味着什么？</p>
-<h2 id="Dispatch-是什么：一句话说清楚"><a href="#Dispatch-是什么：一句话说清楚" class="headerlink" title="Dispatch 是什么：一句话说清楚"></a>Dispatch 是什么：一句话说清楚</h2><p>Anthropic 工程师 Felix Rieseberg 在 X 上的原话：</p>
-<blockquote>
-<p>“One persistent conversation with Claude running on your computer — message it from your phone and return later to finished work.”</p>
-</blockquote>
-<p><strong>一个持续的对话，Claude 跑在你的电脑上——用手机发消息，回来的时候工作已经做完了。</strong></p>
+          <p>解读 Anthropic 于 3 月 17 日在 Claude Cowork 中发布的 Dispatch 功能，扫 QR 码配对后可用手机远程指挥电脑上的 Claude 调用 38 个连接器替你干活，对比其与 Claude Code Remote Control 的差异，并引用早期实测约 50% 成功率的真实体验。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2026/03/19/202603191338/#more" rel="contents">
+              <a class="btn" href="/2026/03/19/202603191338/">
                 阅读全文 &raquo;
               </a>
             </div>

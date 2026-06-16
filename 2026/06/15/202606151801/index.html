@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Loop Engineer（循环工程师）指不再一行行写代码、而是设计并运维一套让 AI agent 自己循环干活（写→跑→看报错→改→再跑）的人，2026 年 6 月才火起来、定义仍松散。难度分三档：让 AI 带着测试自己改到全过普通人现在就能上手，设验证门和控成本要真功夫，几百个子 agent 并行加对抗校验是资深工程的活。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="什么是 Loop Engineer（循环工程师）？我把这事掰开揉碎，普通人到底能不能上手">
+<meta property="og:url" content="https://www.vance.xin/2026/06/15/202606151801/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Loop Engineer（循环工程师）指不再一行行写代码、而是设计并运维一套让 AI agent 自己循环干活（写→跑→看报错→改→再跑）的人，2026 年 6 月才火起来、定义仍松散。难度分三档：让 AI 带着测试自己改到全过普通人现在就能上手，设验证门和控成本要真功夫，几百个子 agent 并行加对抗校验是资深工程的活。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260615-loop-engineer.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260615-loop-engineer-diagram.webp">
+<meta property="article:published_time" content="2026-06-15T18:01:00.000Z">
+<meta property="article:modified_time" content="2026-06-16T09:12:22.342Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Loop Engineer">
+<meta property="article:tag" content="自主编码">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260615-loop-engineer.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/06/15/202606151801/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/06/15/202606151801/","path":"2026/06/15/202606151801/","title":"什么是 Loop Engineer（循环工程师）？我把这事掰开揉碎，普通人到底能不能上手"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>什么是 Loop Engineer（循环工程师）？我把这事掰开揉碎，普通人到底能不能上手 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "什么是 Loop Engineer（循环工程师）？我把这事掰开揉碎，普通人到底能不能上手",
+  "url": "https://www.vance.xin/2026/06/15/202606151801/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/06/15/202606151801/",
+  "datePublished": "2026-06-15T18:01:00.000Z",
+  "dateModified": "2026-06-16T09:12:22.342Z",
+  "description": "Loop Engineer（循环工程师）指不再一行行写代码、而是设计并运维一套让 AI agent 自己循环干活（写→跑→看报错→改→再跑）的人，2026 年 6 月才火起来、定义仍松散。难度分三档：让 AI 带着测试自己改到全过普通人现在就能上手，设验证门和控成本要真功夫，几百个子 agent 并行加对抗校验是资深工程的活。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%8A%8A%E8%BF%99%E4%B8%AA%E6%96%B0%E8%AF%8D%E7%BF%BB%E8%AF%91%E6%88%90%E4%BA%BA%E8%AF%9D"><span class="nav-text">先把这个新词翻译成人话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E8%B7%9F%E3%80%8C%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1%E3%80%8D%E5%B7%AE%E5%9C%A8%E5%93%AA%EF%BC%8C%E8%BF%99%E6%98%AF%E5%85%B3%E9%94%AE"><span class="nav-text">它跟「定时任务」差在哪，这是关键</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E4%BA%8B%E5%88%B0%E5%BA%95%E9%9A%BE%E4%B8%8D%E9%9A%BE%EF%BC%8C%E6%88%91%E5%88%86%E4%B8%89%E6%A1%A3%E8%80%81%E5%AE%9E%E8%AF%B4"><span class="nav-text">这事到底难不难，我分三档老实说</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E8%87%AA%E5%B7%B1%E5%A4%A9%E5%A4%A9%E5%9C%A8%E5%BE%AA%E7%8E%AF%E9%87%8C%E5%B9%B2%E7%9A%84%E5%87%A0%E4%BB%B6%E7%9C%9F%E4%BA%8B"><span class="nav-text">我自己天天在循环里干的几件真事</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B4%E5%9B%9E%E5%BC%80%E5%A4%B4%E9%82%A3%E5%8F%A5"><span class="nav-text">说回开头那句</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">352</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">625</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/06/15/202606151801/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="什么是 Loop Engineer（循环工程师）？我把这事掰开揉碎，普通人到底能不能上手 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Loop Engineer（循环工程师）指不再一行行写代码、而是设计并运维一套让 AI agent 自己循环干活（写→跑→看报错→改→再跑）的人，2026 年 6 月才火起来、定义仍松散。难度分三档：让 AI 带着测试自己改到全过普通人现在就能上手，设验证门和控成本要真功夫，几百个子 agent 并行加对抗校验是资深工程的活。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          什么是 Loop Engineer（循环工程师）？我把这事掰开揉碎，普通人到底能不能上手
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-06-15 18:01:00" itemprop="dateCreated datePublished" datetime="2026-06-15T18:01:00+00:00">2026-06-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-16 09:12:22" itemprop="dateModified" datetime="2026-06-16T09:12:22+00:00">2026-06-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI%E6%8E%A2%E7%B4%A2/" itemprop="url" rel="index"><span itemprop="name">AI探索</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Loop Engineer（循环工程师）指不再一行行写代码、而是设计并运维一套让 AI agent 自己循环干活（写→跑→看报错→改→再跑）的人，2026 年 6 月才火起来、定义仍松散。难度分三档：让 AI 带着测试自己改到全过普通人现在就能上手，设验证门和控成本要真功夫，几百个子 agent 并行加对抗校验是资深工程的活。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260615-loop-engineer.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>这几天我刷推、刷朋友圈，老看到同一句话在转：别再给 AI 打字了，去写循环。配的图基本都是一个新词，Loop Engineer，有人翻成「循环工程师」。底下评论分两拨，一拨说这是程序员的未来，另一拨说又是个唬人的黑话。我天天用 Claude Code 干活，看到这词第一反应是想笑，因为我每天干的活，差不多就是这个意思，只是从来没人给它起过名。</p>
+<p>那今天就把这事彻底讲明白：Loop Engineer 到底是什么，以及最关键的一问，对咱们普通人来说，实践起来到底有没有难度。我尽量讲到我妈也能听懂。</p>
+<h2 id="先把这个新词翻译成人话"><a href="#先把这个新词翻译成人话" class="headerlink" title="先把这个新词翻译成人话"></a>先把这个新词翻译成人话</h2><p>我一个词一个词拆给你。</p>
+<p>先说 agent，你就理解成「一个能自己动手干活的 AI 小助手」。它不光会跟你聊天，还能真去改文件、敲命令、跑程序。再说 loop，就是「循环」，让它把一件事翻来覆去做：写一版、跑一下试试、看哪里报错了、改、再跑一遍，错了接着改，直到对为止。</p>
+<p>所以 Loop Engineer，说人话就是：这个人不再自己一行一行敲代码了。他干的活，是搭一台「让 AI 自己转圈干活」的机器，然后在边上盯着这台机器转。</p>
+<p>机器里那个 AI，自己写、自己跑、自己看报错、自己改。他管的是这台机器，代码本身他不太碰。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260615-loop-engineer-diagram.webp" alt="传统写代码 vs Loop Engineer 的循环"></p>
+<p>这词有多新呢？我得诚实告诉你，它非常新，新到现在都没个铁板钉钉的定义。源头是 2026 年 6 月 7 号，一个叫 Peter Steinberger 的开发者发了条推，大意是「别再给编程 AI 打 prompt 了，去设计一个能替你给 AI 打 prompt 的循环」。这条推被看了一百多万次，第二天 Google 的工程师 Addy Osmani 写了篇文章把它系统化，这词才算正式立住。连 Claude Code 团队的负责人 Boris Cherny 都公开说过一句很扎心的话：他现在不亲手给 AI 写指令了，他的工作就是写循环。</p>
+<p>但你也别把它当成业界已经盖棺定论的东西。靠谱的报道现在还很稀薄，不同的人对它边界的理解都不太一样。我把它当成一个正在长出来的概念看，而不是一条铁律。</p>
+<h2 id="它跟「定时任务」差在哪，这是关键"><a href="#它跟「定时任务」差在哪，这是关键" class="headerlink" title="它跟「定时任务」差在哪，这是关键"></a>它跟「定时任务」差在哪，这是关键</h2><p>很多人一听「让 AI 自己循环」，立马想到一个老东西：定时任务。设个闹钟，每小时自动跑一遍脚本。这玩意几十年前就有了，有啥稀奇。</p>
+<p>差别就在循环里那个「会拿主意的脑子」。定时任务跑的是一段写死的脚本，今天这样跑，明天还这样跑，它不会变通。但 Loop Engineer 写的循环里坐着一个 AI，它每转一圈会看一眼现在是什么情况，自己决定下一步干嘛：是接着往下做、还是退回去重来、还是干脆停下来喊人。决定权交给了 AI 自己。</p>
+<p>所以一个循环能转起来，得先有两样东西。一个是触发器，就是「啥时候开始转」，可能是你敲一句话，也可能是程序一报错就自动启动。另一个更要命，叫「可验证的目标」，就是得有个明确的「怎么算干完了」。</p>
+<p>这个目标可以很硬，比如测试全部通过；也可以软一点，比如让另一个 AI 检查一下结果对不对。</p>
+<p>我看到一句话特别精辟：你的循环要是没有这个检查环节，那它就不是循环，是一台很自信的烧钱机器。它会一直转、一直烧钱，但没人知道它转对了没有。</p>
+<p>这条路其实也不是凭空冒出来的。一年前就有个澳洲开发者 Geoffrey Huntley 搞出过一个叫 Ralph 的玩法，名字取自《辛普森一家》里那个一根筋的小孩。核心特别朴素：写一个循环，把 AI 的输出连同报错一股脑反复喂回给它自己，靠又笨又执着，硬是把答案撞出来。他用这套东西，三个月几乎全自动造出了一门完整的编程语言。他有句话我记到现在：写代码这门手艺正在死去，但搭系统这门工程比以往任何时候都更鲜活。</p>
+<h2 id="这事到底难不难，我分三档老实说"><a href="#这事到底难不难，我分三档老实说" class="headerlink" title="这事到底难不难，我分三档老实说"></a>这事到底难不难，我分三档老实说</h2><p>好，到了你最关心的问题。网上现在两个极端，一拨喊「人人都能当循环工程师」，一拨说「这是天才才玩得转的东西」。我都不同意。我天天干这个，给你分三档说，每一档难度差着十万八千里。</p>
+<p>第一档，普通人现在就能上手，几乎没门槛。说的就是让 AI 带着一个「对错判断」自己改到全过。你不用会写代码，只要你能描述清楚你要啥，再有个东西能判断它做对没有，就行。</p>
+<p>这个「判断」可以很土。网页能不能正常打开、数据对不对得上、一段脚本能不能跑通，都算。你跟它说「跑一下，错了就接着改，改到全对再叫我」，剩下的它自己转圈。</p>
+<p>这一档真是人人能上。我让一个完全不懂编程的朋友试过整理一堆乱七八糟的表格，他就盯着「数据对没对齐」这一个判断，AI 自己改了五六轮就齐了。</p>
+<p>第二档，要花点真功夫了，难点有三个。</p>
+<p>一是怎么定义「算干完了」，这比想象中难。很多活一开始你自己都说不清最后长啥样，你给的目标一含糊，AI 就朝着那句含糊的话乱使劲，结果还不如你手动来。</p>
+<p>二是控成本。循环每转一圈都在烧钱，烧的是算力额度。最怕它半夜卡在某个地方反复重写同一段，你早上一看账单，钱白烧了一宿。</p>
+<p>三是判断 AI 是不是在「钻空子」，这点最阴。你让它「把测试跑绿」，它可能没真把活干好，转头偷偷把那条测试给删了，或者塞点假数据进去蒙混过关。测试是绿了，东西其实更烂了。说白了，人也会偷懒，AI 偷起懒来比人快得多。</p>
+<p>第三档，是资深工程师的活了，普通人短期摸不到，也不必摸到。我自己干过这一档：一次让几百个 AI 小助手同时开工，一拨负责改代码，另一拨专门在后头挑刺、互相对着干。这背后要给整个循环装上一堆「安全门」和「刹车」，几万行代码一口气改完，靠人去一行行审根本审不过来，全得靠工程手段兜底。这是真有门槛的硬工程，不是点一下就成的。</p>
+<h2 id="我自己天天在循环里干的几件真事"><a href="#我自己天天在循环里干的几件真事" class="headerlink" title="我自己天天在循环里干的几件真事"></a>我自己天天在循环里干的几件真事</h2><p>光说档位有点虚，给你几个我亲手干过的，你就有画面了。</p>
+<p>最猛的一次，我让 AI 把一个老项目里 7600 行的 Java 代码，整库重写成另一种语言 Kotlin。早上十点多动手，下午六点多收工，当天晚上就上了线，九十来个接口行为一个没变。</p>
+<p>我全程几乎没看几行代码，盯的是三道「验证门」绿没绿：编译能不能过、原来那套老测试是不是全绿、新旧两版代码对同一笔请求吐出来的结果是不是一字不差。三道门全开，才算放行。</p>
+<p>这就是典型的循环里干活。我看的是这几道门有没有绿，代码具体改成啥样我基本不管。</p>
+<p>里头还真出过一个特别隐蔽的坑。有个字段在重写时悄悄丢了，编译不报错、跑测试也不挂、本地点一下还正常，等上了线客户端少了个字段才会发作。它就是被那拨「专门挑刺」的 AI 在后头校验时给捞回来的。要我自己肉眼读 7600 行，这坑八成混过去了。所以「让 AI 去验 AI」这件事，我不光信，我还吃过它的红利。</p>
+<p>还有更省心的。上周我把一个跨好几个文件的改动，一句话丢给 Claude Code，它自己开了个干净的工作分支，列好计划，一个文件一个文件改，中间自己跑测试，挂了回头修，全弄完才喊我看。我趁这工夫去厨房热了个饭，回来活已经干了一半。这就是循环替你转的感觉，你不用守着它一步步催。</p>
+<h2 id="说回开头那句"><a href="#说回开头那句" class="headerlink" title="说回开头那句"></a>说回开头那句</h2><p>绕了一圈，回到开头那句「别再给 AI 打字了，去写循环」。我现在算是想明白了。它没让你立马去当什么高大上的工程师，只是提醒你换个姿势：从「亲手干每一步」挪到「设计好一台机器，让它替你转，你来盯方向和把关」。</p>
+<p>这个姿势的第一档，今天你就能体会，找个「有明确对错」又「老重复」的小活，让 AI 自己跑圈到对，别一遍遍手动催它。一次性的活就直接说，别硬上循环，那叫高射炮打蚊子。等你想往上走，再去啃验证门、成本和防钻空子那些真功夫。</p>
+<p>我反正是回不去一行行敲的日子了。最后想问问你：你平时有没有那种烦死人、又特别有规律的重复活，正适合丢给 AI 自己转圈？评论区说给我听，我帮你看看它落在哪一档。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/Loop-Engineer/" rel="tag"># Loop Engineer</a>
+              <a href="/tags/%E8%87%AA%E4%B8%BB%E7%BC%96%E7%A0%81/" rel="tag"># 自主编码</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/15/202606151737/" rel="prev" title="AI 裁员浪潮成「火药桶」：一个天天用 Claude Code 的人，夹在中间的真实处境">
+                  <i class="fa fa-angle-left"></i> AI 裁员浪潮成「火药桶」：一个天天用 Claude Code 的人，夹在中间的真实处境
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/06/16/202606161510/" rel="next" title="Kimi K2.7 Code 高速版快 6 倍，我拿天天用的 Claude Code 算了笔账">
+                  Kimi K2.7 Code 高速版快 6 倍，我拿天天用的 Claude Code 算了笔账 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">18:39</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

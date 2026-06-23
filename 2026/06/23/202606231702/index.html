@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="HuggingFace 用单个 GitHub Actions 工作流把 huggingface_hub 的发布周期从 4 到 6 周压到每周一次，每次只花约 0.25 美元，但它特意把人留在闭环里，AI 只起草、人来拍板转正。我同一天遇到博客部署 token 过期静默失败一整天的坑，反过来印证了一件事：自动化最贵的隐藏成本，是没人盯状态时失败会悄无声息地堆积。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HuggingFace 把发布周期从 6 周压到每周一次，可它偏偏没让 AI 全包">
+<meta property="og:url" content="https://www.vance.xin/2026/06/23/202606231702/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="HuggingFace 用单个 GitHub Actions 工作流把 huggingface_hub 的发布周期从 4 到 6 周压到每周一次，每次只花约 0.25 美元，但它特意把人留在闭环里，AI 只起草、人来拍板转正。我同一天遇到博客部署 token 过期静默失败一整天的坑，反过来印证了一件事：自动化最贵的隐藏成本，是没人盯状态时失败会悄无声息地堆积。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260623-auto-release-human-in-loop.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260623-auto-release-human-in-loop-flow.webp">
+<meta property="article:published_time" content="2026-06-23T17:02:00.000Z">
+<meta property="article:modified_time" content="2026-06-23T09:20:40.358Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="自动化">
+<meta property="article:tag" content="GitHubActions">
+<meta property="article:tag" content="CICD">
+<meta property="article:tag" content="HuggingFace">
+<meta property="article:tag" content="发布流水线">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260623-auto-release-human-in-loop.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/06/23/202606231702/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/06/23/202606231702/","path":"2026/06/23/202606231702/","title":"HuggingFace 把发布周期从 6 周压到每周一次，可它偏偏没让 AI 全包"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>HuggingFace 把发布周期从 6 周压到每周一次，可它偏偏没让 AI 全包 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "HuggingFace 把发布周期从 6 周压到每周一次，可它偏偏没让 AI 全包",
+  "url": "https://www.vance.xin/2026/06/23/202606231702/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/06/23/202606231702/",
+  "datePublished": "2026-06-23T17:02:00.000Z",
+  "dateModified": "2026-06-23T09:20:40.358Z",
+  "description": "HuggingFace 用单个 GitHub Actions 工作流把 huggingface_hub 的发布周期从 4 到 6 周压到每周一次，每次只花约 0.25 美元，但它特意把人留在闭环里，AI 只起草、人来拍板转正。我同一天遇到博客部署 token 过期静默失败一整天的坑，反过来印证了一件事：自动化最贵的隐藏成本，是没人盯状态时失败会悄无声息地堆积。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#HuggingFace-%E8%BF%99%E5%A5%97%E6%B5%81%E6%B0%B4%E7%BA%BF%EF%BC%8C%E5%88%B0%E5%BA%95%E8%87%AA%E5%8A%A8%E5%8C%96%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">HuggingFace 这套流水线，到底自动化了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%A8%E9%83%BD%E8%83%BD%E8%87%AA%E5%8A%A8%E4%BA%86%EF%BC%8C%E4%BB%96%E4%BB%AC%E4%B8%BA%E4%BB%80%E4%B9%88%E5%81%8F%E5%81%8F%E6%8A%8A%E4%BA%BA%E7%95%99%E4%B8%8B"><span class="nav-text">全都能自动了，他们为什么偏偏把人留下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8C%E4%B8%80%E5%A4%A9%EF%BC%8C%E6%88%91%E7%9A%84%E5%8D%9A%E5%AE%A2%E6%B5%81%E6%B0%B4%E7%BA%BF%E7%BB%99%E6%88%91%E4%B8%8A%E4%BA%86%E5%8F%8D%E9%9D%A2%E4%B8%80%E8%AF%BE"><span class="nav-text">同一天，我的博客流水线给我上了反面一课</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E6%AD%A3%E4%B8%80%E5%8F%8D%EF%BC%8C%E5%88%B0%E5%BA%95%E6%95%99%E4%BA%86%E6%88%91%E4%BB%80%E4%B9%88"><span class="nav-text">一正一反，到底教了我什么</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">359</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">640</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/06/23/202606231702/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="HuggingFace 把发布周期从 6 周压到每周一次，可它偏偏没让 AI 全包 | 飞飞的AI实验室">
+      <meta itemprop="description" content="HuggingFace 用单个 GitHub Actions 工作流把 huggingface_hub 的发布周期从 4 到 6 周压到每周一次，每次只花约 0.25 美元，但它特意把人留在闭环里，AI 只起草、人来拍板转正。我同一天遇到博客部署 token 过期静默失败一整天的坑，反过来印证了一件事：自动化最贵的隐藏成本，是没人盯状态时失败会悄无声息地堆积。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          HuggingFace 把发布周期从 6 周压到每周一次，可它偏偏没让 AI 全包
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-06-23 17:02:00 / 修改时间：09:20:40" itemprop="dateCreated datePublished" datetime="2026-06-23T17:02:00+00:00">2026-06-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">HuggingFace 用单个 GitHub Actions 工作流把 huggingface_hub 的发布周期从 4 到 6 周压到每周一次，每次只花约 0.25 美元，但它特意把人留在闭环里，AI 只起草、人来拍板转正。我同一天遇到博客部署 token 过期静默失败一整天的坑，反过来印证了一件事：自动化最贵的隐藏成本，是没人盯状态时失败会悄无声息地堆积。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260623-auto-release-human-in-loop.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>今天我干了两件看着不相干的事，凑到一块儿却把同一个道理给我讲明白了。</p>
+<p>上午我刷到 HuggingFace 官方发的一篇博客，标题大意是「我们用 AI、开源工具，加一个留在闭环里的人，把 huggingface_hub 做到每周发一次」。下午我自己去查博客后台，发现一个挂了整整一天没人知道的坑。两件事一正一反，咬得严丝合缝。这篇就掰开讲讲，自动化发布流水线到底该怎么搭，人该卡在哪一步。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260623-auto-release-human-in-loop-flow.webp" alt="流程图"></p>
+<h2 id="HuggingFace-这套流水线，到底自动化了什么"><a href="#HuggingFace-这套流水线，到底自动化了什么" class="headerlink" title="HuggingFace 这套流水线，到底自动化了什么"></a>HuggingFace 这套流水线，到底自动化了什么</h2><p>先说 HF 这边。huggingface_hub 是他们那个官方 Python 客户端库，原来是每 4 到 6 周才发一个新版本。官方的原话是，每一周不发版，就有一周的修复和新功能卡在 main 分支上出不去。换成大白话，活早干完了，只是没打包送到用户手里，干等着。</p>
+<p>现在他们把整条发布流程塞进了一个 GitHub Actions 工作流里。GitHub Actions 说人话就是一套挂在代码仓库上的自动跑腿脚本，你一推代码或者一按钮，它就照着剧本把活全干了。这一个工作流自动干的事，列出来挺吓人：算下一个版本号、改源码里的版本字段、建发布分支、提交打 tag 推上去、把包发布到 PyPI、起草这次的更新说明、给下游依赖库建测试分支、写一条团队群里的 Slack 公告、发完版再把版本号回弹到开发态、给已经合并的 PR 挨个留言、同步命令行文档。</p>
+<p>一整套下来，按官方说，一次发布在他们的推理服务上只花大约 0.25 美元。两毛五，一杯水都不到。</p>
+<p>里面起草更新说明和写 Slack 公告这两件「动笔」的活，是交给一个开权重模型干的，官方点名是 zai-org 的 GLM-5.2，七百多亿参数那个。它读 PR 的元数据和文档改动，把这次到底改了啥总结成人能看的更新说明。工具栈也基本是开源的：编排靠 GitHub Actions，agent 运行时用 OpenCode，发包用 PyPI 的 Trusted Publishing。这个 Trusted Publishing 打个比方就是免密码发布，不用再把一长串密钥存在仓库里，临时换一个短命令牌就把包推上去，安全得多。</p>
+<h2 id="全都能自动了，他们为什么偏偏把人留下"><a href="#全都能自动了，他们为什么偏偏把人留下" class="headerlink" title="全都能自动了，他们为什么偏偏把人留下"></a>全都能自动了，他们为什么偏偏把人留下</h2><p>到这你可能觉得，那不就全自动了吗。妙就妙在没有。</p>
+<p>HF 特意在流程里留了一道人工卡口。官方管这叫 human-in-the-loop，说人话就是「让人留在自动化的回路里」。卡在哪儿呢，卡在最后转正那一步。模型先发一个候选版本，把它起草的更新说明摆进一个草稿状态的 release 里。这时候一个真人坐下来，读一遍这份草稿，改语气、调侧重、把模型权重判断错的地方纠回来，然后才手动触发那个把候选版转成正式版的动作。</p>
+<p>这道人工编辑，按官方说大概十五分钟。而过去纯手写更新说明加凑公告，得花掉大半天。</p>
+<p>HF 给这套设计写了句很狠的话：一份看着自信、却在细节上悄悄出错的草稿，比压根没有草稿更糟。我读到这句心里咯噔一下。因为模型写出来的东西最唬人的地方就是它特别像那么回事，语气笃定、格式工整，你扫一眼根本看不出哪句把影响范围说反了。要是这种草稿不经人看直接转正发出去，用户照着错的更新说明去升级，那才是真出事。</p>
+<p>所以他们的原则就一句：模型起草，人来拍板。AI 干的是把素材揉成草稿这种又累又机械的活，但「这版到底能不能对外」这个决定，仍然攥在人手里。</p>
+<h2 id="同一天，我的博客流水线给我上了反面一课"><a href="#同一天，我的博客流水线给我上了反面一课" class="headerlink" title="同一天，我的博客流水线给我上了反面一课"></a>同一天，我的博客流水线给我上了反面一课</h2><p>讲完 HF，说我自己。</p>
+<p>我这个博客 vance.xin 整条发布也是 GitHub Actions 自动化的。我往主分支一推文章，它就自动跑构建、自动部署，而且我还在工作流里挂了一手：每次部署完，自动把最新的文章链接推给百度的收录接口，再通过 IndexNow 推给 Bing 和 Yandex。IndexNow 说人话就是一个让你主动通知搜索引擎「我这页更新了快来抓」的协议，省得干等爬虫自己晃悠过来。整套跑顺了，我写完一篇推上去，剩下的全程不用我管。</p>
+<p>听着很爽是吧。今天我就被这套「全程不用管」给阴了一下。</p>
+<p>我下午顺手去翻博客的部署记录，才发现负责把站点推到 GitHub Pages 镜像的那个 PERSONAL_TOKEN 过期了。这玩意儿翻成人话就是一把代我登录、代我推送的钥匙。钥匙一过期，部署的最后一步认证就过不去。最阴的地方在于：构建明明是成功的，前面所有步骤绿灯一路过，只有最后一步 git push 红了。可平时谁会盯着每一次工作流的状态看？我是隔了一天主动去查才撞见，这镜像站已经静默失败了整整一天。</p>
+<p>主站靠另一条独立的 Docker 流水线还活着，所以表面看博客没塌。但镜像站挂了一天没人知道这件事本身，比挂掉更让我后背发凉。</p>
+<p>我今天还顺手把三条工作流里的 GitHub Actions 从 v3 升到了 v5，把 checkout 和 setup-node 都换了新版，清掉一堆 Node 20 的弃用警告。这种升级活本身不难，难的是你得先知道它在报警告。而我能知道，恰恰是因为今天被 token 这事逼着把三条工作流从头到尾捋了一遍。要不是踩了坑，这些黄字警告我可能还能视而不见好几个月。</p>
+<h2 id="一正一反，到底教了我什么"><a href="#一正一反，到底教了我什么" class="headerlink" title="一正一反，到底教了我什么"></a>一正一反，到底教了我什么</h2><p>把 HF 和我这一天摆一块儿，结论其实很清楚。</p>
+<p>说真的，自动化真正贵的地方，从来不是搭它花的那点功夫。我这套博客流水线，还有我那十几个串起来的 Claude Code skill，从拉资讯、选题、出稿一直到配图发公众号，全是一个个自动跑的环节。搭的时候我都觉得自己挺聪明。但它们真正的隐藏成本，是当没有人盯着的时候，失败会悄无声息地堆积。构建照样跑、绿灯照样亮，只有最后那一下悄悄红了，你却毫不知情。</p>
+<p>HF 把人留在闭环里，留对了。但请注意，他们留人留的是「转正」这个动作，不是去人肉盯每一步。这就给了我两条能直接带走的判断。</p>
+<p>一条是关于人。人该卡在不可逆、要对外的那一步。能自动的尽管自动，但只要这一步做完就收不回来、或者直接送到用户面前，就该有个人按下最后那个按钮。HF 卡在候选版转正前，我以后给公众号发布也得卡在群发前。</p>
+<p>另一条是关于报警。全自动的流水线，必须给「失败」本身配一个人能看见的出口。我今天最大的教训不在 token 过期，token 总会过期，这是常态。教训是它失败了我居然一天都不知道。接下来我要做的不是让流程更自动，反而是给它加一道失败告警，哪条工作流红了，直接推条消息到我手机上。把人从盯全过程里解放出来，只在出事了的时候叫醒他。</p>
+<p>这两条凑起来，就是 HF 那句「模型起草、人拍板」的另一半。模型能干的活尽管交出去，但拍板的开关和报警的铃铛，得攥在人手里。我今天差点把铃铛也给省了，所以这一天的坑，挨得不冤。</p>
+<p>你的自动化流水线里，有没有哪一步是失败了根本不会有人知道的？评论区聊聊，说不定我们都在同一个坑边上站着。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+              <a href="/tags/GitHubActions/" rel="tag"># GitHubActions</a>
+              <a href="/tags/CICD/" rel="tag"># CICD</a>
+              <a href="/tags/HuggingFace/" rel="tag"># HuggingFace</a>
+              <a href="/tags/%E5%8F%91%E5%B8%83%E6%B5%81%E6%B0%B4%E7%BA%BF/" rel="tag"># 发布流水线</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/23/202606231539/" rel="prev" title="为什么你写的 Agent 只是个 demo：一套运行时系统该长什么样">
+                  <i class="fa fa-angle-left"></i> 为什么你写的 Agent 只是个 demo：一套运行时系统该长什么样
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">18:56</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

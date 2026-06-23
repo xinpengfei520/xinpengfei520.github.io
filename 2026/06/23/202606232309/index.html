@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Oak 是专为 AI agent 设计的开源版本控制系统，用 BLAKE3 内容哈希加 FastCDC 分块重做存储，把分支当工作单元替代逐次提交，v0.99.0 公测、Apache-2.0、可 oak export 一键导回 git。我天天用 Claude Code 改代码，最痛的是 agent 一个任务反复改几十次把 git 历史写乱，但短期不会换底座，更认「人确认后才落进 git」的折中路线">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Oak 想给 AI agent 换掉 git，我天天用 Claude Code 改代码，先说说 git 到底卡在哪">
+<meta property="og:url" content="https://www.vance.xin/2026/06/23/202606232309/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Oak 是专为 AI agent 设计的开源版本控制系统，用 BLAKE3 内容哈希加 FastCDC 分块重做存储，把分支当工作单元替代逐次提交，v0.99.0 公测、Apache-2.0、可 oak export 一键导回 git。我天天用 Claude Code 改代码，最痛的是 agent 一个任务反复改几十次把 git 历史写乱，但短期不会换底座，更认「人确认后才落进 git」的折中路线">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260623-oak-vcs-for-ai-agents.webp">
+<meta property="article:published_time" content="2026-06-23T23:09:00.000Z">
+<meta property="article:modified_time" content="2026-06-23T15:34:08.533Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="ClaudeCode">
+<meta property="article:tag" content="Oak">
+<meta property="article:tag" content="git">
+<meta property="article:tag" content="版本控制">
+<meta property="article:tag" content="AIAgent">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260623-oak-vcs-for-ai-agents.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/06/23/202606232309/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/06/23/202606232309/","path":"2026/06/23/202606232309/","title":"Oak 想给 AI agent 换掉 git，我天天用 Claude Code 改代码，先说说 git 到底卡在哪"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Oak 想给 AI agent 换掉 git，我天天用 Claude Code 改代码，先说说 git 到底卡在哪 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Oak 想给 AI agent 换掉 git，我天天用 Claude Code 改代码，先说说 git 到底卡在哪",
+  "url": "https://www.vance.xin/2026/06/23/202606232309/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/06/23/202606232309/",
+  "datePublished": "2026-06-23T23:09:00.000Z",
+  "dateModified": "2026-06-23T15:34:08.533Z",
+  "description": "Oak 是专为 AI agent 设计的开源版本控制系统，用 BLAKE3 内容哈希加 FastCDC 分块重做存储，把分支当工作单元替代逐次提交，v0.99.0 公测、Apache-2.0、可 oak export 一键导回 git。我天天用 Claude Code 改代码，最痛的是 agent 一个任务反复改几十次把 git 历史写乱，但短期不会换底座，更认「人确认后才落进 git」的折中路线。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#git-%E6%98%AF%E7%BB%99%E3%80%8C%E4%B8%80%E5%A4%A9%E6%8F%90%E4%BA%A4%E5%87%A0%E6%AC%A1%E7%9A%84%E4%BA%BA%E3%80%8D%E8%AE%BE%E8%AE%A1%E7%9A%84"><span class="nav-text">git 是给「一天提交几次的人」设计的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#agent-%E6%94%B9%E4%BB%A3%E7%A0%81%E6%97%B6%EF%BC%8Cgit-%E5%88%B0%E5%BA%95%E5%8D%A1%E5%9C%A8%E5%93%AA%E5%87%A0%E5%A4%84"><span class="nav-text">agent 改代码时，git 到底卡在哪几处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Oak-%E6%8A%8A%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6%E4%BB%8E%E9%87%8C%E5%88%B0%E5%A4%96%E9%87%8D%E5%81%9A%E4%BA%86%E4%B8%80%E9%81%8D"><span class="nav-text">Oak 把版本控制从里到外重做了一遍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E5%88%B0%E5%BA%95%E6%98%AF-git-%E4%B8%8D%E5%A4%9F%E7%94%A8%E4%BA%86%EF%BC%8C%E8%BF%98%E6%98%AF%E5%8F%88%E4%B8%80%E4%B8%AA%E6%83%B3%E5%8F%96%E4%BB%A3-git-%E7%9A%84%E8%BD%AE%E5%AD%90"><span class="nav-text">那到底是 git 不够用了，还是又一个想取代 git 的轮子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%BC%9A%E4%B8%8D%E4%BC%9A%E6%8D%A2%EF%BC%8C%E8%80%81%E5%AE%9E%E8%AF%B4"><span class="nav-text">我会不会换，老实说</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">361</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">22</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">649</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/06/23/202606232309/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Oak 想给 AI agent 换掉 git，我天天用 Claude Code 改代码，先说说 git 到底卡在哪 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Oak 是专为 AI agent 设计的开源版本控制系统，用 BLAKE3 内容哈希加 FastCDC 分块重做存储，把分支当工作单元替代逐次提交，v0.99.0 公测、Apache-2.0、可 oak export 一键导回 git。我天天用 Claude Code 改代码，最痛的是 agent 一个任务反复改几十次把 git 历史写乱，但短期不会换底座，更认「人确认后才落进 git」的折中路线。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Oak 想给 AI agent 换掉 git，我天天用 Claude Code 改代码，先说说 git 到底卡在哪
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-06-23 23:09:00 / 修改时间：15:34:08" itemprop="dateCreated datePublished" datetime="2026-06-23T23:09:00+00:00">2026-06-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Oak 是专为 AI agent 设计的开源版本控制系统，用 BLAKE3 内容哈希加 FastCDC 分块重做存储，把分支当工作单元替代逐次提交，v0.99.0 公测、Apache-2.0、可 oak export 一键导回 git。我天天用 Claude Code 改代码，最痛的是 agent 一个任务反复改几十次把 git 历史写乱，但短期不会换底座，更认「人确认后才落进 git」的折中路线。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260623-oak-vcs-for-ai-agents.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>这两天 Hacker News 上有个东西在转，叫 Oak。一句话介绍：专门给 AI agent 用的版本控制，想在 agent 这个场景里把 git 换掉。我看到它，脑子里没先冒出「这玩意好不好用」，反倒是手已经摸到了我每天那个真实的烦：我让 Claude Code 改一个任务，它一秒钟改十几处文件，git 那边的提交记录瞬间就乱成一锅粥。</p>
+<p>所以这篇不打算给你评测 Oak 有多神。我想借它这件事，把一个憋了挺久的问题摊开讲清楚：git 是给人用的，agent 来了之后到底哪儿开始扛不住，以及最后我自己换不换。</p>
+<h2 id="git-是给「一天提交几次的人」设计的"><a href="#git-是给「一天提交几次的人」设计的" class="headerlink" title="git 是给「一天提交几次的人」设计的"></a>git 是给「一天提交几次的人」设计的</h2><p>先把话说在前头。我不是来唱衰 git 的，它是我每天干活的地基，这点不会变。</p>
+<p>但你想想 git 当初是为谁设计的。给 Linux 内核那帮维护者用的，一个人写一段、想清楚了、攒成一个有意义的改动，写一句话说明白「我这次干了啥」，提交。一天提交几次顶天了，每个 commit 都是人经过脑子的一个完整想法。这套模型的核心假设是：提交的人，是个会停下来思考、会给改动起名字的人类。</p>
+<p>agent 不是这么干活的。</p>
+<p>我让 Claude Code 做一次七千行的 SpringBoot Java 迁到 Kotlin，它在一个任务里来回改的次数，我都数不过来。改一版、跑测试、挂了、读报错、再改、再跑。这个循环它自己能转十几二十轮。要是每一步都老老实实 commit，我的 git 历史里就会塞进来几十个「fix」「update」「try again」这种鬼东西，没一个是人想出来的，全是 agent 自言自语的过程草稿。</p>
+<p>这就是 Oak 作者那帮人想戳的第一个点。他们管它叫 commit-message 税。说白了就是：git 逼着你给每个改动起个名字写句话，可 agent 一秒钟蹦十个改动，这个名字根本起不过来，起了也是噪音。</p>
+<h2 id="agent-改代码时，git-到底卡在哪几处"><a href="#agent-改代码时，git-到底卡在哪几处" class="headerlink" title="agent 改代码时，git 到底卡在哪几处"></a>agent 改代码时，git 到底卡在哪几处</h2><p>光说概念没意思，我把天天踩的几个卡点摆出来，你大概率也遇到过。</p>
+<p>一个是提交噪音。agent 跑长任务，你要么忍着让它一路不提交（那万一中间它把代码改炸了，你想回退到某个还能跑的中间态，没有，因为没存档点），要么让它频繁提交（那你的历史就被写成流水账，过两天你自己都看不懂哪个 commit 是真有意义的）。这俩都难受，我至今没找到一个让自己舒服的频率。</p>
+<p>再一个是回滚。agent 探索性地改了一大片，结果发现方向不对。这时候你想干净撤回到它动手之前，git 那套工具其实挺笨重，reset、revert、stash 几个命令在脑子里绕，绕错一个就把别的东西也带走了。那次 Kotlin 迁移，有个叫 isLiability 的字段在某个分支里凭空消失了，我盯着报错愣了两秒才反应过来是 agent 在某一轮里把它并进了另一个数据类。这种「它到底在哪一步改坏的」，在一堆 agent 自动提交里翻起来特别费劲。</p>
+<p>还有一个最隐蔽，是历史被写乱。git 的历史本来是给人看的，是一个项目的叙事。可你放任 agent 去写这个历史，它写出来的根本不是叙事，是一团草稿纸揉成的废纸团。等你哪天真要靠 git log 去搞清楚一个功能是怎么演化来的，发现根本读不下去。</p>
+<p>这几个点，Oak 不是没看见。它给的答案挺干脆：别让 agent 碰你那条给人看的主线。</p>
+<h2 id="Oak-把版本控制从里到外重做了一遍"><a href="#Oak-把版本控制从里到外重做了一遍" class="headerlink" title="Oak 把版本控制从里到外重做了一遍"></a>Oak 把版本控制从里到外重做了一遍</h2><p>Oak 的做法，我去官方页面和它 GitHub 核了一遍，它没在 git 外面套个壳了事，是从存储层往上重写的。下面这些数字和机制我都对着 oak.space 看过，没核到的我会标出来。</p>
+<p>它底层用 BLAKE3 内容哈希。官方原话是，所有东西都按内容寻址，一个文件块的身份就是它的哈希值，同一个文件存两次，只花一次写入。在这之上是内容定义分块，算法叫 FastCDC。翻成大白话就是：它切文件不按固定位置下刀，顺着内容来切。官方举的例子，你在一个 100MB 文件开头插一行，传统做法可能整个文件后面全错位要重存，FastCDC 只让插入点附近那几个块失效，剩下照旧。对 agent 这种一秒改几十处的场景，省下来的开销是实打实的。</p>
+<p>数据模型它分四层，Blob、Manifest、Commit、Tree。后端可以选 SQLite，也可以挂在 git 上。</p>
+<p>但真正让我觉得它想明白了的，是工作单元那块。它不再把「一次提交」当基本单位，而是拿「一个分支」当工作单元，一个分支对应 agent 的一次会话，再用一段分支描述替代你逐次写的那些提交信息。这就正好接住了上面那个 commit 税的问题：你不用给 agent 的每一步起名字了，整个分支干了件什么事，写一段就行。</p>
+<p>它还有个内容寻址的懒挂载，意思是 agent 不用把整个仓库 clone 下来，按需加载，几秒钟就能开始在任意一个仓库里改东西。速度上官方说快照最高比 git 快 95%。这个 95% 我得标清楚：是官方自己宣传的数字，我没看到独立第三方实测复现过，你听个方向就好，别当铁的。官方倒挺克制，专门加了句「速度快是这套设计的副产品，不是我们的卖点」。</p>
+<p>目前它是 v0.99.0 公测版，支持 macOS 的 Apple Silicon、Linux 的 x86_64、Windows，curl 或者 cargo 装，Apache-2.0 开源。这些我都核到了。</p>
+<h2 id="那到底是-git-不够用了，还是又一个想取代-git-的轮子"><a href="#那到底是-git-不够用了，还是又一个想取代-git-的轮子" class="headerlink" title="那到底是 git 不够用了，还是又一个想取代 git 的轮子"></a>那到底是 git 不够用了，还是又一个想取代 git 的轮子</h2><p>这才是最值得吵的地方。</p>
+<p>Hacker News 上这类「给 agent 造个 X」的东西每次出来，底下永远有一派人冷笑：给 agent 的 git？那不就是 git 吗。给 agent 的浏览器？那不就是浏览器吗。话糙，但戳到一个真问题：很多所谓的 agent 专用工具，扒开看就是在原来的东西外面挂了个钩子，agent 自己用 git 用得好好的，你这层封装纯属多余。</p>
+<p>我得承认这派说得有道理。至少今天，我让 Claude Code 自己跑 git，它命令用得比很多新人都熟。</p>
+<p>但反方的反驳也站得住。这类工具作者的核心论点是：让 agent 的每一个动作都直接落进 git，会污染历史、造成巨大开销，所以正确的做法是把 agent 的工作流跟 git 解耦开，agent 先在自己那层折腾，等人确认了、批准了，才落进给人看的那条主线。</p>
+<p>你发现没有，吵到这儿，两边其实没那么对立。承认 git 历史会被 agent 写乱，这件事双方都同意。分歧只在于：解决它，要不要动到存储层这么狠。</p>
+<p>我的判断偏向中间。git 的提交粒度和历史线性，在 agent 高频改动下确实被撑得难受，这个痛点是真的，不是 Oak 编出来吓唬你换工具的。我天天亲历。但「真到了要换底座」这一步，我现在还迈不过去。</p>
+<h2 id="我会不会换，老实说"><a href="#我会不会换，老实说" class="headerlink" title="我会不会换，老实说"></a>我会不会换，老实说</h2><p>不会，至少现在不会。理由都挺现实。</p>
+<p>一个是迁移成本。我光写文章这一条流水线，就挂着十几个 skill，配图的、查重的、发布的，每一个都是顺着 git 那套规矩磨出来的。底座一换，这些东西大概率得挨个重调，省下的那点提交噪音，换不回我搭进去的那些晚上。这笔账，跟我每次动用 Opus 之前在心里过的那杆秤是同一杆。</p>
+<p>再一个是 v0.99.0 这个版本号。它还在公测，我的真实仓库不是拿来给一个 0.99 的版本控制系统当小白鼠的。这倒不是信不过它，任何一个我每天在上面押着代码的工具，我都得等它再稳一阵才敢上。</p>
+<p>最让我对 Oak 真有点好感的，是它根本没逼你二选一。它有个 oak export 命令，能把你在它那边的分支历史，原样回放成一个全新的 git 仓库，每个 commit 的作者、邮箱、时间戳都给你保留。这就意味着，哪怕你拿它当 agent 的隔离实验场，最后还是能干干净净地导回 git 给人看。它自己也说得很清楚，Oak 不替你调 AI，你带 Claude Code 也好、Codex 也好、Cursor 也好，那都是你自己的事，它只管版本。</p>
+<p>这个姿态我是认的。它没站在「git 已死」的高台上喊口号，而是承认 git 还得用，只是中间那段 agent 自己折腾的过程，git 接不住，它来接。</p>
+<p>所以绕一圈我才看明白，这事压根不是「git 够不够用」的二选一。是 agent 来了之后，版本控制被劈成了两段：一段是 agent 自己反复试错的过程，这段确实该有个新东西兜着；另一段是给人看的那条干净主线，这段还是 git 的地盘。Oak 想做的是前面那段，它没要你交出后面那段。</p>
+<p>我现在还守着 git，但我会一直盯着 Oak。等它过了 1.0、等有人拿真仓库跑出独立的实测数据，我大概会先拿它当 agent 的草稿层试一试，把人那条主线还留在 git 上。</p>
+<p>你呢，你让 agent 改代码的时候，是宁可让它一路别提交、最后自己收尾，还是宁可它一步一个 commit、把历史写成流水账?这两种我都试过，到现在也没拿定主意哪个更不亏。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/ClaudeCode/" rel="tag"># ClaudeCode</a>
+              <a href="/tags/Oak/" rel="tag"># Oak</a>
+              <a href="/tags/git/" rel="tag"># git</a>
+              <a href="/tags/%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6/" rel="tag"># 版本控制</a>
+              <a href="/tags/AIAgent/" rel="tag"># AIAgent</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/23/202606231724/" rel="prev" title="我把博客改成了 GEO 友好，两周后回流率只有 0.21%，但这件事值得做">
+                  <i class="fa fa-angle-left"></i> 我把博客改成了 GEO 友好，两周后回流率只有 0.21%，但这件事值得做
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.3m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">19:02</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="MCP 不替代 Function Calling，两者在不同层。Function Calling 是模型「说」要调哪个工具、参数是啥，只出一个 JSON 不负责执行；Tool Calling 是它的口语化叫法。MCP 是上面一层标准协议，用 JSON-RPC 把工具的声明和执行都标准化，一个 Claude Code 同时挂 banana-image、sync-assistant 多个 server">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚">
+<meta property="og:url" content="https://www.vance.xin/2026/06/27/202606271410/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="MCP 不替代 Function Calling，两者在不同层。Function Calling 是模型「说」要调哪个工具、参数是啥，只出一个 JSON 不负责执行；Tool Calling 是它的口语化叫法。MCP 是上面一层标准协议，用 JSON-RPC 把工具的声明和执行都标准化，一个 Claude Code 同时挂 banana-image、sync-assistant 多个 server">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260625-mcp-tool-function-calling.webp">
+<meta property="article:published_time" content="2026-06-27T14:10:00.000Z">
+<meta property="article:modified_time" content="2026-06-25T16:31:00.259Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="Function Calling">
+<meta property="article:tag" content="Tool Calling">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260625-mcp-tool-function-calling.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/06/27/202606271410/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/06/27/202606271410/","path":"2026/06/27/202606271410/","title":"MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚",
+  "url": "https://www.vance.xin/2026/06/27/202606271410/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/06/27/202606271410/",
+  "datePublished": "2026-06-27T14:10:00.000Z",
+  "dateModified": "2026-06-25T16:31:00.259Z",
+  "description": "MCP 不替代 Function Calling，两者在不同层。Function Calling 是模型「说」要调哪个工具、参数是啥，只出一个 JSON 不负责执行；Tool Calling 是它的口语化叫法。MCP 是上面一层标准协议，用 JSON-RPC 把工具的声明和执行都标准化，一个 Claude Code 同时挂 banana-image、sync-assistant 多个 server 连封面生成、多平台分发，就是这套底层能力的活样本。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Function-Calling-%E5%85%B6%E5%AE%9E%E5%8F%AA%E5%B9%B2%E4%BA%86%E4%B8%80%E5%8D%8A%E7%9A%84%E6%B4%BB"><span class="nav-text">Function Calling 其实只干了一半的活</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E8%BF%99%E5%A5%97%E7%8E%B0%E6%88%90%E7%9A%84%EF%BC%8C%E4%B8%BA%E5%95%A5%E8%BF%98%E8%A6%81%E5%86%8D%E9%80%A0%E4%B8%80%E4%B8%AA-MCP"><span class="nav-text">那这套现成的，为啥还要再造一个 MCP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA-Claude-Code%EF%BC%8C%E5%90%8C%E6%97%B6%E6%8C%82%E7%9D%80%E5%A5%BD%E5%87%A0%E4%B8%AA-MCP"><span class="nav-text">一个 Claude Code，同时挂着好几个 MCP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E4%B8%AA%E8%AF%8D%EF%BC%8C%E4%B8%80%E5%8F%A5%E8%AF%9D%E5%90%84%E8%87%AA%E5%BD%92%E4%BD%8D"><span class="nav-text">三个词，一句话各自归位</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">401</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">713</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/06/27/202606271410/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚 | 飞飞的AI实验室">
+      <meta itemprop="description" content="MCP 不替代 Function Calling，两者在不同层。Function Calling 是模型「说」要调哪个工具、参数是啥，只出一个 JSON 不负责执行；Tool Calling 是它的口语化叫法。MCP 是上面一层标准协议，用 JSON-RPC 把工具的声明和执行都标准化，一个 Claude Code 同时挂 banana-image、sync-assistant 多个 server 连封面生成、多平台分发，就是这套底层能力的活样本。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-06-27 14:10:00" itemprop="dateCreated datePublished" datetime="2026-06-27T14:10:00+00:00">2026-06-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-25 16:31:00" itemprop="dateModified" datetime="2026-06-25T16:31:00+00:00">2026-06-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">MCP 不替代 Function Calling，两者在不同层。Function Calling 是模型「说」要调哪个工具、参数是啥，只出一个 JSON 不负责执行；Tool Calling 是它的口语化叫法。MCP 是上面一层标准协议，用 JSON-RPC 把工具的声明和执行都标准化，一个 Claude Code 同时挂 banana-image、sync-assistant 多个 server 连封面生成、多平台分发，就是这套底层能力的活样本。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260625-mcp-tool-function-calling.webp" alt="MCP、Tool Calling、Function Calling 到底什么关系"></p>
+<p>哈喽，我是飞飞。</p>
+<p>前阵子我写过一篇《一文看懂 MCP》，讲的是它为什么会成为整个 AI 世界的标准、为什么 OpenAI、Cursor 都跟着支持。那篇聊的是「它为什么火」。今天这篇换个角度，专门拆一件后台问得最多、也最容易绕晕的事：MCP、Tool Calling、Function Calling，这三个词到底什么关系，差在哪。</p>
+<p>说真的，很多人是这状态：天天在用 Agent，知道它能调外部工具，可你要是问一句「MCP 跟 function calling 是不是一回事」，多半答不上来。不怪你。这三个词在各种文章里混着用，有的当同义词，有的又说谁替代谁，越看越糊。</p>
+<p>我自己的 Claude Code 上实打实接了好几个 MCP server，包括给文章生封面的、把稿子一键发到知乎掘金 CSDN 公众号的。说句你可能没想到的，你现在看到的这篇文章，最后多平台分发那一步，就是其中一个 MCP 干的。所以这事我没法隔空讲概念，全是拿天天在跑的活线讲。咱们一层层拆。</p>
+<h2 id="Function-Calling-其实只干了一半的活"><a href="#Function-Calling-其实只干了一半的活" class="headerlink" title="Function Calling 其实只干了一半的活"></a>Function Calling 其实只干了一半的活</h2><p>先说最里面那层，Function Calling。</p>
+<p>你可以把大模型想成一个特别能聊、但被锁在屋里、手够不着外面任何东西的人。它脑子好使，可它没法上网、没法读你硬盘上的文件、没法查你的数据库。你问它「我数据库里上周有多少订单」，它只能说「我不知道，我连不上你的库」。</p>
+<p>Function Calling 就是给这个人开了一扇窗。具体怎么开？你提前告诉模型：我这儿有个工具叫 <code>query_orders</code>，它能查订单，要传一个时间参数。模型听懂之后，下次你问订单的事，它不会瞎编，而是回你一段结构化的东西，大意是「我要调 <code>query_orders</code> 这个工具，参数是上周」。</p>
+<p>这里有个关键，很多人没意识到：模型到这一步就停了。它只是「说」它想调哪个工具、传什么参数，吐出来一个 JSON。它本身并不会真去查你的数据库。真正动手那一步，得你自己写代码接住这个 JSON，把查询跑起来，再把结果喂回给模型。</p>
+<p>Prefect 那篇技术博客把这事说得很准：Function Calling 负责的是 schema（也就是工具的声明），执行那部分得你自己补。所以你看，它干的其实只有一半的活，模型出意图，你出力气。</p>
+<p>至于 Tool Calling，别被它绕进去。它跟 Function Calling 基本是一回事，只是叫法不同。OpenAI 官方管这个叫 function calling，Anthropic 管它叫 tool use，更口语的场合大家就叫 tool calling。Descope 的文章里写得很直白：每家厂商都有自己的版本，名字各取各的，干的是同一件事。所以你下回看到这俩词，心里清楚它们是同层的同义词就行，不用纠结。</p>
+<h2 id="那这套现成的，为啥还要再造一个-MCP"><a href="#那这套现成的，为啥还要再造一个-MCP" class="headerlink" title="那这套现成的，为啥还要再造一个 MCP"></a>那这套现成的，为啥还要再造一个 MCP</h2><p>如果 Function Calling 已经能让模型调工具了，那 MCP 又是来解决什么的？</p>
+<p>问题出在「不通用」上。每家大模型定义工具的格式都不一样。你给 OpenAI 写的那套工具声明，结构叫 <code>tool_calls</code>；同样的工具搬到 Claude 上，格式变成 <code>tool_use</code>，连字段名都对不上，Anthropic 这边叫 <code>input_schema</code>，到 OpenAI 那儿就成了套在 function 里的 <code>parameters</code>。</p>
+<p>这意味着什么？你辛辛苦苦给一个模型接了二十个工具，哪天想换个模型试试，这二十个工具的声明、解析、错误处理，基本得照着新格式重写一遍。工具还死死焊在你这一个应用里。别人想用你这套，没法直接拿走，得自己再撸一遍。</p>
+<p>这就是 MCP 要解决的。它不是来替代 Function Calling 的，这点我得重点强调，网上一堆文章把它俩说成对立关系，全错了。Portkey 那篇讲得最清楚：MCP 不替代 Function Calling，它俩在不同层。Function Calling 还是那个 Function Calling，模型该怎么表达调用意图还怎么表达。MCP 是架在上面的一层标准协议，把「工具怎么被发现、怎么被调用、结果怎么回来」这套执行的活，定成了一个跟厂商无关的统一规矩。</p>
+<p>打个我自己琢磨出来的比方。Function Calling 像是你家墙里直接焊死的几个电器，台灯、风扇，焊在哪就只能在哪用，换房子带不走。MCP 像是墙上装了标准插座，任何电器，只要插头是这个标准的，插上就能用，换台电脑、换个模型，插座还在那儿。你的工具从此不绑死在某一个模型身上了。</p>
+<p>技术上它怎么实现的？底层用的是一个叫 JSON-RPC 的老协议，结构是 client 和 server。你的 Agent 这边是 client，每个外部工具包成一个 server。Agent 一连上某个 server，先问它一句「你有哪些工具」（这步叫 discovery），server 把工具清单连描述带参数格式一并报上来；模型看完描述自己挑该用哪个，再带着参数去调。整个流程标准化了，所以同一个 MCP server，插到任何支持 MCP 的客户端上都能用，不用为每家模型各写一遍。</p>
+<h2 id="一个-Claude-Code，同时挂着好几个-MCP"><a href="#一个-Claude-Code，同时挂着好几个-MCP" class="headerlink" title="一个 Claude Code，同时挂着好几个 MCP"></a>一个 Claude Code，同时挂着好几个 MCP</h2><p>光说协议有点干，落到我自己的活上你就懂了。</p>
+<p>我的 Claude Code 现在同时挂着好几个 MCP server。一个叫 banana-image，专门生图，我写文章配封面这事是自动的，在对话里说一句「给这篇配张封面」，背后就是这个 server 去调 Nano Banana 生图、再传到我自己的图床，我这头只管说话，回头图就在那儿了。还有一个叫 sync-assistant，管多平台分发，一篇稿子写完，它能帮我推到知乎、掘金、CSDN、公众号。前面说的，这篇文章发出去那一步，就是它干的。</p>
+<p>除了这俩，还挂着查资料用的搜索 server、抓网页内容的 fetch、查最新技术文档的 context7。它们各管各的事，互不打架。这就是 MCP 架构最实在的好处：一个 host（我的 Claude Code）底下能同时连一串 server，每个 server 是一个独立的能力包。官方文档里也是这么说的，Claude Desktop 同时连三个 server，它就维护三个独立的 client，一对一，谁出问题不牵连别人。</p>
+<p>你把这套放回前面那个比方再看一遍就通了。我的 Claude Code 是那面装满插座的墙，banana-image、sync-assistant 是各自插上来的电器，搜索、抓网页、查文档又是另外几个。我哪天想加个新能力，比如让它直接读写我的数据库，再插一个数据库 server 上去就行，不用动其他任何一个。这种「随插随用、各自独立」的体感，是单纯靠 Function Calling 焊在一个应用里给不了我的。</p>
+<p>也正因为这套链路全自动，我前阵子还踩过一个隐蔽的坑。我整条博客发布是 GitHub Actions 自动化的，结果有个部署用的令牌悄悄过期了，构建明明成功，只有最后一步推送失败，红了一整天没人发现，我隔天主动去查才看到。这事跟 MCP 没直接关系，但它提醒我一件事：能力越自动、链路越长，你越得给「失败」本身配个能看见的告警。MCP 让接外部工具变得轻松，可工具接得越多，哪个 server 哑了你也得心里有数，不能全甩给它跑。</p>
+<h2 id="三个词，一句话各自归位"><a href="#三个词，一句话各自归位" class="headerlink" title="三个词，一句话各自归位"></a>三个词，一句话各自归位</h2><p>绕了一圈，我把这三个词给你各自归个位，记这一段就够了。</p>
+<p>Function Calling，是模型「说」它想调哪个工具、传什么参数，只出一个意图，不负责执行。Tool Calling，是它的口语别名，同一层东西，不同厂商不同叫法而已。MCP，是架在上面的一层标准协议，把工具怎么被发现、怎么被调用、结果怎么回来，统一成一套跟模型无关的规矩，让你的工具不绑死在某一个模型上。</p>
+<p>所以 Agent 那身「能调外部工具」的本事，底层就是从这儿来的：模型靠 Function Calling 表达意图，MCP 把这意图标准化地接到真实世界的工具上去执行。理解了这层，你再看任何一个号称能「接数据库、连搜索、读文件」的 Agent，心里就有底了，知道它那点能耐是怎么搭起来的，也知道该怎么自己搭一套。</p>
+<p>回到开头那个问题，MCP 跟 Function Calling 是不是一回事。现在你应该能干脆地回一句：不是替代，是上下两层，一个出意图，一个管执行，各干各的还配合得好好的。</p>
+<p>你自己有没有给 AI 接过外部工具？是停在用现成 Function Calling 这一步，还是已经动手挂过 MCP server 了，挂的是哪个，欢迎在评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/MCP/" rel="tag"># MCP</a>
+              <a href="/tags/Function-Calling/" rel="tag"># Function Calling</a>
+              <a href="/tags/Tool-Calling/" rel="tag"># Tool Calling</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/27/202606271310/" rel="prev" title="AI 工作流入门：Workflow、Automation、Agent 到底差在哪，我用自己的内容流水线讲清楚">
+                  <i class="fa fa-angle-left"></i> AI 工作流入门：Workflow、Automation、Agent 到底差在哪，我用自己的内容流水线讲清楚
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/06/27/202606271510/" rel="next" title="搭建你的第一个 AI Agent：把它拆成脑、手、记忆、规划四件套，照着搭一个研究助手">
+                  搭建你的第一个 AI Agent：把它拆成脑、手、记忆、规划四件套，照着搭一个研究助手 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.4m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">20:50</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="AI 超级个体进阶第 7 课，把 Agent 拆成四件套：大模型当脑、工具当手、记忆让它记得住、规划让它会拆步骤。我用天天在跑的 Claude Code 一一对上，脑是 Opus、手是 MCP 加文件读写、记忆是一个 memory 文件夹加 CLAUDE.md、规划是长任务自己拆成子任务，再带你照着搭一个能自己查资料、整理、出报告的研究助手，小白先用现成 agent 别急着自己写框架。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="搭建你的第一个 AI Agent：把它拆成脑、手、记忆、规划四件套，照着搭一个研究助手">
+<meta property="og:url" content="https://www.vance.xin/2026/06/27/202606271510/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="AI 超级个体进阶第 7 课，把 Agent 拆成四件套：大模型当脑、工具当手、记忆让它记得住、规划让它会拆步骤。我用天天在跑的 Claude Code 一一对上，脑是 Opus、手是 MCP 加文件读写、记忆是一个 memory 文件夹加 CLAUDE.md、规划是长任务自己拆成子任务，再带你照着搭一个能自己查资料、整理、出报告的研究助手，小白先用现成 agent 别急着自己写框架。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260625-build-your-first-ai-agent.webp">
+<meta property="article:published_time" content="2026-06-27T15:10:00.000Z">
+<meta property="article:modified_time" content="2026-06-25T16:31:00.259Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="AI工具">
+<meta property="article:tag" content="超级个体">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260625-build-your-first-ai-agent.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/06/27/202606271510/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/06/27/202606271510/","path":"2026/06/27/202606271510/","title":"搭建你的第一个 AI Agent：把它拆成脑、手、记忆、规划四件套，照着搭一个研究助手"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>搭建你的第一个 AI Agent：把它拆成脑、手、记忆、规划四件套，照着搭一个研究助手 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "搭建你的第一个 AI Agent：把它拆成脑、手、记忆、规划四件套，照着搭一个研究助手",
+  "url": "https://www.vance.xin/2026/06/27/202606271510/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/06/27/202606271510/",
+  "datePublished": "2026-06-27T15:10:00.000Z",
+  "dateModified": "2026-06-25T16:31:00.259Z",
+  "description": "AI 超级个体进阶第 7 课，把 Agent 拆成四件套：大模型当脑、工具当手、记忆让它记得住、规划让它会拆步骤。我用天天在跑的 Claude Code 一一对上，脑是 Opus、手是 MCP 加文件读写、记忆是一个 memory 文件夹加 CLAUDE.md、规划是长任务自己拆成子任务，再带你照着搭一个能自己查资料、整理、出报告的研究助手，小白先用现成 agent 别急着自己写框架。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA-Agent%EF%BC%8C%E6%8E%80%E5%BC%80%E7%9B%96%E5%AD%90%E5%B0%B1%E6%98%AF%E8%BF%99%E5%9B%9B%E6%A0%B7%E4%B8%9C%E8%A5%BF"><span class="nav-text">一个 Agent，掀开盖子就是这四样东西</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%BF%E6%88%91%E5%A4%A9%E5%A4%A9%E5%9C%A8%E8%B7%91%E7%9A%84-Claude-Code%EF%BC%8C%E6%8A%8A%E5%9B%9B%E4%BB%B6%E5%A5%97%E4%B8%80%E4%B8%AA%E4%B8%AA%E5%AF%B9%E4%B8%8A"><span class="nav-text">拿我天天在跑的 Claude Code，把四件套一个个对上</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%83%B3%E5%8A%A8%E6%89%8B%EF%BC%8C%E5%85%88%E9%80%89%E8%84%91%EF%BC%8C%E5%88%AB%E4%B8%8A%E6%9D%A5%E8%87%AA%E5%B7%B1%E9%80%A0%E6%A1%86%E6%9E%B6"><span class="nav-text">想动手，先选脑，别上来自己造框架</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%85%A7%E7%9D%80%E6%90%AD%E4%B8%80%E4%B8%AA%E7%A0%94%E7%A9%B6%E5%8A%A9%E6%89%8B%EF%BC%8C%E6%8A%8A%E5%9B%9B%E4%BB%B6%E5%A5%97%E7%94%A8%E6%B4%BB"><span class="nav-text">照着搭一个研究助手，把四件套用活</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">401</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">713</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/06/27/202606271510/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="搭建你的第一个 AI Agent：把它拆成脑、手、记忆、规划四件套，照着搭一个研究助手 | 飞飞的AI实验室">
+      <meta itemprop="description" content="AI 超级个体进阶第 7 课，把 Agent 拆成四件套：大模型当脑、工具当手、记忆让它记得住、规划让它会拆步骤。我用天天在跑的 Claude Code 一一对上，脑是 Opus、手是 MCP 加文件读写、记忆是一个 memory 文件夹加 CLAUDE.md、规划是长任务自己拆成子任务，再带你照着搭一个能自己查资料、整理、出报告的研究助手，小白先用现成 agent 别急着自己写框架。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          搭建你的第一个 AI Agent：把它拆成脑、手、记忆、规划四件套，照着搭一个研究助手
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-06-27 15:10:00" itemprop="dateCreated datePublished" datetime="2026-06-27T15:10:00+00:00">2026-06-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-25 16:31:00" itemprop="dateModified" datetime="2026-06-25T16:31:00+00:00">2026-06-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">AI 超级个体进阶第 7 课，把 Agent 拆成四件套：大模型当脑、工具当手、记忆让它记得住、规划让它会拆步骤。我用天天在跑的 Claude Code 一一对上，脑是 Opus、手是 MCP 加文件读写、记忆是一个 memory 文件夹加 CLAUDE.md、规划是长任务自己拆成子任务，再带你照着搭一个能自己查资料、整理、出报告的研究助手，小白先用现成 agent 别急着自己写框架。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260625-build-your-first-ai-agent.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>进阶系列上一课我们聊完了 MCP，今天这一课更动手：我带你亲手搭出第一个能干活的 AI Agent。</p>
+<p>很多人对 Agent 的印象还停在「一个很厉害的聊天机器人」，觉得它神秘、门槛高、得是大厂工程师才碰得了。我天天靠一个 Agent 吃饭，掀开盖子看进去，里面其实就四样东西。把这四样搞清楚，你再看任何一个框架、任何一篇架构图，都会突然通了。</p>
+<h2 id="一个-Agent，掀开盖子就是这四样东西"><a href="#一个-Agent，掀开盖子就是这四样东西" class="headerlink" title="一个 Agent，掀开盖子就是这四样东西"></a>一个 Agent，掀开盖子就是这四样东西</h2><p>我先把这四件套摆给你，后面每一样都用我天天在跑的工具对一遍。</p>
+<p>第一样，<strong>大模型，相当于脑子</strong>。它负责理解你说的话、想清楚下一步该干嘛。但它光会想，不会动手。</p>
+<p>第二样，<strong>工具，相当于手</strong>。联网搜索、读写文件、调接口，这些让模型能真的去外面的世界里办事，而不是只在对话框里空想。</p>
+<p>第三样，<strong>记忆，让它记得住</strong>。聊天机器人转头就忘，Agent 得记得你是谁、上一步干到哪了、查到的东西存哪了。</p>
+<p>第四样，<strong>规划，让它会拆步骤</strong>。你扔给它一个大目标，它自己拆成一小步一小步，调工具、看结果、不对就改，转着圈干到完。</p>
+<p>普通大模型和 Agent 的差别就在这。一个普通 LLM 是你问一句它答一句，答完这一轮就结束了。Agent 是把这个模型包上手、记忆、规划，让它能盯着一个目标自己转好几圈，直到把事办成。这个「转圈」的本事，才是 Agent 区别于聊天框的地方。</p>
+<p>这套四件套不是我编的。我翻了几篇综述，从 2023 年 Wang 那篇被引最多的自治 Agent 综述，到 SuperAnnotate、Prompting Guide 这些 2026 年的指南，讲法高度一致：脑、手、记忆、规划，名字略有出入，骨架一模一样。</p>
+<h2 id="拿我天天在跑的-Claude-Code，把四件套一个个对上"><a href="#拿我天天在跑的-Claude-Code，把四件套一个个对上" class="headerlink" title="拿我天天在跑的 Claude Code，把四件套一个个对上"></a>拿我天天在跑的 Claude Code，把四件套一个个对上</h2><p>光讲概念你记不住，我用一个真实的 Agent 给你对一遍。Claude Code 是我每天干活的家伙，它正好这四样齐全，是个标准样本。</p>
+<p><strong>脑，是 Opus 这个模型。</strong> 我让它干正经活之前，会下意识掂量一下值不值得动用 Opus，杂活就手动切个便宜模型省点额度。这种「用之前在心里过一遍秤」的体感，就是脑子这一块最真实的样子，它贵、它强、它负责想。</p>
+<p><strong>手，是一堆工具。</strong> Claude Code 给我的手包括联网搜索、读写文件、敲命令行，还有一种叫 MCP 的东西（上一课讲过，你就理解成给 AI 接外部能力的标准插口）。官方把它的扩展能力归成六样：CLAUDE.md、技能、子 agent、斜杠命令、钩子、还有 MCP。说人话就是，这只手能伸到的地方特别多，不只是回你几行字。</p>
+<p><strong>记忆，是一个 memory 文件夹加一份 CLAUDE.md。</strong> 我的家底说白了就是十几个自定义技能、一份越喂越厚的 CLAUDE.md、再加一摞 memory 文件。CLAUDE.md 里写着这个仓库的规矩，memory 里记着我这个人的偏好和过往。每次开新对话，它先把这些读进去，就不会跟我从零认识。这就是记忆这一块。</p>
+<p><strong>规划，是长任务它自己拆。</strong> 我给它一个大活，比如写一篇文章，它不会一口气闷头干完，而是拆成查资料、整理、起草、配图、分发好几步，还会派出几个子 agent 各干一摊、各自在自己的小窗口里跑、干完只把结论汇报回来。这个「自己拆步骤、分头干、再汇总」的动作，就是规划。</p>
+<p>你看，四件套，一个不缺。我天天用的这套写作流水线，本质上就是一个攒了十几个技能的研究兼写作 Agent，全长在 Claude Code 的钩子和技能机制上。</p>
+<h2 id="想动手，先选脑，别上来自己造框架"><a href="#想动手，先选脑，别上来自己造框架" class="headerlink" title="想动手，先选脑，别上来自己造框架"></a>想动手，先选脑，别上来自己造框架</h2><p>知道了四件套，下一步就是给你的第一个 Agent 配齐它们。新手最容易犯的错，是上来就想自己写一套 Agent 框架，结果卡在工程细节里，热情磨没了。我劝你反着来：先用一个现成的、四件套已经装好的 agent，把流程跑顺，再谈定制。</p>
+<p>脑子怎么选，看你在哪个圈。国际上，Claude Code 和 Codex 都是装好就能用的成熟 agent，开箱四件套齐全。国内的话，DeepSeek 是个稳妥的选择，能力够用、用的人多、遇到问题搜得到答案。</p>
+<p>还有个我想专门提一句的，GLM-5.2，智谱（现在叫 Z.ai）6 月 13 号刚发的，1M token 的超长上下文，权重还按 MIT 开源放出来了，发布当天就支持接进 Claude Code 用。它是专门冲着「让 agent 干长活」调的，原生就会调工具。国内想找个能扛长任务、又能塞进现成 agent 壳子里的脑子，它现在是个挺实在的选项。</p>
+<p>我得多嘴一句：这些工具的版本和跑分变得飞快，你真要用之前去官网核一眼最新的，别全信我今天写的数字。</p>
+<h2 id="照着搭一个研究助手，把四件套用活"><a href="#照着搭一个研究助手，把四件套用活" class="headerlink" title="照着搭一个研究助手，把四件套用活"></a>照着搭一个研究助手，把四件套用活</h2><p>光对概念太干，我给你一个能照做的小目标：搭一个 AI 研究助手，能自己上网查资料、整理、最后产出一份报告。这正好是四件套的最小实战。</p>
+<p><strong>脑，挑一个会调工具的模型。</strong> 上面那几个随便选一个，关键是它得支持调工具，不然手装不上。</p>
+<p><strong>手，先只给它一个搜索。</strong> 别贪多，第一个 Agent 你就给它配一个联网搜索加一个文件读写。能查、能把查到的存下来，研究助手的骨架就立住了。等这一步跑顺，再往上加别的工具。</p>
+<p><strong>记忆，给它一个文件夹。</strong> 建一个文件夹，让它把查到的资料、你定的研究方向、你的偏好都写进去。下次再开工，它读一眼就接着上回干，不用你重新交代。这一步特别像我那份越喂越厚的 CLAUDE.md，攒得越久，它越懂你这摊事。</p>
+<p><strong>规划，把目标交给它自己拆。</strong> 你不用手把手指挥，直接给它一句话的大目标，比如「帮我把某个主题查清楚，整理成一份带来源的报告」。它会自己拆成搜索、读取、筛选、起草几步，一步步往下走，中间查不到就换个关键词再来。</p>
+<p>这四步搭完，你就有了人生第一个真能干活的 Agent。它已经从问一句答一句的聊天框，长成了收了目标就自己转圈去办事的小助手。我天天跑的那条写作流水线，最早也就是从「给它一个搜索、配一个文件夹」这么一点点长起来的。</p>
+<p>回到开头那句话，Agent 不神秘，掀开盖子就是脑、手、记忆、规划这四样。你今天选个现成的脑，给它一只手、一个文件夹、一个目标，第一个研究助手就站起来了。剩下的，是你越用越想给它加东西。</p>
+<p>你打算让你的第一个研究助手先帮你查清楚哪件事，是盯一个你一直想搞懂的技术，还是替你扒某个领域最近的动态？评论区告诉我，我帮你看看四件套该怎么配。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 大模型</a>
+              <a href="/tags/AI%E5%B7%A5%E5%85%B7/" rel="tag"># AI工具</a>
+              <a href="/tags/%E8%B6%85%E7%BA%A7%E4%B8%AA%E4%BD%93/" rel="tag"># 超级个体</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/27/202606271410/" rel="prev" title="MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚">
+                  <i class="fa fa-angle-left"></i> MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/06/27/202606271610/" rel="next" title="从一次写一篇到一次并行产十篇，我踩出来的规模化内容生产闸门">
+                  从一次写一篇到一次并行产十篇，我踩出来的规模化内容生产闸门 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.4m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">20:50</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

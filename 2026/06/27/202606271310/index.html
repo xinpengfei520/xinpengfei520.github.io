@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="「AI 超级个体进阶指南」第 5 课。Workflow、Automation、Agent 最容易被当成一回事，其实就差一刀：控制流到底是人提前写死的，还是模型运行时自己定。Anthropic 在《Building Effective Agents》里把这条线划得很清楚。我的内容流水线 7 个环节顺序焊死是 Workflow，每个环节内部让模型自己判断怎么干是 Agent，推送收录这种死规则是 Au">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI 工作流入门：Workflow、Automation、Agent 到底差在哪，我用自己的内容流水线讲清楚">
+<meta property="og:url" content="https://www.vance.xin/2026/06/27/202606271310/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="「AI 超级个体进阶指南」第 5 课。Workflow、Automation、Agent 最容易被当成一回事，其实就差一刀：控制流到底是人提前写死的，还是模型运行时自己定。Anthropic 在《Building Effective Agents》里把这条线划得很清楚。我的内容流水线 7 个环节顺序焊死是 Workflow，每个环节内部让模型自己判断怎么干是 Agent，推送收录这种死规则是 Au">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260625-ai-workflow-intro.webp">
+<meta property="article:published_time" content="2026-06-27T13:10:00.000Z">
+<meta property="article:modified_time" content="2026-06-25T16:31:00.259Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="自动化">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="超级个体">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260625-ai-workflow-intro.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/06/27/202606271310/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/06/27/202606271310/","path":"2026/06/27/202606271310/","title":"AI 工作流入门：Workflow、Automation、Agent 到底差在哪，我用自己的内容流水线讲清楚"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>AI 工作流入门：Workflow、Automation、Agent 到底差在哪，我用自己的内容流水线讲清楚 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "AI 工作流入门：Workflow、Automation、Agent 到底差在哪，我用自己的内容流水线讲清楚",
+  "url": "https://www.vance.xin/2026/06/27/202606271310/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/06/27/202606271310/",
+  "datePublished": "2026-06-27T13:10:00.000Z",
+  "dateModified": "2026-06-25T16:31:00.259Z",
+  "description": "「AI 超级个体进阶指南」第 5 课。Workflow、Automation、Agent 最容易被当成一回事，其实就差一刀：控制流到底是人提前写死的，还是模型运行时自己定。Anthropic 在《Building Effective Agents》里把这条线划得很清楚。我的内容流水线 7 个环节顺序焊死是 Workflow，每个环节内部让模型自己判断怎么干是 Agent，推送收录这种死规则是 Automation，三层叠在一起每天在跑。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%8A%8A%E8%BF%99%E4%B8%89%E4%B8%AA%E8%AF%8D%E4%B8%80%E5%88%80%E5%88%87%E5%BC%80%EF%BC%9A%E8%B0%81%E8%AF%B4%E4%BA%86%E7%AE%97"><span class="nav-text">先把这三个词一刀切开：谁说了算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E5%86%85%E5%AE%B9%E6%B5%81%E6%B0%B4%E7%BA%BF%EF%BC%8C%E9%AA%A8%E6%9E%B6%E6%98%AF-Workflow"><span class="nav-text">我的内容流水线，骨架是 Workflow</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%AF%8F%E4%B8%AA%E7%8E%AF%E8%8A%82%E5%86%85%E9%83%A8%EF%BC%8C%E5%8F%88%E6%98%AF%E4%B8%80%E4%B8%AA-Agent"><span class="nav-text">每个环节内部，又是一个 Agent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3-Automation-%E8%97%8F%E5%9C%A8%E5%93%AA%EF%BC%8C%E8%BF%98%E5%92%AC%E8%BF%87%E6%88%91%E4%B8%80%E5%8F%A3"><span class="nav-text">那 Automation 藏在哪，还咬过我一口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E6%83%B3%E4%BB%8E%E5%A4%B4%E6%90%AD%EF%BC%9F%E5%85%88%E6%8A%8A%E4%B8%80%E4%B8%AA%E6%89%8B%E5%B7%A5%E7%8E%AF%E8%8A%82%E5%8D%87%E6%88%90%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="nav-text">不想从头搭？先把一个手工环节升成流水线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E4%B8%AA%E8%AF%8D%E8%83%8C%E5%90%8E%E6%98%AF%E5%90%8C%E4%B8%80%E4%B8%AA%E9%97%AE%E9%A2%98%EF%BC%9A%E8%BF%99%E4%BA%8B%E5%88%B0%E5%BA%95%E8%B0%81%E8%AF%B4%E4%BA%86%E7%AE%97"><span class="nav-text">三个词背后是同一个问题：这事到底谁说了算</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">401</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">713</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/06/27/202606271310/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="AI 工作流入门：Workflow、Automation、Agent 到底差在哪，我用自己的内容流水线讲清楚 | 飞飞的AI实验室">
+      <meta itemprop="description" content="「AI 超级个体进阶指南」第 5 课。Workflow、Automation、Agent 最容易被当成一回事，其实就差一刀：控制流到底是人提前写死的，还是模型运行时自己定。Anthropic 在《Building Effective Agents》里把这条线划得很清楚。我的内容流水线 7 个环节顺序焊死是 Workflow，每个环节内部让模型自己判断怎么干是 Agent，推送收录这种死规则是 Automation，三层叠在一起每天在跑。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AI 工作流入门：Workflow、Automation、Agent 到底差在哪，我用自己的内容流水线讲清楚
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-06-27 13:10:00" itemprop="dateCreated datePublished" datetime="2026-06-27T13:10:00+00:00">2026-06-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-06-25 16:31:00" itemprop="dateModified" datetime="2026-06-25T16:31:00+00:00">2026-06-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">「AI 超级个体进阶指南」第 5 课。Workflow、Automation、Agent 最容易被当成一回事，其实就差一刀：控制流到底是人提前写死的，还是模型运行时自己定。Anthropic 在《Building Effective Agents》里把这条线划得很清楚。我的内容流水线 7 个环节顺序焊死是 Workflow，每个环节内部让模型自己判断怎么干是 Agent，推送收录这种死规则是 Automation，三层叠在一起每天在跑。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260625-ai-workflow-intro.webp" alt="AI 工作流入门"></p>
+<p>哈喽，我是飞飞。</p>
+<p>这是「AI 超级个体进阶指南」的第 5 课。今天聊一个我自己也踩过的认知坑：Workflow、Automation、Agent 这三个词，刚开始我混着用，觉得不就是「让 AI 自动帮我干活」嘛。直到我把那条天天在跑的内容流水线拆开看，才发现这是三层完全不同的机制，叠在一起才有今天这套能自己跑的活儿。三者分不清，你搭出来的东西要么死板得没必要上 AI，要么放飞得不敢交给它。</p>
+<p>所以这一课不背定义。我直接拿自己的内容流水线当活教材，把三个概念一刀切开，再带你看这套混血结构怎么搭。</p>
+<h2 id="先把这三个词一刀切开：谁说了算"><a href="#先把这三个词一刀切开：谁说了算" class="headerlink" title="先把这三个词一刀切开：谁说了算"></a>先把这三个词一刀切开：谁说了算</h2><p>辨析这三个词，网上一堆定义越看越绕。我后来发现，其实只要抓住一个问题就够了：<strong>这件事的「控制流」是谁定的，是人提前把步骤写死在代码里，还是模型在跑的时候自己临场决定。</strong></p>
+<p>这把刀是 Anthropic 在那篇被引用烂了的《Building Effective Agents》里划出来的。他们的原话是，Workflow 是「LLM 和工具被预先定义好的代码路径串起来」的系统，Agent 则是「LLM 自己动态指挥自己的流程和工具使用」。说人话就是：Workflow 的路线是人画好的，Agent 的路线是模型自己走出来的。</p>
+<p>那 Automation 又是什么？它比 Workflow 还往前一步，连 AI 都不一定用。说白了，自动化就是「if 这样，就那样」的死规则，跑一百遍结果一模一样。RPA、定时脚本、你邮箱里那条「收到带发票的邮件就自动归档」的规则，都是 Automation。它最大的优点是绝对可预测，但它一点都不「聪明」，碰到规则没覆盖到的情况就直接懵。</p>
+<p>这三个摆一块儿，你能感觉到一条递进的线：</p>
+<ul>
+<li><strong>Automation</strong>：人写死规则，模型基本不参与，图的是省事和绝对稳。</li>
+<li><strong>Workflow</strong>：人定好步骤顺序，但每一步里可以塞 AI 干判断的活，图的是「又稳又有点脑子」。</li>
+<li><strong>Agent</strong>：人只给目标，连走几步、用哪个工具都让模型自己定，图的是灵活，代价是没那么可控。</li>
+</ul>
+<p>有意思的是，这三层不是「谁取代谁」，而是能叠着用。我那条内容流水线，就是三层全用上了。</p>
+<h2 id="我的内容流水线，骨架是-Workflow"><a href="#我的内容流水线，骨架是-Workflow" class="headerlink" title="我的内容流水线，骨架是 Workflow"></a>我的内容流水线，骨架是 Workflow</h2><p>先看骨架这一层。我写一篇公众号文章，背后是一条焊死了顺序的流水线，整整 7 个环节：先拉 AI 资讯定选题，再搜资料核事实，然后起草、降 AI 腔、提炼写作经验、配封面，最后转成各平台格式。这个顺序是我一遍遍跑出来固定下来的，不能乱。你没法先配封面再定选题，也没法跳过核事实直接起草，那文章里的数字就没人兜底了。</p>
+<p>这一层就是标准的 Workflow：<strong>步骤是我提前画好的，模型只在我允许的格子里干活。</strong> 好处很实在，就是可预测。我知道这条线跑完一定会经过「核事实」和「降 AI 腔」这两道关，不会因为模型今天心情好就跳过。Anthropic 那篇文章讲得很直白：任务定义清楚、你要的是一致性和可预测性，就该用 Workflow，别动不动上全自主的 Agent。</p>
+<p>为什么不把整条线交给一个全自主 Agent，让它「自己看着办」？因为我试过类似的放飞，结果它经常自作主张，比如跳过我最看重的防 AI 腔规则。把骨架钉成 Workflow，等于用代码路径给它划好了护栏。这套防 AI 味的 grep 规则、那份越喂越厚的 CLAUDE.md，都是我照着 Claude Code 认 frontmatter、调 hook 的脾气一点点磨出来的，光把这套规则调顺就搭进去好几个晚上。我可不舍得让模型一时兴起就绕过去。</p>
+<h2 id="每个环节内部，又是一个-Agent"><a href="#每个环节内部，又是一个-Agent" class="headerlink" title="每个环节内部，又是一个 Agent"></a>每个环节内部，又是一个 Agent</h2><p>但骨架是 Workflow，不代表里头死板。妙就妙在，<strong>每个环节的格子里，装的其实是一个能自己规划的 Agent。</strong></p>
+<p>拿「搜资料」这个环节举例。我不会写死「先搜 A 关键词，再搜 B 关键词，抓前三条」这种脚本，只给它一个目标：把选题的事实核清楚、别编造。剩下的它自己定：搜几个关键词、用哪个搜索工具、哪条信源可疑要再交叉验证、要不要把原文抓下来读全文，这些运行时的决策全是模型自己做的。我事先根本不知道它这次会走几步。这就是 Agent 的特征：路径是它临场长出来的。</p>
+<p>起草那个环节也一样。我给的是写作规则和素材，不是一句句填空模板。它得自己判断这篇该用哪个开头钩子、哪段补一手细节、哪里偏题了要拉回主线，这些都不是我能提前写死的。</p>
+<p>所以你看，我这套东西的真身是个<strong>混血结构：外面一层是顺序焊死的 Workflow，每个环节内部是能自己判断怎么干的 Agent。</strong> 这也正好对上 Anthropic 的判断：用 Workflow 保住整体的可控可预测，把 Agent 的灵活性收在一个个有边界的格子里。既不会全死板浪费了模型的脑子，也不会全放飞失了控。</p>
+<h2 id="那-Automation-藏在哪，还咬过我一口"><a href="#那-Automation-藏在哪，还咬过我一口" class="headerlink" title="那 Automation 藏在哪，还咬过我一口"></a>那 Automation 藏在哪，还咬过我一口</h2><p>前面 Workflow 和 Agent 都讲了，纯 Automation 在我这套里也有位置，藏在你不太会注意的角落。</p>
+<p>我的博客 vance.xin，整条发布就是 GitHub Actions 自动化的：一 push 到主分支，它自动构建、自动部署，workflow 里还自挂了两段死规则：每次部署完，自动把最新文章的网址推给百度收录接口，再推一份给 IndexNow。这几段就是纯 Automation，固定触发、固定动作、不需要任何模型判断，图的就是不用每次手动去戳一遍。</p>
+<p>但 Automation 有个隐藏成本，我前阵子就被结实咬了一口。负责把站点同步到 GitHub Pages 镜像的那个授权令牌过期了，部署连续静默失败了一整天。要命的是，构建明明成功，只有最后一步推送认证红了，可没人盯着那个状态。我隔了一天主动去查才发现，镜像站已经挂了一整天没人知道。</p>
+<p>这件事正好印证了 Automation 最容易被忽略的脾气：<strong>它绝对听话，但不会思考，更不会喊疼。</strong> 规则覆盖到的它跑得飞快，碰上规则外的异常（比如令牌过期），它不会像 Agent 那样停下来想「咦不对，该报个警」，只会默默地一遍遍失败。后来我学乖了，给这条线单独配了个「失败本身」能被人看见的告警。全自动这东西省的是手，但你得替它把「出事了」这一声补上。</p>
+<h2 id="不想从头搭？先把一个手工环节升成流水线"><a href="#不想从头搭？先把一个手工环节升成流水线" class="headerlink" title="不想从头搭？先把一个手工环节升成流水线"></a>不想从头搭？先把一个手工环节升成流水线</h2><p>道理讲完，落到你今天就能动手的一件事上。别一上来就想搭我这种 7 环节混血流水线，那是我跑了一百来篇才长成的。<strong>你只要挑一个反复在做、步骤又固定的活，把它从「每次手动点一遍」升成「一条能自己跑的线」就行。</strong></p>
+<p>判断标准很简单，对着上面那三层套一遍：这件事每一步要不要模型动脑子？步骤能不能换序？</p>
+<p>如果完全不用动脑、步骤也死板（比如每天定时把某个表格导出来发到群里），那它就是 Automation，配条规则五分钟搞定，别硬塞 AI 进去浪费 token。如果步骤固定、但中间某几步要 AI 帮你判断或生成（比如「抓一批用户反馈 → 让 AI 归类打标 → 汇总成日报」），那它就该搭成 Workflow，顺序你定，中间那步交给模型。等你哪天发现某一步情况太多变、写死规则根本覆盖不过来，再把那步升级成能自己规划的 Agent。</p>
+<p>先跑通一条最小的线，比一上来追求全自动重要得多。我这套也是从「先把配封面那一个手工环节自动化」开始，一环一环长起来的。</p>
+<h2 id="三个词背后是同一个问题：这事到底谁说了算"><a href="#三个词背后是同一个问题：这事到底谁说了算" class="headerlink" title="三个词背后是同一个问题：这事到底谁说了算"></a>三个词背后是同一个问题：这事到底谁说了算</h2><p>绕回开头那个认知坑。我当初混着用这三个词，是没意识到它们是同一个问题的三个答案：这件事到底该让人说了算、让模型说了算，还是让死规则说了算。想清楚这点，你再看任何一个号称「AI 自动帮你干活」的产品，都能一眼看出它是哪一层、靠不靠谱。</p>
+<p>真正的功力，在于把三层叠对地方：死板的活交给 Automation，要可控的骨架用 Workflow 焊死，要灵活的环节才放 Agent 进去自己跑。你现在读的这篇，就是这套混血机制跑出来的，我坐在中间像个工头，派活、收活、逐篇过手。</p>
+<p>最后留个问题给你：你手上现在最烦、又最固定的那个重复活儿是什么？对着「要不要模型动脑、步骤能不能换序」量一量，它该升成 Automation、Workflow 还是 Agent？评论区告诉我，我帮你拆。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/%E8%B6%85%E7%BA%A7%E4%B8%AA%E4%BD%93/" rel="tag"># 超级个体</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/27/202606271210/" rel="prev" title="AI 超级个体第 4 课：给自己搭一个信息雷达，每天该看的料让机器替你筛出来">
+                  <i class="fa fa-angle-left"></i> AI 超级个体第 4 课：给自己搭一个信息雷达，每天该看的料让机器替你筛出来
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/06/27/202606271410/" rel="next" title="MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚">
+                  MCP、Tool Calling、Function Calling 到底什么关系？我用自己接的几个 MCP 把它讲清楚 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.4m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">20:50</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

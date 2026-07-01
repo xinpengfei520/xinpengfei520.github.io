@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Matt Pocock 的 writing-great-skills 把写 skill 的头号目标点破了：可预测，即 agent 每次都走同一套流程。我写了十几个 skill 天天跑，踩过配图漏图、grep 误伤这些坑，总结出四招让 skill 别飘：先定 user 还是 model 触发、该确定的步骤写死、主文件瘦身细节外挂、再配一个把坑自动变规则的回路。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我写了十几个 AI Skill 才想明白：难的不是让它聪明，是让它别飘">
+<meta property="og:url" content="https://www.vance.xin/2026/07/01/202607011749/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Matt Pocock 的 writing-great-skills 把写 skill 的头号目标点破了：可预测，即 agent 每次都走同一套流程。我写了十几个 skill 天天跑，踩过配图漏图、grep 误伤这些坑，总结出四招让 skill 别飘：先定 user 还是 model 触发、该确定的步骤写死、主文件瘦身细节外挂、再配一个把坑自动变规则的回路。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260701-writing-predictable-ai-skills.webp">
+<meta property="article:published_time" content="2026-07-01T17:49:44.000Z">
+<meta property="article:modified_time" content="2026-07-01T10:09:13.234Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="AI Skill">
+<meta property="article:tag" content="方法论">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260701-writing-predictable-ai-skills.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/01/202607011749/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/01/202607011749/","path":"2026/07/01/202607011749/","title":"我写了十几个 AI Skill 才想明白：难的不是让它聪明，是让它别飘"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>我写了十几个 AI Skill 才想明白：难的不是让它聪明，是让它别飘 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "我写了十几个 AI Skill 才想明白：难的不是让它聪明，是让它别飘",
+  "url": "https://www.vance.xin/2026/07/01/202607011749/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/01/202607011749/",
+  "datePublished": "2026-07-01T17:49:44.000Z",
+  "dateModified": "2026-07-01T10:09:13.234Z",
+  "description": "Matt Pocock 的 writing-great-skills 把写 skill 的头号目标点破了：可预测，即 agent 每次都走同一套流程。我写了十几个 skill 天天跑，踩过配图漏图、grep 误伤这些坑，总结出四招让 skill 别飘：先定 user 还是 model 触发、该确定的步骤写死、主文件瘦身细节外挂、再配一个把坑自动变规则的回路。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A3%98%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88%E6%84%8F%E6%80%9D"><span class="nav-text">飘到底是什么意思</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E5%AE%9A%E8%B0%81%E6%9D%A5%E8%A7%A6%E5%8F%91%E5%AE%83"><span class="nav-text">先定谁来触发它</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%A5%E5%86%99%E6%AD%BB%E7%9A%84%E5%88%AB%E7%95%99%E6%A8%A1%E7%B3%8A"><span class="nav-text">该写死的别留模糊</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%84%E5%88%99%E5%A4%AA%E5%AE%BD%E4%B9%9F%E4%BC%9A%E5%8F%8D%E5%92%AC"><span class="nav-text">规则太宽也会反咬</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E6%96%87%E4%BB%B6%E7%98%A6%E8%BA%AB%E7%BB%86%E8%8A%82%E5%A4%96%E6%8C%82"><span class="nav-text">主文件瘦身细节外挂</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%99%E5%AE%83%E9%85%8D%E4%B8%AA%E8%87%AA%E5%8A%A8%E6%94%B9%E9%94%99"><span class="nav-text">给它配个自动改错</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8A%E5%A4%A9%E5%85%88%E6%94%B9%E5%93%AA%E4%B8%AA-skill"><span class="nav-text">今天先改哪个 skill</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">431</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">769</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/01/202607011749/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="我写了十几个 AI Skill 才想明白：难的不是让它聪明，是让它别飘 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Matt Pocock 的 writing-great-skills 把写 skill 的头号目标点破了：可预测，即 agent 每次都走同一套流程。我写了十几个 skill 天天跑，踩过配图漏图、grep 误伤这些坑，总结出四招让 skill 别飘：先定 user 还是 model 触发、该确定的步骤写死、主文件瘦身细节外挂、再配一个把坑自动变规则的回路。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我写了十几个 AI Skill 才想明白：难的不是让它聪明，是让它别飘
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-01 17:49:44 / 修改时间：10:09:13" itemprop="dateCreated datePublished" datetime="2026-07-01T17:49:44+00:00">2026-07-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Matt Pocock 的 writing-great-skills 把写 skill 的头号目标点破了：可预测，即 agent 每次都走同一套流程。我写了十几个 skill 天天跑，踩过配图漏图、grep 误伤这些坑，总结出四招让 skill 别飘：先定 user 还是 model 触发、该确定的步骤写死、主文件瘦身细节外挂、再配一个把坑自动变规则的回路。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260701-writing-predictable-ai-skills.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>先撇清一下。上一篇我聊 Every 的「复利工程」，讲的是怎么让 AI 越用越懂你、把解法一点点沉淀下来。这篇不是那个，这篇更往下沉一层：怎么把单独一个 skill 本身，写得稳、写得不飘。</p>
+<p>我这个号从选题、调研、写稿、润色、配图到分发，背后挂着十几个 skill，全是我自己一行行写出来、天天串起来跑的。写了这么多我最深的一个体会是：写 skill 最花功夫的地方，从来不在让它多聪明，在让它别飘。</p>
+<p>昨天刷到 Matt Pocock（写 Total TypeScript 那位）开源的 skill 库，GitHub 十三万多 star，里面有份专门讲「怎么写好一个 skill」的东西。我对着自己踩的那些坑读了一遍，很多话戳得我一激灵。这篇就把他那套原则，和我这十几个 skill 磨出来的血肉，掺一块儿讲给你。</p>
+<h2 id="飘到底是什么意思"><a href="#飘到底是什么意思" class="headerlink" title="飘到底是什么意思"></a>飘到底是什么意思</h2><p>先说清楚什么叫「飘」。</p>
+<p>Pocock 那套的核心词就俩字：可预测。他给的定义我很认同。一个好 skill，是 agent 每次跑都走同一套流程，不管这次具体产出是什么。</p>
+<p>反过来，飘就是同一个 skill、同一句话调它，今天这么干、明天那么干，你永远猜不准它这回会不会给你整个花活出来。</p>
+<p>这事对偶尔用一次的人不痛不痒。可我是把 skill 挂上流水线天天自动跑的人，飘一次，我就得回去擦一次屁股。所以对我来说，可预测这事没得商量。它就是这条流水线能不能自己转起来的地基。下面这四招，全是围着「让它别飘」来的。</p>
+<h2 id="先定谁来触发它"><a href="#先定谁来触发它" class="headerlink" title="先定谁来触发它"></a>先定谁来触发它</h2><p>写一个 skill，第一个要拍板的往往不是它干啥这么直白。得先想清楚：谁来触发它。</p>
+<p>Pocock 把它分成两类，还说这是头号决定。一类叫 user-invoked，只有用户手打命令才触发，平时不占 agent 的脑子；另一类叫 model-invoked，任务一匹配模型自己就调，靠的是那行 description 当触发器。他自己更偏爱手打那种，因为最可控。</p>
+<p>这条我太有体会了，因为两类我都亲手写过。</p>
+<p>我那个发公众号的 skill，就故意做成手打触发的：默认跳过，只有我明说「发到公众号」它才动。为啥？怕误推。一篇还没审的稿子被 agent 自作主张推出去，那事故就大了。而我拉资讯、选题那几个 skill 是自动触发的，我还在 description 里专门写了「别 undertrigger」，就怕它该出手时不出手，把过时的老数据当今天的新闻喂给我。</p>
+<p>所以动笔前先问自己：这活儿，是我想什么时候用什么时候喊，还是让它自己看着办。答案不同，skill 的写法就两条路。</p>
+<h2 id="该写死的别留模糊"><a href="#该写死的别留模糊" class="headerlink" title="该写死的别留模糊"></a>该写死的别留模糊</h2><p>定完触发，第二招最实在：该确定的步骤，写死，别给模型留模糊。</p>
+<p>Pocock 的说法是每一步尽量确定、把没用的步骤剪掉。我的翻译更糙：skill 里每留一处含糊，agent 就多一处自由发挥的空间，而自由发挥，就是飘的起点。</p>
+<p>我在配图那个 skill 上栽过一个大跟头。最早我没把「图怎么处理」这步写死，只笼统说了句配图。结果 agent 可来劲了：有时候自作主张把图床链接直接塞进正文，有时候干脆漏图，说好三张出两张。我查了半天才反应过来，它不笨，是我这步留白留太多，它只能自己猜。</p>
+<p>后来我把这条抠死成一句硬规则：写稿的 skill 只许写「截图 N」这种占位符，绝不许自己上传、绝不许自己塞链接，上传和替换是配图 skill 的活。边界一划清，这毛病再没犯过。</p>
+<h2 id="规则太宽也会反咬"><a href="#规则太宽也会反咬" class="headerlink" title="规则太宽也会反咬"></a>规则太宽也会反咬</h2><p>但你别以为把规则写得越严越死就万事大吉，那是另一个坑。</p>
+<p>规则写太宽、太一刀切，它会反过来咬你。我有一条专门扫 AI 味的 grep 规则，本意是揪出那种工整的对仗腔，结果它写得太宽，把正文里「它是不是天天重复、规则是不是清晰」这种正常疑问句，也当成对仗给揪出来了。这叫假阳性，规则没帮上忙，还得我回头一条条人工排除。</p>
+<p>所以这招的分寸在于：精准，比严格更重要。你要的是那条规则不多不少正好圈住该圈的东西，而不是宁可错杀一千。写完一条硬规则，我现在都会拿几个正常句子过一遍，看它会不会误伤。</p>
+<h2 id="主文件瘦身细节外挂"><a href="#主文件瘦身细节外挂" class="headerlink" title="主文件瘦身细节外挂"></a>主文件瘦身细节外挂</h2><p>第三招，是关于 skill 怎么排版的：主文件瘦身，细节外挂。</p>
+<p>Pocock 管这叫渐进式披露，说人话就是把主 SKILL.md 保持精简、只放核心流程，那些又长又细的规则挪到外部参考文件里，用到了再加载。他们测出来这样能把常驻的上下文砍掉六成多。</p>
+<p>我的写稿 skill 就是这么长起来的。主文件 SKILL.md 只放「先干啥再干啥」的骨架，真正那本又臭又长、迭代到一百多次的写作规则清单，我全塞进旁边的 references 文件里。好处是双份的：主文件不会被撑成一本书没法读，agent 每次也不用把所有细则背一遍才动手，用到哪条翻哪条。</p>
+<p>一句话记：主文件是目录，不是全书。</p>
+<h2 id="给它配个自动改错"><a href="#给它配个自动改错" class="headerlink" title="给它配个自动改错"></a>给它配个自动改错</h2><p>前面四招都是怎么把一个 skill 写好，最后这条是我自己琢磨出来、比原文更进一步的：给它配一个能自己改错的回路。</p>
+<p>因为再周全的 skill，也是一个坑一个坑踩出来的，不可能一次写对。我专门做了个叫 content-training 的 skill，它的活就是每写完一篇，把这回润色时暴露的新毛病自动提炼成一条规则，回写进那份规则清单。等于这套 skill 每被用一次，就顺手把自己又收紧了一点。</p>
+<p>这才是我敢让这条流水线天天无人值守跑的底气：它不光执行得稳，还能在犯错里自己变得更稳。我那份规则清单能滚到一百多次还没散架，全靠这个回路兜着。skill 不该是写完就冻在那儿的死文件，得是一个会自己长的东西。</p>
+<h2 id="今天先改哪个-skill"><a href="#今天先改哪个-skill" class="headerlink" title="今天先改哪个 skill"></a>今天先改哪个 skill</h2><p>四招讲完，给你个今天就能上手的最小动作，别一上来就重构。</p>
+<p>挑你手头最常用的那一个 skill，只干两件事。一件，想清楚它到底该用户手打触发还是模型自动触发，把这事定死；另一件，回去翻一遍，找出最容易被 agent 自作主张的那一步，把它从模糊改成一句写死的硬规则。就这两下，你多半就能感觉到它稳了一截。别嫌小，我这十几个 skill，也是从把一步步含糊抠成确定攒起来的。</p>
+<p>说到底，写 skill 这事，真正难的不在让它显得多聪明，在让它每次都规规矩矩走同一条路、不飘。聪明是锦上添花，可预测才是能挂上流水线的前提。</p>
+<p>你那些 skill 里，最爱飘的是哪一步？有没有被 agent 自作主张坑过一次让你哭笑不得的经历？评论区讲讲，我们对对坑。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/AI-Skill/" rel="tag"># AI Skill</a>
+              <a href="/tags/%E6%96%B9%E6%B3%95%E8%AE%BA/" rel="tag"># 方法论</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/01/202607011131/" rel="prev" title="Nano Banana 2 Lite：4 秒三分钱一张，我那条自动配图流水线该给它分哪类活">
+                  <i class="fa fa-angle-left"></i> Nano Banana 2 Lite：4 秒三分钱一张，我那条自动配图流水线该给它分哪类活
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">22:01</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

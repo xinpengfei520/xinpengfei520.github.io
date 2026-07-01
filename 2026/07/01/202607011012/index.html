@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Anthropic 在 2026-06-30 发布 Claude Sonnet 5，SWE-bench Pro 63.2% 逼近 Opus 4.8 的 69.2%，知识工作打平，价格只有 Opus 的六成。它第一次让 Opus 对多数活变成可选项。但 Sonnet 5 换了新 tokenizer，同样文本多吃 1 到 1.35 倍 token，标价便宜 40% 不等于账单便宜 40%，选型得按活的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Sonnet 5 逼近 Opus 还便宜一半：我那本「用之前先过秤」的账，得重算了">
+<meta property="og:url" content="https://www.vance.xin/2026/07/01/202607011012/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Anthropic 在 2026-06-30 发布 Claude Sonnet 5，SWE-bench Pro 63.2% 逼近 Opus 4.8 的 69.2%，知识工作打平，价格只有 Opus 的六成。它第一次让 Opus 对多数活变成可选项。但 Sonnet 5 换了新 tokenizer，同样文本多吃 1 到 1.35 倍 token，标价便宜 40% 不等于账单便宜 40%，选型得按活的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260701-claude-sonnet-5-cost-tradeoff.webp">
+<meta property="article:published_time" content="2026-07-01T10:12:23.000Z">
+<meta property="article:modified_time" content="2026-07-01T03:09:41.759Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="成本">
+<meta property="article:tag" content="Claude Sonnet 5">
+<meta property="article:tag" content="模型选型">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260701-claude-sonnet-5-cost-tradeoff.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/01/202607011012/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/01/202607011012/","path":"2026/07/01/202607011012/","title":"Claude Sonnet 5 逼近 Opus 还便宜一半：我那本「用之前先过秤」的账，得重算了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Claude Sonnet 5 逼近 Opus 还便宜一半：我那本「用之前先过秤」的账，得重算了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Claude Sonnet 5 逼近 Opus 还便宜一半：我那本「用之前先过秤」的账，得重算了",
+  "url": "https://www.vance.xin/2026/07/01/202607011012/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/01/202607011012/",
+  "datePublished": "2026-07-01T10:12:23.000Z",
+  "dateModified": "2026-07-01T03:09:41.759Z",
+  "description": "Anthropic 在 2026-06-30 发布 Claude Sonnet 5，SWE-bench Pro 63.2% 逼近 Opus 4.8 的 69.2%，知识工作打平，价格只有 Opus 的六成。它第一次让 Opus 对多数活变成可选项。但 Sonnet 5 换了新 tokenizer，同样文本多吃 1 到 1.35 倍 token，标价便宜 40% 不等于账单便宜 40%，选型得按活的代价乘调用量乘单价重新分档。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%9C%89%E6%9C%AC%E6%A8%A1%E5%9E%8B%E5%88%86%E9%85%8D%E8%B4%A6"><span class="nav-text">我有本模型分配账</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Sonnet-5-%E5%88%B0%E5%BA%95%E5%BC%BA%E5%88%B0%E5%93%AA"><span class="nav-text">Sonnet 5 到底强到哪</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Opus-%E5%BC%BA%E5%9C%A8%E5%93%AA%E6%B2%A1%E9%80%80%E4%BC%91"><span class="nav-text">Opus 强在哪没退休</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%A6%E5%8D%95%E6%B2%A1%E6%A0%87%E4%BB%B7%E9%82%A3%E4%B9%88%E9%A6%99"><span class="nav-text">账单没标价那么香</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E6%B4%BB%E5%87%86%E5%A4%87%E6%80%8E%E4%B9%88%E9%87%8D%E6%8E%92"><span class="nav-text">我的活准备怎么重排</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%A5%E6%B4%BB%E6%88%91%E5%B8%AE%E4%BD%A0%E5%88%86%E6%A1%A3"><span class="nav-text">报活我帮你分档</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">429</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">766</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/01/202607011012/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Claude Sonnet 5 逼近 Opus 还便宜一半：我那本「用之前先过秤」的账，得重算了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Anthropic 在 2026-06-30 发布 Claude Sonnet 5，SWE-bench Pro 63.2% 逼近 Opus 4.8 的 69.2%，知识工作打平，价格只有 Opus 的六成。它第一次让 Opus 对多数活变成可选项。但 Sonnet 5 换了新 tokenizer，同样文本多吃 1 到 1.35 倍 token，标价便宜 40% 不等于账单便宜 40%，选型得按活的代价乘调用量乘单价重新分档。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Claude Sonnet 5 逼近 Opus 还便宜一半：我那本「用之前先过秤」的账，得重算了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-01 10:12:23 / 修改时间：03:09:41" itemprop="dateCreated datePublished" datetime="2026-07-01T10:12:23+00:00">2026-07-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Anthropic 在 2026-06-30 发布 Claude Sonnet 5，SWE-bench Pro 63.2% 逼近 Opus 4.8 的 69.2%，知识工作打平，价格只有 Opus 的六成。它第一次让 Opus 对多数活变成可选项。但 Sonnet 5 换了新 tokenizer，同样文本多吃 1 到 1.35 倍 token，标价便宜 40% 不等于账单便宜 40%，选型得按活的代价乘调用量乘单价重新分档。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260701-claude-sonnet-5-cost-tradeoff.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天 Anthropic 发了 Claude Sonnet 5，我第一反应没去翻跑分榜。先打开的，是自己那本模型分配的账本。</p>
+<p>我最近连着写了几篇 Claude 的东西，聊过它进 Slack 当同事、聊过它被投毒的安全坑、也聊过怎么用 CLAUDE.md 攒复利。这篇跟那些都不搭界，只聊一件很具体、很俗的事：一个逼近 Opus 又便宜一半的模型出来后，我手头那些活，该重新分给谁跑。</p>
+<p>这对我这种每个月给 Anthropic 交不少钱的人来说，是笔要认真算的账。</p>
+<h2 id="我有本模型分配账"><a href="#我有本模型分配账" class="headerlink" title="我有本模型分配账"></a>我有本模型分配账</h2><p>先说我为啥有这么本账。</p>
+<p>我整条写文章的流水线，挂着十几个 skill，全长在 Claude Code 上。每个 skill 干的活不一样：有的要它读一大堆资料提炼观点，有的只是帮我把格式转一转。</p>
+<p>所以让 agent 动手之前，我脑子里都会下意识过一遍秤：这活值不值得动用 Opus？重的、容易出岔子的，上 Opus；那些机械的杂活，我手动切到便宜模型，省点额度。</p>
+<p>举个我自己的例子。写稿那个 skill、还有润色查 AI 味的那步，输出质量直接决定文章成不成，我一直咬牙用 Opus，错一句我得回头返工，那点模型钱省不得。</p>
+<p>可像把 Markdown 转成公众号排版、给标签分类这种死板活，我早换成便宜模型跑了，反正它错不到哪去。</p>
+<p>中间还夹着一批我一直没想明白该归哪档的活，比如读一大摞资料提炼观点，用 Opus 觉得肉疼，用便宜的又怕它抓不住重点。</p>
+<p>这种「用之前先在心里称一下」的绷着感，就是「贵」最真实的样子。你不会拿最贵的模型去跑一个改标点的活，就跟你不会开跑车下楼买瓶酱油一样。</p>
+<p>Sonnet 5 这一出来，我账本里一直悬着、没想明白该归哪档的那批中间活，全跟着晃了。到底往哪挪，值得好好算一算。</p>
+<h2 id="Sonnet-5-到底强到哪"><a href="#Sonnet-5-到底强到哪" class="headerlink" title="Sonnet 5 到底强到哪"></a>Sonnet 5 到底强到哪</h2><p>先看 Anthropic 官方自己给的那张对比表，数字我都核过。</p>
+<p>在最硬的那项 agentic 编码 SWE-bench Pro 上，Sonnet 5 拿了 63.2%，前一代 Sonnet 4.6 是 58.1%，一步跨了五个多点。终端操作 Terminal-Bench 上 80.4%，电脑操作 OSWorld 上 81.2%，都比上一代明显往上走。</p>
+<p>真正让我盯着看半天的，是它跟旗舰 Opus 4.8 贴得有多近。</p>
+<p>官方这次没把宝押在某个跑分上。它反复强调的关键词是 agentic 可靠性：长任务链不容易丢上下文，工具调用失败了自己会纠错，跑一个长会话状态更稳。说实话，这几条对天天让它连轴干活的人来说，比多两个点的跑分实在得多。</p>
+<p>价格这块才是重锤。促销期到 8 月 31 号，输入每百万 token 两美元，输出十美元。之后恢复到三美元和十五美元。而 Opus 4.8 是五美元和二十五美元。标准价一摆，Sonnet 5 便宜了差不多四成。</p>
+<p>有人说得挺到位：这是头一回，Sonnet 和 Opus 落在了同一条性价比曲线上，Opus 对大多数活，第一次变成了可选项。</p>
+<h2 id="Opus-强在哪没退休"><a href="#Opus-强在哪没退休" class="headerlink" title="Opus 强在哪没退休"></a>Opus 强在哪没退休</h2><p>但我得替 Opus 说句公道话，别看完就把它打入冷宫。</p>
+<p>同样是那张官方表，Opus 4.8 在几块硬骨头上还是领先的。SWE-bench Pro 它 69.2%，比 Sonnet 5 高六个点。这六个点在小活上你没感觉，可一旦是那种几十个文件互相牵扯的大重构、长链路的工程活，六个点就是「一次能不能跑对」的真实差距。深度推理、电脑操作这些，Opus 也都还压着。</p>
+<p>有意思的是知识工作那项 GDPval，Sonnet 5 拿了 1618，反而微微超过 Opus 的 1615。</p>
+<p>所以结论不能简单说成 Sonnet 5 全面赢了。两个模型各有各的地盘：硬核编码和深推理留给 Opus，价格和速度归 Sonnet 5，知识类的活两边打平。它俩谁也没吃掉谁，只是中间那道墙被推薄了。</p>
+<h2 id="账单没标价那么香"><a href="#账单没标价那么香" class="headerlink" title="账单没标价那么香"></a>账单没标价那么香</h2><p>讲到这，最容易被忽略、但对我这种要过秤的人最要命的一条，来了。</p>
+<p>标价便宜四成，不代表你的账单就降四成。</p>
+<p>Sonnet 5 换了个新的 tokenizer，跟 Opus 4.7 那套一样。同样一段文字喂进去，它切出来的 token 数，可能是原来的一倍到一点三五倍。Anthropic 自己在脚注里也承认了，说促销价是特意校准到「大致成本中性」的，但等促销一过、恢复标准价，这个 token 膨胀就会把你名义上省的那四成，悄悄削回去一截。</p>
+<p>这就是我说的过秤要秤准。你光看单价那个数字，会以为捡了大便宜；真正决定你月底掏多少钱的，是单价乘上你实际烧掉的 token 量。后面这个量，被 tokenizer 偷偷改过了。</p>
+<p>这种账我太熟了，光盯着单价那个数字乐呵，月底账单一拉才发现根本没省下几个钱。所以别信 sticker price，拿你自己真实的活跑一批，看月底实际扣了多少，才算数。</p>
+<h2 id="我的活准备怎么重排"><a href="#我的活准备怎么重排" class="headerlink" title="我的活准备怎么重排"></a>我的活准备怎么重排</h2><p>那具体到我这本账，怎么重排。</p>
+<p>我不打算新模型一出就无脑全切，那是另一种偷懒。我准备挑出自己调用量最大的那两三个 skill，头一个就是刚才说的那个读一大摞资料提炼观点的中间活，各拿一批我手头真实的选题，让 Sonnet 5 和我现在用的模型分别跑一遍。</p>
+<p>两头我就盯两个东西。一是产出质量：它提炼出来的观点，够不够我直接拿去写，还是又得我大改一遍。二是实际 token 账单：同一批活跑下来，两边到底差多少钱，注意是看真实扣费，不是看那个标价。跑完这一轮，哪些活迁、哪些活留，我心里就有数了，不用凭感觉拍脑袋。</p>
+<p>判断的尺子我也想清楚了。一个活该用哪档模型，看三样东西相乘：这活错一点的代价有多大，我一天要跑它多少次，以及单价。选模型这事，真正该盯的从来不是「哪个模型最强」，是「这个活错一点的代价，乘上我要跑多少次，再乘单价」。</p>
+<p>按这把尺子，那些错了代价大、但我一天跑不了几次的活，比如关键的大重构，我还是留给 Opus，多花的钱买的是安心。那些质量要求没那么顶、但一天要跑几十上百次的高频活，是 Sonnet 5 最该接手的地方。省下来的是实打实的额度。</p>
+<h2 id="报活我帮你分档"><a href="#报活我帮你分档" class="headerlink" title="报活我帮你分档"></a>报活我帮你分档</h2><p>绕一圈回到那本账本。</p>
+<p>Sonnet 5 真正改变的，不只是又多一个模型可选。它把「贵」和「够用」之间那个纠结地带，给填上了一大块。以前我总在「舍不得动 Opus」和「便宜模型不够聪明」之间反复横跳，现在中间有了个体面的默认选项。</p>
+<p>但工具给你便利，算账这件事还得你自己干。哪些活敢交给它、哪些活省下的是真钱、tokenizer 会不会把你的账偷偷抬回去，这些没人能替你测，得你自己拿真实任务过一遍秤。</p>
+<p>说到底，会换模型的人很多，能把自己每类活该花多少钱算明白的人不多。你现在手头哪个活最纠结用哪档模型？评论区报一下这个活大概在干嘛、一天跑多少次，我帮你分个档。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/%E6%88%90%E6%9C%AC/" rel="tag"># 成本</a>
+              <a href="/tags/Claude-Sonnet-5/" rel="tag"># Claude Sonnet 5</a>
+              <a href="/tags/%E6%A8%A1%E5%9E%8B%E9%80%89%E5%9E%8B/" rel="tag"># 模型选型</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/06/30/202606301414/" rel="prev" title="一个人撑起 5 款产品的「复利工程」：我那本喂到第 108 次的规则书，原来一直在干这事">
+                  <i class="fa fa-angle-left"></i> 一个人撑起 5 款产品的「复利工程」：我那本喂到第 108 次的规则书，原来一直在干这事
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/07/01/202607011021/" rel="next" title="Claude Code 被曝暗藏 147 个域名，我在本机复核了">
+                  Claude Code 被曝暗藏 147 个域名，我在本机复核了 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.4m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">21:56</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

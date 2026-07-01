@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="美团 2026-06-30 开源 LongCat-2.0，1.6T MoE、原生 1M 上下文、专为 agentic coding 造，是首个在 5 万卡国产 ASIC 集群端到端训出的万亿模型，全程没碰 Nvidia。SWE-bench Pro 59.5 超 GPT-5.5 但低于 Claude Sonnet 5 的 63.2。它未必最强，价值在开源便宜和国产自主，适合分掉高频不苛刻的活，核心硬">
+<meta property="og:type" content="article">
+<meta property="og:title" content="美团用 5 万张国产芯片训出万亿 coding 模型：LongCat-2.0 能替 Claude 干哪类活">
+<meta property="og:url" content="https://www.vance.xin/2026/07/01/202607011032/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="美团 2026-06-30 开源 LongCat-2.0，1.6T MoE、原生 1M 上下文、专为 agentic coding 造，是首个在 5 万卡国产 ASIC 集群端到端训出的万亿模型，全程没碰 Nvidia。SWE-bench Pro 59.5 超 GPT-5.5 但低于 Claude Sonnet 5 的 63.2。它未必最强，价值在开源便宜和国产自主，适合分掉高频不苛刻的活，核心硬">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260701-longcat-2-domestic-coding-model.webp">
+<meta property="article:published_time" content="2026-07-01T10:32:46.000Z">
+<meta property="article:modified_time" content="2026-07-01T03:09:41.759Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Agentic Coding">
+<meta property="article:tag" content="开源">
+<meta property="article:tag" content="国产模型">
+<meta property="article:tag" content="LongCat">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260701-longcat-2-domestic-coding-model.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/01/202607011032/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/01/202607011032/","path":"2026/07/01/202607011032/","title":"美团用 5 万张国产芯片训出万亿 coding 模型：LongCat-2.0 能替 Claude 干哪类活"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>美团用 5 万张国产芯片训出万亿 coding 模型：LongCat-2.0 能替 Claude 干哪类活 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "美团用 5 万张国产芯片训出万亿 coding 模型：LongCat-2.0 能替 Claude 干哪类活",
+  "url": "https://www.vance.xin/2026/07/01/202607011032/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/01/202607011032/",
+  "datePublished": "2026-07-01T10:32:46.000Z",
+  "dateModified": "2026-07-01T03:09:41.759Z",
+  "description": "美团 2026-06-30 开源 LongCat-2.0，1.6T MoE、原生 1M 上下文、专为 agentic coding 造，是首个在 5 万卡国产 ASIC 集群端到端训出的万亿模型，全程没碰 Nvidia。SWE-bench Pro 59.5 超 GPT-5.5 但低于 Claude Sonnet 5 的 63.2。它未必最强，价值在开源便宜和国产自主，适合分掉高频不苛刻的活，核心硬活仍留 Claude 顶档。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%81%E5%A4%96%E5%8D%96%E7%9A%84%E8%AE%AD%E5%87%BA%E4%BA%86%E4%B8%87%E4%BA%BF%E6%A8%A1%E5%9E%8B"><span class="nav-text">送外卖的训出了万亿模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E5%88%B0%E5%BA%95%E5%BC%BA%E4%B8%8D%E5%BC%BA"><span class="nav-text">它到底强不强</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E7%8B%A0%E7%9A%84%E6%98%AF%E9%82%A3%E6%89%B9%E5%9B%BD%E4%BA%A7%E8%8A%AF%E7%89%87"><span class="nav-text">最狠的是那批国产芯片</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E8%83%BD%E4%B8%8D%E8%83%BD%E6%9B%BF%E6%88%91%E5%B9%B2%E6%B4%BB"><span class="nav-text">它能不能替我干活</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E9%A1%B6%E6%B4%BB%E6%8D%A2%E4%B8%8D%E6%8E%89%E5%BA%95%E5%BA%A7"><span class="nav-text">它顶活换不掉底座</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E6%94%A5%E4%B8%80%E6%9D%A1%E5%90%8E%E8%B7%AF%E7%9A%84%E6%84%8F%E4%B9%89"><span class="nav-text">多攥一条后路的意义</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">429</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">766</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/01/202607011032/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="美团用 5 万张国产芯片训出万亿 coding 模型：LongCat-2.0 能替 Claude 干哪类活 | 飞飞的AI实验室">
+      <meta itemprop="description" content="美团 2026-06-30 开源 LongCat-2.0，1.6T MoE、原生 1M 上下文、专为 agentic coding 造，是首个在 5 万卡国产 ASIC 集群端到端训出的万亿模型，全程没碰 Nvidia。SWE-bench Pro 59.5 超 GPT-5.5 但低于 Claude Sonnet 5 的 63.2。它未必最强，价值在开源便宜和国产自主，适合分掉高频不苛刻的活，核心硬活仍留 Claude 顶档。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          美团用 5 万张国产芯片训出万亿 coding 模型：LongCat-2.0 能替 Claude 干哪类活
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-01 10:32:46 / 修改时间：03:09:41" itemprop="dateCreated datePublished" datetime="2026-07-01T10:32:46+00:00">2026-07-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">美团 2026-06-30 开源 LongCat-2.0，1.6T MoE、原生 1M 上下文、专为 agentic coding 造，是首个在 5 万卡国产 ASIC 集群端到端训出的万亿模型，全程没碰 Nvidia。SWE-bench Pro 59.5 超 GPT-5.5 但低于 Claude Sonnet 5 的 63.2。它未必最强，价值在开源便宜和国产自主，适合分掉高频不苛刻的活，核心硬活仍留 Claude 顶档。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260701-longcat-2-domestic-coding-model.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天有个消息把我看乐了：一家送外卖的公司，开源了一个万亿参数的大模型。</p>
+<p>美团发布了 LongCat-2.0。我上一篇刚聊完 Claude Sonnet 5 该怎么进我的模型账本，这篇换条完全不同的线：一个国产开源、还是国产芯片训出来的 coding 模型，能不能挤进这本账，替我干点活。</p>
+<p>它跟前几天我写的那些 Claude 的工具、安全、方法论都不搭界。这次就一件事：国产 coding 模型，到底能不能顶班。</p>
+<h2 id="送外卖的训出了万亿模型"><a href="#送外卖的训出了万亿模型" class="headerlink" title="送外卖的训出了万亿模型"></a>送外卖的训出了万亿模型</h2><p>先说 LongCat-2.0 是个啥。</p>
+<p>1.6 万亿参数的 MoE 架构，每个 token 实际只激活其中约 480 亿，原生撑 1M 的超长上下文，MIT 协议开源。它不是那种什么都能聊的通用模型。从头到尾，它就冲着 agentic coding 一件事造的：多步工程任务、调工具、自动改整个仓库。</p>
+<p>说白了，通用大模型追求的是跟你聊得顺、答得全，LongCat-2.0 追求的是能在一个真实项目里，把代码读明白、改对、还能自己跑起来验证。这是两个活。</p>
+<p>为了这个目标，它塞了三样专门的东西：一套稀疏注意力撑起那个 1M 上下文、一套动态激活机制让每个 token 只调用该调用的专家、再按任务类型把专家分成 agent、推理、交互三组分开路由。名词你不用记，记住一句就行：它每一处设计，都在为「一次能吃下一个大仓库再动手」这件事服务。</p>
+<p>它其实早就在你我身边跑过了。前两个月 OpenRouter 上有个匿名的神秘模型叫 Owl Alpha，调用量爬到全球前三，很多人拿它接进 Claude Code、Cursor 里干活，还挺好用。上周掀开马甲，那就是 LongCat-2.0。它潜行两个月，靠真实开发者用脚投票爬上来，这份成绩比自己发一张跑分表实在多了。</p>
+<p>一家做外卖的公司，把 coding 模型干到这个位置，本身就够反常识了。</p>
+<h2 id="它到底强不强"><a href="#它到底强不强" class="headerlink" title="它到底强不强"></a>它到底强不强</h2><p>看跑分。数字我都核过官方那张表。</p>
+<p>SWE-bench Pro 上 59.5，超过了 GPT-5.5 的 58.6。Terminal-Bench 2.1 拿了 70.8，多语言 SWE-bench 77.3，企业工作流那项 FORTE 73.2。据 SCMP 说，整体跟 DeepSeek V4-Pro 打平。</p>
+<p>这成绩放在开源模型里，是妥妥的第一梯队。</p>
+<p>但我得把话说全，别让你以为它吊打了海外。我上一篇核 Claude Sonnet 5 的时候记得清楚，Sonnet 5 的 SWE-bench Pro 是 63.2，Opus 4.8 是 69.2。LongCat-2.0 的 59.5，离 Claude 最顶那两档还差着一截。</p>
+<p>所以它的位置很清楚：near-frontier，接近前沿，但不是最强。它真正的价值，得换个地方看。</p>
+<h2 id="最狠的是那批国产芯片"><a href="#最狠的是那批国产芯片" class="headerlink" title="最狠的是那批国产芯片"></a>最狠的是那批国产芯片</h2><p>真正让我坐直的，不是那几个跑分。</p>
+<p>是这个万亿模型，从训练到推理，整个跑在一个 5 万卡的国产 ASIC 集群上，用的是华为的 Atlas-950 SuperPod，全程一张 Nvidia 卡都没碰。它是业界第一个在纯国产算力上端到端完成的万亿级模型。</p>
+<p>这句话的分量，懂的人自然懂。这两年最卡脖子的从来是算力那道关。买不到最新的卡、买到了也怕哪天被断，是悬在每一家国内 AI 公司头上的事。</p>
+<p>之前不少国产芯片训模型的说法，都被质疑偷偷掺了走私的 Nvidia，成色打折扣。而美团这个是已经被核实过的集群，被 AFP 那边点名，是目前最干净的一个国产自主证据点。</p>
+<p>说真的，一个万亿模型能从头训到尾、还能拉出来跑推理，全程不靠一张进口卡，这件事本身就是个信号：那条大家一直担心走不通的国产全栈路，被人真的走通了一遍。</p>
+<p>LongCat-2.0 真正的分量，不在它跑分多高，在它是第一个用 5 万张国产芯片端到端训出来的万亿模型。它未必是最强的那个，可它是那个证明「不靠 Nvidia 也能把万亿模型从头训到尾」的家伙。</p>
+<h2 id="它能不能替我干活"><a href="#它能不能替我干活" class="headerlink" title="它能不能替我干活"></a>它能不能替我干活</h2><p>聊回我自己的账本。</p>
+<p>上一篇我说过，我给每类活都在心里过秤：一个活该用哪档模型，看它错一点的代价、我一天跑多少次、加上单价。写稿润色这种质量决定成败的核心活，我咬牙用 Opus；格式转换打标签这种死板活，早交给便宜模型了。</p>
+<p>LongCat-2.0 补上来的，正好是这本账里一个新的档位：开源、能自部署、按 token 极便宜、还带 1M 上下文，天生适合啃大仓库。它在第三方平台上的托管价，输入每百万 token 不到一块钱，比 Claude 那几档便宜一个数量级。</p>
+<p>那些高频、量大、但对质量没那么苛刻的活，就是它最该接手的地方。比如把一个陌生的大代码库整个喂进去做初步梳理、给我理清楚模块关系；比如大段日志、长文档的粗筛，先过一遍把重点捞出来。</p>
+<p>这类活一天可能要跑几十上百次，用 Claude 顶档跑纯属烧钱。交给一个便宜又懂代码、还能一口气吞下 1M 上下文的国产开源模型，性价比一下就出来了。</p>
+<p>它在 OpenRouter 上直接就能调，价格又低，试错成本几乎为零。我准备挑几个这类高频不苛刻的活，先拿我手头真实的项目跑一批，两头盯着看：它梳理出来的东西够不够我直接用，实际账单又比现在省多少。跑完再决定分不分一部分给它。至于写稿、润色、关键重构这些错一步就得返工的核心硬活，我暂时一个都不动。</p>
+<h2 id="它顶活换不掉底座"><a href="#它顶活换不掉底座" class="headerlink" title="它顶活换不掉底座"></a>它顶活换不掉底座</h2><p>但这里有个坑，得给想「一步到位换掉 Claude」的人提个醒。</p>
+<p>它能顶的是「活」，顶不了我整个「底座」。我整条流水线挂着十几个 skill，加一份越喂越厚的 CLAUDE.md 和一摞 memory，全是照着 Claude Code 的 frontmatter、hook、skill 脾气一点点磨出来的。真要把底座换成别家，这些 skill 调工具吐的格式十有八九会飘，得挨个重校，光那套防 AI 味的 grep 规则就够我重调好几个晚上。</p>
+<p>这笔生态迁移的时间成本，比省下来的模型钱贵多了，省钱那本账上从来不记这一笔。</p>
+<p>所以「国产模型能不能顶班」这个问题，答案是分活。把某几类活分一部分给它跑，行；指望它整个替掉你磨了半年的工作流，暂时别想。这跟它强不强关系不大，是生态壁垒的问题。</p>
+<h2 id="多攥一条后路的意义"><a href="#多攥一条后路的意义" class="headerlink" title="多攥一条后路的意义"></a>多攥一条后路的意义</h2><p>绕一圈说回来。</p>
+<p>对我这种把整条生产力都押在 Claude Code 上的人，LongCat-2.0 最实在的意义，可能不在它今天能替我省多少钱，在它多给了我一条后路。一个开源、便宜、还是国产芯片自主训出来的强 coding 模型，意味着哪天真遇上断供、涨价、或者哪个模型说没就没，我手里还攥着一个能自己部署、谁也收不走的选项。</p>
+<p>这条后路的价值，平时不显。真到那一天，你会庆幸自己早点认识了它。</p>
+<p>好了，问题抛给你。如果让你往自己的 AI 编程流水线里塞一个国产开源模型，你会放心把哪类活分给它？又有哪类活，你打死也只敢交给 Claude 或者 GPT？评论区聊聊，你心里那条线到底划在哪一档。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/Agentic-Coding/" rel="tag"># Agentic Coding</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90/" rel="tag"># 开源</a>
+              <a href="/tags/%E5%9B%BD%E4%BA%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 国产模型</a>
+              <a href="/tags/LongCat/" rel="tag"># LongCat</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/01/202607011021/" rel="prev" title="Claude Code 被曝暗藏 147 个域名，我在本机复核了">
+                  <i class="fa fa-angle-left"></i> Claude Code 被曝暗藏 147 个域名，我在本机复核了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.4m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">21:56</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

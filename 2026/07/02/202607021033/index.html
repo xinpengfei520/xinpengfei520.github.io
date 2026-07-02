@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="VC Tomasz Tunguz 说搭 agent 该先设计路由再选模型，路由做对能让 70-80% 流量走本地或异步的便宜档、省 90%+ 开销。路由分三层：分类器认这是什么活、路由器定走哪个档、选择器挑档内最便宜的。我动 Opus 前先过秤、杂活切便宜模型，就是人肉路由，缺的是把它从肌肉记忆挪成自动调度。Coinbase 靠默认加路由把开销砍了近一半。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="搭 agent 别一上来就选模型：我那本「过秤」的账，其实是在手动做路由">
+<meta property="og:url" content="https://www.vance.xin/2026/07/02/202607021033/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="VC Tomasz Tunguz 说搭 agent 该先设计路由再选模型，路由做对能让 70-80% 流量走本地或异步的便宜档、省 90%+ 开销。路由分三层：分类器认这是什么活、路由器定走哪个档、选择器挑档内最便宜的。我动 Opus 前先过秤、杂活切便宜模型，就是人肉路由，缺的是把它从肌肉记忆挪成自动调度。Coinbase 靠默认加路由把开销砍了近一半。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260702-ai-execution-routing.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260702-undefined.webp">
+<meta property="article:published_time" content="2026-07-02T10:33:44.000Z">
+<meta property="article:modified_time" content="2026-07-02T03:10:02.611Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="成本">
+<meta property="article:tag" content="模型选型">
+<meta property="article:tag" content="路由">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260702-ai-execution-routing.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/02/202607021033/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/02/202607021033/","path":"2026/07/02/202607021033/","title":"搭 agent 别一上来就选模型：我那本「过秤」的账，其实是在手动做路由"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>搭 agent 别一上来就选模型：我那本「过秤」的账，其实是在手动做路由 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "搭 agent 别一上来就选模型：我那本「过秤」的账，其实是在手动做路由",
+  "url": "https://www.vance.xin/2026/07/02/202607021033/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/02/202607021033/",
+  "datePublished": "2026-07-02T10:33:44.000Z",
+  "dateModified": "2026-07-02T03:10:02.611Z",
+  "description": "VC Tomasz Tunguz 说搭 agent 该先设计路由再选模型，路由做对能让 70-80% 流量走本地或异步的便宜档、省 90%+ 开销。路由分三层：分类器认这是什么活、路由器定走哪个档、选择器挑档内最便宜的。我动 Opus 前先过秤、杂活切便宜模型，就是人肉路由，缺的是把它从肌肉记忆挪成自动调度。Coinbase 靠默认加路由把开销砍了近一半。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E6%98%AF%E6%9C%80%E5%90%8E%E6%89%8D%E5%A1%AB%E7%9A%84%E7%A9%BA"><span class="nav-text">模型是最后才填的空</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%97%A9%E5%B0%B1%E5%9C%A8%E6%89%8B%E5%8A%A8%E5%81%9A%E8%B7%AF%E7%94%B1"><span class="nav-text">我早就在手动做路由</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B7%AF%E7%94%B1%E5%88%B0%E5%BA%95%E5%88%86%E5%93%AA%E4%B8%89%E5%B1%82"><span class="nav-text">路由到底分哪三层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%92%E9%98%9F%E6%89%8D%E6%98%AF%E7%9C%81%E9%92%B1%E5%89%8D%E6%8F%90"><span class="nav-text">排队才是省钱前提</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E9%97%AD%E7%8E%AF%E8%BF%98%E5%B7%AE%E4%B8%80%E5%8D%8A"><span class="nav-text">我的闭环还差一半</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E5%88%86%E6%A1%A3%E5%86%8D%E6%8C%91%E5%9E%8B%E5%8F%B7"><span class="nav-text">先分档再挑型号</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">435</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">774</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/02/202607021033/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="搭 agent 别一上来就选模型：我那本「过秤」的账，其实是在手动做路由 | 飞飞的AI实验室">
+      <meta itemprop="description" content="VC Tomasz Tunguz 说搭 agent 该先设计路由再选模型，路由做对能让 70-80% 流量走本地或异步的便宜档、省 90%+ 开销。路由分三层：分类器认这是什么活、路由器定走哪个档、选择器挑档内最便宜的。我动 Opus 前先过秤、杂活切便宜模型，就是人肉路由，缺的是把它从肌肉记忆挪成自动调度。Coinbase 靠默认加路由把开销砍了近一半。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          搭 agent 别一上来就选模型：我那本「过秤」的账，其实是在手动做路由
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-02 10:33:44 / 修改时间：03:10:02" itemprop="dateCreated datePublished" datetime="2026-07-02T10:33:44+00:00">2026-07-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">VC Tomasz Tunguz 说搭 agent 该先设计路由再选模型，路由做对能让 70-80% 流量走本地或异步的便宜档、省 90%+ 开销。路由分三层：分类器认这是什么活、路由器定走哪个档、选择器挑档内最便宜的。我动 Opus 前先过秤、杂活切便宜模型，就是人肉路由，缺的是把它从肌肉记忆挪成自动调度。Coinbase 靠默认加路由把开销砍了近一半。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260702-ai-execution-routing.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天刷到一篇 VC Tomasz Tunguz 写的短文，一句话把我点住了：多数人搭 AI agent，第一件事就是挑用哪个模型，这是反的，模型选择应该是最后一步。</p>
+<p>我盯着这句看了一会儿，因为我心里咯噔了一下：他说的那个「该先想的东西」，我好像天天在做，只是从没给它起过名字。</p>
+<p>前阵子我写过一篇，聊我动最贵的模型前会先在心里过秤。今天这篇往上升一层：那本过秤的账，本质上就是一层路由，而路由这东西，才是搭 agent 真正该先设计的。</p>
+<h2 id="模型是最后才填的空"><a href="#模型是最后才填的空" class="headerlink" title="模型是最后才填的空"></a>模型是最后才填的空</h2><p>先把 Tunguz 的观点说清楚。</p>
+<p>他说，真正决定成本和效率的，不在你选了哪个模型，在一小段叫路由的代码，它决定每个请求走哪一档模型。路由设计对了，70% 到 80% 的流量可以跑在本地模型上，每次调用几乎零成本；或者走异步档，把 AI 开销砍掉九成还多。</p>
+<p>模型型号，是这套定下来之后，最后才填进去的那个空。</p>
+<p>这个次序为什么反直觉？因为你我都被训练成一看到活就问「这个用 Opus 还是用便宜的」。可 Tunguz 说，你该先问的是另一件事：这活到底难不难、急不急，配得上哪一档。型号是最末端的执行细节，不该是你第一个纠结的东西。</p>
+<h2 id="我早就在手动做路由"><a href="#我早就在手动做路由" class="headerlink" title="我早就在手动做路由"></a>我早就在手动做路由</h2><p>看到这我才反应过来，这事我干了很久了，只是全凭手感。</p>
+<p>我这个号背后挂着十几个 skill，从选题、调研、写稿到配图分发。这一路我从来不是一个模型跑到黑。动 Opus 这种最贵档之前，我一定先在心里过一秤：这趟值不值得。格式转换、打标签、粗筛这类死板活，我早就切到便宜模型上省额度了。</p>
+<p>这不就是路由吗？我拿脑子当那层调度器，看一眼这活是什么、有多难，再决定派给哪一档。Tunguz 把我这套肌肉记忆，画成了一张清清楚楚的架构图。</p>
+<p>就说你正在看的这篇稿子吧。前面调研搜资料，我挂的是便宜档，一条条把料捞回来；初稿铺出来也没舍得动最贵的；只有到最后成稿、润色、把关那几道，我才把 Opus 请出来。整条流水线里，最贵那档我一天也就点用那么几次，剩下的活全在下面几档消化掉了。这套分派我跑了大半年，从来没写成规则，全在手上。</p>
+<p>区别只在一点：我是人肉的，他那套是代码。我靠临场手感，他靠一层能复用、能沉淀的东西。手感这玩意儿，换个人就断了，我自己累了忙了也会漏判。</p>
+<h2 id="路由到底分哪三层"><a href="#路由到底分哪三层" class="headerlink" title="路由到底分哪三层"></a>路由到底分哪三层</h2><p>Tunguz 把路由拆成三层，这是全文我觉得最值得抄下来的部分，我用大白话过一遍。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260702-undefined.webp" alt="三层路由 + 夜间闭环流程图"></p>
+<p>第一层是分类器，负责回答「这是什么活」。把你一句模糊的需求，翻译成一个具体操作：写条回复、总结个仓库、跑个迁移。它干的是听懂意图。</p>
+<p>第二层才是路由器，负责回答「这活走哪个档」。关键点来了：<strong>它不读你的 prompt</strong>，只看分类器贴的标签，加上几个特征，比如这活多复杂、上下文多大、以前这类活成功率高不高。它干的是调度，跟听懂意图是两码事。</p>
+<p>第三层是选择器，在定好的那一档里，挑一个满足信心门槛、又最便宜的模型。</p>
+<p>为什么非得拆开？因为你要是把「这是什么活」和「走哪个档」糊成一次拍脑袋，模型选择就被埋进了 prompt 里，你再也没法拿同一个活去 A&#x2F;B 两个模型谁更划算。我以前就是糊在一起的，难怪总觉得选型全靠玄学。</p>
+<h2 id="排队才是省钱前提"><a href="#排队才是省钱前提" class="headerlink" title="排队才是省钱前提"></a>排队才是省钱前提</h2><p>三层之外，还有个我一开始没琢磨透的前提：排队。</p>
+<p>Tunguz 说，本地算力近乎免费，异步批处理比实时推理便宜两个数量级。所以真正该盯的问题换了个方向：到底有多少活，其实根本不需要一秒钟就回你。</p>
+<p>答案是，少得惊人。草稿、摘要、尽调备忘、夜里跑的评估，这些压根不用你干等着。系统只要能把它们排进队列，大头就能挪到最便宜的档上慢慢跑。</p>
+<p>这条对我太成立了。我这条内容流水线，除了最后成稿要盯着，前面调研、初稿、配图，哪个不能排队？我以前傻乎乎全用实时档一路催着跑，其实大可以让它们夜里排队慢慢出。</p>
+<h2 id="我的闭环还差一半"><a href="#我的闭环还差一半" class="headerlink" title="我的闭环还差一半"></a>我的闭环还差一半</h2><p>Tunguz 那套里，我最眼熟的是收尾那两条反馈回路。</p>
+<p>一条是实时的，给每个请求提前标风险：缺仓库上下文、依赖链太长、危险迁移、涉及敏感操作、高后果的写入，见到就先拦一道。另一条是夜里的，批量把昨天跑过的活翻一遍、打分，回过头更新路由的判断。</p>
+<p>第二条我看着眼熟，是因为我早有了。我那个 content-training，就是每写完一篇，把这回踩的坑自动提炼成规则、回写进我那本已经喂到一百多次的写作手册。这不就是他说的夜间闭环嘛。</p>
+<p>老实说，我得摊个牌：我有闭环，但没有前面那层自动路由。我是手动挡，靠一双肉眼过秤；他那套是自动挡。我这半套跑了很久，另半套还停在脑子里没落地。</p>
+<p>差的这半套，代价其实我天天在付。忙起来手一滑，随手就把本该走便宜档的杂活丢给了最贵那档；或者反过来，图省事把个稍微有点难度的活压给便宜模型，结果它答岔了，我还得回炉重跑一遍，两头都亏。这些漏判要是有一层自动路由兜着，本可以省下来。手感这东西，状态好时准，状态差时就是个筛子。</p>
+<h2 id="先分档再挑型号"><a href="#先分档再挑型号" class="headerlink" title="先分档再挑型号"></a>先分档再挑型号</h2><p>所以这篇我不灌大道理，就给一个今天能改的动作。</p>
+<p>下次再搭一条 agent 流程，先别急着纠结用 Opus 还是用便宜的。先把你要干的活按两个问题分个档：这活要不要实时、到底有多难。把最贵那档死死留给又难又急的，剩下的能排队就排队、能走便宜档就走便宜档。Coinbase 就是靠「更好的默认加路由加缓存」把 AI 开销砍到近一半的，他们 CEO 那句话我很认同：工程师想用哪个模型都行，但默认走什么，才是真正省钱的地方。</p>
+<p>搭 agent 真正该先想清的，不在你挑了哪个模型，在你有没有那层「什么活走哪个档」的路由。型号是最后才填的空。</p>
+<p>问一句：你现在是像我这样拿脑子当路由手动切档，还是已经搭了一层自动的？你把哪几类活，是打死都只交给最贵那档的？评论区聊聊你那本账怎么记的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/%E6%88%90%E6%9C%AC/" rel="tag"># 成本</a>
+              <a href="/tags/%E6%A8%A1%E5%9E%8B%E9%80%89%E5%9E%8B/" rel="tag"># 模型选型</a>
+              <a href="/tags/%E8%B7%AF%E7%94%B1/" rel="tag"># 路由</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/01/202607012339/" rel="prev" title="Claude Code 偷偷改了一个撇号，我更在意它为什么不明说">
+                  <i class="fa fa-angle-left"></i> Claude Code 偷偷改了一个撇号，我更在意它为什么不明说
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">22:10</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

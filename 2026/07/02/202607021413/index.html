@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Simon Willison 给 shot-scraper 加录屏命令时说，他把 --help 写到 coding agent 能直接照用，就像顺手塞了个 SKILL.md。这点破了一个正在发生的变化：工具的 --help、README、接口，真正的读者正从人变成 agent。agent 会一字一句读完还照着执行，写模糊就会被乱发挥。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我给 agent 写了大半年文档才反应过来：读它的早就不是人了">
+<meta property="og:url" content="https://www.vance.xin/2026/07/02/202607021413/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Simon Willison 给 shot-scraper 加录屏命令时说，他把 --help 写到 coding agent 能直接照用，就像顺手塞了个 SKILL.md。这点破了一个正在发生的变化：工具的 --help、README、接口，真正的读者正从人变成 agent。agent 会一字一句读完还照着执行，写模糊就会被乱发挥。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260702-docs-written-for-agents.webp">
+<meta property="article:published_time" content="2026-07-02T14:13:40.000Z">
+<meta property="article:modified_time" content="2026-07-02T15:31:19.295Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="CLI">
+<meta property="article:tag" content="Skill">
+<meta property="article:tag" content="开发者工具">
+<meta property="article:tag" content="文档">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260702-docs-written-for-agents.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/02/202607021413/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/02/202607021413/","path":"2026/07/02/202607021413/","title":"我给 agent 写了大半年文档才反应过来：读它的早就不是人了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>我给 agent 写了大半年文档才反应过来：读它的早就不是人了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "我给 agent 写了大半年文档才反应过来：读它的早就不是人了",
+  "url": "https://www.vance.xin/2026/07/02/202607021413/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/02/202607021413/",
+  "datePublished": "2026-07-02T14:13:40.000Z",
+  "dateModified": "2026-07-02T15:31:19.295Z",
+  "description": "Simon Willison 给 shot-scraper 加录屏命令时说，他把 --help 写到 coding agent 能直接照用，就像顺手塞了个 SKILL.md。这点破了一个正在发生的变化：工具的 --help、README、接口，真正的读者正从人变成 agent。agent 会一字一句读完还照着执行，写模糊就会被乱发挥。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E7%9C%8B%E8%BF%99%E4%B8%AA%E5%B0%8F%E6%9B%B4%E6%96%B0"><span class="nav-text">先看这个小更新</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E6%A1%A3%E6%B2%A1%E4%BA%BA%E8%AF%BB%E6%98%AF%E8%80%81%E6%AF%9B%E7%97%85"><span class="nav-text">文档没人读是老毛病</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E8%A7%A6%E5%8F%91%E5%99%A8%E5%86%99%E7%BB%99-agent"><span class="nav-text">我的触发器写给 agent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%A5%E5%8F%A3%E5%86%99%E6%A8%A1%E7%B3%8A%E5%B0%B1%E8%A2%AB%E4%B9%B1%E5%8F%91%E6%8C%A5"><span class="nav-text">接口写模糊就被乱发挥</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E6%A1%A3%E7%9A%84%E8%AF%BB%E8%80%85%E6%8D%A2%E4%BA%BA%E4%BA%86"><span class="nav-text">文档的读者换人了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8A%E5%A4%A9%E5%B0%B1%E8%83%BD%E6%94%B9%E4%B8%80%E4%B8%AA%E5%8A%A8%E4%BD%9C"><span class="nav-text">今天就能改一个动作</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">436</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">775</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/02/202607021413/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="我给 agent 写了大半年文档才反应过来：读它的早就不是人了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Simon Willison 给 shot-scraper 加录屏命令时说，他把 --help 写到 coding agent 能直接照用，就像顺手塞了个 SKILL.md。这点破了一个正在发生的变化：工具的 --help、README、接口，真正的读者正从人变成 agent。agent 会一字一句读完还照着执行，写模糊就会被乱发挥。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我给 agent 写了大半年文档才反应过来：读它的早就不是人了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-02 14:13:40 / 修改时间：15:31:19" itemprop="dateCreated datePublished" datetime="2026-07-02T14:13:40+00:00">2026-07-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Simon Willison 给 shot-scraper 加录屏命令时说，他把 --help 写到 coding agent 能直接照用，就像顺手塞了个 SKILL.md。这点破了一个正在发生的变化：工具的 --help、README、接口，真正的读者正从人变成 agent。agent 会一字一句读完还照着执行，写模糊就会被乱发挥。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260702-docs-written-for-agents.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天刷到 Simon Willison 给他的 shot-scraper 加了个录屏命令。本来是个不起眼的小更新，我却盯着他配的一句话看了半天。</p>
+<p>他说，他特别喜欢这个做法：把一个命令的 –help 输出写得足够细，细到一个 coding agent 读完就能直接拿去用。用他的原话讲，感觉就像顺手在里面塞了个 SKILL.md。</p>
+<p>我上一篇刚聊过怎么把一个 skill 写得不飘。这篇不是那篇的续集。Simon 这句话把我拽到了更上面一层：我突然反应过来，我写了大半年的那些东西，读它的早就不是人了。</p>
+<h2 id="先看这个小更新"><a href="#先看这个小更新" class="headerlink" title="先看这个小更新"></a>先看这个小更新</h2><p>先说清楚 Simon 干了啥，免得云里雾里。</p>
+<p>shot-scraper 是他写的一个命令行小工具，本来是给网页拍截图用的。这次更新加了个 shot-scraper video，你拿一个 storyboard 文件把操作步骤一条条写下来，点哪、填什么、停几秒，它就靠 Playwright 把整个浏览器操作过程录成视频。他配的演示，是录了一段在 Datasette 里粘一段 CSV 进去自动建表的过程。</p>
+<p>工具本身很小。诚实说一句，shot-scraper 我没上手用过，所以这篇不谈工具本身。真正戳到我的，是他那句关于 –help 的话。</p>
+<p>一个工具作者，在写命令行帮助文档的时候，脑子里装的读者已经从敲命令的人，换成了一个会来读这段帮助、然后自己照着调用的 agent。他甚至把 –help 直接类比成 SKILL.md。我天天写 SKILL.md，这个类比一下就把我点着了。</p>
+<h2 id="文档没人读是老毛病"><a href="#文档没人读是老毛病" class="headerlink" title="文档没人读是老毛病"></a>文档没人读是老毛病</h2><p>先认个老现实。</p>
+<p>写文档，几十年来都是程序员最不爱干的活。README 写了没人看，–help 大家宁愿去 Google，代码注释更新不及时还会骗人。你辛辛苦苦把用法写清楚，多数时候是自我感动，真正的用户扫两眼就关了，遇到问题直接去翻 issue 或者问同事。</p>
+<p>这一半我先认下来。文档没成就感、没人读，是真的。</p>
+<p>但现在情况变了。文档多了一个读者。而且这个读者，跟人完全是两个物种。它会把你写的每一个字都读完，一字不落。它不跳读，也不脑补。它把你的文档当成指令，读完就照着执行。</p>
+<p>写给这种读者的文档，跟写给人的文档，根本不是一回事。</p>
+<h2 id="我的触发器写给-agent"><a href="#我的触发器写给-agent" class="headerlink" title="我的触发器写给 agent"></a>我的触发器写给 agent</h2><p>这事我其实干了很久，只是从没意识到。</p>
+<p>我这个号背后挂着十几个 skill，选题、调研、写稿、润色、配图、分发，串成一条流水线天天跑。这一整套东西全长在 Claude Code 读 skill、认 frontmatter 的脾气上，是我每天干活的地基。每个 skill 顶上都有一行 description。我写这行字的时候，脑子里装的根本不是功能说明，就一个问题：agent 什么时候该来调我。</p>
+<p>就说我那个拉 AI 资讯的 aihot skill，还有帮我选题的 content-scout，它俩的 description 我是当开关写的。我甚至专门在里面写了一句「不要 undertrigger」，意思是别在该调用的时候偷懒不调。这行字不是写给我看的，是写给 agent 看的判断依据。这跟 Simon 说的把 –help 写到 agent 能直接用，说的是同一件事。</p>
+<p>还有一层区别我也亲手踩过。有些 skill 是让 agent 自己判断该不该触发的，description 就得写成一个精准的触发条件，写宽了它到处乱插手，写窄了它该干活时又装死。有些 skill 得反过来，比如我那个发公众号的，我把它默认状态写成不触发，触发条件卡到必须出现「发公众号」「推送微信」这类明确说法才动。就这一句边界，拦住的是它某天自作主张，把一篇还没配图、没过审的稿子直接推出去。这两种脾气完全相反的接口，我都得亲手写清楚，agent 才知道自己的手该伸到哪儿为止。</p>
+<h2 id="接口写模糊就被乱发挥"><a href="#接口写模糊就被乱发挥" class="headerlink" title="接口写模糊就被乱发挥"></a>接口写模糊就被乱发挥</h2><p>写给 agent 的东西，模糊一点就出事，这个我有血泪。</p>
+<p>我那个配图的 content-artist skill，早期接口就没写死。我本来的意思，是让它只在正文里标个「截图一」「截图二」的占位，真正传图床那步交给后面另一个环节去干。结果我没把这条边界抠死，agent 读到那段含糊的描述就自己发挥了：它把图床那一长串 CDN 链接当普通文本塞进了正文，有时候干脆漏图，该配图的位置就那么空着。我是稿子快发出去、扫最后一眼时才逮到那串裸链接，当场有点哭笑不得。</p>
+<p>我后来想明白了。一个人读到写得含糊的文档，会停下来问你一句，或者凭常识猜个八九不离十。agent 不会。它读到模糊的地方，会自己补一个它认为合理的动作，然后一路跑下去，翻了车你都不一定当场发现。</p>
+<p>给人的文档，模糊是体验差。给 agent 的接口，模糊就是个漏洞。我把那条规则改成一句不留余地的死命令，只许写占位、绝不许自己上传或粘链接，它才彻底老实。</p>
+<h2 id="文档的读者换人了"><a href="#文档的读者换人了" class="headerlink" title="文档的读者换人了"></a>文档的读者换人了</h2><p>把这几件事串起来，我看到的是一个正在发生的变化。</p>
+<p>软件文档几十年都是写给人的。人读文档的方式是扫一眼、抓重点、跑起来再说，读者是懒的、跳跃的、会自己脑补的。现在冒出来的这个 agent 读者，读法完全颠倒：它全文照读、逐字当真、读完就执行，还特别较真。</p>
+<p>于是那些我们一直没太当回事的东西，–help、README、报错信息、API 文档，正在悄悄变成写给 agent 的接口。Simon 那句 –help 就像塞了个 SKILL.md，点破的就是这层。你的工具好不好用，正在多出一个新标准：一个 agent 读完你的文档，能不能不问人就直接上手。</p>
+<p>这事想通了还挺带感的。以前写文档像往井里扔石头，听不见响。现在至少有一个读者，是真的会把你写的每个字都当回事的。</p>
+<h2 id="今天就能改一个动作"><a href="#今天就能改一个动作" class="headerlink" title="今天就能改一个动作"></a>今天就能改一个动作</h2><p>不灌大道理，给一个今天就能试的动作。</p>
+<p>挑你最常用的那个脚本、那个内部工具、那个 CLI，把它的 –help 或者 README 拉出来读一遍。读的时候换一个身份：假装你是个刚接手的 agent，只有这段文字，没别的上下文。然后问自己三个问题：什么时候该用它、参数的边界在哪、干完了什么样算成功。有一个答不上来，agent 读到那儿就会开始飘。</p>
+<p>答不上来的那几处，就是你接下来要补的地方。补的时候别写给人看，写给那个会照着做的读者看。</p>
+<p>说到底，文档真正的读者，已经不在那个扫一眼就顺手关掉的人，在那个会一字一句读完、还认认真真照着做的 agent。这个转变才刚开头，我也还在一边写一边改我那十几个 skill 的接口。每被 agent 将一军一次，就回头把那行字抠得更死一点，这活估计短时间内停不下来。</p>
+<p>轮到你了：你写过最后悔「没给 agent 交代清楚」的一段文档或接口是哪个？agent 照着你写的东西，干过什么让你哭笑不得的事？评论区说说。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/CLI/" rel="tag"># CLI</a>
+              <a href="/tags/Skill/" rel="tag"># Skill</a>
+              <a href="/tags/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7/" rel="tag"># 开发者工具</a>
+              <a href="/tags/%E6%96%87%E6%A1%A3/" rel="tag"># 文档</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/02/202607021033/" rel="prev" title="搭 agent 别一上来就选模型：我那本「过秤」的账，其实是在手动做路由">
+                  <i class="fa fa-angle-left"></i> 搭 agent 别一上来就选模型：我那本「过秤」的账，其实是在手动做路由
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">22:13</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

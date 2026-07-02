@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Claude Code 2.1.196 和 2.1.197 都存在一套隐藏提示词标记，会用 4 种撇号、日期分隔符、147 个域名与 11 个 AI 关键词给自定义网关分类。客户端行为已经复现，后端用途仍无直接证据，真正的问题是高权限工具为何不公开说明。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Code 偷偷改了一个撇号，我更在意它为什么不明说">
+<meta property="og:url" content="https://www.vance.xin/2026/07/01/202607012339/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Claude Code 2.1.196 和 2.1.197 都存在一套隐藏提示词标记，会用 4 种撇号、日期分隔符、147 个域名与 11 个 AI 关键词给自定义网关分类。客户端行为已经复现，后端用途仍无直接证据，真正的问题是高权限工具为何不公开说明。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260701-claude-code-prompt-steganography.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260701-claude-code-prompt-steganography-flow.webp">
+<meta property="article:published_time" content="2026-07-01T23:39:46.000Z">
+<meta property="article:modified_time" content="2026-07-02T01:52:29.756Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="提示词">
+<meta property="article:tag" content="隐私">
+<meta property="article:tag" content="逆向分析">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260701-claude-code-prompt-steganography.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/01/202607012339/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/01/202607012339/","path":"2026/07/01/202607012339/","title":"Claude Code 偷偷改了一个撇号，我更在意它为什么不明说"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Claude Code 偷偷改了一个撇号，我更在意它为什么不明说 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Claude Code 偷偷改了一个撇号，我更在意它为什么不明说",
+  "url": "https://www.vance.xin/2026/07/01/202607012339/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/01/202607012339/",
+  "datePublished": "2026-07-01T23:39:46.000Z",
+  "dateModified": "2026-07-02T01:52:29.756Z",
+  "description": "Claude Code 2.1.196 和 2.1.197 都存在一套隐藏提示词标记，会用 4 种撇号、日期分隔符、147 个域名与 11 个 AI 关键词给自定义网关分类。客户端行为已经复现，后端用途仍无直接证据，真正的问题是高权限工具为何不公开说明。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%92%87%E5%8F%B7%E8%97%8F%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">一个撇号藏了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E5%8F%88%E6%A0%B8%E4%BA%86%E4%B8%80%E9%81%8D"><span class="nav-text">我又核了一遍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E6%80%8E%E4%B9%88%E8%A2%AB%E8%A7%A6%E5%8F%91"><span class="nav-text">它怎么被触发</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E5%9C%A8%E8%83%BD%E8%AF%81%E6%98%8E%E4%BB%80%E4%B9%88"><span class="nav-text">现在能证明什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%88%92%E6%9C%8D"><span class="nav-text">我为什么不舒服</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E5%8F%AF%E4%BB%A5%E6%9F%A5%E4%B8%89%E4%BB%B6%E4%BA%8B"><span class="nav-text">你可以查三件事</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">434</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">773</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/01/202607012339/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Claude Code 偷偷改了一个撇号，我更在意它为什么不明说 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Claude Code 2.1.196 和 2.1.197 都存在一套隐藏提示词标记，会用 4 种撇号、日期分隔符、147 个域名与 11 个 AI 关键词给自定义网关分类。客户端行为已经复现，后端用途仍无直接证据，真正的问题是高权限工具为何不公开说明。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Claude Code 偷偷改了一个撇号，我更在意它为什么不明说
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-01 23:39:46" itemprop="dateCreated datePublished" datetime="2026-07-01T23:39:46+00:00">2026-07-01</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-02 01:52:29" itemprop="dateModified" datetime="2026-07-02T01:52:29+00:00">2026-07-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Claude Code 2.1.196 和 2.1.197 都存在一套隐藏提示词标记，会用 4 种撇号、日期分隔符、147 个域名与 11 个 AI 关键词给自定义网关分类。客户端行为已经复现，后端用途仍无直接证据，真正的问题是高权限工具为何不公开说明。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260701-claude-code-prompt-steganography.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨晚我看到一篇文章，标题很直白：<a target="_blank" rel="noopener" href="https://thereallo.dev/blog/claude-code-prompt-steganography">Claude Code 正在给请求做隐写标记</a>。作者拆开 2.1.196 的本地程序后，发现系统提示词里那句平平无奇的日期，会偷偷换掉一个撇号。</p>
+<p>我第一反应是，这说法有点猛，得自己核一下。刚好我这台机器跑的是更新一版的 2.1.197。我把二进制翻出来搜了一遍，原文里的函数、时区判断和两张加密名单，全都还在。</p>
+<p>这件事能确认的部分，比标题更具体。Claude Code 会用 4 种长得很像的撇号、两种日期分隔符，把最多 3 个分类信号塞进系统提示词。至于 Anthropic 后端有没有读取它、拿它做什么，现在还没有直接证据。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260701-claude-code-prompt-steganography-flow.webp" alt="Claude Code 隐藏标记的数据流"></p>
+<h2 id="一个撇号藏了什么"><a href="#一个撇号藏了什么" class="headerlink" title="一个撇号藏了什么"></a>一个撇号藏了什么</h2><p>Claude Code 发给模型的系统上下文里，会带一句当天日期。正常长这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Today&#x27;s date is 2026-07-01.</span><br></pre></td></tr></table></figure>
+
+<p>原作者发现，只要触发特定条件，<code>Today&#39;s</code> 中间那个普通半角撇号就会变。肉眼看都像一个小勾，底层 Unicode 字符却不一样。</p>
+<p>4 个字符分别是普通撇号 <code>U+0027</code>、右单引号 <code>U+2019</code>、修饰字母撇号 <code>U+02BC</code> 和修饰字母短撇号 <code>U+02B9</code>。把它们并排放大还能看出细微差别，塞进终端的一行小字里，基本就是“看见了也当没看见”。</p>
+<p>程序会先看自定义 API 地址的主机名。它检查两个条件：这个域名是否命中内置名单，域名里是否含有某个 AI 实验室关键词。两个开关有 4 种组合，刚好对应 4 种撇号。</p>
+<p>它还会读系统时区。如果时区是 <code>Asia/Shanghai</code> 或 <code>Asia/Urumqi</code>，日期会从 <code>2026-07-01</code> 变成 <code>2026/07/01</code>。</p>
+<p>说人话讲，这句日期表面还是日期，底下已经多带了几位分类信息。模型正常读得懂，人盯着终端却很难察觉。</p>
+<h2 id="我又核了一遍"><a href="#我又核了一遍" class="headerlink" title="我又核了一遍"></a>我又核了一遍</h2><p>于是我开了终端，照着线索往本机安装包里钻。</p>
+<p>我先从 npm 拉下 2.1.196 的 macOS ARM 原生包，对了一遍 SHA256。结果和原作者公布的值完全一致，说明我检查的是同一份 225.8 MB 二进制。</p>
+<p>这个过程挺像在一团压缩过的毛线里找针。我先用 <code>file</code> 确认它是 Mach-O arm64，再跑 <code>shasum -a 256</code> 对哈希。接着按 <code>Today&#39;s date is</code>、两个时区和环境变量名往回找，才把那几段挤在一行里的函数拎出来。</p>
+<p>接着我拆了本机正在用的 2.1.197。那段逻辑没有消失。<code>ANTHROPIC_BASE_URL</code>、两个中国时区、4 种撇号和日期替换函数，都能在二进制里找到。</p>
+<p>更扎眼的是两张名单。它们没有明文放着，而是先做 Base64，再用固定数字 91 做 XOR。我按程序自己的方式解开后，得到 147 个域名和 11 个关键词。</p>
+<p>我第一次解码时还以为自己把字符集弄错了，因为输出一下铺满了终端。重新数过才确认，域名确实是 147 个。本机 2.1.197 的二进制 SHA256 是 <code>8cc0c4d1e4eb1dca3b0cc92ab02ee3505de764e023f8c901761c167b72041fb8</code>，以后版本变了，还能拿这个值回来对照。</p>
+<p>关键词里有 <code>deepseek</code>、<code>moonshot</code>、<code>minimax</code>、<code>zhipu</code>、<code>bigmodel</code>、<code>dashscope</code>、<code>volces</code>。域名表更杂，既有中国互联网公司，也有 Claude 代理、路由器和转售网关。</p>
+<p>所以至少到 2.1.197，这段代码仍在当前版本里。我现在写下这些数字，依据是刚刚对自己安装包做的核验，跟转发一张别人截图是两回事。</p>
+<h2 id="它怎么被触发"><a href="#它怎么被触发" class="headerlink" title="它怎么被触发"></a>它怎么被触发</h2><p>这套逻辑不会平白落到每个人头上。</p>
+<p>如果你没设置 <code>ANTHROPIC_BASE_URL</code>，程序会提前返回。地址是官方 <code>api.anthropic.com</code>，也会提前返回。大多数直接用官方服务的用户，看到的还是普通日期。</p>
+<p>真正进入分类的是自定义 Base URL。公司内部网关、LiteLLM、模型路由器、本地代理和转售服务，都可能走这条路。</p>
+<p>名单里的 <code>cn</code> 还很特别。匹配代码会同时检查“完全相等”和“以点加名单项结尾”，于是任何以 <code>.cn</code> 收尾的主机名都可能命中 known domain。它识别的范围远比十几家 AI 公司宽，不能简单理解成只盯某几个竞争对手。</p>
+<p>这里有个反例很关键。Anthropic 自己的 <a target="_blank" rel="noopener" href="https://docs.anthropic.com/en/docs/claude-code/llm-gateway">LLM gateway 文档</a> 就在教企业配置 <code>ANTHROPIC_BASE_URL</code>，用途包括统一认证、用量统计、预算控制和审计日志。</p>
+<p>自定义网关本来就是官方支持的正常用法。被这套标记覆盖的人里，会有违规转售商，也会混着认真做企业治理的开发团队。</p>
+<h2 id="现在能证明什么"><a href="#现在能证明什么" class="headerlink" title="现在能证明什么"></a>现在能证明什么</h2><p>两件事得掰开。</p>
+<p>客户端生成隐藏标记，这一点能从 2.1.196 和 2.1.197 的二进制里复现。它会读取 Base URL 主机名和时区，再把分类结果写进日期句。这是事实。</p>
+<p>原作者推测 Anthropic 会在后端解析这些字符，可能用来识别代理、转售网关或模型蒸馏链路。这个动机听着合理，但目前仍是推测。我没有看到后端代码，也没有找到 Anthropic 对这段逻辑的公开解释。</p>
+<p>更不能从几个标点直接跳到“Claude Code 正在偷走代码”。标记能说明客户端在分类环境，无法单独证明代码被额外收集、账号被处罚，或某个请求因此进入另一套处理流程。</p>
+<p>实话讲，越是隐私话题，越得忍住一口气把故事讲大的冲动。把确定的说死，把没证据的留白，才不会让真正值得追问的部分被标题党拖垮。</p>
+<h2 id="我为什么不舒服"><a href="#我为什么不舒服" class="headerlink" title="我为什么不舒服"></a>我为什么不舒服</h2><p>我对 Claude Code 的依赖不算轻。</p>
+<p>光写文章这条流水线，我就挂了十几个 skill。选题、调研、润色、配图、公众号发布，全压在它读 frontmatter、调工具和跑命令的能力上。真换底座，那些一点点磨顺的规则够我重新折腾好几个晚上。</p>
+<p>也正因为我愿意给它文件系统、Shell 和 Git 权限，我才希望客户端行为足够无聊。要识别网关，可以发一个有名字的字段，可以写进隐私说明，也可以在日志里留下可审计记录。</p>
+<p>偏偏把分类结果藏进撇号，效果刚好相反。普通人看不见，常规日志对比也容易漏，名单还要解码才能读。它没有让真正的攻击者更难绕过，却让正常用户更难知道自己被怎么分类。</p>
+<p>这对我不是抽象的隐私洁癖。我的发布 skill 会读本地文章、调用配图服务，再把成稿推到公众号草稿箱。任何一环多带一个我不知道的字段，我都希望能在日志里搜到、在文档里查到。明牌字段出了问题还能审计，藏在标点里的位很容易从所有检查里溜过去。</p>
+<p>有心对抗的人换个域名、改个时区就能躲。最稳定留下指纹的，反倒可能是那些老老实实使用固定企业网关的人。</p>
+<p>我真正介意的落在这儿。几个字符未必造成直接伤害，可藏起来这个选择，已经在消耗信任。</p>
+<h2 id="你可以查三件事"><a href="#你可以查三件事" class="headerlink" title="你可以查三件事"></a>你可以查三件事</h2><p>如果你也在用 Claude Code，不用急着删工具。先查自己的环境：</p>
+<ul>
+<li>运行 <code>echo $ANTHROPIC_BASE_URL</code>，看自己是否设置了自定义地址。</li>
+<li>如果走公司网关，问清楚请求链路、日志策略和数据保留规则。</li>
+<li>做隐私审计时比较原始请求，不要只看渲染后的终端文字。</li>
+</ul>
+<p>我还会继续盯后续版本和官方说明。如果 Anthropic 给出合理用途、公开字段含义，或者干脆把它改成透明遥测，这件事的判断都应该跟着更新。</p>
+<p>但在解释出现前，我会把这次发现记在心里。一个能翻仓库、跑命令、改文件的工具，信任从来不只靠大段隐私政策。真正让人放心的，是藏在角落里的行为也经得起看。</p>
+<p>你现在用 Claude Code 走官方 API，还是公司网关或第三方路由？如果知道请求里会带这种隐藏分类，你会继续用，还是会先把原始请求抓出来看一遍？</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E6%8F%90%E7%A4%BA%E8%AF%8D/" rel="tag"># 提示词</a>
+              <a href="/tags/%E9%9A%90%E7%A7%81/" rel="tag"># 隐私</a>
+              <a href="/tags/%E9%80%86%E5%90%91%E5%88%86%E6%9E%90/" rel="tag"># 逆向分析</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/01/202607011841/" rel="prev" title="我随手按了下 ←，发现 Claude Code 把后台 agents 的门槛降到了一次按键">
+                  <i class="fa fa-angle-left"></i> 我随手按了下 ←，发现 Claude Code 把后台 agents 的门槛降到了一次按键
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">22:08</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="claude-real-video 是开源 Python 工具，用场景切换检测和滑动窗口去重让任意大语言模型基于视频画面理解，10分钟演示从约600帧压到5到15帧，token节省九成以上，全程本地不上云。社区争议集中在成本、运动信息丢失和命名三处，它真正解决的是隐私和模型无关性。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="让任意大模型真正&quot;看&quot;视频，这个开源工具省了九成token也挨了骂">
+<meta property="og:url" content="https://www.vance.xin/2026/07/03/202607031901/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="claude-real-video 是开源 Python 工具，用场景切换检测和滑动窗口去重让任意大语言模型基于视频画面理解，10分钟演示从约600帧压到5到15帧，token节省九成以上，全程本地不上云。社区争议集中在成本、运动信息丢失和命名三处，它真正解决的是隐私和模型无关性。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260708-any-llm-see-video.webp">
+<meta property="article:published_time" content="2026-07-03T19:01:00.000Z">
+<meta property="article:modified_time" content="2026-07-08T03:28:52.484Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="开源">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="claude-real-video">
+<meta property="article:tag" content="视频">
+<meta property="article:tag" content="本地">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260708-any-llm-see-video.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/03/202607031901/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/03/202607031901/","path":"2026/07/03/202607031901/","title":"让任意大模型真正\"看\"视频，这个开源工具省了九成token也挨了骂"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>让任意大模型真正"看"视频，这个开源工具省了九成token也挨了骂 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "让任意大模型真正\"看\"视频，这个开源工具省了九成token也挨了骂",
+  "url": "https://www.vance.xin/2026/07/03/202607031901/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/03/202607031901/",
+  "datePublished": "2026-07-03T19:01:00.000Z",
+  "dateModified": "2026-07-08T03:28:52.484Z",
+  "description": "claude-real-video 是开源 Python 工具，用场景切换检测和滑动窗口去重让任意大语言模型基于视频画面理解，10分钟演示从约600帧压到5到15帧，token节省九成以上，全程本地不上云。社区争议集中在成本、运动信息丢失和命名三处，它真正解决的是隐私和模型无关性。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E6%A8%A1%E5%9E%8B%E5%85%B6%E5%AE%9E%E6%B2%A1%E5%9C%A8%E7%9C%8B%E8%A7%86%E9%A2%91"><span class="nav-text">大模型其实没在看视频</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%89%E5%9C%BA%E6%99%AF%E5%88%87%E6%8D%A2%E8%80%8C%E9%9D%9E%E6%8C%89%E7%A7%92%E5%8F%96%E5%B8%A7"><span class="nav-text">按场景切换而非按秒取帧</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%A6%E6%9C%AF%E7%A0%94%E7%A9%B6%E4%B9%9F%E7%AB%99%E8%BF%99%E6%9D%A1%E8%B7%AF"><span class="nav-text">学术研究也站这条路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E5%B8%A7%E7%9C%9F%E7%9A%84%E7%AD%89%E4%BA%8E%E8%A7%86%E9%A2%91%E5%90%97"><span class="nav-text">关键帧真的等于视频吗</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%81%E9%92%B1%E5%85%B6%E5%AE%9E%E4%B8%8D%E6%98%AF%E5%AE%83%E7%9A%84%E9%87%8D%E7%82%B9"><span class="nav-text">省钱其实不是它的重点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%BC%9A%E7%BB%A7%E7%BB%AD%E7%9B%AF%E7%9D%80%E4%B8%A4%E4%BB%B6%E4%BA%8B"><span class="nav-text">我会继续盯着两件事</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">参考资料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%B4%9E%E5%AF%9F"><span class="nav-text">相关洞察</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">442</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">786</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/03/202607031901/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="让任意大模型真正&quot;看&quot;视频，这个开源工具省了九成token也挨了骂 | 飞飞的AI实验室">
+      <meta itemprop="description" content="claude-real-video 是开源 Python 工具，用场景切换检测和滑动窗口去重让任意大语言模型基于视频画面理解，10分钟演示从约600帧压到5到15帧，token节省九成以上，全程本地不上云。社区争议集中在成本、运动信息丢失和命名三处，它真正解决的是隐私和模型无关性。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          让任意大模型真正"看"视频，这个开源工具省了九成token也挨了骂
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-03 19:01:00" itemprop="dateCreated datePublished" datetime="2026-07-03T19:01:00+00:00">2026-07-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-08 03:28:52" itemprop="dateModified" datetime="2026-07-08T03:28:52+00:00">2026-07-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">claude-real-video 是开源 Python 工具，用场景切换检测和滑动窗口去重让任意大语言模型基于视频画面理解，10分钟演示从约600帧压到5到15帧，token节省九成以上，全程本地不上云。社区争议集中在成本、运动信息丢失和命名三处，它真正解决的是隐私和模型无关性。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260708-any-llm-see-video.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>这两天 Hacker News 上一个叫 claude-real-video 的开源项目炸出几百条评论，吵的是一件你可能从没细想过的事：你把视频丢给 AI，它到底有没有在看画面？</p>
+<p>答案有点反常识。ChatGPT 读的是字幕文本，压根不看画面。Claude 干脆不接受视频文件。只有 Gemini 真正读画面，但它按每秒一帧的固定间隔截图，再把视频传到谷歌云端。换句话说，大部分时候你以为 AI 在看视频，它其实在读字幕，或者在看定时截图。claude-real-video 想把这件事做对，做法是在本地按场景切换提取关键帧、去重、转录音频，再喂给任意一个能读图的大模型。它确实省了九成 token，但说实话，社区骂得也不轻。</p>
+<h2 id="大模型其实没在看视频"><a href="#大模型其实没在看视频" class="headerlink" title="大模型其实没在看视频"></a>大模型其实没在看视频</h2><p>先把现状摊开。Gemini 官方文档写得很老实，视觉信息按 1 帧&#x2F;秒采样，文档自己承认”可能会遗漏快速运动或快速场景切换视频中的细节”。一段 10 分钟的演示，按每秒一帧算就是 600 张图，其中大半是几乎一样的幻灯片，模型要为这些重复画面付满 token。</p>
+<p>claude-real-video 的作者 cortexosmain 在 HN 给了组对比数字：同样 10 分钟演示，固定间隔采样出约 600 帧，他的工具压到 5 到 15 帧，token 省掉九成以上，理解效果反而更好。</p>
+<p>差距来自采样逻辑。固定间隔按时间切片，不管内容变没变；claude-real-video 按场景变化切片，镜头切一次才取一帧，再用滑动窗口去掉重复镜头。一段 10 分钟的静态幻灯片，固定采样给出 600 张近重复图，场景感知只留 1 张。一段快速剪辑，固定采样会漏掉采样间隔之间的画面，场景感知每次视觉变化都接得住。</p>
+<p>说白了，这条差别决定了它跟固定采样根本不是一个量级。</p>
+<h2 id="按场景切换而非按秒取帧"><a href="#按场景切换而非按秒取帧" class="headerlink" title="按场景切换而非按秒取帧"></a>按场景切换而非按秒取帧</h2><p>技术细节其实不复杂。工具用 ffmpeg 检测场景切换点，再保证每秒至少一帧兜底，覆盖慢速录屏。去重不靠感知哈希。作者在 README 里特意解释，哈希在纯色和等亮度色相变化时会失效。所以改用降采样到 16x16 的真实像素差异，跟最近保留的几帧对比。A-B-A 剪辑里模型已经看过的镜头切回来，不会重复发送。</p>
+<p>音频这条线也接上了。视频若自带字幕就直接用，没有才回退到 Whisper 转录，支持语言检测。加个 –keep-audio 参数还能把完整音轨存下来，让 Gemini、GPT-4o 这类能听声音的模型真正听到音乐和语调。</p>
+<p>这套”本地预处理加通用模型”的解耦思路，其实跟我每天在用的那条写作流水线是同源的。你现在读的这篇，资料是 brave-search 那个 MCP 一条条搜回来的，封面等会儿会让 banana 那个 MCP 出，脏活累活前置到本地工具，大模型只管读图读文本做推理。我那条流水线挂了十几个 skill，从拉资讯、查重、配图到发公众号，每个环节都把难啃的活儿留在本地做扎实，最后才交给模型做它擅长的那一段。这种分工我跑了半年多，体感很直接：本地这一层做得越厚，换模型时心里越有底。claude-real-video 干的是同一件事，只不过它前置的是视频拆帧，我前置的是搜索和配图。</p>
+<h2 id="学术研究也站这条路"><a href="#学术研究也站这条路" class="headerlink" title="学术研究也站这条路"></a>学术研究也站这条路</h2><p>claude-real-video 不是孤例。今年 CVPR 2025 有一篇论文叫 M-LLM Based Video Frame Selection，结论跟这个工具的思路几乎一样：自适应选帧，用更少的帧拿到更好的理解。</p>
+<p>论文里有个关键判断：判断一帧重不重要，不需要像回答问题那样多的视觉 token，粗略轮廓就够了。他们把每帧从 144 个 token 压到 9 个，让一个 1.5B 的小模型先扫 128 帧打分，再挑几帧喂给大模型。实验结果很硬：选 4 帧的效果超过均匀采样 8 帧，推理还更快。</p>
+<p>说人话就是，”固定采样不够聪明”已经是学界共识，claude-real-video 把这个共识做成了能 pip install 的工具。</p>
+<h2 id="关键帧真的等于视频吗"><a href="#关键帧真的等于视频吗" class="headerlink" title="关键帧真的等于视频吗"></a>关键帧真的等于视频吗</h2><p>这是 HN 吵得最凶的一层。</p>
+<p>用户 octember 那句批评被反复引用：关键帧不是视频，运动、物体持久性这些东西，Claude 没法从一组图片里推断出来。有人拿 DOS 游戏精灵图做测试，15 到 16 个精灵里只定位对 1 到 2 个。也有人试过用关键帧推断动画时序，最后还是靠手动描述才讲明白。</p>
+<p>这话得公平讲。帧提取路线对静态内容多的视频效果好，演示、讲座、幻灯片这类，场景感知加去重几乎是降维打击。但运动密集的内容，体育、舞蹈、动画，关键帧本质上是把一段连续动作拍扁成几张静图，丢掉的就是运动本身。这是结构性的，调参救不回来。</p>
+<p>还有个被点名的细节：工具宣称”视频留在本地”，但提取出来的帧最后还是要发给 Anthropic 或者 OpenAI 的服务器，模型才能看。本地完成的只有预处理那一步，推理还是要把帧发给云端模型。</p>
+<h2 id="省钱其实不是它的重点"><a href="#省钱其实不是它的重点" class="headerlink" title="省钱其实不是它的重点"></a>省钱其实不是它的重点</h2><p>成本这层争议最实在。用户 achatham 算了笔账：Gemini 3.1 Flash Lite 处理 1 小时视频，API 费用 0.24 美元，还有 lower resolution 选项进一步压价。Claude 的 token 单价本来就贵，即便帧数砍掉九成，算下来未必比 Gemini 原生方案便宜。fzysingularity 直接说这是”terribly expensive”的看视频方式。</p>
+<p>所以这个工具真正的分量，不在帮 Claude 省钱，在让那些不能用 Gemini 的场景也能让大模型看视频。</p>
+<p>哪类场景不能用 Gemini？隐私敏感的内部会议录像、医疗影像、法律证据视频，这些不敢传谷歌云端。还有模型自由，你不必绑死在一家身上，任何能读图加读文本的模型都能用同一份 manifest 文件夹。</p>
+<p>模型自由这条我深有体会。我写文章的流水线挂着十几个 skill，全是照着某一家模型认 frontmatter、调 hook 的脾气一点点磨出来的。真要把底座换到别家，光是把那些工具调用的格式校回来就得搭进去好几个晚上。claude-real-video 这种把脏活留在本地、manifest 谁都能读的搞法，等于把换模型的成本摁到了最低。</p>
+<p>超长视频也沾边，Gemini 默认分辨率最多撑 1 小时，低分辨率 3 小时封顶，本地工具没有这个天花板。</p>
+<p>命名这层吵得最热闹但最不重要。一群人建议把项目名里的 Claude 去掉，叫 llm-real-video 或者 llmrv，因为这工具跟具体模型无关，本质是个预处理器。作者没改。</p>
+<h2 id="我会继续盯着两件事"><a href="#我会继续盯着两件事" class="headerlink" title="我会继续盯着两件事"></a>我会继续盯着两件事</h2><p>claude-real-video 代表的是”预处理加通用 LLM”的解耦打法，把视频理解的难点前置到本地，让大模型只做它擅长的读图推理。这条路能不能补上运动信息的短板，是我想看的第一件事。光流、运动热图、时序编码这些手段有没有人接进来，决定了它是停在”静态内容神器”还是能往运动密集场景走。</p>
+<p>第二件事是大厂会不会把这层能力收编进原生模型。Gemini 已经在往自适应采样靠，论文也在推，开源工具的窗口期有多长不好说。但本地隐私和模型无关性这两条，大厂原生方案天然给不了，所以这类工具大概率不会消失，只会分化成两条不同的路。</p>
+<p>你更在意让 AI 看懂视频的哪一头，是它看得准不准，还是它别把你的视频传上云端？</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[[claude-real-video-github]]</li>
+<li>[[claude-real-video-hackernews]]</li>
+<li>[[mllm-video-frame-selection-cvpr2025]]</li>
+<li>[[gemini-video-understanding-docs]]</li>
+</ul>
+<h2 id="相关洞察"><a href="#相关洞察" class="headerlink" title="相关洞察"></a>相关洞察</h2><ul>
+<li>[[claude-real-video-llm-video]]</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%BC%80%E6%BA%90/" rel="tag"># 开源</a>
+              <a href="/tags/LLM/" rel="tag"># LLM</a>
+              <a href="/tags/claude-real-video/" rel="tag"># claude-real-video</a>
+              <a href="/tags/%E8%A7%86%E9%A2%91/" rel="tag"># 视频</a>
+              <a href="/tags/%E6%9C%AC%E5%9C%B0/" rel="tag"># 本地</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/03/202607031203/" rel="prev" title="AI 自己提工单、揪出工程师漏答：我手动盯的那套运维，它一晚跑完了">
+                  <i class="fa fa-angle-left"></i> AI 自己提工单、揪出工程师漏答：我手动盯的那套运维，它一晚跑完了
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/07/05/202607051756/" rel="next" title="把文本画成图反而更便宜：pxpipe 钻计费空子给 Claude 省七成账单">
+                  把文本画成图反而更便宜：pxpipe 钻计费空子给 Claude 省七成账单 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">22:27</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

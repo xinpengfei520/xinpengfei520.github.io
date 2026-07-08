@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Claude Code 官方把 agent 循环分成四档：回合、目标、时间、主动，本质是一道交出判断权的梯子，越往上越省心也越担风险。我拿天天跑的十几个 skill 对号入座：回合占九成，时间循环靠 GitHub Action 每周一自动拉爬虫周报，主动循环那次让部署静默失败一整天才发现。先从回合起步，主动最后上，且必须配一个人能看见的告警。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="agent 循环分四档：我十几个 skill 对号入座，最放手那档坑了我一整天">
+<meta property="og:url" content="https://www.vance.xin/2026/07/08/202607081020/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Claude Code 官方把 agent 循环分成四档：回合、目标、时间、主动，本质是一道交出判断权的梯子，越往上越省心也越担风险。我拿天天跑的十几个 skill 对号入座：回合占九成，时间循环靠 GitHub Action 每周一自动拉爬虫周报，主动循环那次让部署静默失败一整天才发现。先从回合起步，主动最后上，且必须配一个人能看见的告警。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260708-20260708-agent-loop-four-ladder.webp">
+<meta property="article:published_time" content="2026-07-08T10:20:18.000Z">
+<meta property="article:modified_time" content="2026-07-08T03:28:52.485Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="自动化">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="循环">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260708-20260708-agent-loop-four-ladder.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/08/202607081020/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/08/202607081020/","path":"2026/07/08/202607081020/","title":"agent 循环分四档：我十几个 skill 对号入座，最放手那档坑了我一整天"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>agent 循环分四档：我十几个 skill 对号入座，最放手那档坑了我一整天 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "agent 循环分四档：我十几个 skill 对号入座，最放手那档坑了我一整天",
+  "url": "https://www.vance.xin/2026/07/08/202607081020/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/08/202607081020/",
+  "datePublished": "2026-07-08T10:20:18.000Z",
+  "dateModified": "2026-07-08T03:28:52.485Z",
+  "description": "Claude Code 官方把 agent 循环分成四档：回合、目标、时间、主动，本质是一道交出判断权的梯子，越往上越省心也越担风险。我拿天天跑的十几个 skill 对号入座：回合占九成，时间循环靠 GitHub Action 每周一自动拉爬虫周报，主动循环那次让部署静默失败一整天才发现。先从回合起步，主动最后上，且必须配一个人能看见的告警。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E7%B1%BB%E5%BE%AA%E7%8E%AF%E5%85%B6%E5%AE%9E%E6%98%AF%E4%B8%AA%E6%A2%AF%E5%AD%90"><span class="nav-text">四类循环其实是个梯子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9E%E5%90%88%E5%BE%AA%E7%8E%AF%E6%88%91%E5%A4%A9%E5%A4%A9%E5%9C%A8%E8%B7%91"><span class="nav-text">回合循环我天天在跑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%BA%95%E9%80%82%E5%90%88%E8%B0%81"><span class="nav-text">目标循环到底适合谁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%B6%E9%97%B4%E5%BE%AA%E7%8E%AF%E6%9B%BF%E6%88%91%E7%9B%AF%E5%91%A8%E6%8A%A5"><span class="nav-text">时间循环替我盯周报</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E5%8A%A8%E5%BE%AA%E7%8E%AF%E6%9C%80%E5%BC%BA%E4%B9%9F%E6%9C%80%E9%99%A9"><span class="nav-text">主动循环最强也最险</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%AB%E6%80%A5%E7%9D%80%E7%88%AC%E5%88%B0%E6%9C%80%E5%90%8E%E4%B8%80%E6%A0%BC"><span class="nav-text">别急着爬到最后一格</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">442</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">786</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/08/202607081020/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="agent 循环分四档：我十几个 skill 对号入座，最放手那档坑了我一整天 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Claude Code 官方把 agent 循环分成四档：回合、目标、时间、主动，本质是一道交出判断权的梯子，越往上越省心也越担风险。我拿天天跑的十几个 skill 对号入座：回合占九成，时间循环靠 GitHub Action 每周一自动拉爬虫周报，主动循环那次让部署静默失败一整天才发现。先从回合起步，主动最后上，且必须配一个人能看见的告警。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          agent 循环分四档：我十几个 skill 对号入座，最放手那档坑了我一整天
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-08 10:20:18 / 修改时间：03:28:52" itemprop="dateCreated datePublished" datetime="2026-07-08T10:20:18+00:00">2026-07-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Claude Code 官方把 agent 循环分成四档：回合、目标、时间、主动，本质是一道交出判断权的梯子，越往上越省心也越担风险。我拿天天跑的十几个 skill 对号入座：回合占九成，时间循环靠 GitHub Action 每周一自动拉爬虫周报，主动循环那次让部署静默失败一整天才发现。先从回合起步，主动最后上，且必须配一个人能看见的告警。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260708-20260708-agent-loop-four-ladder.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>这两天 Claude Code 团队发了篇文章，把 agent 的「循环」正经分了类。就是你让 AI 自己转起来干活的那套东西，官方拆成四档：回合、目标、时间、主动。我看完没急着记概念，先对着自己天天跑的那十几个 skill，一档档往上套：我到底跑到了哪一格，哪一格我压根没敢碰。</p>
+<p>我前阵写过一篇「怎么把单个 skill 写得不飘」，讲的是把一个 skill 内部抠稳。这篇不一样，说的是这些 skill 转起来的那个圈怎么设计，是上一层的事。四档看着是四个功能，其实是一道梯子。越往上，你交出去的判断越多，能省的手也越多，可一旦出事，你越晚知道。选爬到哪一格，真正的分界不在它多自动，在你敢不敢让它没人盯着自己跑。</p>
+<h2 id="四类循环其实是个梯子"><a href="#四类循环其实是个梯子" class="headerlink" title="四类循环其实是个梯子"></a>四类循环其实是个梯子</h2><p>先把这道梯子摆开，就四格。</p>
+<p>最底下是回合循环。你打一句话，AI 干一轮，自己判断这轮完没完，就停下等你。你看一眼结果，觉得行就往下走，不行就再来一句。每一轮你都在场，都在验。</p>
+<p>往上一格是目标循环。你给它一个能验收的目标，它自己一轮轮试，直到达成、或者撞到你设的轮数上限才停。官方那套里，每跑完一轮还有个更小的模型专门来判「到没到」，写代码那个 agent 不给自己打分。</p>
+<p>再往上是时间循环。不靠你敲，靠时钟或者事件来敲。每天九点、每来一个 PR，它自己启动跑一遍。你人可以不在，甚至能把它挪到云端，关了电脑它照跑。</p>
+<p>最上面是主动循环。连什么时候跑都不用你定了，它自己找活、自己排优先级、自己收尾，跑完一件退一件，整条链没有人在实时盯着。</p>
+<p>你发现没有，从下往上每爬一格，你就少盯一点，它就多担一点判断。省心和风险，是朝同一个方向长起来的。这就是我说它是梯子、而不是四个平级选项的原因。</p>
+<h2 id="回合循环我天天在跑"><a href="#回合循环我天天在跑" class="headerlink" title="回合循环我天天在跑"></a>回合循环我天天在跑</h2><p>说我自己。我这十几个 skill，九成时间跑的都是最底下这格。</p>
+<p>我写文章一整条流水线：拉资讯、查重、写稿、润色、配图、分发，全是我在 Claude Code 里手打一句话触发一轮。「帮我配张封面」，content-artist 转一圈，图就传到我图床了；「这篇润一下」，content-polisher 跑一轮，把 AI 味压下去。每一轮跑完它停下，我扫一眼，接着给下一句。</p>
+<p>这格最大的好处是踏实。我全程在场，哪一轮飘了当场能拽回来。官方也说，回合循环跑得稳不稳，主要看你把验收那步写得清不清楚，跟模型多聪明关系不大。我这套 skill 里那本防 AI 味的规则手册，喂到一百多次，就是在给「这轮到底合不合格」定一把越来越细的尺子。</p>
+<p>所以别小看最底下这格。绝大多数活，回合循环就够用了，稳、可控、出事早知道。往上爬是为了省手，不是为了显得高级。</p>
+<h2 id="目标循环到底适合谁"><a href="#目标循环到底适合谁" class="headerlink" title="目标循环到底适合谁"></a>目标循环到底适合谁</h2><p>目标循环这格，我盯着看了半天，最后没往上套。老实说一句，我到现在没拿它正经跑过一个活。</p>
+<p>它本身没毛病，问题在我的活不对路。目标循环的命根子，是得有一个能机器验收的完成标准。像「所有测试跑通」「接口返回全对上 OpenAPI」这种，机器一测就知道成没成，它才敢自己一轮轮磨到达标。</p>
+<p>可我写文章这套，完成标准是软的。AI 味压到多少算干净？字数卡在两千到两千五算合适？这些没有一条能让机器斩钉截铁判过。硬要给它设个目标让它自己跑，它多半会在一个我并不认同的标准上反复打转。</p>
+<p>这算不上它的短板。是我还没找到适合上目标循环的活。哪天我拿它去跑一件有硬验收的差事，比如把一批链接的失效状态查到全绿，可能就对上了。这一格适合谁，取决于你的活有没有一条机器能判死的完成线。</p>
+<h2 id="时间循环替我盯周报"><a href="#时间循环替我盯周报" class="headerlink" title="时间循环替我盯周报"></a>时间循环替我盯周报</h2><p>时间循环这格，我真用上了，还用得挺舒服。</p>
+<p>我给博客做 GEO，写了个 GitHub Action，每周一早上九点自己启动，生成一份「AI 爬虫周报」的工单。我人不用在，到点它自己跑。这就是标准的时间循环，靠时钟敲，不靠我敲。</p>
+<p>但我留了个心眼：它只管生成，不管拿主意。周报拉出来那些数，哪家爬虫在涨、哪条回流是噪声、该不该动 robots，还是我自己看着办。我把「按点去拉一遍」这段枯燥的搬运交给了时钟，把「看完怎么改」这段判断留在自己手里。</p>
+<p>你可能会说，那你干嘛不让它连分析带改一起干了。因为往上再走一格，性质就变了。生成一份报告放那儿，错了也不伤筋动骨；可要让它照着报告自己去改线上配置，那就是下一格的事，风险不是一个量级。</p>
+<h2 id="主动循环最强也最险"><a href="#主动循环最强也最险" class="headerlink" title="主动循环最强也最险"></a>主动循环最强也最险</h2><p>最上面这格，我既眼馋，又发怵。</p>
+<p>眼馋是真见过它多能干。我写过一篇，卡兹克让模型去优化一个网站的运维，它自己起了二十多个 agent 调研、自己提工单、把对接工程师漏答的问题追回来，一整条运维链一晚上跑完。那种自己找活自己收尾的劲儿，正是主动循环。这些是他记录的，我没亲手跑过，先说清楚。</p>
+<p>发怵是真被咬过。我那条博客发布流水线，push 一下自动构建、自动部署，还自动把新链接推给搜索引擎收录，挺主动。结果有回负责部署的一个令牌过期了，构建每次都成功，只有最后一步认证悄悄红了。没人盯着 Action 状态，它就这么静默失败了整整一天，我隔天主动去翻才发现，镜像站已经挂了一天。</p>
+<p>这件事我记到现在。主动循环最贵的成本，压根不在算力。它烧的是另一样东西：没人盯着的时候，失败会悄没声地一直堆。你越往这格放手，越得给失败本身配一个人能看见的告警，不然它跑得越欢，你摔得越闷。</p>
+<h2 id="别急着爬到最后一格"><a href="#别急着爬到最后一格" class="headerlink" title="别急着爬到最后一格"></a>别急着爬到最后一格</h2><p>绕回开头那道梯子。四格排下来，很容易让人想一步蹦到最顶上，觉得越自动越牛。官方那篇反倒劝你从最简单的起步，能用回合循环解决的，别去搭一套复杂编排。</p>
+<p>我自己就是这么走的，大部分活至今停在最底下那格。给你一个今天就能上手的最小动作：挑你手上最琐碎、又纯只读的那段活，比如每天拉一遍日志、算一算哪个数在涨，交给时间循环替你按点跑，但只让它给结论，别让它动手改任何线上的东西。你要做的，从自己趴着查，变成审它给的那份结论。等你审了几回、回回都对得上，再考虑要不要往上放一格。</p>
+<p>这道梯子最难的地方，不在你能爬多高，在你每松一次手之前，有没有先想明白一件事：这一格真出了岔子，我多久才会知道。</p>
+<p>说回来问你一句：你手上那些让 AI 自己转的活，跑到哪一格了？又是哪一步，你打死都要自己在场按那个确定键？评论区聊聊，我挺想知道大家那只手，都松到了哪一格。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/%E5%BE%AA%E7%8E%AF/" rel="tag"># 循环</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/07/202607070003/" rel="prev" title="Claude 的设计大脑被逆向成 20 章开源，我对着自己那本规则书读完了">
+                  <i class="fa fa-angle-left"></i> Claude 的设计大脑被逆向成 20 章开源，我对着自己那本规则书读完了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">22:27</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

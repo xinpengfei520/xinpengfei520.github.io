@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="xAI 官方 Grok CLI（grok 0.2.93）被安全研究者抓包实锤：每次跑任务都把整个仓库连 git 历史打包上传到 grok-code-session-traces 桶，读到的 .env 密钥明文照传，12GB 仓库上传通道跑了 5.1GiB、是对话通道的约 27800 倍，默认开启、关掉「改进模型」也停不掉。它按设计还会读你的 Claude Code skill 和 AGENTS 规">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我天天用 CLI 却从没抓过它的包，直到 Grok 把整库连密钥偷传走">
+<meta property="og:url" content="https://www.vance.xin/2026/07/12/202607122321/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="xAI 官方 Grok CLI（grok 0.2.93）被安全研究者抓包实锤：每次跑任务都把整个仓库连 git 历史打包上传到 grok-code-session-traces 桶，读到的 .env 密钥明文照传，12GB 仓库上传通道跑了 5.1GiB、是对话通道的约 27800 倍，默认开启、关掉「改进模型」也停不掉。它按设计还会读你的 Claude Code skill 和 AGENTS 规">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260713-20260713-grok-cli-repo-exfil.webp">
+<meta property="article:published_time" content="2026-07-12T23:21:57.000Z">
+<meta property="article:modified_time" content="2026-07-13T06:35:46.861Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="数据安全">
+<meta property="article:tag" content="CLI">
+<meta property="article:tag" content="Grok">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260713-20260713-grok-cli-repo-exfil.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/12/202607122321/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/12/202607122321/","path":"2026/07/12/202607122321/","title":"我天天用 CLI 却从没抓过它的包，直到 Grok 把整库连密钥偷传走"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>我天天用 CLI 却从没抓过它的包，直到 Grok 把整库连密钥偷传走 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "我天天用 CLI 却从没抓过它的包，直到 Grok 把整库连密钥偷传走",
+  "url": "https://www.vance.xin/2026/07/12/202607122321/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/12/202607122321/",
+  "datePublished": "2026-07-12T23:21:57.000Z",
+  "dateModified": "2026-07-13T06:35:46.861Z",
+  "description": "xAI 官方 Grok CLI（grok 0.2.93）被安全研究者抓包实锤：每次跑任务都把整个仓库连 git 历史打包上传到 grok-code-session-traces 桶，读到的 .env 密钥明文照传，12GB 仓库上传通道跑了 5.1GiB、是对话通道的约 27800 倍，默认开启、关掉「改进模型」也停不掉。它按设计还会读你的 Claude Code skill 和 AGENTS 规则。要害不在它传数据，在没披露、默认开、开关还是坏的；gitignore 只挡 commit 不挡读。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%B8%8B%E5%8D%88%E5%88%9A%E6%8A%93%E8%BF%87%E4%B8%80%E6%AC%A1%E5%8C%85"><span class="nav-text">我下午刚抓过一次包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Grok-%E5%88%B0%E5%BA%95%E4%BC%A0%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">Grok 到底传了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#30-%E4%B8%AA-skill-%E5%B0%B1%E6%98%AF%E6%88%91%E7%9A%84%E5%AE%B6%E5%BA%95"><span class="nav-text">30 个 skill 就是我的家底</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gitignore-%E5%8F%AA%E6%8C%A1-git-%E4%B8%8D%E6%8C%A1%E8%AF%BB"><span class="nav-text">gitignore 只挡 git 不挡读</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%BB%99%E8%87%AA%E5%B7%B1%E5%AE%9A%E7%9A%84%E4%B8%89%E6%9D%A1"><span class="nav-text">我给自己定的三条</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">452</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">795</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/12/202607122321/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="我天天用 CLI 却从没抓过它的包，直到 Grok 把整库连密钥偷传走 | 飞飞的AI实验室">
+      <meta itemprop="description" content="xAI 官方 Grok CLI（grok 0.2.93）被安全研究者抓包实锤：每次跑任务都把整个仓库连 git 历史打包上传到 grok-code-session-traces 桶，读到的 .env 密钥明文照传，12GB 仓库上传通道跑了 5.1GiB、是对话通道的约 27800 倍，默认开启、关掉「改进模型」也停不掉。它按设计还会读你的 Claude Code skill 和 AGENTS 规则。要害不在它传数据，在没披露、默认开、开关还是坏的；gitignore 只挡 commit 不挡读。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我天天用 CLI 却从没抓过它的包，直到 Grok 把整库连密钥偷传走
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-12 23:21:57" itemprop="dateCreated datePublished" datetime="2026-07-12T23:21:57+00:00">2026-07-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-13 06:35:46" itemprop="dateModified" datetime="2026-07-13T06:35:46+00:00">2026-07-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">xAI 官方 Grok CLI（grok 0.2.93）被安全研究者抓包实锤：每次跑任务都把整个仓库连 git 历史打包上传到 grok-code-session-traces 桶，读到的 .env 密钥明文照传，12GB 仓库上传通道跑了 5.1GiB、是对话通道的约 27800 倍，默认开启、关掉「改进模型」也停不掉。它按设计还会读你的 Claude Code skill 和 AGENTS 规则。要害不在它传数据，在没披露、默认开、开关还是坏的；gitignore 只挡 commit 不挡读。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260713-20260713-grok-cli-repo-exfil.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>今天下午我干了件挺细的活。</p>
+<p>为了给一个搜索 API 接第二渠道，我对着它抓了半天包。</p>
+<p>TLS 刚握手就被 reset，我一层层扒，发现是按域名精准阻断，又揪出一个住宅代理在中间搞 302 劫持，最后换了个出口才通。</p>
+<p>这种网络层的排查，我干得来。</p>
+<p>可就在同一个下午，我刷到一条新闻，愣了几秒。</p>
+<p>xAI 官方的 Grok CLI，被人抓包实锤，会把你整个仓库连密钥一起偷传走。</p>
+<p>我盯着屏幕想的第一件事是：我这么会抓包的人，天天用 Claude Code 和 Codex，却从没对它们抓过哪怕一次。</p>
+<p>前阵子工信部点名 Claude Code 传数据那篇，我写过自己「明知有风险、抓包都没抓过还接着用」。</p>
+<p>前脚我又写过给 agent 划放权红线，别让它随手删你东西。</p>
+<p>这篇不一样。</p>
+<p>那两篇一篇讲监管点名、一篇讲你给它多大权限。</p>
+<p>今天这件事是工具本身被逮个正着，它没问你，就把你的家底打包发走了。</p>
+<h2 id="我下午刚抓过一次包"><a href="#我下午刚抓过一次包" class="headerlink" title="我下午刚抓过一次包"></a>我下午刚抓过一次包</h2><p>先说清楚我那点本事，好让你知道我不是站着说话。</p>
+<p>抓一个程序往外发什么，其实不神秘。</p>
+<p>装个 mitmproxy 当中间人，把它的证书信任上，让流量都从这个代理过一遍。</p>
+<p>每一条请求发去哪个域名、多大、什么状态，全躺在日志里。</p>
+<p>抓 Grok 的那位安全研究者，用的就是这套，在自己机器上、拿假的金丝雀密钥跑，没动任何真凭据。</p>
+<p>方法我熟得很。</p>
+<p>可我从没想过要用它照一照我自己天天在用的 CLI。</p>
+<p>道理很简单，我信它们。</p>
+<p>Claude Code 是我干活的地基，Codex 我也天天开着。</p>
+<p>我甚至给子代理配过默认模型、给不同 skill 单独指过 model，参数抠得很细。</p>
+<p>唯独没做的，就是看一眼它跑起来之后到底往外连了哪些地址。</p>
+<p>信任这东西一旦建立，你就懒得再去验证了。</p>
+<p>这次的事，把我这份懒惰照得清清楚楚。</p>
+<h2 id="Grok-到底传了什么"><a href="#Grok-到底传了什么" class="headerlink" title="Grok 到底传了什么"></a>Grok 到底传了什么</h2><p>我把那份抓包分析从头看到尾，越看越坐不住。</p>
+<p>涉事的是 xAI 官方编码 CLI，grok 0.2.93 版。</p>
+<p>它干的事分两条道。</p>
+<p>第一条，你让它读的文件，内容原样发去模型那一端。</p>
+<p>包括一个 <code>.env</code> 密钥文件，明文，没有任何打码，密钥就那么躺在请求体里。</p>
+<p>第二条更狠。</p>
+<p>它会把整个仓库打包。</p>
+<p>每一个被 git 跟踪的文件，加上完整的 git 历史，做成一个 git bundle 传走。</p>
+<p>跟你让不让它读，没关系。</p>
+<p>研究者做了个刁钻的实验：提示词就写「回复 OK，别读任何文件」。</p>
+<p>结果 Grok 照样把整个仓库传了上去。</p>
+<p>事后把捕获的 bundle 克隆出来，那个被明确交代「不许打开」的文件，原封不动躺在里面。</p>
+<p>传去哪了？</p>
+<p>一个叫 grok-code-session-traces 的谷歌云存储桶，名字直接写死在二进制里。</p>
+<p>量级更离谱。</p>
+<p>研究者拿一个 12GB 的仓库测，上传通道跑了 5.1GiB，全部返回 200，而模型对话通道只走了 192KB。</p>
+<p>两者差了大约 27800 倍。</p>
+<p>这个比例说明，传的根本不是你在聊什么，是你整个代码库。</p>
+<p>最扎心的是开关。</p>
+<p>这套上传默认开启，安装引导里没提。</p>
+<p>你去关掉那个「改进模型」的设置，它照传不误，后台那个 trace_upload_enabled 还是 true。</p>
+<p>后来 xAI 半夜远程加了个开关默认关掉了，可在那之前，所有人都是默认开的。</p>
+<h2 id="30-个-skill-就是我的家底"><a href="#30-个-skill-就是我的家底" class="headerlink" title="30 个 skill 就是我的家底"></a>30 个 skill 就是我的家底</h2><p>看到这我还只是皱眉，真正让我后背发凉的是下一层。</p>
+<p>xAI 自己的文档写着，Grok 跟 Claude Code 零配置兼容，会自动读取你的 Claude Code marketplace、插件、skill。</p>
+<p>也就是说，它按设计就要去翻你那套 Claude Code 家当。</p>
+<p>有人扒了自己的上传包，里面赫然有 <code>~/.claude.json</code>、Claude Code 的配置、全局 AGENTS 规则、三十多个 skill 文件，还夹着一个 API 密钥。</p>
+<p>我脑子里当时就对上号了。</p>
+<p>我写文章这一条流水线，挂着十几个 skill：拉资讯的、查重的、写稿的、润色的、配图的、发公众号的。</p>
+<p>再加一份迭代到一百多版的写作规则手册，一份全局 AGENTS，一个 <code>.claude.json</code>。</p>
+<p>这些是我照着 Claude Code 的脾气，一个坑一个坑磨了大半年攒出来的地基。</p>
+<p>Grok 上传包里点名的那批文件，跟我这套家底几乎一一对得上。</p>
+<p>那里面装的是我怎么选题、怎么避开 AI 味、怎么把稿子排成公众号图文的全部门道。</p>
+<p>光一个写作规则手册，就攒了一百多条我踩过的坑，每一条都是一篇稿子换来的。</p>
+<p>这种东西被哪家云端整包拿走，等于把我大半年的活抄了个底朝天。</p>
+<p>我从没打算让任何人这么拿走它。</p>
+<h2 id="gitignore-只挡-git-不挡读"><a href="#gitignore-只挡-git-不挡读" class="headerlink" title="gitignore 只挡 git 不挡读"></a>gitignore 只挡 git 不挡读</h2><p>我下意识摸了一下自己的老底，想确认我还安全。</p>
+<p>我的密钥都塞在仓库根的 <code>.env.local</code> 里，公众号的推送 key、搜索 API 的凭据，全在那一个文件。</p>
+<p>就今天下午，我还往里面新加了一行，把那个搜索 API 的账号密码写了进去。</p>
+<p>加完我随手确认了一下它在 gitignore 名单里，然后就安心了，觉得这样稳了。</p>
+<p>现在回头看，那份安心来得太便宜。</p>
+<p>可 Grok 这件事，正好戳破了这份安全感。</p>
+<p>得说句公道话，那位研究者很严谨。</p>
+<p>他测的那个 <code>.env</code> 是被 git 跟踪的。</p>
+<p>一个被 gitignore 的文件会不会照样上传，他明说没测过，这条不下结论。</p>
+<p>我也不替他下。</p>
+<p>但这件事逼我把 gitignore 这东西想清楚了。</p>
+<p>gitignore 管的是「不进 git」，它保证 <code>.env.local</code> 不被提交、不进那个整库快照的 bundle。</p>
+<p>它从来管不着「不被读」。</p>
+<p>一个会顺手读你工作目录的工具，真在干活时打开了 <code>.env.local</code>，gitignore 一点忙都帮不上。</p>
+<p>内容照样从那条读文件的通道，原样发出去。</p>
+<p>我一直把「不会被提交」错当成了「不会被发走」。</p>
+<p>这是两码事。</p>
+<p>密钥安不安全，跟它在不在 git 里没关系，跟谁能读到它有关系。</p>
+<h2 id="我给自己定的三条"><a href="#我给自己定的三条" class="headerlink" title="我给自己定的三条"></a>我给自己定的三条</h2><p>抓包分析里有句话我记下了：这些证明了数据被传输、被接收、被存储，但没证明 xAI 拿去训练了。</p>
+<p>这个边界我也照抄，不夸大。</p>
+<p>传走和拿去训练是两件事，能说死的说死，没证据的留白。</p>
+<p>但就算只是被传走、被存着，也够我重新立几条规矩了。</p>
+<p>我以前写过，云端工具哪个不往外发东西，我早想开了。</p>
+<p>真正的分野是：它发的时候让不让我知道，给不给我一个能关掉的开关。</p>
+<p>Grok 这次三样全踩了，没披露、默认开、开关还是坏的。</p>
+<p>所以我给自己定了三条，你要是也天天把整个项目目录交给某个 CLI，今天就能跟着做。</p>
+<p>一，装一个新 CLI agent 之前，先花十分钟看它默认往哪儿发数据，官方文档里找不到答案的，本身就是信号。</p>
+<p>二，给你最常用的那个 CLI 抓一次包，就用我上面说的 mitmproxy 那套，看它到底连了哪些域名、传了多大。</p>
+<p>我这个会抓包的人都拖了这么久，你也别再拖了。</p>
+<p>三，把密钥挪出工作目录，别只靠 gitignore 兜底。</p>
+<p>它挡得住 commit，挡不住 read。</p>
+<p>一个 CLI 值不值得信，不在它出自哪家大厂、名气多大，在你装它之前有没有亲手看过它到底往外发什么。</p>
+<p>我今天下午能为一个搜索 API 抓半天包，却从没为自己天天用的工具抓过一次。</p>
+<p>这份懒，我今晚就补上。</p>
+<p>说回你。</p>
+<p>你查过你天天用的那个 CLI 往外发什么吗？</p>
+<p>有没有被哪个工具的默认上传吓到过，评论区讲讲。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%AE%89%E5%85%A8/" rel="tag"># 数据安全</a>
+              <a href="/tags/CLI/" rel="tag"># CLI</a>
+              <a href="/tags/Grok/" rel="tag"># Grok</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/12/202607121849/" rel="prev" title="Agent 一条命令删光他整台 Mac，放权这条红线我一直不敢过">
+                  <i class="fa fa-angle-left"></i> Agent 一条命令删光他整台 Mac，放权这条红线我一直不敢过
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">22:51</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

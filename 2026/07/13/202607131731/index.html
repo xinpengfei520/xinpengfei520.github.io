@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="OpenAI 员工 Tibo 发推教用 CLIProxyAPI 加 4 行 claudex alias，5 分钟把 Claude Code 后端换成 GPT-5.6 Sol，保留 CC 皮和 skill 生态。我犹豫在三处：一是 Anthropic 那波 1 月封禁禁的是反方向，这条路真被抓的口子在 OpenAI 侧的 Codex 订阅，Tibo 自己都说 If this gets blocked">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenAI 员工亲手教 5 分钟把 Claude Code 后端换 GPT-5.6 Sol，我盯着那 4 行 alias 没敢按">
+<meta property="og:url" content="https://www.vance.xin/2026/07/13/202607131731/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="OpenAI 员工 Tibo 发推教用 CLIProxyAPI 加 4 行 claudex alias，5 分钟把 Claude Code 后端换成 GPT-5.6 Sol，保留 CC 皮和 skill 生态。我犹豫在三处：一是 Anthropic 那波 1 月封禁禁的是反方向，这条路真被抓的口子在 OpenAI 侧的 Codex 订阅，Tibo 自己都说 If this gets blocked">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260713-claudex-5min-hesitation.webp">
+<meta property="article:published_time" content="2026-07-13T17:31:00.000Z">
+<meta property="article:modified_time" content="2026-07-14T02:15:21.425Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="OpenAI">
+<meta property="article:tag" content="GPT-5.6 Sol">
+<meta property="article:tag" content="CLIProxyAPI">
+<meta property="article:tag" content="工程债">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260713-claudex-5min-hesitation.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/13/202607131731/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/13/202607131731/","path":"2026/07/13/202607131731/","title":"OpenAI 员工亲手教 5 分钟把 Claude Code 后端换 GPT-5.6 Sol，我盯着那 4 行 alias 没敢按"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>OpenAI 员工亲手教 5 分钟把 Claude Code 后端换 GPT-5.6 Sol，我盯着那 4 行 alias 没敢按 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenAI 员工亲手教 5 分钟把 Claude Code 后端换 GPT-5.6 Sol，我盯着那 4 行 alias 没敢按",
+  "url": "https://www.vance.xin/2026/07/13/202607131731/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/13/202607131731/",
+  "datePublished": "2026-07-13T17:31:00.000Z",
+  "dateModified": "2026-07-14T02:15:21.425Z",
+  "description": "OpenAI 员工 Tibo 发推教用 CLIProxyAPI 加 4 行 claudex alias，5 分钟把 Claude Code 后端换成 GPT-5.6 Sol，保留 CC 皮和 skill 生态。我犹豫在三处：一是 Anthropic 那波 1 月封禁禁的是反方向，这条路真被抓的口子在 OpenAI 侧的 Codex 订阅，Tibo 自己都说 If this gets blocked I owe you a reset；二是十几个 skill 长在 CC 的语义地图上换后端就是一次工程债；三是同一天上午刚写完 Ploy 那 4 大坑复盘，门槛越低我越警惕。当下决定：不换主力，装一份并跑。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3-4-%E8%A1%8C-alias-%E9%95%BF%E8%BF%99%E6%A0%B7"><span class="nav-text">那 4 行 alias 长这样</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Anthropic-%E4%B8%8D%E4%BC%9A%E5%B0%81%EF%BC%8COpenAI-%E5%8F%AF%E8%83%BD%E4%BC%9A"><span class="nav-text">Anthropic 不会封，OpenAI 可能会</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#skill-%E5%AE%B6%E5%BA%95%E6%89%8D%E6%98%AF%E9%82%A3%E5%9D%97%E6%9C%80%E5%AE%9E%E7%9A%84%E6%8C%A1%E6%9D%BF"><span class="nav-text">skill 家底才是那块最实的挡板</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tibo-%E7%AB%99%E5%9C%A8%E5%93%AA%E8%BE%B9%EF%BC%8C%E5%80%BC%E5%BE%97%E7%9C%8B%E6%B8%85%E6%A5%9A"><span class="nav-text">Tibo 站在哪边，值得看清楚</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%94%B9%E8%BF%87-CC-%E7%9A%84-env-var%EF%BC%8C%E5%8F%AA%E6%94%B9%E8%BF%87%E9%82%A3%E4%B8%80%E6%AC%A1"><span class="nav-text">我改过 CC 的 env var，只改过那一次</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A3%85%E4%B8%80%E4%BB%BD%E5%B9%B6%E8%B7%91%EF%BC%8C%E6%98%AF%E6%88%91%E4%BB%8A%E5%A4%A9%E7%9A%84%E7%AD%94%E6%A1%88"><span class="nav-text">装一份并跑，是我今天的答案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">参考资料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%B4%9E%E5%AF%9F"><span class="nav-text">相关洞察</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">455</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">803</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/13/202607131731/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="OpenAI 员工亲手教 5 分钟把 Claude Code 后端换 GPT-5.6 Sol，我盯着那 4 行 alias 没敢按 | 飞飞的AI实验室">
+      <meta itemprop="description" content="OpenAI 员工 Tibo 发推教用 CLIProxyAPI 加 4 行 claudex alias，5 分钟把 Claude Code 后端换成 GPT-5.6 Sol，保留 CC 皮和 skill 生态。我犹豫在三处：一是 Anthropic 那波 1 月封禁禁的是反方向，这条路真被抓的口子在 OpenAI 侧的 Codex 订阅，Tibo 自己都说 If this gets blocked I owe you a reset；二是十几个 skill 长在 CC 的语义地图上换后端就是一次工程债；三是同一天上午刚写完 Ploy 那 4 大坑复盘，门槛越低我越警惕。当下决定：不换主力，装一份并跑。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OpenAI 员工亲手教 5 分钟把 Claude Code 后端换 GPT-5.6 Sol，我盯着那 4 行 alias 没敢按
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-13 17:31:00" itemprop="dateCreated datePublished" datetime="2026-07-13T17:31:00+00:00">2026-07-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-14 02:15:21" itemprop="dateModified" datetime="2026-07-14T02:15:21+00:00">2026-07-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">OpenAI 员工 Tibo 发推教用 CLIProxyAPI 加 4 行 claudex alias，5 分钟把 Claude Code 后端换成 GPT-5.6 Sol，保留 CC 皮和 skill 生态。我犹豫在三处：一是 Anthropic 那波 1 月封禁禁的是反方向，这条路真被抓的口子在 OpenAI 侧的 Codex 订阅，Tibo 自己都说 If this gets blocked I owe you a reset；二是十几个 skill 长在 CC 的语义地图上换后端就是一次工程债；三是同一天上午刚写完 Ploy 那 4 大坑复盘，门槛越低我越警惕。当下决定：不换主力，装一份并跑。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260713-claudex-5min-hesitation.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天夜里刷 X，一条推让我盯了挺久。发推的人叫 Tibo（thsottiaux），身份是 OpenAI 员工兼公关帐号。他手把手教你用一个叫 CLIProxyAPI 的开源代理，配一条 4 行的 <code>claudex</code> 别名，5 分钟就把 Claude Code 的后端换成了 GPT-5.6 Sol。CC 的客户端还是 CC，skill 生态一根不动，只是脑袋换了。评论区一堆人喊「神操作 tonight 就试」。我一手咖啡一手手机，盯了半天，最后没按下去。</p>
+<h2 id="那-4-行-alias-长这样"><a href="#那-4-行-alias-长这样" class="headerlink" title="那 4 行 alias 长这样"></a>那 4 行 alias 长这样</h2><p>先把话说前面：这个操作真能跑，不是纸上谈兵。项目源自 GitHub 的 router-for-me&#x2F;CLIProxyAPI，快 4 万 star，开源 MIT 协议。周边生态也长起来了，vibeproxy 菜单栏 GUI、CCS 多账号切换、Quotio 配额监控、Claude Proxy VSCode 插件一堆下游。核心步骤简单到反常识：</p>
+<ol>
+<li><code>brew install cliproxyapi</code> 装本地代理</li>
+<li><code>cliproxyapi --codex-login</code> 登录你的 Codex 订阅（OAuth 授权）</li>
+<li><code>.zshrc</code> 里加两行环境变量加一条别名，重开终端就完事</li>
+</ol>
+<p>关键那条 <code>claudex</code> 别名，Tibo 推里贴的原文长这样：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> ANTHROPIC_BASE_URL=http://127.0.0.1:8317</span><br><span class="line"><span class="built_in">export</span> ANTHROPIC_AUTH_TOKEN=my-local-token</span><br><span class="line"></span><br><span class="line"><span class="built_in">alias</span> claudex=<span class="string">&#x27;CLAUDE_CODE_SUBAGENT_MODEL=gpt-5.6-sol \</span></span><br><span class="line"><span class="string">CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1 \</span></span><br><span class="line"><span class="string">CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY=3 \</span></span><br><span class="line"><span class="string">ENABLE_TOOL_SEARCH=false \</span></span><br><span class="line"><span class="string">claude --model gpt-5.6-sol&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>这 4 个 env 每一个都在处理一件具体的 provider-specific 事。SUBAGENT_MODEL 逼 CC 的子智能体也走 Sol，不让它偷偷 fallback 到 Haiku。ALWAYS_ENABLE_EFFORT 把推理档常开。MAX_TOOL_USE_CONCURRENCY 卡到 3，给并发工具调用留缰绳。ENABLE_TOOL_SEARCH&#x3D;false 最有意思，它把 Claude Code 自带那个 tool_search 前置整个关掉，因为 GPT-5.6 有自己的 Programmatic Tool Calling，那层 CC 优化对它反而是负优化。看得出 Tibo 是知道坑的老手。</p>
+<p>看完这 4 行我头一反应挺舒服，老手做事就是这么细。翻回头再看一眼眉头一皱：能想到要关 tool_search 的人，一定是踩过 tool_search 坑的人。他心里明白换后端不像画个别名那么简单，只是没说出来。</p>
+<h2 id="Anthropic-不会封，OpenAI-可能会"><a href="#Anthropic-不会封，OpenAI-可能会" class="headerlink" title="Anthropic 不会封，OpenAI 可能会"></a>Anthropic 不会封，OpenAI 可能会</h2><p>很多人头一时间会问一句：Anthropic 会不会看到就把我账号封了。这个问题我想清楚了，方向反了。</p>
+<p>Anthropic 那波大封杀发生在今年 1 月 9 日凌晨 2 点 20（UTC）。服务端一个 switch 上线，当天所有把 Claude 订阅 OAuth 塞进 OpenClaw、OpenCode、Cline、Roo Code 这些第三方 harness 的账号，20 分钟内自动被停。</p>
+<p>报错原文是 <code>This credential is only authorized for use with Claude Code and cannot be used for other API requests</code>。2 月 20 更新条款，4 月 4 全量生效。Anthropic Claude Code 头子 Boris Cherny 官方原话说得明白：我们的订阅模型本来就不为第三方工具那种用量模式设计。</p>
+<p>但 Tibo 教的这条路方向反过来。Claude Code 客户端还是原装 CC，只是 <code>ANTHROPIC_BASE_URL</code> 环境变量指向了本地 127.0.0.1 的代理端口。这个环境变量是 Anthropic 官方支持的，本来就给企业客户接自建 gateway 用。Anthropic 服务器根本看不到你在干什么，它看到的只是 CC 客户端没连上它的官方 endpoint 而已。这层合规。</p>
+<p>真正的风险在 OpenAI 那侧。你的 Codex 订阅 OAuth 被 CLIProxyAPI 拿着当持久 API 后端用，这跟 Anthropic 1 月封的那类「订阅拿去当 API」是同构的动作。OpenAI 眼下还没像 Anthropic 那样部署一波服务端封杀，说白了不代表以后不会。Tibo 自己那条推末尾有一句原话，我看了两遍：</p>
+<blockquote>
+<p>If this gets blocked, I owe you a reset.</p>
+</blockquote>
+<p>OpenAI 员工发推教用户这么玩，末尾自己说要是被封了给你重置账号。这句话本身就是最诚实的免责声明，他心里也没底。</p>
+<p>这条我想清楚之后，其实不算我犹豫最大的理由。可它是最上面那一层，得先摆到桌面上。</p>
+<h2 id="skill-家底才是那块最实的挡板"><a href="#skill-家底才是那块最实的挡板" class="headerlink" title="skill 家底才是那块最实的挡板"></a>skill 家底才是那块最实的挡板</h2><p>真正让我按不下去的，是十几个自定义 skill 长在 Claude Code 的语义脾气上这件事。</p>
+<p>我这条写作流水线，拉资讯的、查重的、配图的、发公众号的、防 AI 味的，每一个 skill 都是照着 Claude Code 读 SKILL.md、认 frontmatter、调 hook 的口味一点点磨出来的。光那份防 AI 味的 grep 规则就长了 76 版，才把破折号、negate-first 对仗、三联否定这些坑扫得勉强不误伤正常疑问句。这些规则写的是「Claude 写字容易犯什么错」的语义地图，跟通用 AI 写字地图差着一层。</p>
+<p>今天上午我刚发了一篇 Ploy 生产迁移的复盘，他们把 agent 从 Opus 4.8 切到 GPT-5.6 Sol，账面漂亮得没话说，但中间要修四个大坑，tool 参数默认值、prompt cache 命中、reasoning replay、eval harness 假设。每一个坑都不在模型不行，在整套 stack 悄悄围着 incumbent 长出的一堆 provider 特化行为。那篇发完 3 小时，我这边工程债的余温还热着，现在又端上来一份 5 分钟的甜点。</p>
+<p>具体到我这条流水线上，光是 CLAUDE.md 我砍到 4KB 之前也是 12KB 起步的，一路照着 Opus 反馈的行为磨出来。memory 文件按我每天真调什么裁出来，Skill 触发的 description 一句话写窄一分误触发多两成，改到能自动唤起该跑的、不打扰该静的那个平衡点，中间几十版调整不是模型能替我做的。这些是我这几个月拿真活喂出来的家底，不好意思拿一个 5 分钟别名去赌它跟 Sol 也顺。</p>
+<p>门槛越低我越警惕。5 分钟能跑起来，不代表 5 分钟之后跑得对。我那十几个 skill 一换后端，tool call 会不会静默填错、prompt cache 命中会不会掉、subagent 分发的模型会不会跑偏，一个都没答案。它跑得看起来好好的，可我心里那本「我看到的就是它真做的」的信心已经掉了一半。</p>
+<h2 id="Tibo-站在哪边，值得看清楚"><a href="#Tibo-站在哪边，值得看清楚" class="headerlink" title="Tibo 站在哪边，值得看清楚"></a>Tibo 站在哪边，值得看清楚</h2><p>顺手把最外层拆一下。thsottiaux 是 OpenAI 员工，推特上还有几条推是关于 Codex 使用量重置、Codex Chrome 插件、GPT-5.6 Sol 效率提升的官方口径动作。这个位置的人发这条推，说真的，多少带着点市场动作。</p>
+<p>我没说 Tibo 心思不正，他给的技术信息扎实到没话说。但这条推的传播路径值得读者心里有本账：一个 OpenAI 员工亲自教你把 Claude Code 大脑换成自家 GPT，那条推被点赞几万次，评论区一堆开发者兴冲冲喊 tonight 就试。这个画面本身就是行业奇观。谁在教你走这一步，教你的人自己站在哪边，该看清楚就看清楚。</p>
+<h2 id="我改过-CC-的-env-var，只改过那一次"><a href="#我改过-CC-的-env-var，只改过那一次" class="headerlink" title="我改过 CC 的 env var，只改过那一次"></a>我改过 CC 的 env var，只改过那一次</h2><p>有人可能觉得改 env var 是件小事，我不敢按只是心虚。这条得掰扯清楚。</p>
+<p>我确实改过 Claude Code 的环境变量，就改过那一次。工信部点 Claude Code 传数据那阵，我把 <code>CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1</code> 加进了 <code>.zshrc</code>，顺带 <code>DISABLE_TELEMETRY=1</code> 和 <code>DISABLE_ERROR_REPORTING=1</code>。三个开关拧完，关的是遥测和自动更新那类非核心外呼，主链路一根没敢动。改完当天该跑什么活还跑什么活。</p>
+<p>那次改的判据很清楚：我只是把非必要出站关了，CC 到 Anthropic 的核心 API 通道我一根没敢碰。Tibo 教的这次动的是核心通道本身，<code>ANTHROPIC_BASE_URL</code> 直接指向 127.0.0.1 一个本地代理，再往下走的就完全不是 Anthropic 的服务了。同样改 env var，一个是拧掉泄水口的阀门，一个是把整根主管道拧到旁边去。你别说，两码事的分量差得真不是一星半点。</p>
+<h2 id="装一份并跑，是我今天的答案"><a href="#装一份并跑，是我今天的答案" class="headerlink" title="装一份并跑，是我今天的答案"></a>装一份并跑，是我今天的答案</h2><p>我不打算把 CC 主力换掉。也不打算装作没看见 Sol 那些指标。</p>
+<p>今晚我会开另一个终端，起一份 CLIProxyAPI，配一条独立的 <code>claudex</code> 别名，只拿它跑一些小的探索性活。改博客某个 skill 的边角，让它去查一段冷门 API 文档，重构一段十几行的小脚本。主力仍是原装 Claude Code 加 Opus，过秤心法照旧，重活留 Opus 杂活切便宜档。两条线并跑一阵，盯 skill 兼容、盯 subagent 分发、盯月底真实账单，看那 4 行 alias 承诺的东西，落到我这套 grep 规则底下还剩多少。</p>
+<p>顺手要做的还有一件事：把并跑期间那份 claudex 生成的每一段代码都单独打个 tag，跟主力那份分开归档，防止我哪天翻旧文件搞混谁写的。这是我踩过的老坑，同一批脚本混在同一个仓库里跑久了，你会分不清哪些是你自己写的、哪些是当天 agent 顺手改的，出了问题回头都找不到人。</p>
+<p>跑完体感如果攒得够多，我会再单开一篇摆效果。Tibo 那句 If this gets blocked, I owe you a reset，我打算把它翻译成中文贴在那份 <code>claudex</code> 别名上边，当每次启动前的免责声明。</p>
+<p>你会按下那 4 行 alias 吗，还是也在心里那本账上看到了什么让你迟疑的东西？</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[[tibo-claudex-alias-cliproxyapi]]</li>
+<li>[[anthropic-third-party-harness-ban]]</li>
+<li>[[cliproxyapi-github-readme]]</li>
+</ul>
+<h2 id="相关洞察"><a href="#相关洞察" class="headerlink" title="相关洞察"></a>相关洞察</h2><ul>
+<li>[[claudex-5min-migration-hesitation]]</li>
+<li>[[model-migration-is-engineering-debt]]</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+              <a href="/tags/GPT-5-6-Sol/" rel="tag"># GPT-5.6 Sol</a>
+              <a href="/tags/CLIProxyAPI/" rel="tag"># CLIProxyAPI</a>
+              <a href="/tags/%E5%B7%A5%E7%A8%8B%E5%80%BA/" rel="tag"># 工程债</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/13/202607131714/" rel="prev" title="Ploy 迁 GPT-5.6 快 2.2 倍便宜 27%，我盯着那笔没入账的迁移工程债">
+                  <i class="fa fa-angle-left"></i> Ploy 迁 GPT-5.6 快 2.2 倍便宜 27%，我盯着那笔没入账的迁移工程债
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/07/13/202607132256/" rel="next" title="今晚装了 Mindwalk 跑我两个真会话，agent 走过的地方发光，没走的一片漆黑">
+                  今晚装了 Mindwalk 跑我两个真会话，agent 走过的地方发光，没走的一片漆黑 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:02</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

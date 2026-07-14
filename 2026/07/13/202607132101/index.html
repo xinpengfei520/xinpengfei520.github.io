@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Anthropic 从 Opus 4.7 起换新 tokenizer（4.8、Sonnet 5 沿用），同一份代码比旧版多切约 30% token，而每 token 标价没变，等于对同样的活闷声涨价；涨幅集中在英文和代码，中文几乎不受影响。Sonnet 5 促销价还会在 2026 年 8 月 31 日到期后从 2&#x2F;10 涨回 3&#x2F;15。想看清就用官方 count_tokens 自己量，别信标价。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="标价一分没涨，我同一份代码在 Claude 上多烧了三成 token">
+<meta property="og:url" content="https://www.vance.xin/2026/07/13/202607132101/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Anthropic 从 Opus 4.7 起换新 tokenizer（4.8、Sonnet 5 沿用），同一份代码比旧版多切约 30% token，而每 token 标价没变，等于对同样的活闷声涨价；涨幅集中在英文和代码，中文几乎不受影响。Sonnet 5 促销价还会在 2026 年 8 月 31 日到期后从 2&#x2F;10 涨回 3&#x2F;15。想看清就用官方 count_tokens 自己量，别信标价。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260714-claude-tokenizer-hidden-hike.webp">
+<meta property="article:published_time" content="2026-07-13T21:01:11.000Z">
+<meta property="article:modified_time" content="2026-07-14T05:31:03.166Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="token成本">
+<meta property="article:tag" content="tokenizer">
+<meta property="article:tag" content="模型定价">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260714-claude-tokenizer-hidden-hike.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/13/202607132101/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/13/202607132101/","path":"2026/07/13/202607132101/","title":"标价一分没涨，我同一份代码在 Claude 上多烧了三成 token"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>标价一分没涨，我同一份代码在 Claude 上多烧了三成 token | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "标价一分没涨，我同一份代码在 Claude 上多烧了三成 token",
+  "url": "https://www.vance.xin/2026/07/13/202607132101/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/13/202607132101/",
+  "datePublished": "2026-07-13T21:01:11.000Z",
+  "dateModified": "2026-07-14T05:31:03.166Z",
+  "description": "Anthropic 从 Opus 4.7 起换新 tokenizer（4.8、Sonnet 5 沿用），同一份代码比旧版多切约 30% token，而每 token 标价没变，等于对同样的活闷声涨价；涨幅集中在英文和代码，中文几乎不受影响。Sonnet 5 促销价还会在 2026 年 8 月 31 日到期后从 2/10 涨回 3/15。想看清就用官方 count_tokens 自己量，别信标价。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%97%A9%E8%AF%B4%E8%BF%87%E5%88%AB%E4%BF%A1%E6%A0%87%E4%BB%B7"><span class="nav-text">我早说过别信标价</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#token-%E9%95%BF%E5%BA%A6%E4%B8%8D%E5%9B%BA%E5%AE%9A"><span class="nav-text">token 长度不固定</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8C%E6%A0%B7%E4%BB%A3%E7%A0%81%E5%88%87%E5%BE%97%E6%9B%B4%E7%A2%8E"><span class="nav-text">同样代码切得更碎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%AD%E6%96%87%E5%85%9A%E8%BA%B2%E8%BF%87%E4%B8%80%E5%8A%AB"><span class="nav-text">中文党躲过一劫</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%83%E9%94%80%E4%BB%B7-8-%E6%9C%88%E5%BA%95%E5%88%B0%E6%9C%9F"><span class="nav-text">促销价 8 月底到期</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%BF-count-tokens-%E8%87%AA%E5%B7%B1%E9%87%8F"><span class="nav-text">拿 count_tokens 自己量</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">456</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">805</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/13/202607132101/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="标价一分没涨，我同一份代码在 Claude 上多烧了三成 token | 飞飞的AI实验室">
+      <meta itemprop="description" content="Anthropic 从 Opus 4.7 起换新 tokenizer（4.8、Sonnet 5 沿用），同一份代码比旧版多切约 30% token，而每 token 标价没变，等于对同样的活闷声涨价；涨幅集中在英文和代码，中文几乎不受影响。Sonnet 5 促销价还会在 2026 年 8 月 31 日到期后从 2&#x2F;10 涨回 3&#x2F;15。想看清就用官方 count_tokens 自己量，别信标价。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          标价一分没涨，我同一份代码在 Claude 上多烧了三成 token
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-13 21:01:11" itemprop="dateCreated datePublished" datetime="2026-07-13T21:01:11+00:00">2026-07-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-14 05:31:03" itemprop="dateModified" datetime="2026-07-14T05:31:03+00:00">2026-07-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Anthropic 从 Opus 4.7 起换新 tokenizer（4.8、Sonnet 5 沿用），同一份代码比旧版多切约 30% token，而每 token 标价没变，等于对同样的活闷声涨价；涨幅集中在英文和代码，中文几乎不受影响。Sonnet 5 促销价还会在 2026 年 8 月 31 日到期后从 2/10 涨回 3/15。想看清就用官方 count_tokens 自己量，别信标价。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260714-claude-tokenizer-hidden-hike.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>前阵子写 Sonnet 5 的时候，我在文末顺手撂过一句话：别信标价页那个便宜价，它换了新 tokenizer，名义上省下的会被悄悄削回去。</p>
+<p>当时那句话我说得挺虚，没数，就是个体感。</p>
+<p>昨天刷到一篇实测，有人真把这笔账从头到尾算了一遍。我盯着那张表看了半天，后背有点发凉。</p>
+<p>硌得我难受的地方在于，这笔账我早该自己算，却让别人先算明白了。</p>
+<h2 id="我早说过别信标价"><a href="#我早说过别信标价" class="headerlink" title="我早说过别信标价"></a>我早说过别信标价</h2><p>先把话说前头，免得你觉得我在替 Anthropic 洗地或者砸场子。</p>
+<p>我是 Claude Code 的重度用户，天天开着它干活，一个月给 Anthropic 的钱不算小。</p>
+<p>我对成本这事敏感到什么程度？早年我逮着最强的 Opus 什么活都上，月底账单肉疼，才逼自己改成按任务手动分模型。</p>
+<p>省钱模式我手动跑过，prompt caching 我把账单从 106 美元压到过 33，连把文本渲染成图钻图片计费空子那种野路子我都写过。</p>
+<p>我甚至给自己立过一条「过秤」的规矩：派 agent 干活前，先在心里掂量这活值不值得上贵模型，纯体力杂活手动切便宜档。有回我从 Claude 换到 Gemini，仗着它上下文装得下，一直不开新窗口，一个月消费直接高了六成。那次我才明白，多花的钱常常不在模型贵，在用法悄悄变了。</p>
+<p>所以这篇不是唱衰，是我这个抠成本抠到骨头里的人，发现自己漏算了一层。</p>
+<h2 id="token-长度不固定"><a href="#token-长度不固定" class="headerlink" title="token 长度不固定"></a>token 长度不固定</h2><p>先说清楚这层到底是什么，不然后面的数字你没法自己判断。</p>
+<p>你付的钱，是两个数相乘：内容被切成多少个 token，乘以每个 token 多少钱。</p>
+<p>标价页只告诉你后面那个单价，默认前面那个是定死的。</p>
+<p>它不定死。</p>
+<p>同一段文字，交给不同的 tokenizer，切出来的 token 数能差出一大截。</p>
+<p>打个比方。你去菜市场买肉，店家报的是每份多少钱，可这个「份」是他自己拿刀切的。</p>
+<p>刀法一变，同一块肉切成更多份，单价没动，你付的总数就上去了。</p>
+<p>token 就是那个「份」，tokenizer 就是那把刀。</p>
+<h2 id="同样代码切得更碎"><a href="#同样代码切得更碎" class="headerlink" title="同样代码切得更碎"></a>同样代码切得更碎</h2><p>Anthropic 就是换了刀法。</p>
+<p>从 Opus 4.7 开始，它上了一套新 tokenizer，4.8 和 Sonnet 5 都沿用这套；4.6 和更早的还是旧刀。</p>
+<p>新刀切同一份内容，比旧刀多切出不少 token。</p>
+<p>按 Anthropic 自己文档的说法，新 tokenizer 对同样文本大概是旧版的 1 到 1.35 倍，代码尤其是重灾区。</p>
+<p>那篇实测更狠，直接拿官方接口把同一批文件在新旧两把刀下各切一遍。</p>
+<p>一个 TypeScript 文件从 898 涨到 1178，一段英文散文从 476 涨到 636，他们那份 agent 系统提示从一万零七百多涨到近一万五。</p>
+<p>Python 从 831 涨到 1022，Rust 从 1019 涨到 1312，一份 JSON 工具定义从 2631 涨到 3306，几乎每一类都是两三成往上走。</p>
+<p>代码为什么最惨？符号、缩进、驼峰命名这些零件，新刀切得比旧刀更碎，而代码里满满都是这些。</p>
+<p>综合下来，一次真实请求大概多产三成 token。</p>
+<p>关键在于，每 token 的标价一分没动。</p>
+<p>Opus 4.6 和 4.8 都是每百万输入 5 美元、输出 25 美元，数字一模一样。</p>
+<p>可同样一份代码丢进去，4.8 计的 token 就是比 4.6 多。</p>
+<p>那篇文章拿真实账单核过：同一份内容，Opus 4.6 计 2541 个 token，4.8 计 3191，多了四分之一还拐弯。</p>
+<p>换算成有效价格，4.8 那个 5 美元 25 美元，花起来其实像 7.5 美元 37.5 美元。</p>
+<p>那篇实测还拿 GPT 当尺子比了一圈，同一个 TS 文件，Claude 新刀切出来是 GPT 的 1.73 倍。这个跨厂对比我没法自己复核 GPT 那半边，就当那篇博客的实测数摆着看。</p>
+<h2 id="中文党躲过一劫"><a href="#中文党躲过一劫" class="headerlink" title="中文党躲过一劫"></a>中文党躲过一劫</h2><p>看到这你先别急着卸载 Claude Code。</p>
+<p>有个细节那篇实测标得很清楚，我觉得对咱们特别重要：这三成的涨幅，几乎全砸在英文和代码上，中文基本没动。</p>
+<p>他们测的那段中文散文，旧刀 435 个 token，新刀 433，差了两个，基本可以忽略。</p>
+<p>换句话说，吃亏的是你的代码文件、你那一大坨英文系统提示、你的 JSON 工具定义。</p>
+<p>你写在代码里的中文注释、你跟 agent 的中文对话，这部分几乎没被多切。</p>
+<p>所以别一听「涨三成」就慌。</p>
+<p>你要是主要拿它写中文内容、做中文对话，这刀基本没落在你身上。</p>
+<p>可只要你天天用它跑代码，尤其是 TypeScript 这种，那这三成就实打实压在你账单上。</p>
+<p>我这条自动写作流水线，十几个 skill 全是英文系统提示加中文正文混着跑，英文那半边是躲不掉的。</p>
+<p>光那份写作规则手册就攒了一百多条，全是英文骨架。每跑一篇稿子，这些英文系统提示都要重新计一次费，这刀落下来，我是正面挨的。</p>
+<h2 id="促销价-8-月底到期"><a href="#促销价-8-月底到期" class="headerlink" title="促销价 8 月底到期"></a>促销价 8 月底到期</h2><p>还有一层叠加的，得单独拎出来提醒你，因为它是一条带日期的坑。</p>
+<p>Sonnet 5 上线时挂的是每百万输入 2 美元、输出 10 美元，比 Sonnet 4.6 的 3 美元 15 美元便宜，当时不少人当降价欢呼。</p>
+<p>那是促销价，写死了到 2026 年 8 月 31 日。</p>
+<p>促销期内，这个低价刚好略微盖过多出来的那些 token，所以现在用 Sonnet 5 跑代码，确实还比 4.6 略便宜一点点。</p>
+<p>问题是 9 月 1 号一到，价格恢复成 3 美元 15 美元，可多出来的 token 不会跟着退回去。</p>
+<p>到那天，同样的活，用 Sonnet 5 会比当初用 Sonnet 4.6 贵大概三分之一。</p>
+<p>这条我建议你直接记进日历。省得 9 月账单出来，才发现单价和 token 两头一起涨了。</p>
+<h2 id="拿-count-tokens-自己量"><a href="#拿-count-tokens-自己量" class="headerlink" title="拿 count_tokens 自己量"></a>拿 count_tokens 自己量</h2><p>讲了半天别人的数，说个你今天就能上手的事。</p>
+<p>想知道这刀到底落在你身上多少，别猜，也别拿 tiktoken 去估。</p>
+<p>tiktoken 是 OpenAI 家的尺子，拿它量 Claude 会低估百分之十几，代码上错得更多。</p>
+<p>Anthropic 有个官方接口叫 count_tokens，你传哪个 model，它就用那个 model 对应的 tokenizer 来数，数出来的就是账单要扣的。</p>
+<p>你把自己最常跑的那类文件，比如项目里最大那个 TS 文件，分别按 model 传 claude-opus-4-6 和 claude-opus-4-8 各数一遍，两个数一减，差多少一目了然。</p>
+<p>那篇实测就是这么干的。他们还嫌 count_tokens 只是预测，干脆发了几个 max_tokens 设成 1 的真实请求，直接读账单上的 input_tokens 来对，两个数分毫不差。整套核对下来，一共花了八分钱。</p>
+<p>老实说，我手头这台机器没配 Anthropic 的 API key，这一遍我还没亲手跑上。</p>
+<p>方法我给你了，数我不替你编。你要是跑了，欢迎回来告诉我你那份代码差了几成。</p>
+<p>我配好 key 也会拿自己这条流水线量一遍，到时候真有了数，再单开一篇跟你摊。</p>
+<p>一个模型到底贵不贵，其实不在标价页那两个数字，在你自己那份代码被它切成多少 token、月底实扣多少。</p>
+<p>标价从来不等于你月底实扣的那个数。</p>
+<p>我为 TTS 那套按字符计费的坑肉疼过，当时照正文字数估成本，结算下来多出七成，标点、空格、停顿全按字符算。</p>
+<p>这次 tokenizer 这刀，是同一个陷阱换了层皮：计费的口径在你没留神的地方，把标价悄悄放大了。</p>
+<p>你有没有过那种感觉，单价明明没涨，月底账单却莫名其妙厚了一截？或者你已经拿 count_tokens 量过自己代码的 token 口径？评论区说说你那份差了几成。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+              <a href="/tags/token%E6%88%90%E6%9C%AC/" rel="tag"># token成本</a>
+              <a href="/tags/tokenizer/" rel="tag"># tokenizer</a>
+              <a href="/tags/%E6%A8%A1%E5%9E%8B%E5%AE%9A%E4%BB%B7/" rel="tag"># 模型定价</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/13/202607131731/" rel="prev" title="OpenAI 员工亲手教 5 分钟把 Claude Code 后端换 GPT-5.6 Sol，我盯着那 4 行 alias 没敢按">
+                  <i class="fa fa-angle-left"></i> OpenAI 员工亲手教 5 分钟把 Claude Code 后端换 GPT-5.6 Sol，我盯着那 4 行 alias 没敢按
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/07/13/202607132256/" rel="next" title="今晚装了 Mindwalk 跑我两个真会话，agent 走过的地方发光，没走的一片漆黑">
+                  今晚装了 Mindwalk 跑我两个真会话，agent 走过的地方发光，没走的一片漆黑 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:04</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

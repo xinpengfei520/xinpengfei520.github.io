@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="有人写了个 MessageDisplay hook，把 Claude 爱说的 load-bearing、honest take、you&#39;re absolutely right 自动换成别的词。我扒了它的机制：它只改你屏幕上看到的那一层，Claude 下一轮读回的还是原话，等于给眼睛按了静音键。真想让它别飘，得学我那两个常年挂着的 PostToolUse hook，把软规则钉成动作层的硬拦截。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一个 hook 让 Claude 不再满嘴 load-bearing，但它只遮住了我的眼睛">
+<meta property="og:url" content="https://www.vance.xin/2026/07/14/202607142321/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="有人写了个 MessageDisplay hook，把 Claude 爱说的 load-bearing、honest take、you&#39;re absolutely right 自动换成别的词。我扒了它的机制：它只改你屏幕上看到的那一层，Claude 下一轮读回的还是原话，等于给眼睛按了静音键。真想让它别飘，得学我那两个常年挂着的 PostToolUse hook，把软规则钉成动作层的硬拦截。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260715-20260715-claude-messagedisplay-hook-wordswap.webp">
+<meta property="article:published_time" content="2026-07-14T23:21:00.000Z">
+<meta property="article:modified_time" content="2026-07-16T10:48:46.655Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="提示词工程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Hook">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260715-20260715-claude-messagedisplay-hook-wordswap.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/14/202607142321/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/14/202607142321/","path":"2026/07/14/202607142321/","title":"一个 hook 让 Claude 不再满嘴 load-bearing，但它只遮住了我的眼睛"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>一个 hook 让 Claude 不再满嘴 load-bearing，但它只遮住了我的眼睛 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "一个 hook 让 Claude 不再满嘴 load-bearing，但它只遮住了我的眼睛",
+  "url": "https://www.vance.xin/2026/07/14/202607142321/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/14/202607142321/",
+  "datePublished": "2026-07-14T23:21:00.000Z",
+  "dateModified": "2026-07-16T10:48:46.655Z",
+  "description": "有人写了个 MessageDisplay hook，把 Claude 爱说的 load-bearing、honest take、you're absolutely right 自动换成别的词。我扒了它的机制：它只改你屏幕上看到的那一层，Claude 下一轮读回的还是原话，等于给眼睛按了静音键。真想让它别飘，得学我那两个常年挂着的 PostToolUse hook，把软规则钉成动作层的硬拦截。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E4%B8%AA%E9%81%AE%E8%AF%8D-hook-%E6%80%8E%E4%B9%88%E7%8E%A9"><span class="nav-text">那个遮词 hook 怎么玩</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E5%8F%AA%E6%94%B9%E4%BD%A0%E7%9C%8B%E5%88%B0%E7%9A%84"><span class="nav-text">它只改你看到的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%8B%BF-hook-%E5%B9%B2%E7%9A%84%E6%AD%A3%E7%BB%8F%E6%B4%BB"><span class="nav-text">我拿 hook 干的正经活</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%81%AE%E4%B8%91%E5%92%8C%E6%B2%BB%E6%9C%AC%E5%B7%AE%E4%B8%80%E5%B1%82"><span class="nav-text">遮丑和治本差一层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%A5%E7%BB%99%E5%93%AA%E6%9D%A1%E8%A7%84%E7%9F%A9%E9%85%8D-hook"><span class="nav-text">该给哪条规矩配 hook</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">462</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">812</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/14/202607142321/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="一个 hook 让 Claude 不再满嘴 load-bearing，但它只遮住了我的眼睛 | 飞飞的AI实验室">
+      <meta itemprop="description" content="有人写了个 MessageDisplay hook，把 Claude 爱说的 load-bearing、honest take、you&#39;re absolutely right 自动换成别的词。我扒了它的机制：它只改你屏幕上看到的那一层，Claude 下一轮读回的还是原话，等于给眼睛按了静音键。真想让它别飘，得学我那两个常年挂着的 PostToolUse hook，把软规则钉成动作层的硬拦截。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一个 hook 让 Claude 不再满嘴 load-bearing，但它只遮住了我的眼睛
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-14 23:21:00" itemprop="dateCreated datePublished" datetime="2026-07-14T23:21:00+00:00">2026-07-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-16 10:48:46" itemprop="dateModified" datetime="2026-07-16T10:48:46+00:00">2026-07-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">有人写了个 MessageDisplay hook，把 Claude 爱说的 load-bearing、honest take、you're absolutely right 自动换成别的词。我扒了它的机制：它只改你屏幕上看到的那一层，Claude 下一轮读回的还是原话，等于给眼睛按了静音键。真想让它别飘，得学我那两个常年挂着的 PostToolUse hook，把软规则钉成动作层的硬拦截。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260715-20260715-claude-messagedisplay-hook-wordswap.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>天天用 Claude Code 的人，估计都被那几个词磨出茧子了。</p>
+<p>你让它改个 bug，它开口先来一句「you’re absolutely right」。你问它这段逻辑，它张嘴就是「这是一处 load-bearing 的设计」。再写两行，「honest take」又冒出来了。不是它说得不对，是那股翻来覆去的腔调，听多了真上头。</p>
+<p>前两天刷到一个帖子，作者受够了，动手写了个 hook，把这些词自动换掉。「seam」换成「whatchamacallit」，「you’re absolutely right」换成「I’m a complete clown」，「load-bearing」换成「cooked」。看得我笑了几秒。</p>
+<p>但笑完我就顺手把它扒开看了看。这一看，反而想清楚了一件我一直没说透的事：hook 这东西，到底该拿来干嘛。</p>
+<h2 id="那个遮词-hook-怎么玩"><a href="#那个遮词-hook-怎么玩" class="headerlink" title="那个遮词 hook 怎么玩"></a>那个遮词 hook 怎么玩</h2><p>它用的是 Claude Code 一个不太起眼的 hook，叫 MessageDisplay。</p>
+<p>顾名思义，这个 hook 在 Claude 的消息「要显示给你看」的那一刻触发。你挂一个脚本上去，脚本拿到这段要显示的文本，做个正则替换，再把换好的内容吐回去。屏幕上你看到的，就是替换后的版本。</p>
+<p>配置也简单，在 settings.json 的 hooks 块里挂一个 MessageDisplay，命令指向你那个替换脚本就行。脚本里写什么词换什么词，随你发挥。原帖作者给的那几个是玩梗用的，他自己也说，你完全可以换成更有用的。</p>
+<p>挂好之后要开个新会话才生效，因为 Claude Code 是启动时给 hook 配置拍快照的，中途改不认。</p>
+<p>到这儿，你可能觉得这不挺好？眼不见心不烦。别急，坑就在下一步。</p>
+<h2 id="它只改你看到的"><a href="#它只改你看到的" class="headerlink" title="它只改你看到的"></a>它只改你看到的</h2><p>我盯着这个机制多看了两眼，发现一个要命的地方：它改的，只是「显示」这一层。</p>
+<p>Claude 那句原话，一个字没变。它生成的还是「load-bearing」，只是在递到你眼前的最后一步，被脚本偷偷换了个皮。更关键的是，下一轮对话，Claude 读回自己上一条输出时，读到的还是原文，不是你屏幕上那个被换过的版本。</p>
+<p>说白了，这个 hook 治的是你的眼睛，不是它的嘴。</p>
+<p>它嘴上照样满口 load-bearing，你只是看不见了。就像你嫌同事口头禅烦，没去跟他说，而是给自己戴了副耳机。世界清净了，但那是你这头清净，不是他那头改了。</p>
+<p>我为什么敢这么笃定？因为这台机器我熟。这类 hook 挂在整条链路的最末端，Claude 早把话生成完、存进对话历史了，脚本才在出口处拦一道做替换。它够不着 Claude 的脑子，也改不了已经落进上下文的那句原文。你下一轮再问它，它眼里那句还是 load-bearing。</p>
+<p>这不是说这 hook 没用。你要的就是「我眼前干净」，那它完美交付。可要是你指望它能让 Claude 从此改了这毛病、连带影响它后面的判断，那就想岔了。它压根没碰到 Claude 干活的那一层。</p>
+<h2 id="我拿-hook-干的正经活"><a href="#我拿-hook-干的正经活" class="headerlink" title="我拿 hook 干的正经活"></a>我拿 hook 干的正经活</h2><p>这事之所以戳中我，是因为我天天在用 hook，而且用的全是另一头。</p>
+<p>Claude Code 的 hook 有一大把生命周期事件，MessageDisplay 只是其中最不起眼的一个。我以前压根没正眼瞧过它，就因为它只管显示。我天天挂的是另外几个。</p>
+<p>给你说三个我配置里常年不下岗的。</p>
+<p>第一个，类型检查。我 CLAUDE.md 里写过一句「改完代码跑一遍类型检查」。可这是建议式的，长会话上下文一压缩，它转头就忘，好几次带着类型错误就上线了。后来我换成一个 PostToolUse hook：每次编辑完文件自动跑类型检查，一旦报错就用 exit 2 把这步直接拦下来，再把错误甩回给 Claude 让它自己修。exit 2 这个返回码是命门，它不是提个醒，是真把这步堵死，Claude 不修好就过不去。从那以后这毛病根治了。</p>
+<p>第二个更糙，格式化。Claude 写完代码从不主动跑 Prettier，我加了个 PostToolUse hook，匹配 Write 和 Edit，三行配置，它一动文件就自动格式化，我再没为缩进跟它拌过嘴。</p>
+<p>第三个是防手贱。我用 PreToolUse 卡在它执行命令之前，配上 permissions.deny，把带通配符的 rm、git push –force 这种一锤子买卖的命令直接拦掉。它再自信，这道闸也得先问过我。</p>
+<p>这些 hook 还有些藏得深的开关我也摸过。比如 async，让脚本丢后台跑不卡你手上的活；再比如 asyncRewake，后台默默跑，真出岔子了反过来把 Claude 叫醒来收拾。全是冲着「它干活的时候我怎么管住它」去的，没一个是管显示的。</p>
+<p>你看出这几个跟遮词 hook 的差别了吗？我这些拦的都是 Claude 的「动作」，它要干一件事，我在那个节点上卡一道关。遮词那个碰的是「显示」，它干完了、也生成完了，我只在递到你眼前之前换了层皮。</p>
+<p>一个管它手上做了什么，一个管你眼里看到什么。差着一整层。我心里那句老话是这么排的：CLAUDE.md 管记忆，skill 管流程，hook 管纪律。纪律这活，只能靠动作层的硬拦，靠不了显示层的一层滤镜。</p>
+<h2 id="遮丑和治本差一层"><a href="#遮丑和治本差一层" class="headerlink" title="遮丑和治本差一层"></a>遮丑和治本差一层</h2><p>真要治 Claude 满嘴 AI 腔那种毛病，我走的也不是遮词这条路。</p>
+<p>我那条写作流水线里，专门有个检测 AI 味的 skill，配一套 grep 硬扫。正文里的中文长破折号必须清零，「不是 X 是 Y」那种对仗最多留一处，字数卡在区间里，小标题超字数或者带括号也揪出来。命中了就打回去重写。这套是真把那些味儿从文字里删掉了，不是拿别的词盖住。</p>
+<p>更要紧的是它还会自己长本事。我另配了个 skill，每写完一篇，就把这回新踩的坑提炼成一条规则，回写进那份手册。攒到现在一百多次迭代，一百多条。这套规则越用越紧，不是我一开始就想周全的，是一篇篇踩出来的。</p>
+<p>删掉和盖住，看着都让画面干净了，骨子里差得远。盖住那个，你撤掉滤镜，原样还在。删掉那个，源头就没了。</p>
+<p>所以我心里给 hook 分了两层。一层是显示层，MessageDisplay 这种，治标、给人看个舒服，图一乐可以挂。另一层是动作层，PostToolUse、Stop 这些，卡在 Claude 真正干活的节点上，能拦能改能让它返工，治的是本。想让它别飘，你得往动作层写死规则，别指望在显示层遮丑。</p>
+<p>题眼就在这儿：让 Claude 不飘，真正管用的不在遮住你看到的那几个词，在它每次干完活那道你亲手写死的关卡。</p>
+<h2 id="该给哪条规矩配-hook"><a href="#该给哪条规矩配-hook" class="headerlink" title="该给哪条规矩配 hook"></a>该给哪条规矩配 hook</h2><p>那个遮词 hook 我没往配置里留。图一乐的东西，笑过就好。</p>
+<p>但它值一个提醒。你翻翻自己的 CLAUDE.md，是不是也有几条软规矩，写着「应该怎样怎样」，可 Claude 三天两头不当回事？那几条，才是真正该被搬到 hook 里的。</p>
+<p>我自己就是这么一条条搬的。哪条规矩我发现它反复不听，我就把它从 CLAUDE.md 里拎出来，钉成一个 hook。不听一次是偶然，同一条栽三回，就说明这活靠不了它自觉，得靠硬拦。CLAUDE.md 那一层，我现在只留它真记得住、也真肯照做的；凡是它爱犯懒、犯了后果还不小的，一律往 hook 搬。这条分界，是我被它坑够了才划出来的。</p>
+<p>给你一个今天就能动手的最小动作：挑出你最常被 Claude 跳过的那一条规矩，比如「改完必须跑测试」，把它从 CLAUDE.md 的一句建议，改成一个 PostToolUse hook 的硬拦截。规矩从「它看心情听」变成「它绕不过去」，就这一下。</p>
+<p>对了，说回那几个口头禅。你被 Claude 哪句车轱辘话烦得最狠？是「you’re absolutely right」，还是别的？评论区报个数，我看看是不是就我一个人破防了。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B/" rel="tag"># 提示词工程</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Hook/" rel="tag"># Hook</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/14/202607142257/" rel="prev" title="三个模型接力跑 16 小时，我那条流水线最怕的是交接掉链子">
+                  <i class="fa fa-angle-left"></i> 三个模型接力跑 16 小时，我那条流水线最怕的是交接掉链子
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/07/15/202607150352/" rel="next" title="OpenAI 教人写提示词说少写步骤，我写了十几个 agent 指令只信一半">
+                  OpenAI 教人写提示词说少写步骤，我写了十几个 agent 指令只信一半 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:14</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="OpenAI 提示词指南主张「从结果出发、少写步骤」，但原话后半句是「过程本身重要时就把过程写清楚」。我写了十几个串起来跑的 agent skill，结论是只对一半：选题打分这类判断活给目标就行，多环节交接的确定性流程反而得把步骤焊死，一句话就飘。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenAI 教人写提示词说少写步骤，我写了十几个 agent 指令只信一半">
+<meta property="og:url" content="https://www.vance.xin/2026/07/15/202607150352/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="OpenAI 提示词指南主张「从结果出发、少写步骤」，但原话后半句是「过程本身重要时就把过程写清楚」。我写了十几个串起来跑的 agent skill，结论是只对一半：选题打分这类判断活给目标就行，多环节交接的确定性流程反而得把步骤焊死，一句话就飘。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260715-202607150352-openai-prompt-guide-goal-vs-steps.webp">
+<meta property="article:published_time" content="2026-07-15T03:52:00.000Z">
+<meta property="article:modified_time" content="2026-07-16T10:48:46.655Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="提示词工程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Skill">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260715-202607150352-openai-prompt-guide-goal-vs-steps.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/15/202607150352/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/15/202607150352/","path":"2026/07/15/202607150352/","title":"OpenAI 教人写提示词说少写步骤，我写了十几个 agent 指令只信一半"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>OpenAI 教人写提示词说少写步骤，我写了十几个 agent 指令只信一半 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenAI 教人写提示词说少写步骤，我写了十几个 agent 指令只信一半",
+  "url": "https://www.vance.xin/2026/07/15/202607150352/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/15/202607150352/",
+  "datePublished": "2026-07-15T03:52:00.000Z",
+  "dateModified": "2026-07-16T10:48:46.655Z",
+  "description": "OpenAI 提示词指南主张「从结果出发、少写步骤」，但原话后半句是「过程本身重要时就把过程写清楚」。我写了十几个串起来跑的 agent skill，结论是只对一半：选题打分这类判断活给目标就行，多环节交接的确定性流程反而得把步骤焊死，一句话就飘。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%91%E5%86%99%E6%AD%A5%E9%AA%A4%E5%8F%AA%E5%AF%B9%E4%B8%80%E5%8D%8A"><span class="nav-text">少写步骤只对一半</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A4%E6%96%AD%E7%9A%84%E6%B4%BB%E5%8F%AA%E4%BA%A4%E7%9B%AE%E6%A0%87"><span class="nav-text">判断的活只交目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A4%E6%8E%A5%E7%9A%84%E6%B4%BB%E6%AD%A5%E9%AA%A4%E7%84%8A%E6%AD%BB"><span class="nav-text">交接的活步骤焊死</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%80%81%E5%9D%91%E7%94%A8%E7%A1%AC%E8%A7%84%E5%88%99%E5%85%9C%E4%BD%8F"><span class="nav-text">老坑用硬规则兜住</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%AB%E6%8C%87%E6%9C%9B%E4%B8%80%E6%AC%A1%E5%86%99%E5%AF%B9"><span class="nav-text">别指望一次写对</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%94%B9%E4%BD%A0%E6%9C%80%E9%A3%98%E9%82%A3%E6%9D%A1"><span class="nav-text">先改你最飘那条</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">462</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">812</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/15/202607150352/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="OpenAI 教人写提示词说少写步骤，我写了十几个 agent 指令只信一半 | 飞飞的AI实验室">
+      <meta itemprop="description" content="OpenAI 提示词指南主张「从结果出发、少写步骤」，但原话后半句是「过程本身重要时就把过程写清楚」。我写了十几个串起来跑的 agent skill，结论是只对一半：选题打分这类判断活给目标就行，多环节交接的确定性流程反而得把步骤焊死，一句话就飘。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OpenAI 教人写提示词说少写步骤，我写了十几个 agent 指令只信一半
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-15 03:52:00" itemprop="dateCreated datePublished" datetime="2026-07-15T03:52:00+00:00">2026-07-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-16 10:48:46" itemprop="dateModified" datetime="2026-07-16T10:48:46+00:00">2026-07-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">OpenAI 提示词指南主张「从结果出发、少写步骤」，但原话后半句是「过程本身重要时就把过程写清楚」。我写了十几个串起来跑的 agent skill，结论是只对一半：选题打分这类判断活给目标就行，多环节交接的确定性流程反而得把步骤焊死，一句话就飘。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260715-202607150352-openai-prompt-guide-goal-vs-steps.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>前两天 OpenAI 出了一份面向普通人的提示词指南，核心一句话被到处转：从结果出发，少写步骤。</p>
+<p>我看到标题第一反应是想反驳。因为我手里天天跑着十几个给 AI 派活的指令，有些恰恰是靠「把步骤写死」才不翻车的。</p>
+<p>但我把原文翻到底，发现被转烂的是半句话。OpenAI 的原话是：当过程本身重要时，就把过程描述清楚；否则，给模型留出自己去搜、去比、去调整的空间。</p>
+<p>后半句没人读。而那半句，才是这份指南真正的分寸。</p>
+<p>昨天我刚写过 Claude 的遮词 hook，讲怎么把软规则钉死在动作层。这篇不碰 hook，也不聊模型，往前挪一步：一条给 AI 的指令，到底该给它一个目标，还是把步骤焊死。这俩坑我踩了两年，今天摊开讲。</p>
+<h2 id="少写步骤只对一半"><a href="#少写步骤只对一半" class="headerlink" title="少写步骤只对一半"></a>少写步骤只对一半</h2><p>先说我为什么信这半句、又只信一半。</p>
+<p>我写过一整套 skill，天天串起来出稿：拉资讯的、选题的、调研的、写稿的、润色的、配图的、分发的，还有一个总编排的，一口气跑完。它们里头，有的我只给了目标，有的把步骤抠到了子步骤。</p>
+<p>这跟我心情无关，看的是活的性质。</p>
+<p>OpenAI 那句话的分寸就在这儿：过程重要就写清过程，过程不重要就放手。问题是「过程重不重要」这句判断，指南没替你做，得你自己拿捏。</p>
+<p>我这两年拿捏出的一条线是这样的：需要判断、需要权衡、每次答案都可能不一样的活，给目标；多环节交接、一步错满盘乱、每次都得走同一条路的活，焊步骤。</p>
+<p>下面四节，全是我拿真金白银的 token 换来的。</p>
+<h2 id="判断的活只交目标"><a href="#判断的活只交目标" class="headerlink" title="判断的活只交目标"></a>判断的活只交目标</h2><p>我的选题 skill 是最典型的「只给目标」。</p>
+<p>它要干的事是：从几十条 AI 资讯里挑出最值得写的五条。我没给它「第一步查阅读量、第二步查转发」这种死步骤，给的是一套六个维度的打分框架：账号契合、可写性、热度、爆款相、时效，再减去跟最近撞题的重复度。每个维度怎么权衡，我让模型自己判断。</p>
+<p>为什么这类活不能写死步骤？因为选题这事本身就没有标准动作。今天热的是模型发布，明天热的是某家翻车，权重每天都在动。你把步骤焊死，它就只会机械套用，碰到框架外的好题反而装看不见。</p>
+<p>这跟我早年写代码提示词踩的坑一个道理。我花过半小时写一份特别细的指令式提示词，把函数名、异常处理、变量名全规定死。结果代码风格跟项目里其他部分对不上，错误处理还打架，改起来比自己写还累。后来我改成只讲清「要做什么、为什么」，把技术栈和验收标准给够，剩下让它自己复用项目现成的封装，代码反而直接能合进去。</p>
+<p><strong>今天就能改的一个动作</strong>：翻出你最近写得最啰嗦的那条指令，如果它干的是选题、取舍、出方案这类需要判断的活，把那串步骤删掉，换成「你要达成什么」加上一两条不能碰的红线。给它判断的空间，比给它一条轨道更管用。</p>
+<h2 id="交接的活步骤焊死"><a href="#交接的活步骤焊死" class="headerlink" title="交接的活步骤焊死"></a>交接的活步骤焊死</h2><p>反过来，我那个总编排的 skill，是把步骤焊得最死的一个。</p>
+<p>它要串起八个环节：调研、写稿、润色、评阅、沉淀、配图、分发、发布，一个接一个，每个环节还有自己的子步骤。这种活，我一个字都不敢省。</p>
+<p>因为它是多环节交接的确定性流程。我试过偷懒，只写一句「帮我写篇文章配图再分发」，模型立刻就飘：要么漏掉评阅直接配图，要么顺序乱了先分发后润色，要么自作主张加一个我没让它干的环节。环节越多，出岔子的缝越多。</p>
+<p>我这套写稿 skill 最早就一句话：帮我写篇两千字的中文科技文。那版勉强能用。后来一步步往里加，拆到三百多行、十几个步骤，才变成「一句话产出能直接发的稿」。步骤拆得越细，模型自由发挥的缝越小，输出越稳。</p>
+<p>配图那一环我栽过一个更具体的跟头。早期我没把「只许写截图占位、绝不许自己上传图片或往正文塞图床链接」这条写死，只给了个「把图配好」的目标。结果 agent 自作主张，把一串图床链接直接塞进正文，还漏图。我把这条抠成硬规则之后，它才老实。</p>
+<p>这正好是 OpenAI 那句话的另一半：过程本身重要的时候，你就得把过程写清楚。多环节交接的流水线，过程就是命。</p>
+<p><strong>今天就能改的一个动作</strong>：找出你那条最容易漏步骤、乱顺序的多环节指令，别怕啰嗦，把每一步和步骤之间的交接写死。这种活偷懒省下的字，都会变成后面返工的时间。</p>
+<h2 id="老坑用硬规则兜住"><a href="#老坑用硬规则兜住" class="headerlink" title="老坑用硬规则兜住"></a>老坑用硬规则兜住</h2><p>OpenAI 指南里还有一句我特别认同：用一两条硬规则，替代冗长的逐步骤脚本。</p>
+<p>它给的例子很朴素，比如「别改动已经敲定的日期和预算数字」，比如「拟成草稿，先别发出去」。一句硬约束，堵住一个它最容易犯的错。</p>
+<p>这套我早就在用，而且是被逼出来的。</p>
+<p>我那个防 AI 味的 skill，一开始给的就是个纯目标：写得有人味，别像 AI。你猜怎么着，模型飘得没边，每篇的 AI 味都不一样，这篇破折号一堆，那篇满是对仗金句，我根本没法预期它下一篇会怎么翻车。</p>
+<p>后来我才想明白，「写得有人味」这种话模型接不住，它太虚了。我把它换成一串 grep 能扫的死规矩：正文里的中文长破折号一个都不许出现，对仗句最多留一处，字数卡死在一个区间。命中一条，直接打回重写。</p>
+<p>从虚目标换成硬规则，这一版才真正稳住。</p>
+<p>这里有个反直觉的点：给判断类的活「留空间」，跟给老毛病「上硬规则」，一点都不矛盾。前者是让它在没标准答案的地方自己拿主意，后者是在它反复栽跟头的动作上，立一道绕不过去的闸。指南那半句「少写步骤」，从来不等于「什么约束都别给」。</p>
+<p><strong>今天就能改的一个动作</strong>：回想 AI 帮你干活时，最让你反复抓狂的那一个具体毛病，把它写成一句你自己都能一眼验证的硬规则，贴到指令最上头。别写「注意质量」，要写「每个数字必须能对上原文」这种。</p>
+<h2 id="别指望一次写对"><a href="#别指望一次写对" class="headerlink" title="别指望一次写对"></a>别指望一次写对</h2><p>OpenAI 还点了一句常被忽略的：你不用一次就把提示词写对，后续追问本来就是预期内的调整方式。</p>
+<p>这条我举双手赞成，而且我把它做进了 skill 的骨头里。</p>
+<p>我的选题 skill 跑到挑出五条候选，会主动停下来，等我拍板选哪条，才往下走。发公众号那个 skill 更彻底，默认压根不触发，非得等我明说「发到公众号」它才动，就怕它自作主张把没审的稿推出去。</p>
+<p>这些停顿都是我故意留的口子。有些判断，我不想交给模型替我拍。选题错了是一整篇的方向错，发错稿是发出去就收不回。这种要命的关口，我宁可它停下来问我一句。</p>
+<p>能交给模型自己跑的，是那些照步骤走、错了也好收拾的活。真正压着风险的那几步，得留一道人工闸门。这跟 OpenAI 说的「后续追问是预期内的」是一个意思，只不过我把「追问」提前固化成了流程里一个写死的停顿点。</p>
+<p><strong>今天就能改的一个动作</strong>：看看你有没有哪条指令，是让 AI 一口气从头跑到尾、中间不给你插手机会的。如果这条链子里有一步错了代价很大，就在那步前面加一个「停下来等我确认」。</p>
+<h2 id="先改你最飘那条"><a href="#先改你最飘那条" class="headerlink" title="先改你最飘那条"></a>先改你最飘那条</h2><p>说到底，这两年我最大的体会是，这套「哪类活给目标、哪类活焊步骤」的分界，我一开始根本没想明白，全是一个个 skill 踩着坑长出来的。我甚至专门写了个 skill，每出完一篇稿就把新踩的坑自动提炼成一条规则，回写进那本手册，让它越用越紧。</p>
+<p>OpenAI 这份指南写得挺好，但它默认你已经会判断「过程重不重要」。而这恰恰是最难、也最值钱的那一步。</p>
+<p>所以别急着照搬「少写步骤」。真正管用的不在你写了几步，在你拎得清哪类活只交个目标让它自己判断、哪类活得把步骤一颗颗焊死。</p>
+<p>今天你就挑一条：最近你写给 AI、结果它飘得最狠的那条指令，掂量一下：它是该给目标、你却把步骤写太死，把它绑僵了？还是该焊步骤、你却只甩了个目标，给了它乱来的空间？对症改一处，比读十篇指南都值。</p>
+<p>说说你的。你写给 AI 的指令里，飘得最离谱的那条，是给目标给过了头，还是步骤没焊死？评论区聊聊，我看看是不是又戳中了一片人。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B/" rel="tag"># 提示词工程</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Skill/" rel="tag"># Skill</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/14/202607142321/" rel="prev" title="一个 hook 让 Claude 不再满嘴 load-bearing，但它只遮住了我的眼睛">
+                  <i class="fa fa-angle-left"></i> 一个 hook 让 Claude 不再满嘴 load-bearing，但它只遮住了我的眼睛
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/07/16/202607160001/" rel="next" title="Claude 的 artifact 能调 MCP 了，我最想接的那几个却全用不上">
+                  Claude 的 artifact 能调 MCP 了，我最想接的那几个却全用不上 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:14</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

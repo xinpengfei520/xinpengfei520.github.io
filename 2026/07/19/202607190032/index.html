@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Simon Willison 用 Fable 5 做了个 LLM 套话高亮器，只标记十种套话、不拦人。我那套写作检测系统当初敢拦：低于 80 分自动打回、最多循环 3 轮、不达标阻断流水线，结果一次批量跑 10 篇，烧掉 64 次调用、270 万 token，8 篇卡在轮次上限，零交付。结论是硬规则可以有阻断权，主观评分只配有建议权。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Simon 的套话检测器只高亮不拦人，我那套敢拦，10 篇稿子一篇没出来">
+<meta property="og:url" content="https://www.vance.xin/2026/07/19/202607190032/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Simon Willison 用 Fable 5 做了个 LLM 套话高亮器，只标记十种套话、不拦人。我那套写作检测系统当初敢拦：低于 80 分自动打回、最多循环 3 轮、不达标阻断流水线，结果一次批量跑 10 篇，烧掉 64 次调用、270 万 token，8 篇卡在轮次上限，零交付。结论是硬规则可以有阻断权，主观评分只配有建议权。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260719-202607190032-detector-authority-boundary.webp">
+<meta property="article:published_time" content="2026-07-19T00:32:00.000Z">
+<meta property="article:modified_time" content="2026-07-19T07:47:59.086Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Skill">
+<meta property="article:tag" content="AI写作">
+<meta property="article:tag" content="质量检测">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260719-202607190032-detector-authority-boundary.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/19/202607190032/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/19/202607190032/","path":"2026/07/19/202607190032/","title":"Simon 的套话检测器只高亮不拦人，我那套敢拦，10 篇稿子一篇没出来"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Simon 的套话检测器只高亮不拦人，我那套敢拦，10 篇稿子一篇没出来 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Simon 的套话检测器只高亮不拦人，我那套敢拦，10 篇稿子一篇没出来",
+  "url": "https://www.vance.xin/2026/07/19/202607190032/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/19/202607190032/",
+  "datePublished": "2026-07-19T00:32:00.000Z",
+  "dateModified": "2026-07-19T07:47:59.086Z",
+  "description": "Simon Willison 用 Fable 5 做了个 LLM 套话高亮器，只标记十种套话、不拦人。我那套写作检测系统当初敢拦：低于 80 分自动打回、最多循环 3 轮、不达标阻断流水线，结果一次批量跑 10 篇，烧掉 64 次调用、270 万 token，8 篇卡在轮次上限，零交付。结论是硬规则可以有阻断权，主观评分只配有建议权。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%96%E9%82%A3%E4%B8%AA%E5%B7%A5%E5%85%B7%E5%8F%AA%E9%AB%98%E4%BA%AE"><span class="nav-text">他那个工具只高亮</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%BB%99%E6%A3%80%E6%B5%8B%E5%8F%91%E8%BF%87%E9%98%BB%E6%96%AD%E6%9D%83"><span class="nav-text">我给检测发过阻断权</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E6%AC%A1%E6%89%B9%E9%87%8F%E8%B7%91%E6%88%90%E4%BA%86%E7%A9%BA%E8%BD%AC"><span class="nav-text">那次批量跑成了空转</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A1%AC%E8%A7%84%E5%88%99%E5%92%8C%E8%BD%AF%E8%AF%84%E5%88%86%E8%AF%A5%E5%88%86%E5%BC%80"><span class="nav-text">硬规则和软评分该分开</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BC%8F%E6%A3%80%E5%92%8C%E9%94%99%E6%8B%A6%E5%B7%AE%E7%9D%80%E9%87%8F%E7%BA%A7"><span class="nav-text">漏检和错拦差着量级</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%A5%E6%8B%A6%E7%9A%84%E5%9C%B0%E6%96%B9%E8%BF%98%E6%98%AF%E5%BE%97%E6%8B%A6"><span class="nav-text">该拦的地方还是得拦</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8A%E5%A4%A9%E5%85%88%E7%BB%99%E5%93%AA%E6%9D%A1%E9%99%8D%E6%9D%83"><span class="nav-text">今天先给哪条降权</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">467</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">818</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/19/202607190032/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Simon 的套话检测器只高亮不拦人，我那套敢拦，10 篇稿子一篇没出来 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Simon Willison 用 Fable 5 做了个 LLM 套话高亮器，只标记十种套话、不拦人。我那套写作检测系统当初敢拦：低于 80 分自动打回、最多循环 3 轮、不达标阻断流水线，结果一次批量跑 10 篇，烧掉 64 次调用、270 万 token，8 篇卡在轮次上限，零交付。结论是硬规则可以有阻断权，主观评分只配有建议权。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Simon 的套话检测器只高亮不拦人，我那套敢拦，10 篇稿子一篇没出来
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-19 00:32:00 / 修改时间：07:47:59" itemprop="dateCreated datePublished" datetime="2026-07-19T00:32:00+00:00">2026-07-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Simon Willison 用 Fable 5 做了个 LLM 套话高亮器，只标记十种套话、不拦人。我那套写作检测系统当初敢拦：低于 80 分自动打回、最多循环 3 轮、不达标阻断流水线，结果一次批量跑 10 篇，烧掉 64 次调用、270 万 token，8 篇卡在轮次上限，零交付。结论是硬规则可以有阻断权，主观评分只配有建议权。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260719-202607190032-detector-authority-boundary.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>先撇清一下，免得你觉得我又在炒冷饭。这条线上我写过几篇：一篇讲我攒了六十几条规矩删 AI 腔，一篇讲哪几种 AI 味我死活不留，还有一篇讲写 skill 的时候规则太宽会反咬。那几篇讲的都是怎么把规则写好。这篇不碰这个。</p>
+<p>这篇只问一件事：你辛辛苦苦攒的那些检测规则，到底该不该有权把你的活拦下来。</p>
+<p>我是被一张账单逼着想明白的。</p>
+<h2 id="他那个工具只高亮"><a href="#他那个工具只高亮" class="headerlink" title="他那个工具只高亮"></a>他那个工具只高亮</h2><p>事情起头是 Simon Willison 前两天扔出来的一个小玩意儿。</p>
+<p>他用 Fable 5 顺手 vibe code 了一个网页应用，说人话就是没怎么正经设计，边聊边让模型给写出来的。功能特别单一：你把一段文字贴进去，它把大模型最爱用的十种套话给你高亮出来。</p>
+<p>被它点名的有 no fluff, no filler, no jargon 这种链式否定，有 sit with that，有 you already know，还有 worth naming。你要是觉得英文没那么直观，换成中文的「让我们一起来看看」「值得深思」「这不仅仅是一次尝试」，那个塑料味立刻就对上了。</p>
+<p>我盯着它看了半天。真正让我停下来的，是它的动词。</p>
+<p>Highlight。高亮。</p>
+<p>它不打分。稿子及不及格它不管，句子该怎么改它也不插手。它就把可疑的地方涂个颜色，剩下的全交回给你。</p>
+<p>我当时心里咯噔一下。因为我那套东西，走的是完全相反的路。</p>
+<h2 id="我给检测发过阻断权"><a href="#我给检测发过阻断权" class="headerlink" title="我给检测发过阻断权"></a>我给检测发过阻断权</h2><p>我写文章是一条流水线在跑：拉资讯、选题、调研、写稿、润色、评阅、配图、分发，十几个环节各归各的 skill 管。</p>
+<p>里头有两层检测。</p>
+<p>底下一层是硬扫描，靠 grep 硬查。中文那种长横破折号必须清零，那玩意儿是 AI 中文最扎眼的指纹，撒手不管一篇能塞进去二十几个。对仗句式全文最多留一处。三连否定的排比不许排。小标题超过十二个字或者带括号，揪出来重写。中文字数拿正则数一遍，卡在两千到两千五。这层规矩攒到现在一百四十多条，是跟着一百二十多篇稿子一条条长出来的。</p>
+<p>上面一层是评分。一层专查 AI 味，从结构模板化、表达空洞、细节缺失这些维度打百分比；另一层拿刘润那套写作心法的六个维度打分，满分一百。</p>
+<p>出事的是我给上面这层配的权力。</p>
+<p>我当初的设计是：评分低于 80 就自动打回去重写，最多循环三轮，三轮还不达标，整条流水线停在那儿等我裁决。</p>
+<p>写的时候我觉得这设计特别负责任。质量不达标，凭什么放出去？</p>
+<h2 id="那次批量跑成了空转"><a href="#那次批量跑成了空转" class="headerlink" title="那次批量跑成了空转"></a>那次批量跑成了空转</h2><p>真正教育我的是一次批量。</p>
+<p>那天我一口气排了十篇稿子进流水线，想着挂着让它跑，我该干嘛干嘛去。</p>
+<p>回来一看傻眼了。</p>
+<p>十篇里八篇全部撞到了三轮上限，一动不动卡在那儿等我拍板。我离开之前它们在跑，我回来它们还在原地，只是账单涨了：整个批次消耗六十四次 agent 调用，烧掉大约两百七十万 token。</p>
+<p>交付了几篇？</p>
+<p>零。一篇都没出来。钱花了，时间过了，机器忙了大半天，产出是空的。</p>
+<p>更难受的是我一篇篇翻分数的时候。那八篇里好几篇卡在七十七、七十八，就差那么两三分。而给出这两三分的，是一个模型的主观判断。它换个时间点重跑，给到八十一也不奇怪。就为这么一个会飘的数，八篇稿子全压在那儿动不了。</p>
+<p>说白了，我拿一个会抖的主观分数，接上了一个能停掉整条产线的开关。</p>
+<h2 id="硬规则和软评分该分开"><a href="#硬规则和软评分该分开" class="headerlink" title="硬规则和软评分该分开"></a>硬规则和软评分该分开</h2><p>复盘完我改了设计。但我动的地方跟阈值无关。</p>
+<p>我一开始的本能是把 80 降到 75。降完琢磨了一下，这是治标不治本，下次照样有稿子卡在七十三。</p>
+<p>真正该动的是权力。</p>
+<p>后来的规矩是：评分环节只做一轮定点重改，改完不管多少分一律放行。总结里如实写一句「初评 73 分，复核 82 分」，或者「初评 76 分，复核 78 分」。分数照给，照实说，但它不许拦人。</p>
+<p>这么改完，我才把两层检测的区别想清楚。</p>
+<p>底下那层 grep 硬规则，判的是客观事实。一篇稿子里有没有破折号，小标题有没有超过十二个字，这些事没有商量余地，机器数得清，也不会今天数出一个明天数出另一个。这层我至今还留着阻断权，它揪出来我就得改。</p>
+<p>上面那层评分，判的是主观质量。同一篇稿子，模型今天给 79、明天给 83 都算正常。把这种会抖的东西接到阻断开关上，就是给流水线埋雷。</p>
+<p>一句话，能被机器判死的，可以有权拦你；只能被机器估个大概的，只配给你提个醒。</p>
+<p>Simon 那个工具，踏踏实实就站在后面那一类里。它清楚自己认出来的是「可疑」而非「有罪」，所以它只涂色。</p>
+<h2 id="漏检和错拦差着量级"><a href="#漏检和错拦差着量级" class="headerlink" title="漏检和错拦差着量级"></a>漏检和错拦差着量级</h2><p>还有一笔账，我当初压根没算过。</p>
+<p>漏检和错拦，代价根本不在一个量级上。</p>
+<p>漏检的代价是什么？一篇稿子里混进去两句 AI 腔，读者读着觉得这段有点塑料。难受，但天塌不下来，下篇改进就是了。</p>
+<p>错拦的代价是什么？整条产线停摆，十篇稿子一篇出不来，两百七十万 token 打水漂。</p>
+<p>这两种错差着好几个数量级。既然差这么多，默认那一档就该偏向放行，而不该偏向拦截。</p>
+<p>我以前把「宁可错杀不可放过」当成严谨。现在我觉得，那只是没算过错杀的账。</p>
+<p>顺便说个更早的坑，正好是同一个道理的另一面。我那条查对仗的 grep 规则写得太宽的时候，会把「它是不是天天重复、规则是不是清晰」这种正常疑问句当成对仗句揪出来。「第一反应」被当成列表编号，「最后一步」被当成收尾套话。每次我都得人工判一遍，这是真命中还是误伤。假如这些误伤当年也带着阻断权，我大概每篇稿子都得跟机器吵一架。</p>
+<h2 id="该拦的地方还是得拦"><a href="#该拦的地方还是得拦" class="headerlink" title="该拦的地方还是得拦"></a>该拦的地方还是得拦</h2><p>话说回来，我不是在讲检测就该全线放行。</p>
+<p>有些闸门我攥得死死的，一点没松。</p>
+<p>比如发公众号那个环节。我把它做成必须我手打指令才触发，默认整个跳过。哪怕前面所有检测全绿、评分给到九十，它也不会自己把稿子推出去。</p>
+<p>区别在哪儿？</p>
+<p>发布这个动作是不可逆的，而且是对外的。推出去就收不回来了。这种地方我宁可多敲一句话，也不接受任何自动化。</p>
+<p>而重写一遍稿子这个动作，可逆、对内、随时能补救。给它配阻断权，纯属浪费。</p>
+<p>所以那把尺子量的不在这件事重不重要，在它出了岔子能不能补救。补不回来的，闸门焊死；补得回来的，让它先过去。</p>
+<h2 id="今天先给哪条降权"><a href="#今天先给哪条降权" class="headerlink" title="今天先给哪条降权"></a>今天先给哪条降权</h2><p>如果你手里也攒着一套自己的检测规则，不管是写作的、代码的，还是 agent 流水线上的，今天有件小事可以做。</p>
+<p>把规则摊开，一条条问：这条判的是客观事实，还是主观好坏。</p>
+<p>判客观事实的那些，留着阻断权没问题。判主观好坏的那些，降级成提醒，只报数，不拦人。</p>
+<p>再顺手问一句：这条要是误伤了，我得花多大代价才能救回来。救不回来的，才配当闸门。</p>
+<p>说实话，我这套东西现在也谈不上磨好了。规则还在一篇篇往上加，误伤还在偶尔发生，我也不敢说这个平衡就找准了。但至少那条产线不会再因为一个七十八分把自己锁死。</p>
+<p>绕了一圈我才明白，检测这件事真正难的不在把规则写多严，在想清楚它到底该不该有权拦住你。Simon 那个只会涂色的小工具，早就想明白了。</p>
+<p>你手里那套规矩，有没有哪一条其实不配有拦人的权力？或者反过来，你被自己定的规矩卡住过没有？评论区聊聊，我挺想知道别人是怎么划这条线的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Skill/" rel="tag"># Skill</a>
+              <a href="/tags/AI%E5%86%99%E4%BD%9C/" rel="tag"># AI写作</a>
+              <a href="/tags/%E8%B4%A8%E9%87%8F%E6%A3%80%E6%B5%8B/" rel="tag"># 质量检测</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/17/202607171844/" rel="prev" title="Fable 5 强到一句话自主登月，我却没让它顶我那 90% 的日常">
+                  <i class="fa fa-angle-left"></i> Fable 5 强到一句话自主登月，我却没让它顶我那 90% 的日常
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.5m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:27</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

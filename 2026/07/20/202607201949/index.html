@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="布拉格研究者让 165 个模型反复报 1-100 随机数，发现每家都死磕某几个数，Qwen3-Max 问 30 次全答 42，这种行为指纹花不到 35 美元就能给模型验明正身；CISPA 审计发现 45.83% 的影子 API 没在跑它收你钱的那个模型，约 100 次固定请求你就能自查中转站有没有偷换。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="30 次都答 42：一个随机数验出你的 API 有没有被偷换模型">
+<meta property="og:url" content="https://www.vance.xin/2026/07/20/202607201949/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="布拉格研究者让 165 个模型反复报 1-100 随机数，发现每家都死磕某几个数，Qwen3-Max 问 30 次全答 42，这种行为指纹花不到 35 美元就能给模型验明正身；CISPA 审计发现 45.83% 的影子 API 没在跑它收你钱的那个模型，约 100 次固定请求你就能自查中转站有没有偷换。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260721-model-fingerprint-api-swap.webp">
+<meta property="article:published_time" content="2026-07-20T19:49:50.000Z">
+<meta property="article:modified_time" content="2026-07-21T03:13:36.424Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="独立开发">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="API">
+<meta property="article:tag" content="模型检测">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260721-model-fingerprint-api-swap.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/20/202607201949/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/20/202607201949/","path":"2026/07/20/202607201949/","title":"30 次都答 42：一个随机数验出你的 API 有没有被偷换模型"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>30 次都答 42：一个随机数验出你的 API 有没有被偷换模型 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "30 次都答 42：一个随机数验出你的 API 有没有被偷换模型",
+  "url": "https://www.vance.xin/2026/07/20/202607201949/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/20/202607201949/",
+  "datePublished": "2026-07-20T19:49:50.000Z",
+  "dateModified": "2026-07-21T03:13:36.424Z",
+  "description": "布拉格研究者让 165 个模型反复报 1-100 随机数，发现每家都死磕某几个数，Qwen3-Max 问 30 次全答 42，这种行为指纹花不到 35 美元就能给模型验明正身；CISPA 审计发现 45.83% 的影子 API 没在跑它收你钱的那个模型，约 100 次固定请求你就能自查中转站有没有偷换。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#30-%E6%AC%A1%E5%85%A8%E7%AD%94-42"><span class="nav-text">30 次全答 42</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E9%83%BD%E7%88%B1%E5%81%8F%E5%BF%83"><span class="nav-text">模型都爱偏心</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E5%9C%A8%E8%83%8C%E8%AF%BE%E6%96%87"><span class="nav-text">它在背课文</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%87%E7%BA%B9%E8%83%BD%E9%AA%8C%E8%BA%AB%E4%BB%BD"><span class="nav-text">指纹能验身份</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E8%87%AA%E5%B7%B1%E4%B9%9F%E8%83%BD%E9%AA%8C"><span class="nav-text">你自己也能验</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">470</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">819</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/20/202607201949/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="30 次都答 42：一个随机数验出你的 API 有没有被偷换模型 | 飞飞的AI实验室">
+      <meta itemprop="description" content="布拉格研究者让 165 个模型反复报 1-100 随机数，发现每家都死磕某几个数，Qwen3-Max 问 30 次全答 42，这种行为指纹花不到 35 美元就能给模型验明正身；CISPA 审计发现 45.83% 的影子 API 没在跑它收你钱的那个模型，约 100 次固定请求你就能自查中转站有没有偷换。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          30 次都答 42：一个随机数验出你的 API 有没有被偷换模型
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-20 19:49:50" itemprop="dateCreated datePublished" datetime="2026-07-20T19:49:50+00:00">2026-07-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-21 03:13:36" itemprop="dateModified" datetime="2026-07-21T03:13:36+00:00">2026-07-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">布拉格研究者让 165 个模型反复报 1-100 随机数，发现每家都死磕某几个数，Qwen3-Max 问 30 次全答 42，这种行为指纹花不到 35 美元就能给模型验明正身；CISPA 审计发现 45.83% 的影子 API 没在跑它收你钱的那个模型，约 100 次固定请求你就能自查中转站有没有偷换。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260721-model-fingerprint-api-swap.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>先说个有点荒诞的事。有人拿一个大模型做实验，反复问它同一句话：从 1 到 100，随便报一个数。问了 30 次。结果它 30 次全报了同一个数，42。</p>
+<p>42 是什么？《银河系漫游指南》里那个梗，「生命、宇宙以及一切的终极答案」。你以为它在掷骰子，其实它在背课文。</p>
+<p>前阵子我写过 Simon 那个套话检测器，那查的是 AI 写作的痕迹，内容层面的事。今天这篇不一样，查的是模型身份：你花钱调的那个 API，供应商到底给没给你上你以为的那个模型。这跟我最近老聊的模型选型也是两码事，那是挑哪个模型干活，这篇是下游一环，你挑定了，它到底给没给你上。这是供应链和账单层面的事，往下拆你会有点后背发凉。</p>
+<h2 id="30-次全答-42"><a href="#30-次全答-42" class="headerlink" title="30 次全答 42"></a>30 次全答 42</h2><p>这个实验来自布拉格经济大学一个叫 Tomáš Brückner 的研究者，7 月刚挂到 arXiv 上，论文名字很直白，叫《One Token Is Enough》，一个 token 就够了。</p>
+<p>他干了件笨活。找来 165 个模型，每个都反复问「1 到 100 报个随机数」，一共发了大概 32.6 万次请求。全程花了多少钱？不到 35 美元。</p>
+<p>结果每家模型的答案分布都长得不一样，而且各有各的偏执。Qwen3-Max 问 30 次全答 42。Claude Sonnet 5 死磕 47。GPT-4o 松一点，在 42、37、57 之间打转。Llama 3.3 偏爱 53。</p>
+<p>你把这些分布画成图，就是一张张脸。同一个问题问一百来次，看它爱报哪几个数、各占多大比例，基本就能认出这是谁。Brückner 给它起了个名，行为指纹。</p>
+<h2 id="模型都爱偏心"><a href="#模型都爱偏心" class="headerlink" title="模型都爱偏心"></a>模型都爱偏心</h2><p>这里有个怪事：随机数，怎么还会有偏好？</p>
+<p>其实先别怪模型。人自己也报不出随机数。有个叫 Veritasium 的科普账号做过一次 20 万人的调查，让大家从 1 到 100 随便想一个「随机」的数，结果 37 被选得最多。人偏爱质数，偏爱以 7 结尾的数，本能地躲开整十和 11、22 这种叠字，觉得那样看着不够随机。</p>
+<p>模型是拿海量人类文本喂出来的，人这套偏心它照单全收，还放得更狠。有人实测过，GPT-4o 在 1 到 10 里选随机数，问 100 次有 92 次报 7；单看那一步，选中 7 的概率高到 96.4%。</p>
+<p>所以当你觉得它在随机的时候，它其实在复述人类语料里那点老套的偏好。</p>
+<h2 id="它在背课文"><a href="#它在背课文" class="headerlink" title="它在背课文"></a>它在背课文</h2><p>再往底下走一层，就明白指纹是怎么来的了。</p>
+<p>大模型说话是一个 token 一个 token 往外蹦的，每一步都在算下一个最该出什么。碰到报个随机数这种开放问题，理论上 1 到 100 该均匀摊开，每个数概率差不多。可训练把这条曲线削尖了，几个高频答案吃掉了绝大部分概率，剩下的九十几个数几乎没份。</p>
+<p>Brückner 量过这个尖锐程度。理想的均匀分布，信息熵应该有 6.6 bit；而这些模型实测下来，中位数只有 1.0 bit。这个数字翻成人话就是：它的随机里几乎没有随机，答案早被那几个高频选项锁死了。</p>
+<p>至于它为什么偏偏死磕 47，一种解释是训练里的偏好被反复强化，把分布压成了尖峰。但这更多是合理推断，别当成铁律。真正确定的是那个结果：分布塌了，塌出来的形状每家不一样，于是成了指纹。</p>
+<h2 id="指纹能验身份"><a href="#指纹能验身份" class="headerlink" title="指纹能验身份"></a>指纹能验身份</h2><p>到这儿，事情就有意思了。</p>
+<p>既然每个模型都有独一份的指纹，那我反过来问：我手上这个 API，报出来的分布跟它声称的模型对得上吗？对不上，只能说明一件事，供应商给我上的，压根是另一个模型。</p>
+<p>这正是我看到这篇论文后背发凉的地方。我是重度的多模型用户，天天从聚合入口调各家模型，OpenRouter 就是我常走的一个口子。巧的是，Brückner 那 32.6 万次请求，跑的也是 OpenRouter。我最没底的一件事就是：这一层路由，到底把我的请求塞给了谁。</p>
+<p>聚合入口这东西，方便是真方便，一个 key 打通十几家。可它也意味着，我根本看不见最上游那一跳。我下单要的是某个旗舰，中间过了几手转发，最后落到哪台机器、加载的是全精度还是压缩量化过的版本，我基本两眼一抹黑。</p>
+<p>这担心并非空穴来风。Brückner 顺手验了 31 个声称在跑 Llama 的商业接口，有 11 个的分布跟官方权重对不上，也就是挂着 Llama 的牌子，跑的是别的东西。</p>
+<p>更硬的证据来自 CISPA 的一篇审计论文，名字够直白，《Real Money, Fake Models》，真金白银，假模型。他们查那些影子接口，45.83% 没能通过身份验证，性能落差最高到 47.21%。近一半在造假，你付了旗舰的钱，拿到的可能是个缩水货。</p>
+<p>动机一点都不难猜。你按旗舰价付费，它按小模型的成本给你跑，中间那道差价就是它的利润。我天天手动给不同的活派模型，脏活累活丢便宜的，关键判断才舍得上旗舰，对这本账太熟：便宜模型跟旗舰之间的成本差常常是好几倍，甚至十几倍。这么大一个价差摆在那儿，只要中间没人盯着，总有人会动心思，把你要的旗舰悄悄换成够用就行的小模型。</p>
+<h2 id="你自己也能验"><a href="#你自己也能验" class="headerlink" title="你自己也能验"></a>你自己也能验</h2><p>好在这套方法的门槛，低到普通开发者也够得着。</p>
+<p>你不需要模型方配合，也拿不到内部的概率数据，可黑盒外面就能干。挑一个你在用的模型，查一下它公开的指纹偏爱哪几个数，然后用一模一样的 prompt 问它个一百来次，把答案分布拉出来比一比。对得上就踏实，对不上就该警觉了。整个成本，也就是 Brückner 那种不到 35 美元的量级，缩到单个模型更是几杯咖啡的钱。</p>
+<p>这法子谈不上百分百准，Brückner 报的错误率在 10.6% 上下，但作为一道随手能拉的自查警报，够用了。</p>
+<p>其实我一直有个土办法，验账单。标价便宜从来不等于账单便宜。就说 Sonnet 5 换新 tokenizer 那回，名义单价看着是降了，我把最常跑的两三个 skill 各拉一批真实的活出来对，盯着月底实扣，才发现省下的那点又被 tokenizer 悄悄削回去大半。打那以后，谁挂出来的单价我都不信，只认自己跑出来的账。这回不过是把同一套本能，从验账单挪到验身份上：别信它自称是谁，让它自己报几十次数，露出马脚。</p>
+<p>给你一个今天就能用的最小动作：下次你怀疑某个 API 被偷偷降智了，别光凭手感骂娘，用固定的 prompt 多问它几次那个它该偏爱的数，看分布还对不对。手感会骗人，分布不会。</p>
+<p>说到底，这套指纹法真正的价值，不在它多精巧，在它把「你付的钱有没有买到你以为的那个模型」这件一直只能靠信任的事，头一回变成了你自己一百来次请求就能验的事。信任很贵，但现在你手里有了一把便宜的尺子。</p>
+<p>你有没有怀疑过，自己充值买的 API 或者会员，某段时间被人偷偷换成了更便宜的模型？如果真要较个真，你会怎么验？评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E7%8B%AC%E7%AB%8B%E5%BC%80%E5%8F%91/" rel="tag"># 独立开发</a>
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 大模型</a>
+              <a href="/tags/API/" rel="tag"># API</a>
+              <a href="/tags/%E6%A8%A1%E5%9E%8B%E6%A3%80%E6%B5%8B/" rel="tag"># 模型检测</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/19/202607192256/" rel="prev" title="Ollama 融 6500 万治本地不够强，开的药方是让我上云">
+                  <i class="fa fa-angle-left"></i> Ollama 融 6500 万治本地不够强，开的药方是让我上云
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:35</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

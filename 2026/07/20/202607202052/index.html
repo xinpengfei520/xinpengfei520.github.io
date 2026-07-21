@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Cursor 的智能体集群把任务拆成规划者用最强模型、执行者用便宜模型，同一个 SQLite 任务总成本从 10565 美元压到 1339 美元、执行层从 9373 干到 411；但真正的命门不在规划拆得多漂亮，在拆完之后没人盯的交接会不会掉链子，执行层敢压多便宜取决于你兜底那道闸有多硬。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一万刀干到一千三：Cursor 贵规划便宜执行，可它没讲交接会掉链子">
+<meta property="og:url" content="https://www.vance.xin/2026/07/20/202607202052/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Cursor 的智能体集群把任务拆成规划者用最强模型、执行者用便宜模型，同一个 SQLite 任务总成本从 10565 美元压到 1339 美元、执行层从 9373 干到 411；但真正的命门不在规划拆得多漂亮，在拆完之后没人盯的交接会不会掉链子，执行层敢压多便宜取决于你兜底那道闸有多硬。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260721-cursor-agent-swarm-planner-worker.webp">
+<meta property="article:published_time" content="2026-07-20T20:52:35.000Z">
+<meta property="article:modified_time" content="2026-07-21T05:42:45.429Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Cursor">
+<meta property="article:tag" content="多智能体">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="编排">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260721-cursor-agent-swarm-planner-worker.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/20/202607202052/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/20/202607202052/","path":"2026/07/20/202607202052/","title":"一万刀干到一千三：Cursor 贵规划便宜执行，可它没讲交接会掉链子"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>一万刀干到一千三：Cursor 贵规划便宜执行，可它没讲交接会掉链子 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "一万刀干到一千三：Cursor 贵规划便宜执行，可它没讲交接会掉链子",
+  "url": "https://www.vance.xin/2026/07/20/202607202052/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/20/202607202052/",
+  "datePublished": "2026-07-20T20:52:35.000Z",
+  "dateModified": "2026-07-21T05:42:45.429Z",
+  "description": "Cursor 的智能体集群把任务拆成规划者用最强模型、执行者用便宜模型，同一个 SQLite 任务总成本从 10565 美元压到 1339 美元、执行层从 9373 干到 411；但真正的命门不在规划拆得多漂亮，在拆完之后没人盯的交接会不会掉链子，执行层敢压多便宜取决于你兜底那道闸有多硬。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E7%A7%92-1000-%E6%AC%A1%E6%8F%90%E4%BA%A4"><span class="nav-text">一秒 1000 次提交</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%B5%E7%9A%84%E5%8F%AA%E5%80%BC%E5%9C%A8%E6%8B%86%E8%A7%A3"><span class="nav-text">贵的只值在拆解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E5%B0%B1%E6%98%AF%E6%88%91%E7%9A%84%E6%B4%BB%E6%B3%95"><span class="nav-text">这就是我的活法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A4%E6%8E%A5%E6%89%8D%E6%98%AF%E5%91%BD%E9%97%A8"><span class="nav-text">交接才是命门</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E8%AF%A5%E6%80%8E%E4%B9%88%E5%88%86"><span class="nav-text">你该怎么分</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">471</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">820</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/20/202607202052/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="一万刀干到一千三：Cursor 贵规划便宜执行，可它没讲交接会掉链子 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Cursor 的智能体集群把任务拆成规划者用最强模型、执行者用便宜模型，同一个 SQLite 任务总成本从 10565 美元压到 1339 美元、执行层从 9373 干到 411；但真正的命门不在规划拆得多漂亮，在拆完之后没人盯的交接会不会掉链子，执行层敢压多便宜取决于你兜底那道闸有多硬。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一万刀干到一千三：Cursor 贵规划便宜执行，可它没讲交接会掉链子
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-20 20:52:35" itemprop="dateCreated datePublished" datetime="2026-07-20T20:52:35+00:00">2026-07-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-21 05:42:45" itemprop="dateModified" datetime="2026-07-21T05:42:45+00:00">2026-07-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Cursor 的智能体集群把任务拆成规划者用最强模型、执行者用便宜模型，同一个 SQLite 任务总成本从 10565 美元压到 1339 美元、执行层从 9373 干到 411；但真正的命门不在规划拆得多漂亮，在拆完之后没人盯的交接会不会掉链子，执行层敢压多便宜取决于你兜底那道闸有多硬。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260721-cursor-agent-swarm-planner-worker.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>先甩一个让我愣了一下的数字。Cursor 让一个智能体集群去干同一件活，把总账从 10565 美元压到了 1339 美元。光是干体力活的那层，从 9373 美元干到了 411 美元。活还是那些活，质量他们说”差不多”。</p>
+<p>我盯着这个数字出了会儿神。因为它省钱的路子，跟我天天手动在跑的那套，是同一个理。</p>
+<p>前阵子我写过《三个模型接力 16 小时》，那篇讲的是长任务串着交接怎么掉链子。今天这篇不太一样，讲的是一摊活在内部怎么分层：谁来拆，谁来干，凭什么这么分能省这么多。顺带说一句我觉得 Cursor 那篇博客最漂亮、也最避重就轻的地方。</p>
+<h2 id="一秒-1000-次提交"><a href="#一秒-1000-次提交" class="headerlink" title="一秒 1000 次提交"></a>一秒 1000 次提交</h2><p>先看它干了件什么活。</p>
+<p>Cursor 让集群用 Rust 从零重写 SQLite 那本 835 页的手册，拿 sqllogictest 当卷子打分。用 Grok 4.5 跑，新集群 4 小时过了 80% 的测试。旧版集群呢？没撑到第 2 个小时就崩了，被迫暂停。</p>
+<p>给它一本 835 页的手册，它还你一个数据库。</p>
+<p>更夸张的是提交速度。它家早先那个建浏览器的集群，一小时提交约 1000 次，走的是 Git。这回的新系统，一秒提交约 1000 次，为此他们从零自己写了一套版本控制。同一个词，一小时和一秒，差了 3600 倍。</p>
+<h2 id="贵的只值在拆解"><a href="#贵的只值在拆解" class="headerlink" title="贵的只值在拆解"></a>贵的只值在拆解</h2><p>那这活到底是怎么分的？</p>
+<p>Cursor 给这一节起的小标题叫”树和叶子”。任务天然长成一棵树：规划者用最强的模型，把一个大目标劈成一块块小活；执行者用更快更便宜的模型，把这些小活一件件干掉。规划者永远不动手，执行者永远不操心全局。</p>
+<p>省钱就省在这儿。原文那句话我觉得说透了：一旦前沿模型把模糊的目标压成一条明确到不能再明确的指令，便宜模型照着做就行了。</p>
+<p>摊开成本你会更服气。执行层扛了七成以上、大多数时候九成以上的 token，却只花掉一小块钱；规划者吐的 token 是零头，却吃掉了大约三分之二的成本。真正配得上前沿智能的动作，一只手数得过来：拆解、拍设计、做几个关键取舍。剩下的都是照章办事，凭什么用贵的？</p>
+<p>这套路子并非 Cursor 独创。Anthropic 自己的研究系统同样拿 Opus 当牵头规划、Sonnet 当干活的执行者，业界给它起了个名，叫编排者和工人，早成了多智能体的默认骨架。</p>
+<h2 id="这就是我的活法"><a href="#这就是我的活法" class="headerlink" title="这就是我的活法"></a>这就是我的活法</h2><p>看到这儿我特别有共鸣，因为这就是我天天在手动干的事。</p>
+<p>我那条博客流水线，content-director 就是个纯编排者：它先规划，再把研究、写作、润色、配图、分发这些环节，一个个扇给对应的 skill 去干。我自己派活前还有个土规矩，叫”过秤”：值得动脑的活，润色稿子、改流水线脚本、关键判断，舍得上 Opus 旗舰；纯体力的杂活，批量改文件名、格式转换，手动切便宜模型。</p>
+<p>这套分法的账我算过。六个 skill 全用 Sonnet 跑完一篇，一个月吃掉我 19% 的额度。后来按任务分，写作润色留 Sonnet，搜料、配图、分发全压到 Haiku，直接降到 8% 到 9%。省下的一半多，跟 Cursor 那套是同一个道理：别让贵模型干便宜活。</p>
+<p>说来有点丢人，我一开始是逮着最强的模型往死里用，什么活都塞给 Opus，图个省事。直到有个月账单肉疼，才逼自己坐下来，把每个 skill 到底该配哪档模型，一个个重新过了一遍秤。</p>
+<p>可我这套过秤说白了是人肉路由，手感好的时候准，忙起来手一抖，也会把有难度的活压给便宜模型，结果它答岔了还得回炉重来。所以我特别懂 Cursor 那股劲：想把这道分活的判断，从人的肌肉记忆，挪成系统能自动调度的东西。</p>
+<p>诚实说一句，我没跑过 Cursor 那套工业级的装置，也没复测过它的分。我能印证的，只是”强弱分工确实省钱”这个方向。</p>
+<h2 id="交接才是命门"><a href="#交接才是命门" class="headerlink" title="交接才是命门"></a>交接才是命门</h2><p>但 Cursor 那篇博客，我觉得有个地方讲得太漂亮了，漂亮到有点避重就轻。它把省钱讲得头头是道，却没细讲拆完之后，交接会怎么掉链子。</p>
+<p>我吃过这个亏。有次我用 agent 把一个 7000 多行的 SpringBoot 老项目迁成 Kotlin。它规划得很利索，一块块干得也快。可它会自信地把一个空指针判断顺手”优化”掉，把某个分支逻辑悄悄改岔，有个叫 isLiability 的字段在某个分支里凭空消失。编译过了，跑也跑了，满屏 diff 你根本看不出哪儿错了。到头来是靠流水线里专门设的一道对抗校验，在报错时才把它捞回来。</p>
+<p>所以我越来越信一句话：长任务里最值钱的，不在规划有多周全，在错了之后那道兜底的闸。</p>
+<p>Cursor 自己其实也承认了这件事，只是换了个说法。它一秒 1000 次提交、还专门自建版本控制，本质上就是在给交接铺基础设施，让每一步都能回滚、能追溯。它还提到一个更逗的坑：两个规划者互相不知道对方存在，各自造了一个一模一样的轮子。</p>
+<p>我没本事一秒提交一千次，但同一个道理，我在流水线里给每个 skill 都焊死了一张岗位接口卡：进来什么、吐出去什么、格式长什么样，写得死死的。就靠这一步，上一个 skill 交给下一个的东西，才不至于在半路走样。规划漂亮是锦上添花，接口对齐才是塌不了的地基。</p>
+<p>还有一种更阴险的掉链子，是静默失败。我的博客镜像站有回部署，构建全绿，只有临了那步 git push 认证悄悄红了，整条链静默挂了一整天没人发现。所以我的结论是两条：人得卡在不可逆、要对外的那一步；全自动链路必须给”失败”本身单配一个能推到你手机上的告警。</p>
+<h2 id="你该怎么分"><a href="#你该怎么分" class="headerlink" title="你该怎么分"></a>你该怎么分</h2><p>要真把这套用起来，我的判断是三条。</p>
+<p>先问自己：这摊活里，到底哪一下才配得上贵模型？通常就是拆解、定方案、拍那几个关键取舍。剩下的照章执行，全交给便宜模型。</p>
+<p>再一个，你敢把执行层压到多便宜，取决于你兜底那道闸有多硬。有对抗校验、有逐行 review、有测试网兜着，你就敢往下压；什么都没有，便宜模型干岔了没人知道，省的那点钱全得吐回去。</p>
+<p>还有，交接一定要走明面。进度文件、git 历史、给每个环节一张写清输入输出的接口卡，别让上下文在 agent 之间靠”它应该懂”来传。</p>
+<p>Cursor 用一秒 1000 次提交把这套跑成了工业级，我用十几个 skill 手动跑我的小作坊。规模差着十万八千里，可撞上的是同一堵墙：活可以扇出去，那道该不该收的判断，收不回来。</p>
+<p>你手上的活，有没有哪一摊是你也想拆成”贵的规划、便宜的执行”的？你最怕它在哪一步掉链子？评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/Cursor/" rel="tag"># Cursor</a>
+              <a href="/tags/%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># 多智能体</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E7%BC%96%E6%8E%92/" rel="tag"># 编排</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/20/202607201949/" rel="prev" title="30 次都答 42：一个随机数验出你的 API 有没有被偷换模型">
+                  <i class="fa fa-angle-left"></i> 30 次都答 42：一个随机数验出你的 API 有没有被偷换模型
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:37</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

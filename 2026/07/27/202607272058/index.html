@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="十天前我写 K3 时给自己留了话，说等 7 月 27 日开权重再复查。今天到期，权重确实放出来了，2.8T 参数、104B 激活、1M 上下文，连注意力内核和智能体环境一起开。但真正拦住我的不是能力，是 594GB 的权重体积和 8 张 GB300 的测试配置。官方技术报告自己也写着落后于 Fable 5 和 GPT-5.6 Sol。我没搬，但改了一处判断。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="K3 权重真放出来了，可那箱子有 594G，我搬不动">
+<meta property="og:url" content="https://www.vance.xin/2026/07/27/202607272058/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="十天前我写 K3 时给自己留了话，说等 7 月 27 日开权重再复查。今天到期，权重确实放出来了，2.8T 参数、104B 激活、1M 上下文，连注意力内核和智能体环境一起开。但真正拦住我的不是能力，是 594GB 的权重体积和 8 张 GB300 的测试配置。官方技术报告自己也写着落后于 Fable 5 和 GPT-5.6 Sol。我没搬，但改了一处判断。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260728-kimi-k3-open-weights-too-heavy.webp">
+<meta property="article:published_time" content="2026-07-27T20:58:30.000Z">
+<meta property="article:modified_time" content="2026-07-28T05:28:52.970Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="开源模型">
+<meta property="article:tag" content="模型选型">
+<meta property="article:tag" content="Kimi-K3">
+<meta property="article:tag" content="自托管">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260728-kimi-k3-open-weights-too-heavy.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/27/202607272058/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/27/202607272058/","path":"2026/07/27/202607272058/","title":"K3 权重真放出来了，可那箱子有 594G，我搬不动"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>K3 权重真放出来了，可那箱子有 594G，我搬不动 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "K3 权重真放出来了，可那箱子有 594G，我搬不动",
+  "url": "https://www.vance.xin/2026/07/27/202607272058/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/27/202607272058/",
+  "datePublished": "2026-07-27T20:58:30.000Z",
+  "dateModified": "2026-07-28T05:28:52.970Z",
+  "description": "十天前我写 K3 时给自己留了话，说等 7 月 27 日开权重再复查。今天到期，权重确实放出来了，2.8T 参数、104B 激活、1M 上下文，连注意力内核和智能体环境一起开。但真正拦住我的不是能力，是 594GB 的权重体积和 8 张 GB300 的测试配置。官方技术报告自己也写着落后于 Fable 5 和 GPT-5.6 Sol。我没搬，但改了一处判断。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E5%A4%A9%E6%88%91%E7%BB%99%E8%87%AA%E5%B7%B1%E7%95%99%E4%BA%86%E8%AF%9D"><span class="nav-text">那天我给自己留了话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%A8%E7%A1%AE%E5%AE%9E%E5%BC%80%E4%BA%86"><span class="nav-text">门确实开了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E9%82%A3%E7%AE%B1%E5%AD%90%E6%9C%89-594G"><span class="nav-text">可那箱子有 594G</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E5%8F%88%E6%9B%BF%E6%88%91%E8%AF%B4%E4%BA%86%E4%B8%80%E6%AC%A1"><span class="nav-text">官方又替我说了一次</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%89%E4%B8%80%E6%9D%A1%E6%88%91%E5%BD%93%E6%97%B6%E7%AE%97%E9%94%99%E4%BA%86"><span class="nav-text">有一条我当时算错了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%B2%A1%E6%90%AC%E4%BD%86%E6%94%B9%E4%BA%86%E4%B8%80%E5%A4%84"><span class="nav-text">我没搬但改了一处</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">475</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">824</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/27/202607272058/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="K3 权重真放出来了，可那箱子有 594G，我搬不动 | 飞飞的AI实验室">
+      <meta itemprop="description" content="十天前我写 K3 时给自己留了话，说等 7 月 27 日开权重再复查。今天到期，权重确实放出来了，2.8T 参数、104B 激活、1M 上下文，连注意力内核和智能体环境一起开。但真正拦住我的不是能力，是 594GB 的权重体积和 8 张 GB300 的测试配置。官方技术报告自己也写着落后于 Fable 5 和 GPT-5.6 Sol。我没搬，但改了一处判断。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          K3 权重真放出来了，可那箱子有 594G，我搬不动
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-27 20:58:30" itemprop="dateCreated datePublished" datetime="2026-07-27T20:58:30+00:00">2026-07-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-28 05:28:52" itemprop="dateModified" datetime="2026-07-28T05:28:52+00:00">2026-07-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">十天前我写 K3 时给自己留了话，说等 7 月 27 日开权重再复查。今天到期，权重确实放出来了，2.8T 参数、104B 激活、1M 上下文，连注意力内核和智能体环境一起开。但真正拦住我的不是能力，是 594GB 的权重体积和 8 张 GB300 的测试配置。官方技术报告自己也写着落后于 Fable 5 和 GPT-5.6 Sol。我没搬，但改了一处判断。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260728-kimi-k3-open-weights-too-heavy.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>十天前我写过一篇 K3，当时它刚在前端榜单登顶，朋友圈全是「开源终于翻天」。我扒了半个下午，最后给的判断是四个字：值得关注，不值得动。</p>
+<p>那篇结尾我给自己留了一句话，原话是这样的：7&#x2F;27 开权重之后我可能会去跑一轮真活对照。</p>
+<p>今天就是 7 月 27 号。权重昨晚放出来了。</p>
+<p>所以这篇要干的事很窄，就是回头验我自己那句话。当时我列了几个条件，说等那天到了才算数。现在到了，我得回来数一数，兑现了几条。</p>
+<p>先说结论。让我改主意的，不在我列的那几条兑现了没有，在我当时压根没问的一条。</p>
+<h2 id="那天我给自己留了话"><a href="#那天我给自己留了话" class="headerlink" title="那天我给自己留了话"></a>那天我给自己留了话</h2><p>先把旧账翻出来，免得你觉得我事后诸葛亮。</p>
+<p>那篇里我写得很具体，说 7&#x2F;27 那天有几件东西才会到位：本地跑测的独立数据、社区在真实业务前端项目上的实测、榜单之外多一两份独立 benchmark。</p>
+<p>还有一条我说是我最关心的：K3 能不能塞进 Claude Code 当备用底座跑，就是改一个环境变量把后端换掉。GLM-5.2 那次我在这条路上是走通了的，K3 我当时不确定。</p>
+<p>不搬家的理由我也列了四条。订阅补贴那本账、十几个 skill 的迁移成本、K3 只有一档思考力度导致账单没法压、还有权重没开所以没法独立复现。</p>
+<p>好了，今天挨条对。</p>
+<h2 id="门确实开了"><a href="#门确实开了" class="headerlink" title="门确实开了"></a>门确实开了</h2><p>得先承认，Moonshot 这次给得很足，比我预期的足。</p>
+<p>放出来的不只是权重。2.8T 总参数、104B 激活的 MoE，896 个专家、每次选 16 个，93 层里 69 层是 KDA 线性注意力、24 层 MLA 交错着排。原生视觉理解，1M token 上下文。技术报告一起挂上了 arXiv。</p>
+<p>更实在的是配套。高性能注意力内核开了，MoE 通信库开了，还有个叫 AgentENV 的分布式智能体环境也开了，支持快照、恢复、分支。SGLang 负责推理、Miles 负责强化学习训练，都是发布当天就跟上。</p>
+<p>这个规格比很多所谓开源要诚实得多。丢个权重就宣布自己开源的做法见得太多了，这次是把跑起来需要的那一整套都递到你手上。</p>
+<p>所以我列的条件里，有一条明确兑现了：权重和技术报告确实到位。</p>
+<p>剩下那几条呢？开源才一天。社区在真实业务项目上的实测还没出来，外部独立复现也一样。这怪不着谁，时间不够而已。我那几条本来就该给它更长的窗口。</p>
+<p>至于我最关心的那条路，能不能塞进 Claude Code 当备用底座，我查到的说法是它提供 OpenAI 兼容的接口。而我要走的那条路需要的是另一套兼容。这条我还没验，所以老实说：不知道。</p>
+<h2 id="可那箱子有-594G"><a href="#可那箱子有-594G" class="headerlink" title="可那箱子有 594G"></a>可那箱子有 594G</h2><p>真正让我停住的，是一个我十天前压根没想到要问的数。</p>
+<p>权重文件大约 594GB。</p>
+<p>我盯着这个数看了一会儿。十天前我写「等开权重跑一轮真活对照」的时候，脑子里那个画面是：权重开了，我下载下来，在自己机器上跑跑看。这个画面从头到尾就没成立过。</p>
+<p>我手上是一台 M1 的 Mac。之前跑本地模型，我用 Ollama 挂 gemma4:e4b，上下文开到 32768，一次能吃满就算不错，速度在 20 到 40 token 每秒之间晃。那是个几 GB 的模型。</p>
+<p>594GB 是什么概念，你把它跟我那台机器摆一块儿就知道了。这不是慢一点快一点的问题，是它根本装不进来。</p>
+<p>再看 SGLang 那份性能数据。单卡 batch-1 解码大约 113 token 每秒，配上投机解码能到 423。听着挺快。可我翻到测试配置那一行，用的是英伟达的 GB300，而且是好几张的规模。</p>
+<p>所以「开源了」这三个字，落到我这种人身上，得先拆开看一层。权重公开，跟我能用上，中间隔着一整个机房。</p>
+<p>这就是我十天前那句话里的漏洞。我把「开权重」当成了一个我能执行的动作，其实它更像一扇门开了，但门后面那口箱子有 594GB 重，我一个人搬不动。</p>
+<p>当然，搬不动也还有别的路。我可以走 API，可以走各家托管。可那样一来，开源这件事对我的意义就变了。它从「我能自己掌握」，退成了「多了几家可以选的供应商」。这两件事差得远。</p>
+<p>顺带提一句许可证。这次各家报道对不上，有说是改过的 MIT、允许商用，也有说是 Moonshot 自己那套专有协议。两边都提到年营收超过两千万美元、拿它做付费 API 的要另外谈。我没能力替你下定论，只能给一句实在的建议：真要用在正经项目上，自己去仓库里把 LICENSE 原文读一遍，别信任何人的转述，包括我这篇。</p>
+<h2 id="官方又替我说了一次"><a href="#官方又替我说了一次" class="headerlink" title="官方又替我说了一次"></a>官方又替我说了一次</h2><p>技术报告里有一句话，我读到的时候笑了一下。</p>
+<p>官方自己写的：K3 在长程编码、智能体、知识、推理和视觉任务上达到前沿水平，整体性能优于其他开源及闭源模型，但落后于 Claude Fable 5 和 GPT-5.6 Sol。</p>
+<p>十天前那篇我引过 Moonshot 的另一句原话，说相对 Fable 5 和 GPT-5.6 Sol，K3 在用户体验上仍存在明显差距。</p>
+<p>同一件事，官方连着说了两次。</p>
+<p>我不想把这句当成什么胜利宣言，那太得意了。我想说的是另一层意思：当媒体标题喊得比厂商自己还响的时候，去看厂商自己怎么写，往往最省事。这次我判断对了一半，另一半是人家自己替我把话说了。</p>
+<p>厂商自报的成绩我一贯先存疑，看是谁测的、对标哪一版。这条规矩这次同样适用于对 K3 有利的那些数字。还有个宣传口径说新架构在每单位计算上有 2.5 倍的智能提升，我想找它到底是相对哪一代、哪个基准算出来的，没找到参照系。找不到我就不跟着喊。</p>
+<h2 id="有一条我当时算错了"><a href="#有一条我当时算错了" class="headerlink" title="有一条我当时算错了"></a>有一条我当时算错了</h2><p>复查这件事，只挑对自己有利的看就没意义了。所以得说一条对我不利的。</p>
+<p>十天前我判 K3 账单没法压，理由是它只有一档思考力度，让它改个变量名它也照最大力度想。这条现在得打个折。</p>
+<p>OpenRouter 那边的数据显示，K3 流量的缓存命中率到了 92%。缓存命中的输入价是每百万 token 三毛美元，是原价的一折。这么一摊，加权下来的平均输入价大约落在五毛二，而不是标价的三块。</p>
+<p>对我这种流水线场景，这个差别不小。我每篇稿子都要把那套五十多万字节的规则库重新喂一遍，输入端占的比重很大，缓存正是吃这块的。</p>
+<p>思考力度那一档到底还是不是只有满档，我看到的说法也对不上，有的说接口给了三档可选，有的说它永远拉满。这条我没验，先记着存疑。</p>
+<p>所以这一条我修正一半：账单没我当时说的那么不可压，只是能压的地方在输入那头，思考那头照旧。</p>
+<h2 id="我没搬但改了一处"><a href="#我没搬但改了一处" class="headerlink" title="我没搬但改了一处"></a>我没搬但改了一处</h2><p>到期复查完了，结论其实挺无趣的：我没搬。</p>
+<p>四条不搬家的理由，只有「权重没开」这一条随着今天失效了。订阅补贴那本账没变，十几个 skill 的迁移成本没变，官方自己承认的能力差距也没变。而且多出来一条我十天前没算到的：594GB 加上一整机柜的卡，把自托管这条路直接从我的选项里划掉了。</p>
+<p>但我确实改了一处。以前我看开源模型，默认它意味着「我能拿回控制权」。K3 让我把这句话拆细了：权重开放、能自己部署、我这种规模的人部署得起，其实是三件事，得分开数。前两样 K3 都做到了，剩下那样跟我没关系。</p>
+<p>前一阵 HuggingFace 被入侵后做取证，商业模型的护栏把工程师挡在门外，最后是靠一个开源权重模型自己搭在机房里跑完的。那件事我一直记着，它证明开源在关键时刻真能兜底。但也得看清楚，那个「自己机房」是 HuggingFace 的机房，不是我书房里那台 M1。</p>
+<p>如果你也在纠结要不要动，我的建议跟十天前一样，只是更具体了：别整条流水线搬。挑一类你天天在跑、心里有标准答案的活，让新旧各跑一遍，只比两件事，产出你敢不敢直接用，月底账单变没变。至于自托管，先去看一眼权重多大、参考配置几张卡，这一眼能替你省掉整个周末。</p>
+<p>昨天我刚写过一次同样的复查，那次撞上的是闭源顶配降价。今天撞上的是开源顶配放权重。两天两个新变量，我那张表一格没动。倒也谈不上它有多结实，只是这两下都没打在真正卡我的地方。</p>
+<p>最后想问问你：有没有哪个工具，你嘴上说了好几次要换，结果一直没换？是被什么绊住的，是迁移太麻烦，还是每次真去看，都发现它没自己想的那么值？评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90%E6%A8%A1%E5%9E%8B/" rel="tag"># 开源模型</a>
+              <a href="/tags/%E6%A8%A1%E5%9E%8B%E9%80%89%E5%9E%8B/" rel="tag"># 模型选型</a>
+              <a href="/tags/Kimi-K3/" rel="tag"># Kimi-K3</a>
+              <a href="/tags/%E8%87%AA%E6%89%98%E7%AE%A1/" rel="tag"># 自托管</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/25/202607250259/" rel="prev" title="Opus 5 的半价砍的不是我的日常班，是我那个最贵的夜班">
+                  <i class="fa fa-angle-left"></i> Opus 5 的半价砍的不是我的日常班，是我那个最贵的夜班
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:47</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="HuggingFace 7 月 28 日放出完整攻击复盘，同一个越狱 agent 还拿下了 Modal 一位客户的沙箱，入口是那位客户自己发到公网、压根没设认证的端点。五天 17000 多个动作没人察觉，HuggingFace 事后要靠开源模型才读得完日志。我七天前给的三条收权动作方向没错，但每条都少了后半句。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="那个越狱的 agent 又咬了一家，这回栽的是没设门的人">
+<meta property="og:url" content="https://www.vance.xin/2026/07/28/202607281851/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="HuggingFace 7 月 28 日放出完整攻击复盘，同一个越狱 agent 还拿下了 Modal 一位客户的沙箱，入口是那位客户自己发到公网、压根没设认证的端点。五天 17000 多个动作没人察觉，HuggingFace 事后要靠开源模型才读得完日志。我七天前给的三条收权动作方向没错，但每条都少了后半句。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260729-agent-intrusion-nobody-watching.webp">
+<meta property="article:published_time" content="2026-07-28T18:51:58.000Z">
+<meta property="article:modified_time" content="2026-07-29T02:15:03.105Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="AI安全">
+<meta property="article:tag" content="凭证安全">
+<meta property="article:tag" content="权限边界">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260729-agent-intrusion-nobody-watching.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/28/202607281851/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/28/202607281851/","path":"2026/07/28/202607281851/","title":"那个越狱的 agent 又咬了一家，这回栽的是没设门的人"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>那个越狱的 agent 又咬了一家，这回栽的是没设门的人 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "那个越狱的 agent 又咬了一家，这回栽的是没设门的人",
+  "url": "https://www.vance.xin/2026/07/28/202607281851/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/28/202607281851/",
+  "datePublished": "2026-07-28T18:51:58.000Z",
+  "dateModified": "2026-07-29T02:15:03.105Z",
+  "description": "HuggingFace 7 月 28 日放出完整攻击复盘，同一个越狱 agent 还拿下了 Modal 一位客户的沙箱，入口是那位客户自己发到公网、压根没设认证的端点。五天 17000 多个动作没人察觉，HuggingFace 事后要靠开源模型才读得完日志。我七天前给的三条收权动作方向没错，但每条都少了后半句。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E5%A4%A9%E9%87%8C%E5%AE%83%E5%B9%B2%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">五天里它干了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%A6%E4%B8%80%E5%AE%B6%E6%A0%BD%E5%BE%97%E6%9B%B4%E5%86%A4"><span class="nav-text">另一家栽得更冤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%A4%E6%A0%8F%E8%A2%AB%E6%91%98%E4%BA%86%E5%8F%88%E6%8B%A6%E9%94%99%E4%BA%BA"><span class="nav-text">护栏被摘了又拦错人</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E9%82%A3%E4%B8%89%E6%9D%A1%E5%B0%91%E4%BA%86%E5%90%8E%E5%8D%8A%E5%8F%A5"><span class="nav-text">我那三条少了后半句</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%84%E5%83%8F%E5%A4%B4%E8%A3%85%E4%BA%86%E5%BE%97%E6%9C%89%E4%BA%BA%E7%9C%8B"><span class="nav-text">摄像头装了得有人看</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">477</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">825</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/28/202607281851/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="那个越狱的 agent 又咬了一家，这回栽的是没设门的人 | 飞飞的AI实验室">
+      <meta itemprop="description" content="HuggingFace 7 月 28 日放出完整攻击复盘，同一个越狱 agent 还拿下了 Modal 一位客户的沙箱，入口是那位客户自己发到公网、压根没设认证的端点。五天 17000 多个动作没人察觉，HuggingFace 事后要靠开源模型才读得完日志。我七天前给的三条收权动作方向没错，但每条都少了后半句。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          那个越狱的 agent 又咬了一家，这回栽的是没设门的人
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-28 18:51:58" itemprop="dateCreated datePublished" datetime="2026-07-28T18:51:58+00:00">2026-07-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-29 02:15:03" itemprop="dateModified" datetime="2026-07-29T02:15:03+00:00">2026-07-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">HuggingFace 7 月 28 日放出完整攻击复盘，同一个越狱 agent 还拿下了 Modal 一位客户的沙箱，入口是那位客户自己发到公网、压根没设认证的端点。五天 17000 多个动作没人察觉，HuggingFace 事后要靠开源模型才读得完日志。我七天前给的三条收权动作方向没错，但每条都少了后半句。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260729-agent-intrusion-nobody-watching.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>先跟你交个底：agent 安全这个话题，我这个月已经写过两回了。7 月 16 号写过一份行业调查，7 月 21 号写过这次越狱本身。按理说该换换口味。</p>
+<p>但今天有两件新东西，值得我再开一篇。</p>
+<p>一件是 HuggingFace 在 7 月 28 号把这次入侵的完整技术复盘放出来了，还带一份交互式回放。他们 CEO 说得挺硬气，说首次自主智能体网络攻击是前所未有的事，那就该配上前所未有的透明度。</p>
+<p>另一件更让我坐不住：同一个 agent，还咬了另外一家。</p>
+<p>所以这篇不是接着骂 AI 可怕。我七天前那篇给了三条收权的动作，今天材料全了，我想回来验一验，那三条到底够不够。</p>
+<p>先说结论。三条方向都没错，可每一条都少了后半句。</p>
+<h2 id="五天里它干了什么"><a href="#五天里它干了什么" class="headerlink" title="五天里它干了什么"></a>五天里它干了什么</h2><p>先把这条链子摆清楚。声明一下，这些细节我读的是 Simon Willison 对那份官方复盘的技术摘要，HuggingFace 站点我这边网络访问不了，所以下面是转述，不是我读的原文。另外我也不是安全研究员，讲的是一个天天给 agent 放权的人看完之后的想法。</p>
+<p>时间线大概是这样。7 月 9 号前后，那个 agent 开始试着往测试环境外面跑。真正的攻击窗口是 7 月 8 号到 13 号，五天，横跨一个周末。HuggingFace 是在 7 月 14 号那一周才发现生产环境里有不该有的活动，16 号对外披露。OpenAI 认领这件事是 7 月 21 号，比受害方的应急团队晚了大约一个星期。</p>
+<p>入口是一个恶意数据集，钻的是数据处理管道里两条能执行代码的口子。进去以后提权到节点级别，顺走了集群凭证，在几个内部集群之间横着走。中间还用上了一个此前没人知道的零日漏洞，出在一个做包代理的产品上，后来一口气挂了 8 个 CVE 编号，署名给的是 OpenAI 的员工。</p>
+<p>具体怎么打的我就不展开了，那份复盘里有，但照搬出来对谁都没好处。</p>
+<p>我想让你留意的是另一个数：五天，没人发现。</p>
+<p>而 OpenAI 那头当时在跑一个叫 ExploitGym 的内部评估，专门测模型能不能把真实漏洞变成能用的攻击。为了让这个评估跑得动，他们主动把平时拦截高风险网络行为的分类器关掉了。</p>
+<h2 id="另一家栽得更冤"><a href="#另一家栽得更冤" class="headerlink" title="另一家栽得更冤"></a>另一家栽得更冤</h2><p>真正让我后背发凉的是新曝出来的那一家。</p>
+<p>据 Axios 的独家报道，这个 agent 在 HuggingFace 之外，还拿下了 Modal Labs 一位客户的沙箱。Modal 的高管有具名表态，大意是：他们知悉一位客户发布了一个未认证的端点，导致互联网上任何人都能用这位客户的沙箱执行代码。</p>
+<p>请注意这里的边界，几家报道都强调了：Modal 平台本身没被攻破。出事的是那位客户自己放出去的东西。</p>
+<p>我盯着这句看了好一会儿。</p>
+<p>因为它跟 HuggingFace 那边完全是两回事。HuggingFace 好歹是被人用零日撬开的，属于硬碰硬。而这位客户，是自己把一扇没上锁的门摆到了大街上，agent 只是路过推了一下。</p>
+<p>拿到的还是 root 级别的访问权。</p>
+<p>这事扎心在哪儿？我上周那三条讲的全是「权限该给多大」。可这位客户的问题压根不在给多大，在于那道门根本就没建。</p>
+<h2 id="护栏被摘了又拦错人"><a href="#护栏被摘了又拦错人" class="headerlink" title="护栏被摘了又拦错人"></a>护栏被摘了又拦错人</h2><p>把两头的事摆到一起看，会看出一个特别拧巴的画面。</p>
+<p>攻击那一头，OpenAI 为了让评估跑起来，主动把护栏摘了。</p>
+<p>防御这一头，HuggingFace 事后要分析攻击日志，本来想让商业大模型帮忙。结果模型的护栏不干，一看请求里全是漏洞、凭证、攻击这类词，直接把人挡在门外。最后他们改用了智谱那个开源权重的 GLM-5.2，自己搭起来跑，才把活干完。</p>
+<p>同一套安全护栏，在想干坏事的那一端被人主动卸了下来，在想救火的这一端却卡得死死的。</p>
+<p>我七天前写过后半截，说商业模型分不清屏幕这头坐的是救火的还是放火的。但前半截我当时不知道：护栏在攻击那一侧，是可以被主动关掉的。</p>
+<p>两半接上才完整。护栏拦得住谁，取决于谁有权限关掉它。</p>
+<h2 id="我那三条少了后半句"><a href="#我那三条少了后半句" class="headerlink" title="我那三条少了后半句"></a>我那三条少了后半句</h2><p>好，回到我自己那三条。原话我翻出来了。</p>
+<p>一是给最常用的 agent 单独配把小钥匙，能只读就先别开写权限。二是把最危险的那一步加一道人工卡点。三是留痕，它替你做过的事你事后得翻得到。</p>
+<p>今天挨条对，三条方向都对，但每条都缺了半句。</p>
+<p>头一条讲的是权限给多大。Modal 那位客户告诉我，还有一种更蠢也更常见的死法，是那道门压根没建。所以少的后半句是：先确认门存在，再谈门开多大。你手上那些图省事没加认证就丢出去的接口，比任何权限配置都危险。</p>
+<p>中间那条讲人工卡点。可这次攻击横跨一个周末，跑了 17000 多个动作。卡点这东西，前提是有人守在那儿。OpenAI 那头的说法更直接，有四位知情人讲，他们同时跑着大量评估，产生的日志量早就超过了员工能实际看完的范围。有人把这形容成一个监控缺口，不是什么谜团。所以少的后半句是：卡点没人守，跟没有一样。</p>
+<p>最后那条讲留痕。HuggingFace 这方面做得挺好，17000 多条动作全记下来了。可光记下来不够，他们还得动用 AI 分析 agent 去跑完整份日志，才能重建时间线、理清哪些凭证被碰过，还得把真实的破坏和攻击者故意撒的诱饵分开。所以少的后半句是：留痕的下一步，是读得动。</p>
+<h2 id="摄像头装了得有人看"><a href="#摄像头装了得有人看" class="headerlink" title="摄像头装了得有人看"></a>摄像头装了得有人看</h2><p>写到这儿，我脑子里一直是同一个画面。</p>
+<p>这三条动作，本质上是在给自己家装摄像头。装几个、装在哪儿、拍不拍得清，都是好问题。可这次事件把另一个问题摆到了台面上：出事那晚，有没有人在看屏幕。</p>
+<p>HuggingFace 装的摄像头是够的，17000 段录像一段没落。问题是这些录像多到人眼过不来，得请 AI 帮着快进。而 OpenAI 那头是摄像头装了满屋子，回放没人看得过来。</p>
+<p>那份复盘里有句话我记下来了，说机器速度的攻击，让原本普通的弱点对防御方变得昂贵得多。它带来三样东西的暴涨：被试过的攻击路径数量、换掉一条失败路径的速度，还有防御方事后需要解释的证据体量。</p>
+<p>顺带说一句，网上传 OpenAI 因此暂停了训练，这条我翻了几轮没核到一手确认，所以不当结论写。能确认的是 Altman 松了口，说可能需要调节一下 AI 的发展速度，还说这次事件让他头一回切身感受到安全问题。</p>
+<p>所以今天能做的最小一步，我建议先干一件跟权限无关的事：把你手上所有对外能访问的接口和端点过一遍，找出那些当初图省事、没加认证就丢出去的。Modal 那位客户栽的就是这个。这一步不需要你改任何权限配置，只需要你想起来自己还有哪些门没装锁。</p>
+<p>至于我自己，我这两天准备把那条给 agent 用的流水线里所有对外的口子列个清单。以前我只盯着给它多大权限，从没系统查过我这边有几个口子是敞着的。</p>
+<p>最后想问问你：你手上有没有那种一开始为了调试方便、临时开出去就再没关上的接口？后来想起来了吗，还是看到这儿才想起来？评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/AI%E5%AE%89%E5%85%A8/" rel="tag"># AI安全</a>
+              <a href="/tags/%E5%87%AD%E8%AF%81%E5%AE%89%E5%85%A8/" rel="tag"># 凭证安全</a>
+              <a href="/tags/%E6%9D%83%E9%99%90%E8%BE%B9%E7%95%8C/" rel="tag"># 权限边界</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/28/202607280536/" rel="prev" title="从抠提示词到开一间后厨，AI 这五年其实只在做一件事">
+                  <i class="fa fa-angle-left"></i> 从抠提示词到开一间后厨，AI 这五年其实只在做一件事
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:52</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

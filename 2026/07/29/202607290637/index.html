@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="把 AI 工作画成流程图这套讲法我写过四篇了。这次有个新概念叫虚假连线，指没有真实数据依赖却被画上去的箭头。我拿它量自己那条八阶段流水线，发现沉淀和配图之间那条线是假的，而实际执行时我早就并行跑了，图和现实对不上。另有一条单写者规则我刚违反过。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="拿这把新尺子量了一遍，我那条流水线上有根线是假的">
+<meta property="og:url" content="https://www.vance.xin/2026/07/29/202607290637/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="把 AI 工作画成流程图这套讲法我写过四篇了。这次有个新概念叫虚假连线，指没有真实数据依赖却被画上去的箭头。我拿它量自己那条八阶段流水线，发现沉淀和配图之间那条线是假的，而实际执行时我早就并行跑了，图和现实对不上。另有一条单写者规则我刚违反过。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260729-fake-edge-pipeline-audit.webp">
+<meta property="article:published_time" content="2026-07-29T06:37:16.000Z">
+<meta property="article:modified_time" content="2026-07-29T13:44:26.525Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="多智能体">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="流程设计">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260729-fake-edge-pipeline-audit.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/29/202607290637/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/29/202607290637/","path":"2026/07/29/202607290637/","title":"拿这把新尺子量了一遍，我那条流水线上有根线是假的"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>拿这把新尺子量了一遍，我那条流水线上有根线是假的 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "拿这把新尺子量了一遍，我那条流水线上有根线是假的",
+  "url": "https://www.vance.xin/2026/07/29/202607290637/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/29/202607290637/",
+  "datePublished": "2026-07-29T06:37:16.000Z",
+  "dateModified": "2026-07-29T13:44:26.525Z",
+  "description": "把 AI 工作画成流程图这套讲法我写过四篇了。这次有个新概念叫虚假连线，指没有真实数据依赖却被画上去的箭头。我拿它量自己那条八阶段流水线，发现沉淀和配图之间那条线是假的，而实际执行时我早就并行跑了，图和现实对不上。另有一条单写者规则我刚违反过。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E5%8F%AB%E8%99%9A%E5%81%87%E8%BF%9E%E7%BA%BF"><span class="nav-text">什么叫虚假连线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E9%82%A3%E5%BC%A0%E5%9B%BE%E4%B8%8A%E6%9C%89%E6%A0%B9%E5%81%87%E7%BA%BF"><span class="nav-text">我那张图上有根假线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E8%B7%91%E7%9A%84%E6%97%B6%E5%80%99%E6%88%91%E6%97%A9%E5%B0%B1%E8%B7%B3%E8%BF%87%E4%BA%86"><span class="nav-text">实际跑的时候我早就跳过了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%98%E6%9C%89%E6%9D%A1%E8%A7%84%E7%9F%A9%E6%88%91%E5%88%9A%E8%BF%9D%E5%8F%8D%E8%BF%87"><span class="nav-text">还有条规矩我刚违反过</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E4%B8%AA-90-2-%E6%88%91%E6%A0%B8%E4%B8%8D%E5%88%B0"><span class="nav-text">那个 90.2% 我核不到</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E9%82%A3%E5%BC%A0%E5%9B%BE%E4%B8%8A%E7%9A%84%E5%81%87%E7%BA%BF%E5%9C%A8%E5%93%AA"><span class="nav-text">你那张图上的假线在哪</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">481</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">830</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/29/202607290637/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="拿这把新尺子量了一遍，我那条流水线上有根线是假的 | 飞飞的AI实验室">
+      <meta itemprop="description" content="把 AI 工作画成流程图这套讲法我写过四篇了。这次有个新概念叫虚假连线，指没有真实数据依赖却被画上去的箭头。我拿它量自己那条八阶段流水线，发现沉淀和配图之间那条线是假的，而实际执行时我早就并行跑了，图和现实对不上。另有一条单写者规则我刚违反过。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          拿这把新尺子量了一遍，我那条流水线上有根线是假的
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-29 06:37:16 / 修改时间：13:44:26" itemprop="dateCreated datePublished" datetime="2026-07-29T06:37:16+00:00">2026-07-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">把 AI 工作画成流程图这套讲法我写过四篇了。这次有个新概念叫虚假连线，指没有真实数据依赖却被画上去的箭头。我拿它量自己那条八阶段流水线，发现沉淀和配图之间那条线是假的，而实际执行时我早就并行跑了，图和现实对不上。另有一条单写者规则我刚违反过。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260729-fake-edge-pipeline-audit.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>先说个可能会劝退你的事：把 AI 工作画成一张流程图这套讲法，我已经写过四篇了。</p>
+<p>画架构图那篇我讲过五个零件，讲过图上总得留一个框给人。编排模式那篇我讲过指挥加子代理并行就是我那条流水线。还有一篇讲从事务管理到结果管理。</p>
+<p>按理说这个主题该歇歇了。</p>
+<p>这次我还是写了，因为这回手里多了一把新尺子。</p>
+<p>我最近看到一套讲法，把 AI 工作流当成图来做工程，里面有个词我以前没见过：<strong>虚假连线</strong>。</p>
+<p>我拿它量了一遍自己那条跑了两百多篇文章的流水线，量出两处我自己的问题。</p>
+<p>所以这篇不讲那套框架多好，讲我被它量出了什么。</p>
+<h2 id="什么叫虚假连线"><a href="#什么叫虚假连线" class="headerlink" title="什么叫虚假连线"></a>什么叫虚假连线</h2><p>先把这个概念讲清楚，就一句话。</p>
+<p>在这套讲法里，图上两个节点之间的箭头，只有当后一个节点<strong>真的需要前一个节点的产出</strong>时才成立。这叫真依赖。</p>
+<p>那种没有实际数据往来、纯粹因为「感觉应该先做这个再做那个」而画上去的箭头，就是虚假连线。</p>
+<p>它长得跟真箭头一模一样，但它不承载任何东西。</p>
+<p>这东西的危害跟占地方无关。<strong>它把本来能同时干的活，硬锁成了必须排队。</strong>你以为流程就该这么走，其实是自己给自己画了道栅栏。</p>
+<p>那套讲法的实施规则里，打头那条就是：<strong>先删掉虚假依赖，再去扩展系统</strong>。</p>
+<p>我看到这条的时候心里咯噔一下，因为我那条流水线从八个环节长起来，从来没人查过里面的线是真是假。</p>
+<h2 id="我那张图上有根假线"><a href="#我那张图上有根假线" class="headerlink" title="我那张图上有根假线"></a>我那张图上有根假线</h2><p>我去把自己那份编排配置翻出来，逐个环节抄了一遍它声明的输入。</p>
+<p>链条是这样的：采集拿到选题，写稿要采集的研究摘要，润色要写稿的文件，评阅要润色后的文件，接下来是沉淀和配图，然后分发，最后发布。</p>
+<p>文档里画的是一条直线，注意事项那里还写着必须按顺序执行、不可跳过。</p>
+<p>可我把那两个中间环节的输入抄出来一对，愣住了。</p>
+<p><strong>沉淀那一步，要的是润色阶段的检测结果。配图那一步，要的是评阅之后的文章文件。</strong></p>
+<p>它们俩谁也不需要谁。</p>
+<p>沉淀在写经验库，配图在生成封面，两件事从头到尾没有一个字节的数据往来。可它们在图上被画成了一前一后，还配了句不可跳过。</p>
+<p><strong>那根线是假的。</strong></p>
+<h2 id="实际跑的时候我早就跳过了"><a href="#实际跑的时候我早就跳过了" class="headerlink" title="实际跑的时候我早就跳过了"></a>实际跑的时候我早就跳过了</h2><p>更有意思的在后面。</p>
+<p>我翻了最近两篇文章的交付记录，两篇里都写着同一句话：沉淀和配图并行。而且确实是同时发起的，写经验库和生封面在同一个动作里一起跑。</p>
+<p>也就是说，<strong>文档里画着一条排队的线，我实际干活的时候早把它跳过去了。</strong></p>
+<p>图和现实对不上。而且这次是现实对，图错了。</p>
+<p>这事挺值得琢磨。那条假线是什么时候混进去的？大概是当初搭流水线的时候，脑子里有个顺序感：先总结教训，再去配图，听着就比较有条理。有条理不等于有依赖，可画图的时候这两样很容易混成一件事。</p>
+<p>后来真跑起来，效率会自己找路。跑了几十篇之后，实际执行早就绕开了那条线，只有文档还停在原地。</p>
+<p>所以我这次真正的收获，跟学到一个新词关系不大。<strong>是这个词头一回把我的眼睛从框上挪开，让我去查那些线。</strong></p>
+<h2 id="还有条规矩我刚违反过"><a href="#还有条规矩我刚违反过" class="headerlink" title="还有条规矩我刚违反过"></a>还有条规矩我刚违反过</h2><p>那套规则里还有一条：<strong>单个文件只允许一个写入者。</strong></p>
+<p>理由很实在，多个 agent 同时往一个文件里写，最后谁覆盖了谁根本查不清。</p>
+<p>我当下的反应是这条我肯定没问题。我那个越攒越厚的写作规则库，一直是由专门负责沉淀的那个环节在写，写了一百多篇训练日志。</p>
+<p>然后我去翻了那个文件的提交记录。</p>
+<p>前面七条都是沉淀环节写的，格式统一，每次记一篇。可中间夹着一条不一样的，是前两天我为了给那一百多条规则建索引，直接改的，没走沉淀那一环。</p>
+<p><strong>所以那个文件现在有两个写入者。</strong></p>
+<p>这条规矩我刚学到，就发现自己昨天才违反过。</p>
+<p>它目前还没出事，因为两个写入者写的是文件的不同位置，一个在开头加索引，一个在中间加日志。但这属于运气，不属于设计。真哪天两边同时动同一段，我大概率查不出是谁覆盖了谁。</p>
+<p>顺带说一条我做对了的。那套规则里有一句「验证者必须独立于执行的 agent」，说的是不能让干活的自己给自己打分。这条我这儿是分开的：评阅是独立的一环，打完分把重改派回给润色或写稿，改完再由评阅复核。干活的和验收的确实是两个角色。</p>
+<p>三条规矩量下来，一条做对了，两条露了馅。</p>
+<h2 id="那个-90-2-我核不到"><a href="#那个-90-2-我核不到" class="headerlink" title="那个 90.2% 我核不到"></a>那个 90.2% 我核不到</h2><p>得说个扫兴的。</p>
+<p>那套讲法里给了个数字，说这种拆开并行的做法比单个 agent 效率高 90.2%，括号里标着内部数据。</p>
+<p>这个数我没核到外部来源。公开资料里能查到的相近说法是「在能拆开的活上，团队式做法大约赢八成」，落在八成上下，跟 90.2% 对不齐。而且效率这个词怎么定义、拿什么测的，没交代。</p>
+<p>90.2% 这个精度看着像有过认真测量，可标着内部数据就意味着外人没法复核。我把它当方向看，不当结论用。</p>
+<p>倒是另一个数我认。它说这套并行做法烧的 token 是普通对话的十五倍，这个跟 Anthropic 之前公布的口径对得上，我以前引过。</p>
+<p>这也是为什么我不打算把整条流水线都改成并行。十五倍的账不是小数目，只有在那些真能拆开、拆开还能省时间的地方才值得。</p>
+<h2 id="你那张图上的假线在哪"><a href="#你那张图上的假线在哪" class="headerlink" title="你那张图上的假线在哪"></a>你那张图上的假线在哪</h2><p>所以这篇给你的东西很具体。</p>
+<p>如果你也有一条串起来的 AI 工作流，不管是几个 skill 还是几个手动步骤，今天可以做一件事：<strong>把每一步的输入抄出来，一步一步问，它到底要不要前一步的产出。</strong></p>
+<p>不要凭感觉，去看它实际读了什么文件、拿了什么数据。</p>
+<p>要，那条线是真的。不要，那就是你自己画上去的栅栏。</p>
+<p>我自己下一步准备把配置里那条假线拆掉，让沉淀和配图正式并行，顺便把它俩的输入写清楚，各自依赖谁就写谁，别再笼统写一句上一步。至于那个双写入者，我打算把索引那块单独挪出来，让规则库回到只有一个写入者的状态。</p>
+<p>真正拖慢一条流水线的，不在哪一步跑得慢，在图上那几条根本不该存在的线。</p>
+<p>最后想问问你：你手上那条工作流里，有没有哪两步其实互不相干，只是你一直习惯先做完这个再做那个？评论区说说是哪两步，我挺好奇大家的假线都长在哪儿。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># 多智能体</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E6%B5%81%E7%A8%8B%E8%AE%BE%E8%AE%A1/" rel="tag"># 流程设计</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/29/202607290346/" rel="prev" title="说 1224 人联名喊减速的，多半没点开那份原文">
+                  <i class="fa fa-angle-left"></i> 说 1224 人联名喊减速的，多半没点开那份原文
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">24:01</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

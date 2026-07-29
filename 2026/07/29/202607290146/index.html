@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Gemini 的 Managed Agents 新增环境钩子，能在工具调用前后跑脚本，返回 deny 就把那次调用直接拦掉、拒绝理由还自动进模型上下文。我两周前刚写文章推荐给 Claude Code 配三个 hook，今天打开自己的配置一看，那三个一个都没有，permissions.deny 是零条。上周我说卡点没人守等于没有，我这儿更省事，压根没装。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="别急着夸 Gemini 的新钩子，先看你的 deny 是不是空的">
+<meta property="og:url" content="https://www.vance.xin/2026/07/29/202607290146/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Gemini 的 Managed Agents 新增环境钩子，能在工具调用前后跑脚本，返回 deny 就把那次调用直接拦掉、拒绝理由还自动进模型上下文。我两周前刚写文章推荐给 Claude Code 配三个 hook，今天打开自己的配置一看，那三个一个都没有，permissions.deny 是零条。上周我说卡点没人守等于没有，我这儿更省事，压根没装。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260729-gemini-env-hooks-empty-deny.webp">
+<meta property="article:published_time" content="2026-07-29T01:46:50.000Z">
+<meta property="article:modified_time" content="2026-07-29T10:42:26.264Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Gemini">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="Hook">
+<meta property="article:tag" content="放权边界">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260729-gemini-env-hooks-empty-deny.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/29/202607290146/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/29/202607290146/","path":"2026/07/29/202607290146/","title":"别急着夸 Gemini 的新钩子，先看你的 deny 是不是空的"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>别急着夸 Gemini 的新钩子，先看你的 deny 是不是空的 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "别急着夸 Gemini 的新钩子，先看你的 deny 是不是空的",
+  "url": "https://www.vance.xin/2026/07/29/202607290146/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/29/202607290146/",
+  "datePublished": "2026-07-29T01:46:50.000Z",
+  "dateModified": "2026-07-29T10:42:26.264Z",
+  "description": "Gemini 的 Managed Agents 新增环境钩子，能在工具调用前后跑脚本，返回 deny 就把那次调用直接拦掉、拒绝理由还自动进模型上下文。我两周前刚写文章推荐给 Claude Code 配三个 hook，今天打开自己的配置一看，那三个一个都没有，permissions.deny 是零条。上周我说卡点没人守等于没有，我这儿更省事，压根没装。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E7%BB%99%E7%9A%84%E6%98%AF%E8%83%BD%E6%8B%A6%E7%9A%84%E9%97%B8"><span class="nav-text">它给的是能拦的闸</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E5%91%A8%E5%89%8D%E6%88%91%E5%86%99%E8%BF%87%E4%B8%80%E6%A8%A1%E4%B8%80%E6%A0%B7%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="nav-text">两周前我写过一模一样的东西</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%89%93%E5%BC%80%E9%85%8D%E7%BD%AE%E4%B8%80%E7%9C%8B"><span class="nav-text">我打开配置一看</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E9%82%A3%E5%8F%A5%E8%AF%9D%E8%AF%B4%E6%BC%8F%E4%BA%86%E5%8D%8A%E6%88%AA"><span class="nav-text">我那句话说漏了半截</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E5%87%86%E4%BB%B6%E8%A7%A3%E5%86%B3%E4%B8%8D%E4%BA%86%E8%BF%99%E4%B8%80%E6%AD%A5"><span class="nav-text">标准件解决不了这一步</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8A%E5%A4%A9%E5%B0%B1%E6%8A%8A%E9%97%B8%E8%A1%A5%E5%9B%9E%E5%8E%BB"><span class="nav-text">今天就把闸补回去</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">479</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">826</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/29/202607290146/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="别急着夸 Gemini 的新钩子，先看你的 deny 是不是空的 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Gemini 的 Managed Agents 新增环境钩子，能在工具调用前后跑脚本，返回 deny 就把那次调用直接拦掉、拒绝理由还自动进模型上下文。我两周前刚写文章推荐给 Claude Code 配三个 hook，今天打开自己的配置一看，那三个一个都没有，permissions.deny 是零条。上周我说卡点没人守等于没有，我这儿更省事，压根没装。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          别急着夸 Gemini 的新钩子，先看你的 deny 是不是空的
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-29 01:46:50 / 修改时间：10:42:26" itemprop="dateCreated datePublished" datetime="2026-07-29T01:46:50+00:00">2026-07-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Gemini 的 Managed Agents 新增环境钩子，能在工具调用前后跑脚本，返回 deny 就把那次调用直接拦掉、拒绝理由还自动进模型上下文。我两周前刚写文章推荐给 Claude Code 配三个 hook，今天打开自己的配置一看，那三个一个都没有，permissions.deny 是零条。上周我说卡点没人守等于没有，我这儿更省事，压根没装。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260729-gemini-env-hooks-empty-deny.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>Google 前几天给 Gemini 的 Managed Agents 加了个功能，叫环境钩子。</p>
+<p>先撇清一下，Managed Agents 这东西我在 I&#x2F;O 那阵写过一次，讲的是它把沙箱、工具、浏览器打包成一次 API 调用。今天这篇跟那个没关系，只盯新加的这一样。</p>
+<p>环境钩子干的事，一句话说清：<strong>在 agent 每次调用工具的前后，插一段你自己的脚本</strong>。官方点名了两个用途，安全审查和代码格式化。</p>
+<p>我看到这两个词的时候乐了一下。因为两周前我刚写过一篇文章，讲的就是怎么给 Claude Code 配这种东西。</p>
+<p>然后我干了件事，打开自己的配置看了一眼。</p>
+<p>看完有点想笑，也有点笑不出来。</p>
+<h2 id="它给的是能拦的闸"><a href="#它给的是能拦的闸" class="headerlink" title="它给的是能拦的闸"></a>它给的是能拦的闸</h2><p>先把这个功能讲准，尤其是最要紧的那一点。</p>
+<p>挂载点有两个，一个卡在工具执行之前，一个卡在执行之后。配置写在一个叫 hooks.json 的文件里，脚本跑在远程沙箱内部。</p>
+<p>真正决定这功能值不值钱的，是下面这条。</p>
+<p>你的脚本可以返回一个 deny，附上理由。这时候那次工具调用会被直接跳过，<strong>而且拒绝的理由会被送进模型的上下文里</strong>。</p>
+<p>这一下就把它跟「只能看不能拦」的监控区分开了。它不只是在旁边记账，能真把手伸出去按住。</p>
+<p>另外还有个预算上限，设一个最大 token 数，到顶了交互会返回一个未完成状态，你可以拿上次的 interaction id 接着跑。免费套餐也开了，不过官方只说了无账单的项目能试，没给具体额度，那我就不编数字。cron 定时触发也提了一句，粒度没说。</p>
+<p>说明一下，这些我都没上手跑过，是读完官方文档之后的判断，不是实测报告。</p>
+<h2 id="两周前我写过一模一样的东西"><a href="#两周前我写过一模一样的东西" class="headerlink" title="两周前我写过一模一样的东西"></a>两周前我写过一模一样的东西</h2><p>现在说说我为什么乐。</p>
+<p>7 月 14 号我写过一篇，讲 hook。当时我给自己配了三样。</p>
+<p>一个是类型检查。我在 CLAUDE.md 里写过「改完代码跑一遍类型检查」，但那是建议式的，长会话上下文一压缩它转头就忘。后来我换成 hook，编辑完文件自动跑检查，报错就用 exit 2 把这步堵死。我当时的原话是：exit 2 这个返回码是命门，它不是提个醒，是真把这步堵死，Claude 不修好就过不去。</p>
+<p>一个是格式化，三行配置，它一动文件就自动跑 Prettier。</p>
+<p>还有一个是防手贱。我卡在它执行命令之前，配上 permissions.deny，把带通配符的删除、强制推送这种一锤子买卖的命令直接拦掉。原话是：它再自信，这道闸也得先问过我。</p>
+<p>那篇文章我还总结了一句自认为挺精辟的分层：CLAUDE.md 管记忆，skill 管流程，hook 管纪律。</p>
+<p>你看，Google 这次给的东西，跟我两周前手搓的那套是一回事。执行前后各一个挂载点，能返回拒绝，能拦住。我用 exit 2，它用 deny，形状一样。</p>
+<p>区别在于，我那套是自己一条条抠出来的土法，只在 Claude Code 里有效。它把这件事做成了标准件，写在一个配置文件里，跑在自己的沙箱内。</p>
+<p>而且有一点它做得比我好。我的 hook 拦下来之后，得我自己把错误甩回去让模型重来。它是拒绝理由自动进上下文，模型当场就知道自己为什么被拦。这个差别不大，但少一道手工活。</p>
+<h2 id="我打开配置一看"><a href="#我打开配置一看" class="headerlink" title="我打开配置一看"></a>我打开配置一看</h2><p>好，说回我为什么又笑不出来。</p>
+<p>写完那篇文章两周，今天我打开自己的配置文件看了看。查了两个地方，项目里的一个，全局的一个。</p>
+<p>我文章里推荐的那三样，<strong>一个都不在</strong>。</p>
+<p>类型检查的 hook，没有。格式化的 hook，没有。那道我专门写过一段、说「它再自信也得先问过我」的防手贱闸门，permissions.deny 里躺着零条规则。</p>
+<p>我现在真正配着的 hook 只有两个，一个 SessionEnd，一个 Stop。点开一看，都是往 token 用量统计工具发通知的脚本。也就是说，我唯一还活着的两个 hook，干的是记账，跟纪律一点关系没有。</p>
+<p>说句公道话，我不能断言自己从来没配过。可能是换过机器，可能是某次清理配置顺手删的，也可能配在别的项目里。我能确认的只有一件事：<strong>今天我打开的这两个文件里，那几道闸是空的。</strong></p>
+<p>更让我坐不住的是上周那篇。当时我复查自己给过的收权建议，其中一条讲人工卡点，我给的补充是：卡点这东西，前提是有人守在那儿，<strong>卡点没人守，跟没有一样</strong>。</p>
+<p>现在轮到我自己身上，情况还更省事。谈守不守都太早了，那道闸压根就没装。</p>
+<h2 id="我那句话说漏了半截"><a href="#我那句话说漏了半截" class="headerlink" title="我那句话说漏了半截"></a>我那句话说漏了半截</h2><p>坐下来想了想，我发现自己那句话有个盲区。</p>
+<p>「卡点没人守等于没有」，这句话默认了一个前提：闸已经装上了，只是没人盯。可我这次的情况还要往前一步，<strong>闸根本就没建起来</strong>。</p>
+<p>这两件事的成因完全不同。没人守是精力问题，装不上人手。而闸没装，纯粹是因为它不装也不报错。</p>
+<p>这就是配置类东西最阴的地方。你少写一条 deny 规则，今天不会有任何提示，明天也不会，一直到某个 agent 真的执行了一条你不想让它跑的命令，你才知道那儿本来该有道闸。我之前踩过类似的坑：一个部署用的令牌悄悄过期，构建全绿，只有最后一步推不上去，网站红了整整一天我才发现。都是同一个病，<strong>缺席的东西不会举手</strong>。</p>
+<p>回头看我写那篇 hook 文章时给的判据，其实是对的：同一条规矩它反复不听，就别指望它自觉，钉成 hook。那时候我是被坑够了才划出这条线。</p>
+<p>坑归坑，配置该掉还是会掉。</p>
+<h2 id="标准件解决不了这一步"><a href="#标准件解决不了这一步" class="headerlink" title="标准件解决不了这一步"></a>标准件解决不了这一步</h2><p>所以 Google 这次做的事，到底帮我解决了什么？</p>
+<p>有两样是真解决了。一是可移植，纪律不再是各家工具各写一套语法，配置文件挪一挪就能带走。二是拒绝理由回喂模型，省掉我手工转达那一下。</p>
+<p>但有一样它替不了，而且这一样恰恰是我今天栽的地方：<strong>装不装、拦哪几条，还是得有个人坐下来把规则写出来</strong>。</p>
+<p>Google 给的是一副更好用的闸门零件。至于门口该不该站人，它管不着。我那三条规则丢了，怪不到工具头上，是我自己写完文章之后就没再管。</p>
+<p>说到底，真正拦住 agent 的，不在工具给不给你这个钩子，在有没有人坐下来把那条规则写出来。</p>
+<p>这话不是给 Google 泼冷水。工具做到标准件这一层已经很值钱了，剩下那一步本来就不该指望它。我只是提醒我自己：这次别又写完文章就完了。</p>
+<h2 id="今天就把闸补回去"><a href="#今天就把闸补回去" class="headerlink" title="今天就把闸补回去"></a>今天就把闸补回去</h2><p>所以这篇的可执行动作，我先给自己。</p>
+<p>我准备做的是把那道防手贱的规则补回 permissions.deny，起手就拦两类：带通配符的删除，和强制推送。这两样错一次很难收回，正好符合我自己那条判据。</p>
+<p>给你的动作更简单，一分钟的事：<strong>打开你的配置文件，看一眼 deny 那一栏是不是空的。</strong></p>
+<p>不用改任何东西，先看一眼就行。你可能跟我一样，以为自己早就配好了。</p>
+<p>判断该拦哪几条也有现成的尺子，用我那条老判据就够：<strong>同一条规矩它跳过三回，就别再指望自觉，钉死它</strong>。一次是偶然，三次是习惯。</p>
+<p>最后想问问你：你给 agent 设过硬拦截吗？如果设过，是一直活着，还是也跟我一样，写的时候挺认真，回头一看早就不知道去哪了？评论区聊聊，我挺想知道是不是只有我这样。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/Gemini/" rel="tag"># Gemini</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/Hook/" rel="tag"># Hook</a>
+              <a href="/tags/%E6%94%BE%E6%9D%83%E8%BE%B9%E7%95%8C/" rel="tag"># 放权边界</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/28/202607282028/" rel="prev" title="有人真把 K3 塞进了 64G 的 Mac，代价是三个字等一分钟">
+                  <i class="fa fa-angle-left"></i> 有人真把 K3 塞进了 64G 的 Mac，代价是三个字等一分钟
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">23:57</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

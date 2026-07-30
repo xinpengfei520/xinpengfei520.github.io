@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="吴恩达团队开源了桌面 agent OpenWorker，十天拿到 10831 star，交的是成品不是聊天记录，11 家模型随便换还能全下本地。昨天我刚写完自己被单点依赖套住，这东西看着像现成答案。可它把换模型做到了零成本，我欠的那笔债却不在模型那一层。更有意思的是这个判断不用我下，吴恩达自己在 README 里指了那一层。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="吴恩达这个 agent 让我随便换模型，可我换不动">
+<meta property="og:url" content="https://www.vance.xin/2026/07/30/202607300319/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="吴恩达团队开源了桌面 agent OpenWorker，十天拿到 10831 star，交的是成品不是聊天记录，11 家模型随便换还能全下本地。昨天我刚写完自己被单点依赖套住，这东西看着像现成答案。可它把换模型做到了零成本，我欠的那笔债却不在模型那一层。更有意思的是这个判断不用我下，吴恩达自己在 README 里指了那一层。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260730-openworker-model-agnostic-not-ecosystem.webp">
+<meta property="article:published_time" content="2026-07-30T03:19:52.000Z">
+<meta property="article:modified_time" content="2026-07-30T10:35:22.718Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="迁移成本">
+<meta property="article:tag" content="OpenWorker">
+<meta property="article:tag" content="Andrew Ng">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260730-openworker-model-agnostic-not-ecosystem.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/30/202607300319/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/30/202607300319/","path":"2026/07/30/202607300319/","title":"吴恩达这个 agent 让我随便换模型，可我换不动"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>吴恩达这个 agent 让我随便换模型，可我换不动 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "吴恩达这个 agent 让我随便换模型，可我换不动",
+  "url": "https://www.vance.xin/2026/07/30/202607300319/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/30/202607300319/",
+  "datePublished": "2026-07-30T03:19:52.000Z",
+  "dateModified": "2026-07-30T10:35:22.718Z",
+  "description": "吴恩达团队开源了桌面 agent OpenWorker，十天拿到 10831 star，交的是成品不是聊天记录，11 家模型随便换还能全下本地。昨天我刚写完自己被单点依赖套住，这东西看着像现成答案。可它把换模型做到了零成本，我欠的那笔债却不在模型那一层。更有意思的是这个判断不用我下，吴恩达自己在 README 里指了那一层。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E5%88%B0%E5%BA%95%E6%98%AF%E4%B8%AA%E4%BB%80%E4%B9%88%E4%B8%9C%E8%A5%BF"><span class="nav-text">它到底是个什么东西</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%98%A8%E5%A4%A9%E6%88%91%E5%88%9A%E8%AF%B4%E6%AC%A0%E4%BA%86%E4%B8%80%E7%AC%94%E5%80%BA"><span class="nav-text">昨天我刚说欠了一笔债</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8D%A2%E7%94%B5%E6%96%B9%E4%BE%BF%EF%BC%8C%E6%8D%A2%E6%8F%92%E5%BA%A7%E8%A6%81%E5%91%BD"><span class="nav-text">换电方便，换插座要命</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%B4%E6%81%A9%E8%BE%BE%E8%87%AA%E5%B7%B1%E6%8C%87%E4%BA%86%E9%82%A3%E4%B8%80%E5%B1%82"><span class="nav-text">吴恩达自己指了那一层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E5%A4%A9%E5%BC%80%E4%BA%86%E4%B8%89%E7%99%BE%E5%A4%9A%E4%B8%AA-issue"><span class="nav-text">十天开了三百多个 issue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%BC%9A%E4%B8%8D%E4%BC%9A%E8%A3%85%E5%AE%83"><span class="nav-text">我会不会装它</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E9%82%A3%E5%B1%8B%E5%AD%90%E6%8F%92%E5%A4%B4%E4%BB%80%E4%B9%88%E5%BD%A2%E7%8A%B6"><span class="nav-text">你那屋子插头什么形状</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">484</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">836</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/30/202607300319/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="吴恩达这个 agent 让我随便换模型，可我换不动 | 飞飞的AI实验室">
+      <meta itemprop="description" content="吴恩达团队开源了桌面 agent OpenWorker，十天拿到 10831 star，交的是成品不是聊天记录，11 家模型随便换还能全下本地。昨天我刚写完自己被单点依赖套住，这东西看着像现成答案。可它把换模型做到了零成本，我欠的那笔债却不在模型那一层。更有意思的是这个判断不用我下，吴恩达自己在 README 里指了那一层。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          吴恩达这个 agent 让我随便换模型，可我换不动
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-30 03:19:52 / 修改时间：10:35:22" itemprop="dateCreated datePublished" datetime="2026-07-30T03:19:52+00:00">2026-07-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">吴恩达团队开源了桌面 agent OpenWorker，十天拿到 10831 star，交的是成品不是聊天记录，11 家模型随便换还能全下本地。昨天我刚写完自己被单点依赖套住，这东西看着像现成答案。可它把换模型做到了零成本，我欠的那笔债却不在模型那一层。更有意思的是这个判断不用我下，吴恩达自己在 README 里指了那一层。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260730-openworker-model-agnostic-not-ecosystem.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>昨天我写了一篇，讲我把整条内容流水线全压在 Claude Code 上，账号真要出点事，那笔迁移债当天就得还。写完心里其实是空的，因为我没给出解法。</p>
+<p>今天刷到一个东西，看着像是解法送上门了。</p>
+<p>吴恩达团队开源了一个叫 OpenWorker 的桌面 agent。我去 GitHub 上数了数，仓库 7 月 20 日建的，到今天十天，10831 个 star、1432 个 fork，MIT 许可，Python 写的。</p>
+<p>它最打眼的一条是：<strong>模型你随便挑。</strong></p>
+<p>OpenAI、Anthropic、Google、DeepSeek、Kimi、Qwen、MiniMax、Mistral、GLM、Grok，开箱就支持十一家，还能接 Together 和 Fireworks 上的开源权重模型，或者干脆用 Ollama 全跑在本地。你自己带 key，想换随时换。</p>
+<p>我昨天那篇的病根，就是被一家焊死了。</p>
+<p>所以我今天认真看了它一遍，看完的结论有点意外：<strong>这东西挺好，但它救不了我。</strong></p>
+<h2 id="它到底是个什么东西"><a href="#它到底是个什么东西" class="headerlink" title="它到底是个什么东西"></a>它到底是个什么东西</h2><p>先把它是什么讲清楚。</p>
+<p>它自己的说法是一个住在你桌面上的开源 AI 同事，交给你的是<strong>做完的活</strong>，不是聊天记录。README 里举的例子很具体：一份排好版的文档、一条带着数字的 Slack 回复、一个更新过的日历、一个整理干净的收件箱。</p>
+<p>干活分四步。你说出你要的结果，比如「把这个客户的简报做出来」「帮我把日历捋顺」。它自己拆步骤，跨你的桌面、文件和已经连上的应用去干。任何有后果的动作之前它停下来问你一句。最后交成品，不是交一张待办清单。</p>
+<p>能连的东西不少，25 个以上的集成，GitHub、Slack、Jira、Notion、Linear、Outlook、Gmail、Google Calendar 都在里面，另外你的终端和本地文件也算。任何能通过 MCP 接进来的工具都能插，MCP 说人话就是让 AI 调外部工具的那套插头标准，而且是逐个工具单独授权。</p>
+<p>还有个细节我挺喜欢。它挂着无人值守跑的时候，遇到需要你点头的事，<strong>不自己动手，把要问的停在一个收件箱里等你回来</strong>。</p>
+<p>审批门这套东西我在这个号上写过太多回了，这次不展开。</p>
+<h2 id="昨天我刚说欠了一笔债"><a href="#昨天我刚说欠了一笔债" class="headerlink" title="昨天我刚说欠了一笔债"></a>昨天我刚说欠了一笔债</h2><p>说回我自己。</p>
+<p>我这条内容流水线挂着 13 个 skill，一个编排 8 个阶段的总调度。还有一份 52 万字节、127 条的写作规则库，和一份从 12KB 砍到 4KB 的 CLAUDE.md。</p>
+<p>昨天那篇的结论是：这些东西全长在 Claude Code 上，账号哪天登不进去，这笔债就当天到期。</p>
+<p>现在来了个不锁模型的壳。我头一个念头当然是，这不正好吗。</p>
+<p>我把它的架构图看了一遍。三层：最上面是桌面壳，中间是跑在本机的 agent 服务，用 Python 写的，最下面接你的文件、终端、那 25 个集成和你选的模型。</p>
+<p>看完我明白问题出在哪了。说白了，我看错了层。</p>
+<h2 id="换电方便，换插座要命"><a href="#换电方便，换插座要命" class="headerlink" title="换电方便，换插座要命"></a>换电方便，换插座要命</h2><p>打个比方。</p>
+<p>OpenWorker 跟我说的是：电你随便接，接哪家的都行，想自己发电用 Ollama 也行。这话不假，这一层它真的做通了。</p>
+<p>可我那一屋子电器的插头，是照另一家插座的形状做的。它换的是供电，我要换的是墙上那个孔。</p>
+<p>我那 13 个 skill 不是普通的提示词文件。它们是照着 Claude Code 认 frontmatter 的方式、读 skill 的顺序、hook 触发的时机，一点点抠出来的。说真的，连今天上午我还在修一个脚本，专门治规则库行号漂移。那玩意儿也是照 Claude Code 那套目录结构长出来的。</p>
+<p>OpenWorker 一个都读不了。</p>
+<p>它有它自己的 agent 引擎、自己的工具约定、自己的一套 connector 体系，connector 说人话就是接外部应用的那些现成插件。我搬过去，等于把这些东西照它的形状重做一遍。</p>
+<p><strong>它把换模型做成了零成本，可我那笔债不在换哪个模型那一层，在我照着某一家的脾气抠出来的那一层。</strong></p>
+<p>这跟我以前算过的账是一回事。之前有家公司叫 Lindy，把全部流量从 Anthropic 切到了 DeepSeek V4，账面上一年省几百万美元。可创始人自己说，迁移比预想多干了一百倍的活。省的是模型钱，付的是形状钱。</p>
+<p>所以「不锁模型」和「不锁生态」是两件事。前者 OpenWorker 给了，后者它给不了，任何一个自带引擎的 agent 产品都给不了。</p>
+<h2 id="吴恩达自己指了那一层"><a href="#吴恩达自己指了那一层" class="headerlink" title="吴恩达自己指了那一层"></a>吴恩达自己指了那一层</h2><p>最有意思的是，这个判断根本不用我来下。</p>
+<p>README 快到末尾的地方有一段，说 OpenWorker 的引擎建在一个叫 aisuite 的库上面。aisuite 是吴恩达那边更早的项目，给各家大模型提供一套统一的调用接口，外加一层带工具和 MCP 支持的 agent 能力。</p>
+<p>然后他写了这么一句：<strong>如果你想自己搭一个 agent harness 而不是用我们这个，从 aisuite 开始；这个仓库是 aisuite 能承载什么的一个参考实现。</strong></p>
+<p>harness 说人话就是套在模型外面的那层脚手架，决定 agent 怎么被调起来、工具怎么挂上去、活怎么一步步交接。我那 13 个 skill、那个 8 阶段编排，全都是 harness 层的东西。</p>
+<p>我去查了 aisuite 的数据。15822 个 star，1673 个 fork，2024 年 6 月建的，比 OpenWorker 老两年，star 还更多。OpenWorker 原本就长在 aisuite 那个仓库里，后来才搬出来单开。</p>
+<p><strong>换句话说，底座比上层应用更老、更厚，而且作者自己把上层定位成一个「参考实现」。</strong></p>
+<p>这句话我读了两遍。它等于在说：产品你可以用，但真正该沉淀在你自己手里的东西在下面那一层。</p>
+<p>我欠债的位置，正好就是他指的那一层。</p>
+<h2 id="十天开了三百多个-issue"><a href="#十天开了三百多个-issue" class="headerlink" title="十天开了三百多个 issue"></a>十天开了三百多个 issue</h2><p>得说点扫兴的，不然这篇就成安利了。</p>
+<p>这仓库现在挂着 <strong>302 个 open issue</strong>，而它才十天。我翻了翻最近开的几条：Intel Mac 不支持、有人要求加中文、Ollama 的视觉模型不被调用、会话被打断之后会永久 400 失败。</p>
+<p>它自己也没藏。README 顶上明写着 Beta，原话是「完全可用、会自己更新，我们正在打磨粗糙的边角」。Windows 的安装包还没做代码签名，装的时候 SmartScreen 会弹警告，签名在办。模型那一栏也标了，只有它验证过能干工具调用的那几个在推荐名单里，别的模型串你能填，但自担风险。</p>
+<p>还有一条我觉得更值得注意。README 的贡献说明里写着一句：他们按内部的路线图和目标在开发。所以那些已经在开发中的、或者偏离他们方向的 PR，可能不会接。</p>
+<p>MIT 许可是真的，代码是真的开放。但<strong>开源和共治是两件事</strong>。这条我写 K3 权重那次就记过一遍：看到「开源」两个字，先看清对方开的到底是什么。</p>
+<p>顺带一个挺说明问题的信号，已经有第三方在做中文汉化包了，十几个 star。中文需求是真的，官方还没顾上。</p>
+<h2 id="我会不会装它"><a href="#我会不会装它" class="headerlink" title="我会不会装它"></a>我会不会装它</h2><p>诚实说在前面：<strong>我还没装。</strong> 我这台 M1 的 Mac 符合它的要求，但写这篇的时候我只读了 README 和仓库数据，没跑过一次真活。所以这篇给你的是判断，不是实测报告。</p>
+<p>会装，但不是拿它替我这条线。</p>
+<p>它适合的活跟我这条线不重叠。我的流水线是文章生产，跑在终端里，输出是 markdown。OpenWorker 明显更适合跨办公工具那一摊：把 Jira 和 GitHub 上的状态凑成一份周报，把日历捋顺，盯着某个 Slack 频道出早报。这些活我现在压根没自动化，因为往 Claude Code 里接 Slack 和日历的 connector，比我写一个 skill 麻烦得多。</p>
+<p>所以它对我是个补位，不是个替换。</p>
+<p>真要说这东西改了我什么，是它让我把昨天那个问题问得更准了。我昨天以为我的债是「押在一家模型上」。今天看清了，模型那一层其实早就不锁了，<code>ANTHROPIC_BASE_URL</code> 指到别家这条路我跑通过，Ollama 拉本地模型我也跑通过。<strong>真正锁住我的是我照着一家的脾气写了 13 个 skill，而这一层没有任何产品能替我搬。</strong></p>
+<p>那我这周准备做的事就更具体了：把那 13 个 skill 拆开看，哪些是「规则」哪些是「胶水」。规则是可以搬走的，比如那 127 条写作经验、那份不许用中文破折号的硬扫描矩阵，它们跟哪个 harness 无关。胶水是搬不走的，frontmatter 怎么写、hook 挂在哪个事件上，换个壳就得重做。</p>
+<p>这份清单我早该做了，昨天只是想到，今天被吴恩达那句话推了一把。</p>
+<h2 id="你那屋子插头什么形状"><a href="#你那屋子插头什么形状" class="headerlink" title="你那屋子插头什么形状"></a>你那屋子插头什么形状</h2><p>所以这篇给你的东西很具体。</p>
+<p>你手上一定有一堆攒了很久的东西：调顺的提示词、写厚的规则文件、配好的自动化。今天可以做一件事，<strong>把它们分成两摊</strong>。</p>
+<p>一摊是不管换到哪都还成立的，比如你总结出来的判断标准、你踩过的坑、你的用词禁忌。这些是资产，值得从工具里搬出来，存成纯文本放你自己的仓库。</p>
+<p>一摊是照某一家的形状长出来的，比如它认什么配置格式、钩子挂在哪。这些是负债，你换壳的那天要重付一遍。</p>
+<p>分完你就知道自己真实的迁移成本有多少了。<strong>大多数人以为自己被模型锁住了，其实锁住你的是插头形状。</strong></p>
+<p>最后想问问你：你攒得最厚的那份配置，如果明天换个工具，有多少是能原样搬过去的？我猜比你以为的少，但也比你担心的多。</p>
+<p>评论区说说你那份最舍不得的文件是什么。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E8%BF%81%E7%A7%BB%E6%88%90%E6%9C%AC/" rel="tag"># 迁移成本</a>
+              <a href="/tags/OpenWorker/" rel="tag"># OpenWorker</a>
+              <a href="/tags/Andrew-Ng/" rel="tag"># Andrew Ng</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/30/202607300232/" rel="prev" title="五个坑我认得四个，agent 那六天全踩了">
+                  <i class="fa fa-angle-left"></i> 五个坑我认得四个，agent 那六天全踩了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">24:10</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

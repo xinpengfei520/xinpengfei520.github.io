@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="一项影子评估让前沿 agent 接手两篇未发表 NeurIPS 论文的核心研究问题，给它六天和数千美元算力。工程活全干完且不需要人帮忙，研究问题零进展，两篇都被原作者明确拒稿。论文归纳出五个失败模式，其中四个我在自己那条流水线上都被咬过，而五条里至少三条的共同根因是同一个：那个问题没有一条机器能判死的线。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="五个坑我认得四个，agent 那六天全踩了">
+<meta property="og:url" content="https://www.vance.xin/2026/07/30/202607300232/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="一项影子评估让前沿 agent 接手两篇未发表 NeurIPS 论文的核心研究问题，给它六天和数千美元算力。工程活全干完且不需要人帮忙，研究问题零进展，两篇都被原作者明确拒稿。论文归纳出五个失败模式，其中四个我在自己那条流水线上都被咬过，而五条里至少三条的共同根因是同一个：那个问题没有一条机器能判死的线。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260730-agent-five-failure-modes-undecidable-line.webp">
+<meta property="article:published_time" content="2026-07-30T02:32:00.000Z">
+<meta property="article:modified_time" content="2026-07-30T09:57:38.876Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="能力边界">
+<meta property="article:tag" content="论文解读">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260730-agent-five-failure-modes-undecidable-line.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/30/202607300232/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/30/202607300232/","path":"2026/07/30/202607300232/","title":"五个坑我认得四个，agent 那六天全踩了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>五个坑我认得四个，agent 那六天全踩了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "五个坑我认得四个，agent 那六天全踩了",
+  "url": "https://www.vance.xin/2026/07/30/202607300232/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/30/202607300232/",
+  "datePublished": "2026-07-30T02:32:00.000Z",
+  "dateModified": "2026-07-30T09:57:38.876Z",
+  "description": "一项影子评估让前沿 agent 接手两篇未发表 NeurIPS 论文的核心研究问题，给它六天和数千美元算力。工程活全干完且不需要人帮忙，研究问题零进展，两篇都被原作者明确拒稿。论文归纳出五个失败模式，其中四个我在自己那条流水线上都被咬过，而五条里至少三条的共同根因是同一个：那个问题没有一条机器能判死的线。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E5%A4%A9%E5%B9%B2%E5%AE%8C%EF%BC%8C%E4%B8%80%E6%AD%A5%E6%B2%A1%E7%AD%94%E4%B8%8A"><span class="nav-text">六天干完，一步没答上</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%BB%A5%E5%89%8D%E5%8F%AA%E6%9C%89%E4%B8%80%E5%8F%A5%E6%88%91%E4%B8%8D%E6%94%BE%E5%BF%83"><span class="nav-text">我以前只有一句我不放心</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%B4%E4%B8%A4%E6%9D%A1%E8%AF%B4%E7%9A%84%E6%98%AF%E5%AE%83%E6%B2%A1%E5%B0%BA%E5%AD%90"><span class="nav-text">头两条说的是它没尺子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%AD%E9%97%B4%E9%82%A3%E6%9D%A1%E6%88%91%E7%AD%89%E8%BF%87%E5%9B%9B%E5%8D%81%E7%A7%92"><span class="nav-text">中间那条我等过四十秒</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E4%B8%8D%E4%BC%9A%E5%BF%83%E7%96%BC%E9%92%B1"><span class="nav-text">它不会心疼钱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%90%8E%E9%82%A3%E6%9D%A1%E6%88%91%E4%B8%8A%E5%91%A8%E6%89%8D%E7%8A%AF"><span class="nav-text">最后那条我上周才犯</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A4%E4%B8%8D%E6%AD%BB%E7%9A%84%E9%82%A3%E6%9D%A1%E7%BA%BF"><span class="nav-text">判不死的那条线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E9%82%A3%E6%9D%A1%E7%BA%BF%E4%B8%8A%E5%93%AA%E4%B8%80%E6%AD%A5%E5%88%A4%E4%B8%8D%E6%AD%BB"><span class="nav-text">你那条线上哪一步判不死</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">483</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">834</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/30/202607300232/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="五个坑我认得四个，agent 那六天全踩了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="一项影子评估让前沿 agent 接手两篇未发表 NeurIPS 论文的核心研究问题，给它六天和数千美元算力。工程活全干完且不需要人帮忙，研究问题零进展，两篇都被原作者明确拒稿。论文归纳出五个失败模式，其中四个我在自己那条流水线上都被咬过，而五条里至少三条的共同根因是同一个：那个问题没有一条机器能判死的线。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          五个坑我认得四个，agent 那六天全踩了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-07-30 02:32:00 / 修改时间：09:57:38" itemprop="dateCreated datePublished" datetime="2026-07-30T02:32:00+00:00">2026-07-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">一项影子评估让前沿 agent 接手两篇未发表 NeurIPS 论文的核心研究问题，给它六天和数千美元算力。工程活全干完且不需要人帮忙，研究问题零进展，两篇都被原作者明确拒稿。论文归纳出五个失败模式，其中四个我在自己那条流水线上都被咬过，而五条里至少三条的共同根因是同一个：那个问题没有一条机器能判死的线。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260730-agent-five-failure-modes-undecidable-line.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>先说一件让我坐直了的事。</p>
+<p>有人给前沿 agent 出了两道真题，是两篇还没发表的 NeurIPS 论文的核心研究问题。给它六天时间、数千美元算力，让它自己去答。</p>
+<p>六天后，全部工程活它都干完了，而且没要人帮一把手。</p>
+<p>然后两篇都被论文原作者明确拒了。</p>
+<p>我得先撇清一件事。「agent 能干活但拍板得我自己来」这句话，我在这个号上说过不止一次。前天那篇讲流水线假线的，还说了一遍。所以这篇要是又落到那儿，就是车轱辘话。</p>
+<p>这次不一样的地方在于：<strong>我以前那句话是个立场，凭的是体感。这篇论文给的是诊断，它把 agent 在这件事上具体败在哪，拆成了五个能点名的地方。</strong></p>
+<p>而那五个地方里，我认得四个。</p>
+<h2 id="六天干完，一步没答上"><a href="#六天干完，一步没答上" class="headerlink" title="六天干完，一步没答上"></a>六天干完，一步没答上</h2><p>先把原文摆清楚。</p>
+<p>这篇是 arXiv 2607.27191，7 月 24 日的，17 页。作者名单挺重，里面有 Sayash Kapoor 和 Arvind Narayanan，就是写 AI Snake Oil 那两位，还有 Helen Toner。</p>
+<p>它们管这套方法叫影子评估。做法是让 agent 去接一篇高质量未发表论文的核心研究问题，产出交给论文原作者本人打分。作者说这套做法卡在「狭窄可验证任务」和「盲审投稿」中间，是另开的一条路。</p>
+<p>结果分成两半，反差就在这儿。</p>
+<p>工程那一半，原文写的是全部完成，而且不需要人类帮助。数据处理、跑实验、写代码，六天里它自己走完了。</p>
+<p>研究那一半，原文写的是没能取得实质性进展。</p>
+<p>两篇论文的原作者给出的评价，英文原话是 unambiguously rejected，明确拒绝，没有留余地。</p>
+<p>得说清一件事，这只有两个案例，作者自己也把标题写成「早期证据」。<strong>两篇论文推不出「AI 永远做不了研究」这种结论，我不打算替它把话说大。</strong> 论文也没点名用的是哪个模型，我照样不猜。</p>
+<h2 id="我以前只有一句我不放心"><a href="#我以前只有一句我不放心" class="headerlink" title="我以前只有一句我不放心"></a>我以前只有一句我不放心</h2><p>论文归纳的五个失败模式，我按原文列一下：</p>
+<ul>
+<li>对可发表研究标准认识不足</li>
+<li>对研究设计缺陷反应不创新</li>
+<li>从死胡同回溯效率低</li>
+<li>资源意识欠缺</li>
+<li>指令漂移</li>
+</ul>
+<p>我读下来的头一个反应是<strong>尴尬</strong>。本来以为会读出「果然如此」那种痛快，结果没有。</p>
+<p>因为这五条里有四条，我在自己那条流水线上都被咬过。我给它们打过补丁，那些补丁现在还在 skill 里跑着。</p>
+<p>但我一直以为那是我自己攒的经验。读完这篇我才反应过来，<strong>那些坑是一类系统性的缺陷，早被人写进论文里了。我只是在自己那个小作坊里，一个人把它们重新发现了一遍。</strong></p>
+<p>下面挨个对。</p>
+<h2 id="头两条说的是它没尺子"><a href="#头两条说的是它没尺子" class="headerlink" title="头两条说的是它没尺子"></a>头两条说的是它没尺子</h2><p>头一个失败模式是不知道什么叫「够得上发表」。</p>
+<p>我这边的对应物很直接。说真的，agent 写完一篇稿子，它自己觉得挺好。它没有那把尺子。所以我在流水线里塞了一个专门打分的环节，按刘润那套六个维度打，满分一百。最近几篇落在八十五到八十九之间，低于八十就派回去做一轮定点重改。</p>
+<p>那把尺子是我硬装上去的。它自己长不出来。</p>
+<p>紧接着那个更贴我。原文说的是遇到研究设计有毛病时，它的反应不够创新。</p>
+<p>翻译到我这儿就是：稿子字数没到下限，它的反应是注水。回头问一句「要不要去补点真东西」，它想不到。规则给了一个约束，它的动作就是想办法把这个约束满足掉。至于这个约束本身有没有把问题设计歪，它不会去碰。</p>
+<p>还有一次更典型。我让它修一个句式违规，它把那句改了，改出来的新句子踩了另一条规则。灭掉一个，造出一个。这件事后来被我写成了硬规矩：修完必须重新过一遍完整的扫描，不能只验被修的那一项。</p>
+<p><strong>说白了这两条是同一件事。它努力得很，卡的地方在于手里没有一把能判「这样行不行」的尺子。</strong>没有尺子，它只能对着你给的那条约束死磕。</p>
+<h2 id="中间那条我等过四十秒"><a href="#中间那条我等过四十秒" class="headerlink" title="中间那条我等过四十秒"></a>中间那条我等过四十秒</h2><p>从死胡同回溯效率低，这一条我有过很具体的画面。</p>
+<p>四月我用 Ollama 拉了 gemma4 的 e4b 接上 Claude Code。模型生成到一半停住了，停完把前面写过的内容又吐了一遍。我盯着屏幕等，等了四十秒，才反应过来它在原地打转。</p>
+<p>它不知道自己进了死胡同。</p>
+<p>但这一条我得给它说句公道话，因为我见过反例。之前实测 MiMo Code，让它写一个解析 Markdown 头部的小工具。它自己写了测试，跑出来五个用例三过两败。然后它读 TAP 的报错，自己诊断出是正则抢先匹配，一次修改把正则收紧，重跑五过零败。</p>
+<p><strong>同一个能力，在有测试可判死的地方它回溯得干净利落，在没东西判死的地方它原地转四十秒。</strong> 这个对比我记了很久，今天算是找到了它的名字。</p>
+<h2 id="它不会心疼钱"><a href="#它不会心疼钱" class="headerlink" title="它不会心疼钱"></a>它不会心疼钱</h2><p>资源意识欠缺，这条我是用钱换来的认识。</p>
+<p>我跟你讲，它是真的不会心疼。我会。所以我调用 Opus 之前会在心里过一遍秤，杂活手动切便宜模型。我把缓存命中率从三成调到七成三，账单从一百零六美元压到三十三美元。我把 CLAUDE.md 从 12KB 砍到 4KB，因为那份文件每一行每一轮都当前缀重发一次。</p>
+<p>多智能体那套跑法烧的 token 是普通对话的十五倍，这个数我引过好几次。</p>
+<p>这些动作没有一个是 agent 自己想出来的。<strong>账单疼的是我，所以省钱的活也只能我来干。</strong></p>
+<h2 id="最后那条我上周才犯"><a href="#最后那条我上周才犯" class="headerlink" title="最后那条我上周才犯"></a>最后那条我上周才犯</h2><p>最后那个失败模式叫指令漂移。就是给了它一份指令，跑着跑着它偏了。</p>
+<p>我这边的老账很多。配图那个 skill 一开始没把规则写死，agent 就自作主张把图床链接塞进正文，还漏图。防 AI 味的规则它也会绕过去。这些后来都靠把该确定的步骤抠死解决了。</p>
+<p>但真正让我不太好意思的是上周那件事。</p>
+<p>前天那篇文章讲的是，我拿「虚假连线」这个概念去审了一遍自己那条流水线。结果发现文档里画着两个环节串行执行，可实际跑的时候，它们早就并行了。图和现实分了家，而且错的是图。</p>
+<p>论文说的是 agent 会偏离它的指令。而我那次的漂移更难看一点：<strong>是我自己写的文档和我自己的执行分了家，人和 agent 一起漂，还漂了几十篇才被我抓到。</strong></p>
+<p>它至少还是照着一份写死的指令在漂。我那份指令本身早就不作数了。</p>
+<h2 id="判不死的那条线"><a href="#判不死的那条线" class="headerlink" title="判不死的那条线"></a>判不死的那条线</h2><p>把五条摊在一起看，我觉得至少三条底下是同一个根。</p>
+<p>工程活能判死。测试过没过、代码跑不跑、数据处理完没完，都有一条机器能自己验的线。所以它六天全干完了，不需要人帮忙。</p>
+<p>研究问题判不死。这个方向值不值得追、这个结果够不够格发出去、这个设计有没有从一开始就歪。没有哪个函数能对这些返回真或假。</p>
+<p><strong>那六天真正卡住它的，不在它不够聪明，在那个问题没有一条机器能判死的线。</strong></p>
+<p>这也解释了为什么它在 MiMo 那个小工具上回溯得那么漂亮，在死胡同里却能转四十秒。它的能力只有一套。区别在有的地方有线，有的地方没有。</p>
+<h2 id="你那条线上哪一步判不死"><a href="#你那条线上哪一步判不死" class="headerlink" title="你那条线上哪一步判不死"></a>你那条线上哪一步判不死</h2><p>所以这篇给你的东西挺具体。</p>
+<p>如果你手上也有一条派 agent 干活的流程，今天可以做一件事。<strong>把每一步拎出来，问一句这一步的完成标准，机器能不能自己判。</strong></p>
+<p>能判的，比如格式对不对、测试过不过、字数够不够、链接通不通，尽管交出去，它干得比你快也比你稳。</p>
+<p>判不死的，比如这个选题值不值得写、这个判断敢不敢下、这篇够不够格发出去。那几步就是你今天还得坐在那儿的理由。</p>
+<p>我自己这条线上判不死的只有两处：选题拍板，和最后那句能不能发。中间那八个阶段，从四月搭起来就一直是交出去的，到现在没想收回来。</p>
+<p>不过读完这篇我加了一件事。以前我只是「觉得」那两处得我来，现在我知道它具体会怎么砸。<strong>知道它会在哪儿摔，比笼统地不放心，让我敢交出去的东西多得多。</strong></p>
+<p>最后想问问你：你那条流程里，有没有哪一步你一直亲自盯着，但仔细想想它的完成标准其实是能写成代码判的？说说是哪一步，我挺好奇大家都在手动守什么。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/%E8%83%BD%E5%8A%9B%E8%BE%B9%E7%95%8C/" rel="tag"># 能力边界</a>
+              <a href="/tags/%E8%AE%BA%E6%96%87%E8%A7%A3%E8%AF%BB/" rel="tag"># 论文解读</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/30/202607300205/" rel="prev" title="别人钻空子白拿 Max，我头一回怕自己的号也没了">
+                  <i class="fa fa-angle-left"></i> 别人钻空子白拿 Max，我头一回怕自己的号也没了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">24:07</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

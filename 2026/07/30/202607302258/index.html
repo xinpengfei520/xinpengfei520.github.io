@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="一项受控研究把语料规模拉成 28 级阶梯跨越约 450 倍，发现约一千万语料 token 是个交叉点，过了这条线 BM25 一路领先近 20 分。我量了自己的库，三千两百万 token，已经过线三倍多。但论文真正的结论不是老办法赢了，而是把 BM25 装给 agent 之后它拿 69.4 分，比裸 BM25 的 54.8 和它自己翻文件的 36.9 都高。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文说老办法赢了，可它真正的结论在后半句">
+<meta property="og:url" content="https://www.vance.xin/2026/07/30/202607302258/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="一项受控研究把语料规模拉成 28 级阶梯跨越约 450 倍，发现约一千万语料 token 是个交叉点，过了这条线 BM25 一路领先近 20 分。我量了自己的库，三千两百万 token，已经过线三倍多。但论文真正的结论不是老办法赢了，而是把 BM25 装给 agent 之后它拿 69.4 分，比裸 BM25 的 54.8 和它自己翻文件的 36.9 都高。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260731-bm25-scale-crossover-ranked-discovery.webp">
+<meta property="article:published_time" content="2026-07-30T22:58:00.000Z">
+<meta property="article:modified_time" content="2026-07-31T06:11:09.477Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="RAG">
+<meta property="article:tag" content="知识库">
+<meta property="article:tag" content="检索">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260731-bm25-scale-crossover-ranked-discovery.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/07/30/202607302258/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/07/30/202607302258/","path":"2026/07/30/202607302258/","title":"论文说老办法赢了，可它真正的结论在后半句"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>论文说老办法赢了，可它真正的结论在后半句 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "论文说老办法赢了，可它真正的结论在后半句",
+  "url": "https://www.vance.xin/2026/07/30/202607302258/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/07/30/202607302258/",
+  "datePublished": "2026-07-30T22:58:00.000Z",
+  "dateModified": "2026-07-31T06:11:09.477Z",
+  "description": "一项受控研究把语料规模拉成 28 级阶梯跨越约 450 倍，发现约一千万语料 token 是个交叉点，过了这条线 BM25 一路领先近 20 分。我量了自己的库，三千两百万 token，已经过线三倍多。但论文真正的结论不是老办法赢了，而是把 BM25 装给 agent 之后它拿 69.4 分，比裸 BM25 的 54.8 和它自己翻文件的 36.9 都高。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E6%8A%8A%E5%B0%BA%E5%AD%90%E6%80%8E%E4%B9%88%E5%81%9A%E7%9A%84"><span class="nav-text">那把尺子怎么做的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E5%BA%93%E8%BF%87%E7%BA%BF%E4%B8%89%E5%80%8D%E5%A4%9A"><span class="nav-text">我的库过线三倍多</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%9F%E7%BB%93%E8%AE%BA%E4%B8%8D%E6%98%AF%E8%80%81%E5%8A%9E%E6%B3%95%E8%B5%A2%E4%BA%86"><span class="nav-text">真结论不是老办法赢了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E5%A4%A9%E5%89%8D%E6%88%91%E5%86%99%E8%BF%87%E5%90%8C%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="nav-text">三天前我写过同一句话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E9%82%A3%E4%B8%AA%E5%90%91%E9%87%8F%E5%B1%82%E5%8F%AA%E7%9B%96%E4%BA%86%E4%B8%80%E6%88%90%E4%B8%89"><span class="nav-text">我那个向量层只盖了一成三</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E7%9A%84%E5%BA%93%E5%9C%A8%E5%93%AA%E4%B8%80%E7%BA%A7"><span class="nav-text">你的库在哪一级</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">485</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">837</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/07/30/202607302258/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="论文说老办法赢了，可它真正的结论在后半句 | 飞飞的AI实验室">
+      <meta itemprop="description" content="一项受控研究把语料规模拉成 28 级阶梯跨越约 450 倍，发现约一千万语料 token 是个交叉点，过了这条线 BM25 一路领先近 20 分。我量了自己的库，三千两百万 token，已经过线三倍多。但论文真正的结论不是老办法赢了，而是把 BM25 装给 agent 之后它拿 69.4 分，比裸 BM25 的 54.8 和它自己翻文件的 36.9 都高。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          论文说老办法赢了，可它真正的结论在后半句
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-07-30 22:58:00" itemprop="dateCreated datePublished" datetime="2026-07-30T22:58:00+00:00">2026-07-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-07-31 06:11:09" itemprop="dateModified" datetime="2026-07-31T06:11:09+00:00">2026-07-31</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">一项受控研究把语料规模拉成 28 级阶梯跨越约 450 倍，发现约一千万语料 token 是个交叉点，过了这条线 BM25 一路领先近 20 分。我量了自己的库，三千两百万 token，已经过线三倍多。但论文真正的结论不是老办法赢了，而是把 BM25 装给 agent 之后它拿 69.4 分，比裸 BM25 的 54.8 和它自己翻文件的 36.9 都高。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260731-bm25-scale-crossover-ranked-discovery.webp" alt="cover"></p>
+<p>哈喽，我是飞飞。</p>
+<p>前两天刷到一篇论文，标题挺挑衅：BM25 Wins at Scale。</p>
+<p>BM25 是个上世纪的关键词检索算法，说人话就是按词频给文档打分排序。它跟现在流行的那套「把文字变成向量再按语义相似度捞」完全是两条路。一个老古董标题里写着「在规模上赢了」，我头一眼以为是开倒车。</p>
+<p>看完发现不是。而且真正让我坐直的东西在结论的后半句，那半句被大部分转述都吃掉了。</p>
+<p>我还顺手拿它量了一下自己那个知识库，量出个有点尴尬的结果。</p>
+<h2 id="那把尺子怎么做的"><a href="#那把尺子怎么做的" class="headerlink" title="那把尺子怎么做的"></a>那把尺子怎么做的</h2><p>先说这研究怎么做的，因为它的价值全在方法上。</p>
+<p>这类比较以前最大的毛病是各测各的。这个范式在这个数据集上测，那个范式在另一个数据集上测，语料规模还各不相同。测完谁也说服不了谁。</p>
+<p>这次他们在一个叫 EnterpriseRAG-Bench 的基准上，把语料规模做成了一架梯子。<strong>28 级严格嵌套，每级比上一级大 1.25 倍，从 1144 篇文档一路爬到 511959 篇，token 数从 170 万涨到 6 亿零 100 万，整体跨度约 450 倍。</strong></p>
+<p>严格嵌套的意思是，小规模那一级的文档，在大规模那一级里全都还在。题目不变，相关文档和干扰文档的底座也不变，变的只有周围塞了多少无关内容。</p>
+<p>这样一来，不同范式的分数曲线就能画在同一张图上了。</p>
+<p>结果很干脆。<strong>大约在一千万语料 token 那个位置出现了交叉点。</strong>过了这条线，BM25 在每一个更大的层级上都领先，到满规模时领先接近 20 分。</p>
+<h2 id="我的库过线三倍多"><a href="#我的库过线三倍多" class="headerlink" title="我的库过线三倍多"></a>我的库过线三倍多</h2><p>看到一千万这个数，我立刻去数了自己的。</p>
+<p>我那个 Obsidian 库现在有 9812 篇 markdown，8234 万个字符，其中中文字 1624 万。按中文一字约一个 token、其余四字符约一个 token 粗算，大概是 <strong>3280 万语料 token</strong>。</p>
+<p><strong>过线了，而且是那个交叉点的三倍多。</strong></p>
+<p>这个数字让我有点意外，因为我以前从没往这个方向想过。我一直觉得知识库的问题是「资料够不够干净」「问题问得够不够具体」，这两条我写过。规模本身会翻转「哪种检索更好」这件事，我没意识到。</p>
+<p>顺带说个巧合。我写 Karpathy 那套 LLM Wiki 的时候引过他一句话。他说在约 100 篇资料、40 万字的规模下，靠一个目录文件加一个日志文件导航就够了，用不着向量数据库。当时我把它当成一条经验记下来了。</p>
+<p>现在回头看，那其实是一句关于规模的判断，只是当时没人把整条曲线测出来。而我今天这个库，是他说那个规模的两百倍。</p>
+<h2 id="真结论不是老办法赢了"><a href="#真结论不是老办法赢了" class="headerlink" title="真结论不是老办法赢了"></a>真结论不是老办法赢了</h2><p>这才是我说被吃掉的那半句。</p>
+<p>论文里还比了一种叫 File-System Agent 的范式，就是让 agent 自己在文件系统里翻，一层层找下去。它在最小的那几级上表现不错，能追平甚至略微超过 BM25。</p>
+<p>但它有两个问题。一个是贵，<strong>光是这种一步步往下探的方式，在底座那一级就要多烧 39 倍的查询 token</strong>。另一个是不扛规模，到满规模时落后接近 20 分。</p>
+<p>到这儿为止，故事听着像「花哨的新玩意输给了朴素的老办法」。</p>
+<p>然后论文做了一件事，把结论整个翻了过来。</p>
+<p><strong>他们把 agent 自己翻文件那套换掉，改成先用 BM25 排好序再交给 agent。同样 150 道题，满规模下这个组合拿了 69.4 分。裸 BM25 是 54.8，agent 自己翻文件是 36.9。</strong></p>
+<p>翻文件那套之所以输，跟 agent 笨不笨没关系。输在它找东西的方式上。</p>
+<p>摘要最后那句话我照原文译过来。语料变大会越来越偏向全局候选排序，词汇检索是最强的可扩展默认项。而 <strong>agent 的推理最好用在排好序之后，而非取代排序本身</strong>。</p>
+<h2 id="三天前我写过同一句话"><a href="#三天前我写过同一句话" class="headerlink" title="三天前我写过同一句话"></a>三天前我写过同一句话</h2><p>看到这儿我去翻了自己的东西，然后有点说不出话。</p>
+<p>我那份写作规则库现在是 57 万字节、129 条规则。这么大一个文件，agent 每次写文章不可能通读，所以我给它定的取法写在 skill 里，原话是：<strong>任何时候都不要试图通读全文。</strong></p>
+<p>硬规则那部分靠 grep 查，说白了就是关键词检索，跟 BM25 是一条路上的东西。这部分一直很好用。</p>
+<p>出问题的是另一部分。我那里面攒了三十几条按选题类型分的写作范式，是几十篇一点点磨出来最值钱的东西。可有一次五连测复盘发现，<strong>这批范式连续五篇一条都没被用上</strong>。写稿时 grep 命中的全是硬规则，范式区成了只写不读的死内存。</p>
+<p>七月二十八号我给这个问题写了个诊断，原话是：</p>
+<blockquote>
+<p>症结不在规则本身，在没有入口。</p>
+</blockquote>
+<p>然后我建了一张索引，35 行，每行写「选题长这样，跳到第几行」。agent 现在的流程是先读那张索引，找到对应的一两条，再照行号跳过去读全文。</p>
+<p>三天后，这篇论文用 28 级语料阶梯，把我那句话测了出来。</p>
+<p>我建的那张索引，就是论文说的 ranked discovery。我让 agent 先查索引再去读，就是论文说的「推理用在排好序之后」。而我之前让它在 57 万字节里 grep 碰运气，就是那个 36.9 分的 File-System Agent。</p>
+<p>这套东西我不是照着论文搭的。我是被那 34 条范式没人用逼出来的。</p>
+<p>而且那张索引建起来之后，效果是能看见的。最近几篇写稿，它连着命中了好几次。有一篇同时命中三条，正好覆盖了那篇最大的三个坑。还有一次更有意思。命中的那条范式自带一句文体预警，说这类文章的对仗最容易超标。我因此动笔就散句化，初稿的违规数比上一次同类文章少了一多半。</p>
+<p>同样一批规则，之前躺了五篇没人读，之后连着几篇都用上了。中间没改过一个字，只是加了个入口。</p>
+<h2 id="我那个向量层只盖了一成三"><a href="#我那个向量层只盖了一成三" class="headerlink" title="我那个向量层只盖了一成三"></a>我那个向量层只盖了一成三</h2><p>再说个更尴尬的。</p>
+<p>我给这个库配了一套检索后端，向量和关键词两层。向量那层现在索引了 1216 篇文档、4672 个片段。关键词那层是 9066 篇。</p>
+<p>也就是说，<strong>向量那层只覆盖了整个库的一成三左右。</strong></p>
+<p>我一直把这当成一个待办事项，觉得哪天该把向量索引补全。今天读完这篇我改主意了。</p>
+<p>在我这个规模上，论文说词汇检索本来就是更强的那个默认项。我那个覆盖一成三的向量层，与其说是没建完的工程，不如说是它本来就不该是主力。真正该补的是把关键词那层用好，再给上面加一层排序。</p>
+<p>当然得说清边界。这篇论文测的是企业文档问答，我这是个人知识库，语料形态不一样，结论不能照搬。而且我没在自己的库上做过 A&#x2F;B 对照，没有实测数字。所以上面这段是判断，不是测出来的结论。</p>
+<h2 id="你的库在哪一级"><a href="#你的库在哪一级" class="headerlink" title="你的库在哪一级"></a>你的库在哪一级</h2><p>所以这篇给你的东西很具体。</p>
+<p>如果你也攒了个喂给 AI 的知识库，今天可以做两件事。</p>
+<p>一件是<strong>去数一下你的库有多大</strong>。找到那个目录，把所有文本文件的字符数加起来，中文按一字一个 token、英文按四字符一个 token 粗估。数出来跟一千万比一比，你就知道自己在交叉点的哪一侧。低于这条线，agent 自己翻文件还行；高过这条线，先做排序再让它推理。</p>
+<p>一件是<strong>看看你给 AI 留的入口长什么样</strong>。你那堆资料，它是怎么知道该看哪几份的？如果答案是「它自己找」，那你大概率就是那个 36.9 分。</p>
+<p>我自己接下来要做的，是把 grep 那一层再往上抬一格。现在硬规则靠关键词碰，范式靠索引查，可这两条路是分开的。论文那个 69.4 分的组合提示我，它们应该是一条路：<strong>先排序，再让 agent 从排好的候选里挑。</strong></p>
+<p>最后想问问你：你那个知识库，AI 每次是怎么找到该看的那几份的？是你给它建了目录，还是让它自己在文件夹里翻？</p>
+<p>评论区说说你的做法，我挺想知道大家的入口都长什么样。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/RAG/" rel="tag"># RAG</a>
+              <a href="/tags/%E7%9F%A5%E8%AF%86%E5%BA%93/" rel="tag"># 知识库</a>
+              <a href="/tags/%E6%A3%80%E7%B4%A2/" rel="tag"># 检索</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/07/30/202607300319/" rel="prev" title="吴恩达这个 agent 让我随便换模型，可我换不动">
+                  <i class="fa fa-angle-left"></i> 吴恩达这个 agent 让我随便换模型，可我换不动
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">24:13</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

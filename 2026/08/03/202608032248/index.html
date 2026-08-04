@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Google 复盘 skill 库治理：EVAL.yaml 必填、CI 跑 linter 和链接检查、每周全库回归。我上周刚把四份靠人记的清单做成四个脚本，头一个就量出全站 489 篇里 404 篇不合规，还当场抓到我当天刚发的那篇。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Google 给 skill 库上了 CI，我上周刚把四份清单变成四个脚本">
+<meta property="og:url" content="https://www.vance.xin/2026/08/03/202608032248/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Google 复盘 skill 库治理：EVAL.yaml 必填、CI 跑 linter 和链接检查、每周全库回归。我上周刚把四份靠人记的清单做成四个脚本，头一个就量出全站 489 篇里 404 篇不合规，还当场抓到我当天刚发的那篇。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260804-google-skills-ci-checklist-scanner.webp">
+<meta property="article:published_time" content="2026-08-03T22:48:00.000Z">
+<meta property="article:modified_time" content="2026-08-04T05:57:45.044Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Skills">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="CI">
+<meta property="article:tag" content="写作流水线">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260804-google-skills-ci-checklist-scanner.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/08/03/202608032248/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/08/03/202608032248/","path":"2026/08/03/202608032248/","title":"Google 给 skill 库上了 CI，我上周刚把四份清单变成四个脚本"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Google 给 skill 库上了 CI，我上周刚把四份清单变成四个脚本 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Google 给 skill 库上了 CI，我上周刚把四份清单变成四个脚本",
+  "url": "https://www.vance.xin/2026/08/03/202608032248/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/08/03/202608032248/",
+  "datePublished": "2026-08-03T22:48:00.000Z",
+  "dateModified": "2026-08-04T05:57:45.044Z",
+  "description": "Google 复盘 skill 库治理：EVAL.yaml 必填、CI 跑 linter 和链接检查、每周全库回归。我上周刚把四份靠人记的清单做成四个脚本，头一个就量出全站 489 篇里 404 篇不合规，还当场抓到我当天刚发的那篇。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E6%AC%A1%E6%89%8B%E5%B7%A5%E4%BF%AE%E5%A4%8D%E4%B8%89%E6%AC%A1%E7%BF%BB%E8%BD%A6"><span class="nav-text">三次手工修复三次翻车</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%A6%E5%A4%96%E4%B8%89%E4%BB%BD%E6%B8%85%E5%8D%95%E6%80%8E%E4%B9%88%E8%AE%A4%E5%91%BD"><span class="nav-text">另外三份清单怎么认命</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%96%E4%BB%AC%E9%82%A3%E5%A5%97%E5%92%8C%E6%88%91%E5%AF%B9%E4%B8%8A%E4%BA%86"><span class="nav-text">他们那套和我对上了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%96%E4%BB%AC%E6%AF%94%E6%88%91%E7%8B%A0%E7%9A%84%E4%B8%A4%E5%A4%84"><span class="nav-text">他们比我狠的两处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%B8%85%E5%8D%95%E8%AF%A5%E5%8F%98%E6%88%90%E8%84%9A%E6%9C%AC"><span class="nav-text">什么清单该变成脚本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E9%82%A3%E4%BB%BD%E6%B8%85%E5%8D%95%E8%BF%98%E5%9C%A8%E9%9D%A0%E8%AE%B0%E6%80%A7%E5%90%97"><span class="nav-text">你那份清单还在靠记性吗</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">490</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">843</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/08/03/202608032248/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Google 给 skill 库上了 CI，我上周刚把四份清单变成四个脚本 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Google 复盘 skill 库治理：EVAL.yaml 必填、CI 跑 linter 和链接检查、每周全库回归。我上周刚把四份靠人记的清单做成四个脚本，头一个就量出全站 489 篇里 404 篇不合规，还当场抓到我当天刚发的那篇。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Google 给 skill 库上了 CI，我上周刚把四份清单变成四个脚本
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-08-03 22:48:00" itemprop="dateCreated datePublished" datetime="2026-08-03T22:48:00+00:00">2026-08-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-08-04 05:57:45" itemprop="dateModified" datetime="2026-08-04T05:57:45+00:00">2026-08-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Google 复盘 skill 库治理：EVAL.yaml 必填、CI 跑 linter 和链接检查、每周全库回归。我上周刚把四份靠人记的清单做成四个脚本，头一个就量出全站 489 篇里 404 篇不合规，还当场抓到我当天刚发的那篇。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260804-google-skills-ci-checklist-scanner.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>Google 的 Agent Skills 团队发了篇复盘，讲他们怎么管那个 GitHub 上一万五千星的开源 skill 库：每个 skill 必须自带评估文件，提交要过 CI，每周全库回归一遍。</p>
+<p>我读的时候一直在点头，点得有点心虚。</p>
+<p>因为就在上周，我在自己的写作流水线上干了件一模一样的事，只是规模小得多：把四份「靠人记的清单」做成了四个脚本。每一个脚本背后，都是一次真实的翻车。</p>
+<p>先撇清一下。我写过怎么把单个 skill 写得不飘，写过 Mistral 给 skill 上版本管理，更早还写过 Every 的复利工程。那三篇分别是工艺层、版本层、沉淀层。这篇是新的一层：规则已经有了，版本也管了，可<strong>谁来保证每次都照着做</strong>。</p>
+<h2 id="三次手工修复三次翻车"><a href="#三次手工修复三次翻车" class="headerlink" title="三次手工修复三次翻车"></a>三次手工修复三次翻车</h2><p>先讲把我打服的那个案例。</p>
+<p>我那本写作规则库有一份 35 行的选题范式索引，每行指向正文里的一条规则。规则库天天在长，行号跟着漂，索引隔三差五就得修一轮。</p>
+<p>我徒手修过三次，三次全翻了。</p>
+<p>头一回，新插三条规则，34 个指针里 32 个失效，我一个个数行号补。</p>
+<p>再修的那回我学聪明了，写了个「就近找标题」的小聪明：指针漂了就找最近的标题对上。结果它把两对规则悄悄合并，索引从 34 条塌缩成 32 条。<strong>丢了两条，还不报错。</strong></p>
+<p>最后那回最难看。我把索引和标题各排一遍序再一一配对，错位了一格，34 个指针全部落在标题行上，但全是错的标题。我的检查只验了「指着标题」，没验「指着对的标题」。<strong>每个指针看起来都是好的，每个都是坏的。</strong></p>
+<p>三次翻车，翻在三个不同的地方。这才是清单类活儿的真面目：坑从来成片长，你每次绕过上次那个，就掉进一个新的。</p>
+<p>认命之后我把它写成了脚本，四道校验：按行序绑定、特征词唯一性、塌缩检查、改完幂等复算。之后每次索引变动，跑一下，几秒出结果。</p>
+<h2 id="另外三份清单怎么认命"><a href="#另外三份清单怎么认命" class="headerlink" title="另外三份清单怎么认命"></a>另外三份清单怎么认命</h2><p>同一周里，还有三份清单走了同样的路。</p>
+<p>拆段那份。我的公众号版本要按句号拆段，拆段逻辑一直是每次现写。有一次它把加粗的一对星号从中间拆开，结尾那半落了单，公众号预览里加粗全没渲染出来。连续六篇中招，最后是读者视角肉眼看出来的。现在拆段是脚本，拆之前先把加粗、代码、链接这些标记护住。</p>
+<p>查重那份。写作前要查最近用过的比喻，免得同一个比喻两篇文章当主角。我以前靠手打清单，手打那次漏了一个「闸」字，结果它在两篇文章里都挑了大梁。现在脚本从训练日志里自动抽，还按出现次数分级。</p>
+<p>最扎眼的是最后那份。我的文章 description 有条规范，60 到 120 字，定了快两个月。上周我写脚本去量全站，489 篇里 <strong>404 篇不合规</strong>。规范定了之后写的照样超。</p>
+<p>更难看的还在后面。脚本上线当天跑头一批测试，就抓到一篇超标 157 字的。那篇是我当天上午刚发的。</p>
+<p><strong>规则就摆在我眼前，我照样超了。</strong></p>
+<p>写那篇的时候我不是不知道规范，我是没去数。人记得住规则，记不住清单。这四件事凑在一起，把这句话钉死了。</p>
+<h2 id="他们那套和我对上了"><a href="#他们那套和我对上了" class="headerlink" title="他们那套和我对上了"></a>他们那套和我对上了</h2><p>回头看 Google 那篇复盘，为什么我边读边点头，因为几乎每条都能对上号。</p>
+<p>他们的 CI 跑 linter，查 frontmatter、行数、目录结构、命名规范。我的 description 脚本查长度、数字、单行、标点，同一类东西。</p>
+<p>他们用 AI 辅助清单校验指令的结构模式。我的索引校验脚本干的就是这个，只是我的四道校验是被三次翻车逼出来的。</p>
+<p>他们提交时评估加每周全库回归。我是交付前重跑硬扫描矩阵，加每篇写完让沉淀环节把新坑提炼成新规则。</p>
+<p>连分层都像。他们的标准目录是 SKILL.md 加 reference 加 scripts，我的每个 skill 也是主文件放流程、references 放细节、scripts 放检查。</p>
+<p>这不是我抄他们，也轮不到他们抄我。是同一面墙撞出了同一个答案：<strong>文档管不住执行，能管住执行的只有机器。</strong></p>
+<p>有个差别值得说。他们治理的是社区库，几百个外部贡献者，谁也不能指望别人自觉。我治理的是自己，一个人一条流水线，按说最该靠得住。可 404 篇超标说明，<strong>我自己也不是那个能自觉的人</strong>。外部贡献者靠不住和我靠不住，是同一件事。</p>
+<h2 id="他们比我狠的两处"><a href="#他们比我狠的两处" class="headerlink" title="他们比我狠的两处"></a>他们比我狠的两处</h2><p>诚实边界得摆出来，别让你以为我已经做到 Google 那个程度。差着两层。</p>
+<p>头一层，他们每个 skill 必须带一个 EVAL.yaml，提交时作者要附上评估用的 prompt 套件和评分标准，然后拿两组 agent 对比着跑：带这个 skill 的和不带的，量回答质量、任务完成率、token 消耗。<strong>我的十几个 skill，一个自带评估的都没有。</strong>我知道它们能跑，但「有这个 skill 比没有好多少」，我从来没量过。</p>
+<p>另一层，他们是提交即强制，CI 不过就进不去。我的四个脚本还是「规则里写着必须跑」的半自动，靠的还是执行流程时记得调它。说白了，我只是把清单交给了机器，还没把「记得跑」也交给机器。</p>
+<p>这两层就是我接下来要补的。先给最常用的两个 skill 各配一份最小评估，再想办法让脚本挂在提交动作上自动跑。做到哪一步我再写。</p>
+<h2 id="什么清单该变成脚本"><a href="#什么清单该变成脚本" class="headerlink" title="什么清单该变成脚本"></a>什么清单该变成脚本</h2><p>四次翻车攒下来，我总结了一个判断标准，就三个信号，中一个就该动手。</p>
+<p>信号一：这份核对每次的动作完全一样。索引对行号、description 数字数，没有任何需要判断的成分，纯机械。机械活给人做，错是迟早的。</p>
+<p>信号二：错了不报错。索引塌缩不吭声，加粗断了预览才看得见，超标的 description 安安静静躺了两个月。<strong>凡是坏了还一声不吭的东西，必须有个东西定期去戳它。</strong></p>
+<p>信号三：你已经在同一份清单上错过两次。错一次可能是意外，错两次说明这活儿天生不适合人。我那个索引给了我三次机会，我才听懂。</p>
+<p>反过来说，需要判断力的核对别急着脚本化。比方说「这段有没有说服力」，脚本量不出来，硬量就是自欺。脚本管量得出的，人管量不出的，这条线划清楚，两边都轻松。</p>
+<p>安检这个事，规定贴在墙上没人看，真管用的是那台安检机，谁过都得过一遍，它不知道累，也不给谁面子。<strong>规则库再厚，真正缺的往往不在规定，在那台不知疲倦的机器。</strong></p>
+<h2 id="你那份清单还在靠记性吗"><a href="#你那份清单还在靠记性吗" class="headerlink" title="你那份清单还在靠记性吗"></a>你那份清单还在靠记性吗</h2><p>给你留个今天就能做的最小动作。</p>
+<p>想一下你的流程里，哪份清单是「每次都该核对、但经常忘」的。发布前的检查项、提交前的格式核对、上线前那几个必看的数，都算。挑出最常错的那一份，今天把它变成一个能跑的检查，哪怕只是十行的小脚本，能跑就行。</p>
+<p>写完你多半会跟我一样，头一次跑就抓到一个现行的。那个瞬间挺微妙的，有点丢人，更多的是踏实。</p>
+<p>对了，Google 那篇通篇讲流程，一个失败案例都没提。我猜他们也翻过车，只是没往复盘里写。所以我把我的四次翻车原样摆在这儿，算替他们补上另一半。</p>
+<p>你流程里那份最常被忘掉的清单是什么？有没有哪次「明明有规范还是错了」错得特别冤的？评论区讲讲，我们对对坑。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/Skills/" rel="tag"># Skills</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/CI/" rel="tag"># CI</a>
+              <a href="/tags/%E5%86%99%E4%BD%9C%E6%B5%81%E6%B0%B4%E7%BA%BF/" rel="tag"># 写作流水线</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/08/03/202608030013/" rel="prev" title="那个开关我早就开着了，只是从没接上线">
+                  <i class="fa fa-angle-left"></i> 那个开关我早就开着了，只是从没接上线
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">24:26</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

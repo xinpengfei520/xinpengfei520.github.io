@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Meta 发的 Muse Glimmer 是 30B dense 模型，四比特量化后不到 20G，单卡最高 53 tok&#x2F;s。我留本地的三条理由它全接住了，可真拦住我的是换模型之后工具调用会不会悄悄填错还不报错。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Meta 这个 30B 把我三条理由全接住了，我卡在另一条上">
+<meta property="og:url" content="https://www.vance.xin/2026/08/11/202608111203/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Meta 发的 Muse Glimmer 是 30B dense 模型，四比特量化后不到 20G，单卡最高 53 tok&#x2F;s。我留本地的三条理由它全接住了，可真拦住我的是换模型之后工具调用会不会悄悄填错还不报错。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260811-202608111203-muse-glimmer-local-agent-v2.webp">
+<meta property="article:published_time" content="2026-08-11T12:03:00.000Z">
+<meta property="article:modified_time" content="2026-08-13T02:09:28.469Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="本地模型">
+<meta property="article:tag" content="Meta">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260811-202608111203-muse-glimmer-local-agent-v2.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/08/11/202608111203/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/08/11/202608111203/","path":"2026/08/11/202608111203/","title":"Meta 这个 30B 把我三条理由全接住了，我卡在另一条上"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Meta 这个 30B 把我三条理由全接住了，我卡在另一条上 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Meta 这个 30B 把我三条理由全接住了，我卡在另一条上",
+  "url": "https://www.vance.xin/2026/08/11/202608111203/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/08/11/202608111203/",
+  "datePublished": "2026-08-11T12:03:00.000Z",
+  "dateModified": "2026-08-13T02:09:28.469Z",
+  "description": "Meta 发的 Muse Glimmer 是 30B dense 模型，四比特量化后不到 20G，单卡最高 53 tok/s。我留本地的三条理由它全接住了，可真拦住我的是换模型之后工具调用会不会悄悄填错还不报错。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%AD%E4%BB%80%E4%B9%88%E8%BF%98%E5%86%99%E8%BF%99%E4%B8%80%E7%AF%87"><span class="nav-text">凭什么还写这一篇</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%95%99%E6%9C%AC%E5%9C%B0%E7%9A%84%E9%82%A3%E4%B8%89%E6%9D%A1"><span class="nav-text">我留本地的那三条</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%9F%E5%BA%A6%E8%BF%99%E5%85%B3%E5%AE%83%E8%BF%87%E4%BA%86"><span class="nav-text">速度这关它过了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E5%8D%A1%E4%BD%8F%E7%9A%84%E6%98%AF%E5%8F%A6%E4%B8%80%E6%9D%A1"><span class="nav-text">我卡住的是另一条</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%B8%8B%E5%91%A8%E5%85%88%E6%8E%A5%E5%93%AA%E4%B8%80%E6%AE%B5"><span class="nav-text">我下周先接哪一段</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">498</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">849</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/08/11/202608111203/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Meta 这个 30B 把我三条理由全接住了，我卡在另一条上 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Meta 发的 Muse Glimmer 是 30B dense 模型，四比特量化后不到 20G，单卡最高 53 tok&#x2F;s。我留本地的三条理由它全接住了，可真拦住我的是换模型之后工具调用会不会悄悄填错还不报错。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Meta 这个 30B 把我三条理由全接住了，我卡在另一条上
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-08-11 12:03:00" itemprop="dateCreated datePublished" datetime="2026-08-11T12:03:00+00:00">2026-08-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-08-13 02:09:28" itemprop="dateModified" datetime="2026-08-13T02:09:28+00:00">2026-08-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Meta 发的 Muse Glimmer 是 30B dense 模型，四比特量化后不到 20G，单卡最高 53 tok/s。我留本地的三条理由它全接住了，可真拦住我的是换模型之后工具调用会不会悄悄填错还不报错。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260811-202608111203-muse-glimmer-local-agent-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>Meta 昨天开源了一个叫 Muse Glimmer 的模型，300 亿参数，Apache 2.0，说是专门给「常驻在你机器上的 agent」做的。</p>
+<p>我得先交代一件事：本地模型这个话题，两周内我已经写过两回了。</p>
+<p>七月二十八号写 Deltafin 把 K3 塞进 64G 的 Mac，结论是装得进但太慢。八月四号写 iPhone 上真跑起了 35B，同一把尺子量下来还是同一个答案。按理说该换换口味了。</p>
+<p>我今天还写，是因为这次多了三样以前没同时出现过的东西：为常驻 agent 调的、四比特量化后二十来 G 就够、Apache 2.0 可以商用。</p>
+<p>前两次我那把尺子卡在容量和速度上。这次这三样凑齐了，我得重新量一遍。</p>
+<h2 id="凭什么还写这一篇"><a href="#凭什么还写这一篇" class="headerlink" title="凭什么还写这一篇"></a>凭什么还写这一篇</h2><p>先把新东西摆清楚，下面这些数我一个都没测过。</p>
+<p>它是 30B 的 dense 模型，27.9B 的文本解码器加 1.9B 的视觉编码器，从 Meta 更大的 Muse Spark 蒸出来的。</p>
+<p>注意 dense 这个词，等会儿要用。</p>
+<p>内存这条得掰清楚，因为传得最广的说法有点糊。</p>
+<p>全精度要五十五 G 以上，Meta 自己都说消费级硬件够不着。压到四比特之后，模型本体不到二十 G。</p>
+<p>官方原话是，剩下的空间刚好够用。二十四 G 或三十二 G 的盘子里，还塞得下 KV 缓存、视觉编码器，和推测解码用的那个小模型。</p>
+<p>所以「24G 能跑」是真的，但它是量化之后的事，不是原生。</p>
+<p>速度这块，单张 AMD Radeon AI PRO R9700 上最高 53 tok&#x2F;s，AMD 那颗 Ryzen AI Max+ 395 上最高 24 tok&#x2F;s，RTX 5090 上单用户解码 236 tok&#x2F;s。</p>
+<p>我跑 Mac，所以最想看的是 Apple 芯片上的数。LMSYS 那篇说测了 M5 Pro，可我没扒到具体数字，Ollama 页面也不给。这条我没核到，如实说。</p>
+<h2 id="我留本地的那三条"><a href="#我留本地的那三条" class="headerlink" title="我留本地的那三条"></a>我留本地的那三条</h2><p>七月我写过一篇讲本地和云那条线，里面把我为什么非留着本地不可，掰成了三条。</p>
+<p>数据不出这台机器。断网了照样能跑。模型下下来之后，推理不再计费。</p>
+<p>这三条是我的判据，现在拿它们逐条对一遍。</p>
+<p>数据不出机器，满足。而且 Meta 专门往这个方向训过，官方说训练目标里包含少外泄、抗住来自不可信内容的提示注入、守住信息边界。</p>
+<p>断网能跑，满足。这条比看上去值钱。Deltafin 那个流式模式虽然只占两百多 G 磁盘，可它是边跑边从 HuggingFace 拉专家权重，断网就废。Muse Glimmer 是权重整个躺在你盘上。</p>
+<p>推理不计费，满足，而且这次多了一层。Apache 2.0 意味着能商用、能改、能再分发。以前不少开源模型的许可，正经拿去做产品之前得先请法务看一眼。</p>
+<p>三条全中。</p>
+<h2 id="速度这关它过了"><a href="#速度这关它过了" class="headerlink" title="速度这关它过了"></a>速度这关它过了</h2><p>现在轮到那把尺子。</p>
+<p>我量本地模型只问一句：这次是不是人在盯着屏幕等。人坐那儿等它吐字，慢一秒都难受。活能挂后台异步跑，慢点无所谓。</p>
+<p>七月底 K3 那次，这把尺子直接被量废了。14.6 秒才蹦一个字，挂后台跑一篇稿要十二个小时，连异步这条退路都堵死。</p>
+<p>我当时还留了个估法：别看参数量，看激活参数量和你机器的内存带宽。</p>
+<p>这就是 dense 这个词该拿出来用的地方。</p>
+<p>K3 是 2.8T 总参数但每次只激活 104B 的混合专家模型。Muse Glimmer 是 30B dense，每次全都要过一遍。听起来后者更亏，可你把数放一块看：104B 对 30B，还是量化到四比特之后的 30B。</p>
+<p>打个比方，K3 那种是仓库特别大但每次只从几个货架取货，问题是那几个货架本身就重得搬不动。Muse Glimmer 是整个仓库小到你可以一趟全搬完。</p>
+<p>24 到 53 tok&#x2F;s 是什么概念。我在 M1 上跑 gemma4:e4b 大概是一秒二十到四十个字，就是那个体感。这个速度我用得下去。</p>
+<p>所以速度这关，它大概率过了。</p>
+<h2 id="我卡住的是另一条"><a href="#我卡住的是另一条" class="headerlink" title="我卡住的是另一条"></a>我卡住的是另一条</h2><p>三条理由全中，速度也过了。那我今天就该去下权重了，对吧。</p>
+<p>说真的，我没有。</p>
+<p>七月十三号我写过一篇，OpenAI 的员工在推上手把手教人五分钟把 Claude Code 的后端换成 GPT-5.6 Sol，四行 alias 的事。我盯着那四行看了半天，没敢按。</p>
+<p>当时我写下的理由是这么一句：门槛低成这样，恰恰是我最不敢按的地方。它跑得越顺，越照不出哪里已经悄悄错了。</p>
+<p>我怕的是一个具体的场景。</p>
+<p>有人踩过这么个坑。模型给工具参数全填了默认值，一大批文件读进来是空的。可这些调用一个错都没报，跑通率照样满格，界面上不飘一点红。这道空读悄悄跑了三天，才有人回头发现。</p>
+<p>我那条发号的流水线是一模一样的结构。Claude Code 认得 frontmatter，才拼得对图文。真换了个模型，它把某个字段悄悄填成默认值，渲染照样成功，草稿照样进箱，等我点开才看出封面早填岔了。</p>
+<p>这就像体检报告上每一项都是绿的，你以为自己没事，可病恰好在那份报告没测的那一项上。指标全绿不等于身体没病，它只等于你测的那几项没病。</p>
+<p>你知道吗，Muse Glimmer 的官方卖点里正好有一条是冲着这个来的，叫失败恢复。</p>
+<p>说明写得很清楚：工具调用失败、或者返回了意外结果，模型会自己诊断错误再重试，而不是停在那儿干等。</p>
+<p>我读到这条的时候愣了一下。它擦着我那个恐惧过去了，可没打中。</p>
+<p>它解的是「摔了能自己爬起来」。我怕的是「压根没摔，可它填错了，而且不报错」。前者是有个错误信号摆在那儿等着被处理，后者是从头到尾没有信号。这两件事隔着一整层。</p>
+<p>说白了，失败恢复给体检报告加了一项「指标异常自动复查」，可它复查的还是原来那几项。</p>
+<h2 id="我下周先接哪一段"><a href="#我下周先接哪一段" class="headerlink" title="我下周先接哪一段"></a>我下周先接哪一段</h2><p>所以这次的结论跟前两次不一样了。</p>
+<p>前两次我说的是「跑不动」，模型那头就把路堵死了。这次它跑得动，路通了，可拦住我的东西挪到了我这头：我没有一套能看出它悄悄填错的办法。</p>
+<p>顺带说一句，Meta 自己在模型卡里写着，在能触发真实动作的 agent 场景里，建议给不可逆的操作加人工确认。厂商比营销号清醒。</p>
+<p>有一条路我看了挺动心。Ollama 已经支持它了，虽然眼下只在 Apple 芯片的 MLX 引擎上，命令长这样：<code>ollama launch claude --model muse-glimmer:30b-mlx</code>。</p>
+<p>你注意这个 claude。它换的是发动机，车还是原来那台。我那十几个 skill 是照着 Claude Code 的脾气一点点抠出来的，谁认 frontmatter、谁按什么顺序加载、hook 在哪个时机触发，全焊在这套壳上。能保住壳只换模型，迁移成本就完全是另一个量级。</p>
+<p>不过还有件事得说明白。有人指出，跨会话接着干活这个能力是那层壳给的，不是模型给的。所以换了模型之后，壳还在，可壳和新模型之间那些没写进文档的默契，得重新验一遍。</p>
+<p>我下周打算这么干。不整条流水线切，先挑最不怕出错的那一段：调研阶段抓网页、提摘要。这段出错了我一眼能看出来，重跑一次也不心疼。切过去跑一周，专门盯一件事，就是工具调用的参数有没有被悄悄填成默认值。</p>
+<p>给你一个今天就能做的判断。别先看参数量，去查你那台机器的内存带宽，再拿激活参数量除一除，这比翻一晚上教程管用。然后问自己那三条：数据要不要留在本地、断网要不要还能干活、推理费用疼不疼。三条占不到两条，本地这条线对你就是个玩具。</p>
+<p>你把 agent 搬到本地了吗？如果没搬，是嫌它跑不动，还是跟我一样，卡在「我不知道怎么验它有没有跑对」这件事上？评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E6%9C%AC%E5%9C%B0%E6%A8%A1%E5%9E%8B/" rel="tag"># 本地模型</a>
+              <a href="/tags/Meta/" rel="tag"># Meta</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/08/10/202608101425/" rel="prev" title="我补的六条禁令，拦不住我自己开的那扇后门">
+                  <i class="fa fa-angle-left"></i> 我补的六条禁令，拦不住我自己开的那扇后门
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/08/12/202608121009/" rel="next" title="我本来想骂微信双标，扒完规则发现是我想岔了">
+                  我本来想骂微信双标，扒完规则发现是我想岔了 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">24:47</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

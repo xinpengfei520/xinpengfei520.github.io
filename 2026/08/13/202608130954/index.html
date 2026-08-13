@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="OpenRouter 实测搜索预算，1 轮 35.8 分花 0.14 美元，25 轮 89 分花 0.99 美元。可答对时平均搜 17.6 次，答错时搜 23.4 次。我那条调研链路的搜索深度一直凭手感定。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="搜 25 轮从 35.8 分干到 89 分，可它答错那次搜得最狠">
+<meta property="og:url" content="https://www.vance.xin/2026/08/13/202608130954/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="OpenRouter 实测搜索预算，1 轮 35.8 分花 0.14 美元，25 轮 89 分花 0.99 美元。可答对时平均搜 17.6 次，答错时搜 23.4 次。我那条调研链路的搜索深度一直凭手感定。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260813-202608130954-search-depth-budget.webp">
+<meta property="article:published_time" content="2026-08-13T09:54:00.000Z">
+<meta property="article:modified_time" content="2026-08-13T02:09:28.469Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="成本">
+<meta property="article:tag" content="搜索">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260813-202608130954-search-depth-budget.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/08/13/202608130954/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/08/13/202608130954/","path":"2026/08/13/202608130954/","title":"搜 25 轮从 35.8 分干到 89 分，可它答错那次搜得最狠"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>搜 25 轮从 35.8 分干到 89 分，可它答错那次搜得最狠 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "搜 25 轮从 35.8 分干到 89 分，可它答错那次搜得最狠",
+  "url": "https://www.vance.xin/2026/08/13/202608130954/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/08/13/202608130954/",
+  "datePublished": "2026-08-13T09:54:00.000Z",
+  "dateModified": "2026-08-13T02:09:28.469Z",
+  "description": "OpenRouter 实测搜索预算，1 轮 35.8 分花 0.14 美元，25 轮 89 分花 0.99 美元。可答对时平均搜 17.6 次，答错时搜 23.4 次。我那条调研链路的搜索深度一直凭手感定。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E9%82%A3%E6%9D%A1%E9%93%BE%E8%B7%AF%E4%B8%80%E7%9B%B4%E6%B2%A1%E9%87%8F%E8%BF%87"><span class="nav-text">我那条链路一直没量过</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E6%90%9C%E5%88%B0%E5%BA%95%E5%80%BC%E4%B8%8D%E5%80%BC"><span class="nav-text">多搜到底值不值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8D%A2%E6%A8%A1%E5%9E%8B%E6%AF%94%E6%8D%A2%E5%BC%95%E6%93%8E%E7%AE%A1%E7%94%A8"><span class="nav-text">换模型比换引擎管用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AD%94%E9%94%99%E9%82%A3%E6%AC%A1%E5%AE%83%E6%90%9C%E5%BE%97%E6%9C%80%E7%8B%A0"><span class="nav-text">答错那次它搜得最狠</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%B8%8B%E5%91%A8%E5%85%88%E5%8A%A8%E5%93%AA%E4%B8%80%E5%A4%84"><span class="nav-text">我下周先动哪一处</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">498</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">849</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/08/13/202608130954/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="搜 25 轮从 35.8 分干到 89 分，可它答错那次搜得最狠 | 飞飞的AI实验室">
+      <meta itemprop="description" content="OpenRouter 实测搜索预算，1 轮 35.8 分花 0.14 美元，25 轮 89 分花 0.99 美元。可答对时平均搜 17.6 次，答错时搜 23.4 次。我那条调研链路的搜索深度一直凭手感定。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          搜 25 轮从 35.8 分干到 89 分，可它答错那次搜得最狠
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-08-13 09:54:00 / 修改时间：02:09:28" itemprop="dateCreated datePublished" datetime="2026-08-13T09:54:00+00:00">2026-08-13</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">OpenRouter 实测搜索预算，1 轮 35.8 分花 0.14 美元，25 轮 89 分花 0.99 美元。可答对时平均搜 17.6 次，答错时搜 23.4 次。我那条调研链路的搜索深度一直凭手感定。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260813-202608130954-search-depth-budget.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>我那条抓资料的链路跑了大半年，有个参数我从来没量过：一个题该搜几轮才收手。</p>
+<p>全凭手感。感觉差不多了就停，感觉没搜够就再来一轮。</p>
+<p>OpenRouter 前天发了个网页搜索的实时基准，把「模型、搜索引擎、搜索方法、预算」四类配置摆在一起测。我读完发现，我那套手感两头都不对。</p>
+<p>先撇清一下。八月八号我写过 Kitesurf，聊的是 agent 浏览器跟我那套 playwright 加 jina 的双通道谁更省，重心在抓取那一层怎么翻 403 那堵墙。这篇不重讲反爬，只谈另一个我一直没碰过的参数：搜多深。</p>
+<h2 id="我那条链路一直没量过"><a href="#我那条链路一直没量过" class="headerlink" title="我那条链路一直没量过"></a>我那条链路一直没量过</h2><p>先交代我在跑什么，好让你知道这些数落到哪。</p>
+<p>我有个 skill 叫 content-researcher，专门给写稿抓料。主力是 playwright，启一个真实 Chromium 去抓页面；被 403 或者超时挡回来，退到 jina.ai 把页面转成干净的 markdown。两条腿配合着，大部分站能过。</p>
+<p>这条链路我磨了大半年，踩的坑都很具体。Chromium 版本升了跟 playwright 不兼容，某个站改了反爬突然全 403，jina.ai 偶尔限流返回空内容。</p>
+<p>可你注意，这些全是「抓得到抓不到」的问题。</p>
+<p>「该搜几轮」这个参数，我压根没当成一个可以调的东西看过。它就在那儿，是个默认值，我从没问过它该是多少。</p>
+<h2 id="多搜到底值不值"><a href="#多搜到底值不值" class="headerlink" title="多搜到底值不值"></a>多搜到底值不值</h2><p>OpenRouter 这份榜里最直观的一组数，是 Claude Opus 5 在 BrowseComp 上配 Perplexity 引擎跑出来的。</p>
+<p>搜 1 轮，准确率 35.8%，每题花 0.14 美元。</p>
+<p>搜 5 轮，66.5%，0.51 美元。</p>
+<p>搜 25 轮，89.0%，0.99 美元。</p>
+<p>我盯着这三行看了半天。</p>
+<p>从 1 轮到 25 轮，分数从 35.8 干到 89，是两倍半。钱从一毛四涨到九毛九，七倍。官方那句总结写的是「分数大约翻倍，成本只多 2.5 到 7 倍」。我按这组数自己算了一遍，分数其实涨了 2.5 倍，成本正好顶在 7 倍那个上限。</p>
+<p>打个比方，这像打井。往下打五米见了水，再往下打二十五米水更旺。多花的力气是有的，可换来的水量比力气涨得快。</p>
+<p>真正让我上心的是中间那个 5 轮。</p>
+<p>从 1 轮到 5 轮，准确率涨了 30.7 个点，钱花了 3.6 倍。从 5 轮到 25 轮，再涨 22.5 个点，钱只多了不到一倍。</p>
+<p>也就是说，前几轮最值，后面每一分越来越贵，可绝对成本还压在一美元以内。</p>
+<p>我那条链路默认搜几轮，我现在都说不上来。但我敢说，肯定不是二十五轮。</p>
+<p>榜里还测了一个维度，我读了两遍才反应过来自己也没调过：搜索方法。</p>
+<p>一种是插件式的，你给一次查询，它搜一次，回来一批结果就完事。另一种是把搜索当工具交给模型，让它自己决定要搜几次、每次搜什么、看完再要不要接着搜。</p>
+<p>说白了，这两种的差别不在搜的次数多少，在谁来决定停不停。</p>
+<p>我那条链路是前一种。我给一批关键词，它抓回来，我看着办。它没有「我看完这批觉得不够，再自己拟几个词接着搜」的权力。</p>
+<p>这事我以前没觉得是个问题，因为我一直把 researcher 当成一双手，不是一个脑子。现在看，这个选择本身就把上面那条「多搜很值」的收益给锁死了一半，它压根没有多搜的权限。</p>
+<h2 id="换模型比换引擎管用"><a href="#换模型比换引擎管用" class="headerlink" title="换模型比换引擎管用"></a>换模型比换引擎管用</h2><p>另一条结论我一读就笑了，因为它把我一直靠手感干的事验证了一遍。</p>
+<p>原文的说法是：模型不动只换引擎，分数平均差 10 分；而前沿模型跟低成本模型之间，平均差 15 分。</p>
+<p>接着打井那个比方。换个引擎像换钻头，有用；换个模型像换打井的师傅，更管用。</p>
+<p>这条为什么让我笑。七月我写过一篇，讲搭 agent 别一上来就选模型。里面说我拿脑子当调度器，看一眼这活多难，再决定派给哪一档。格式转换、打标签、粗筛这类死板活，早就切到便宜模型上了。那会儿是纯手感，账也算过：六个 skill 全用 Sonnet 一个月吃掉我 19% 的额度，按任务分档之后降到 8% 到 9%。</p>
+<p>现在有人拿数据把这条说了一遍。我那点肌肉记忆，方向是对的。</p>
+<p>还有个数值得记：前沿模型换不同引擎，成本能差 2.5 倍；便宜模型只差 1.5 倍。你要是用贵模型，引擎选错了，钱包比分数先有感觉。</p>
+<p>榜里还有一条我完全没想到的。GPT-5.6 Luna 搜 25 轮花了 111 秒，搜 1 轮反而要 140 秒。</p>
+<p>多搜二十四轮，还快了半分钟。</p>
+<p>你知道吗，我琢磨了半天这事怎么可能。大概是搜 1 轮的时候资料不够，模型只能自己在那儿硬想、反复推敲。搜到 25 轮资料齐了，它不用绕了，直接就答出来。</p>
+<p>这条对我挺有冲击。我一直默认「搜得多等得久」，所以下意识地不敢往多了配。要是这个现象在别的模型上也成立，那我那个顾虑就是假的。</p>
+<h2 id="答错那次它搜得最狠"><a href="#答错那次它搜得最狠" class="headerlink" title="答错那次它搜得最狠"></a>答错那次它搜得最狠</h2><p>还有一条结论，是这份榜里最反直觉、也最扎我的。</p>
+<p>原文说，失败率高的任务，降低搜索深度反而是省钱的有效路子。</p>
+<p>我第一反应是这不对啊。越难的题不是越该多搜吗。</p>
+<p>往下读看到了机制，我就服了。</p>
+<p>WideSearch 那套题里，模型<strong>答对的时候平均搜 17.6 次，答错的时候搜 23.4 次</strong>。</p>
+<p>说真的，这个数比什么都直白。模型答不出来的时候不会停，它会把预算耗光，搜得比答对时还多，然后交一份错的给你。</p>
+<p>这一下把我那条链路里最烦的画面解释清楚了。</p>
+<p>我见过 researcher 卡在某个站上反复重试，日志刷得飞快。我以前的理解是它在努力，是这个题难。现在看，那多半是它已经找不到了，只是还没停。</p>
+<p>回到打井。往下打五米二十五米都值，可要是这块地压根没水，你打到一百米也是白打，而且越往下越贵。</p>
+<p><strong>所以该不该多搜，不在这题重不重要，在它搜不搜得出来。</strong></p>
+<h2 id="我下周先动哪一处"><a href="#我下周先动哪一处" class="headerlink" title="我下周先动哪一处"></a>我下周先动哪一处</h2><p>得先把边界说清楚，这条挺关键。</p>
+<p>这份榜是 OpenRouter 自家发的，没有第三方复现。更要紧的是它的测法：每次搜索只取十条结果，<strong>不做页面抓取，也不执行代码</strong>。原文自己也点了这一层，说市面上多数榜测的是完整 agent 产品，而它这套是专门把搜索配置单独拎出来测。</p>
+<p>我那条链路恰恰是要抓完整正文的，playwright 抓页面、jina 转 markdown，都是这份榜里没测的部分。</p>
+<p>所以这些数我拿来当方向看，不当我自己链路的预期值。真要知道我那条搜几轮最划算，只能自己量。</p>
+<p>下周我打算动两处。</p>
+<p>一处是把「搜几轮」从默认值变成一个我真正调过的参数。先看它现在是多少，再按题的类型分开设。</p>
+<p>另一处是给它加一个早停。既然答错的时候它反而搜得更多，那就不能让它无限往下打。搜到一定轮数还没拿到能用的东西，就停下来转人工，别把预算烧在一口没水的井上。</p>
+<p>早停这事说着简单，真写起来卡在一个地方：怎么让它知道自己「没拿到能用的东西」。</p>
+<p>搜回来一堆结果，它是不缺东西的，缺的是对的东西。这跟我之前踩的另一个坑同源，工具调用返回成功不代表拿到的内容是对的。</p>
+<p>我暂时想到的土办法是数一个具体的东西：这一轮搜回来的结果里，有没有出现之前没见过的信源域名。要是连着几轮翻来覆去都是那几个站，基本可以判定这条路走到头了。这个判据我还没写进去，下周试。</p>
+<p>给你一个今天就能做的动作。把你的调研任务分成两类：一类是「网上肯定有，只是得多翻几页」，一类是「大概率查不到，得靠人问或者靠自己算」。</p>
+<p>前一类舍得给轮数，后一类早点收手。分错了，钱和时间两头都亏。</p>
+<p>最后想问问你：你那个调研 agent 搜几轮收手，是拍脑袋定的，还是真量过？如果量过，你的拐点在第几轮？评论区聊聊，我下周调完回来摆一下改前改后。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E6%88%90%E6%9C%AC/" rel="tag"># 成本</a>
+              <a href="/tags/%E6%90%9C%E7%B4%A2/" rel="tag"># 搜索</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/08/12/202608121009/" rel="prev" title="我本来想骂微信双标，扒完规则发现是我想岔了">
+                  <i class="fa fa-angle-left"></i> 我本来想骂微信双标，扒完规则发现是我想岔了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">24:47</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

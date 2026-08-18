@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Claude 8月起在生成文字里嵌不可见统计水印，改的是随机数来源而非文字；轻改留痕，彻底重写才消；代码注释有水印，代码本体基本无。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我说「机器可读标记不归我管」，结果它已经管上了">
+<meta property="og:url" content="https://www.vance.xin/2026/08/18/202608181031/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Claude 8月起在生成文字里嵌不可见统计水印，改的是随机数来源而非文字；轻改留痕，彻底重写才消；代码注释有水印，代码本体基本无。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260818-20260818-claude-watermark.webp">
+<meta property="article:published_time" content="2026-08-18T10:31:00.000Z">
+<meta property="article:modified_time" content="2026-08-18T09:39:08.669Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="AI水印">
+<meta property="article:tag" content="内容安全">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260818-20260818-claude-watermark.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/08/18/202608181031/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/08/18/202608181031/","path":"2026/08/18/202608181031/","title":"我说「机器可读标记不归我管」，结果它已经管上了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>我说「机器可读标记不归我管」，结果它已经管上了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "我说「机器可读标记不归我管」，结果它已经管上了",
+  "url": "https://www.vance.xin/2026/08/18/202608181031/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/08/18/202608181031/",
+  "datePublished": "2026-08-18T10:31:00.000Z",
+  "dateModified": "2026-08-18T09:39:08.669Z",
+  "description": "Claude 8月起在生成文字里嵌不可见统计水印，改的是随机数来源而非文字；轻改留痕，彻底重写才消；代码注释有水印，代码本体基本无。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B0%B4%E5%8D%B0%E7%A9%B6%E7%AB%9F%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-text">水印究竟是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E7%AE%A1%E4%B8%8D%E7%AE%A1%E4%BD%A0"><span class="nav-text">它管不管你</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%AF%8F%E5%A4%A9%E5%8F%91%E7%9A%84%E5%86%85%E5%AE%B9%E6%80%8E%E4%B9%88%E7%AE%97"><span class="nav-text">我每天发的内容怎么算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B2%A1%E5%86%99%E5%87%BA%E6%9D%A5%E7%9A%84%E9%82%A3%E5%8D%8A%E4%B8%AA%E9%97%AE%E9%A2%98"><span class="nav-text">没写出来的那半个问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%8E%B0%E5%9C%A8%E6%80%8E%E4%B9%88%E7%9C%8B%E8%BF%99%E4%BB%B6%E4%BA%8B"><span class="nav-text">我现在怎么看这件事</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">500</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">851</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/08/18/202608181031/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="我说「机器可读标记不归我管」，结果它已经管上了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Claude 8月起在生成文字里嵌不可见统计水印，改的是随机数来源而非文字；轻改留痕，彻底重写才消；代码注释有水印，代码本体基本无。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我说「机器可读标记不归我管」，结果它已经管上了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-08-18 10:31:00 / 修改时间：09:39:08" itemprop="dateCreated datePublished" datetime="2026-08-18T10:31:00+00:00">2026-08-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Claude 8月起在生成文字里嵌不可见统计水印，改的是随机数来源而非文字；轻改留痕，彻底重写才消；代码注释有水印，代码本体基本无。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260818-20260818-claude-watermark.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>上个月写欧盟 AI 内容标注那篇，我说了一句「机器可读标记压根不归我管」，当时觉得挺利索。</p>
+<p>七月三十一号发出去，八月十四号 Anthropic 出了一篇 FAQ。我重读那句话，感觉有点刺。</p>
+<p>它已经管上了。</p>
+<h2 id="水印究竟是什么"><a href="#水印究竟是什么" class="headerlink" title="水印究竟是什么"></a>水印究竟是什么</h2><p>先把这件事说清楚，「水印」这个词容易让人想到银行票据上那种一眼能看见的图案。Claude 的水印完全不是那回事。</p>
+<p>大语言模型每次生成文字都是一个字一个字往外选的。每次选词，它面前摆着一排候选词：「阴沉」「灰暗」「乌云密布」，意思差不多的好几个可选。选哪个，以前靠一个任意的随机数决定，现在靠一串从密钥生成的伪随机序列决定。</p>
+<p>Anthropic 拿着密钥，事后能检验这篇文字的选词模式是不是和密钥对得上。对得上，就说明这篇可能是 Claude 写的。</p>
+<p>对读者来说没任何区别。意思、流畅度、创意，全都不变。Google DeepMind 用 Gemini 的真实流量做过 A&#x2F;B 测试，有水印和没水印两组用户的点赞踩踩比例没有统计显著差异。人工评分员两篇放在一起比，也挑不出哪篇是哪篇。</p>
+<p>有个类比我觉得说得准：大富翁棋盘游戏里，骰子本来是真骰子，现在换成翻 π 小数的某一段来决定步数。游戏结果没变，但如果你知道是从 π 哪一位开始的，就能反推「这局棋大概率用的是 π 骰子」。</p>
+<h2 id="它管不管你"><a href="#它管不管你" class="headerlink" title="它管不管你"></a>它管不管你</h2><p>说真的，这件事在程序员圈子里引发了一波小恐慌。「我用 Claude 写的代码，会不会被检测到是 AI 写的？」「公司用 Claude 写的文档，会不会被平台判为 AI 内容？」</p>
+<p>Anthropic 的 FAQ 对这两个问题回答得很直接。</p>
+<p><strong>代码基本不受影响。</strong> 水印只附着在「选哪个词都行」的位置。代码里绝大多数地方不存在这种随便选的空间：<code>return</code> 后面就得跟 <code>return</code>，变量名拼错了就是错的，逻辑分支错了就跑不起来。所以代码本体几乎没有水印落脚的地方。例外是注释，注释用自然语言写，里面就可能有。</p>
+<p>我在 Claude Code 里跑的那些 skill，每次生成的 Python 脚本，代码本体大概率是干净的。但如果 Claude 顺手给函数写了一行中文注释，那行注释里可能就带着水印。这个区别以前我没想过。</p>
+<p><strong>轻改留水印，彻底重写没有。</strong> 改几个词、调整一下语序，统计模式大概率还在。把每个词都换掉重写一遍，就没有了。Anthropic 在这里加了一句我觉得很实诚的话：「那时候你还能说这是 AI 写的吗？」</p>
+<p><strong>不含任何用户信息。</strong> 密钥在 Anthropic 那边，水印只能说明「Claude 参与过这篇内容的生成」，连是哪个账号生成的都说不出来，更不要说在哪台设备、哪个会话里生成的。这个设计我觉得是刻意的，走另一个方向会很麻烦，比如「这段文字是某某用户某年某月某日在某个对话里生成的」，那才是真的隐私问题。</p>
+<p>短文本也不可靠。只有几十个词的文本，Claude 根本没多少「随便选」的机会，置信度会很低。Anthropic 说得很清楚：文字越长，越能判断。一条 tweet 长度的文字，基本判不出来。</p>
+<h2 id="我每天发的内容怎么算"><a href="#我每天发的内容怎么算" class="headerlink" title="我每天发的内容怎么算"></a>我每天发的内容怎么算</h2><p>这是我最关心的那个问题。我这条流水线的工作方式是：researcher 搜资料，writer 写初稿，polisher 改 AI 味，我过一遍之后发出去。</p>
+<p>按 Anthropic 的判定方式，这篇内容带水印。有大量的词是 Claude 选的，不管后来被改了几次，只要没有全部替换过，模式就还在。</p>
+<p>有意思的地方在这儿：polisher 阶段会把 AI 味最浓的句子改掉，换成更像人写的措辞。这一步在降 AI 味的同时，也顺带稀释了水印里的统计模式。但「稀释」不等于「消失」，除非每个词都换。大概是五分之一到三分之一的词被动过，水印置信度肯定下降，但大概率还在。</p>
+<p>但这里有个很重要的事我想说清楚：水印说的是「Claude 写了这篇」，不是「这篇是假的」，也不是「这篇没有人工审阅」。</p>
+<p>我那条流水线里，选题是我来的，发布前全文我过一遍，出了问题我来扛。这条线我在欧盟那篇写过，现在还是这条线，水印的出现没有改变它。</p>
+<p>有时候我会想，水印到底是谁的需求。Anthropic 说是合规，EU AI Act 要求 AI 内容必须有机器可读标记，他们签了那个自愿承诺书。但他们不只在欧盟用户上开启，而是全球一刀切，理由是「暂时还没有稳定的按地区限制的方法」。全球一刀切这件事，我倒觉得某种程度上更干净。不然就有「欧盟用户被标记，其他人不被标记」这种双轨情况，反而更乱。</p>
+<p>水印检测 API 还在开发中，Anthropic 说「即将推出」，但还没有。等它出来，任何人拿这篇文章去跑一下，大概会看到「Claude 参与了这篇内容的生成」的信号。这个结果是真的。</p>
+<p>不过有一件事让我有点在意，跟我自己关系不大，是关于下游用这套检测的那些人。</p>
+<h2 id="没写出来的那半个问题"><a href="#没写出来的那半个问题" class="headerlink" title="没写出来的那半个问题"></a>没写出来的那半个问题</h2><p>Anthropic 在 FAQ 里明确说，水印不能区分「Claude 写的」和「Claude 大幅改写了人写的」。翻译稿是带水印的，因为每个词都是 Claude 选的。但一篇 Claude 只动了几处语法的人写稿，基本不带，因为几乎没有 Claude 选词的空间。</p>
+<p>这个设计是对的，因为机理决定了它就只能这样。</p>
+<p>但问题在于，这个「可能是 Claude 写的」的概率信号，到了下游（学校、招聘平台、发布平台），会以什么姿态被使用，Anthropic 控制不了。</p>
+<p>Anthropic 自己把这件事写进了 FAQ：「检测到水印不能证明内容是 AI 生成的，检测不到水印也不能证明内容不是 AI 生成的。」这句话很诚实。但这句话只在 FAQ 里，不会自动出现在任何一个使用了他们检测 API 的产品的判定页面上。</p>
+<p>说真的，我不知道这个担忧是不是多余的。也许检测 API 的使用场景根本到不了那里。但既然想到了，写出来总比不写强。</p>
+<h2 id="我现在怎么看这件事"><a href="#我现在怎么看这件事" class="headerlink" title="我现在怎么看这件事"></a>我现在怎么看这件事</h2><p>欧盟那篇最后那段，我问了读者一个问题：你发出去的那些 AI 参与写的东西，最后过手的那道关口设在哪儿？</p>
+<p>这个问题我自己的回答没变。水印管的是「这篇有没有 Claude 的参与痕迹」，关口管的是「这篇出了问题谁来扛」。这是两件事，它们不互相取消。</p>
+<p>上次我说「机器可读标记不归我管」，说的是欧盟那条义务是上游的事，我不需要在自己的文章里加什么标记。这一点没变。Anthropic 确实在模型层处理这件事，我不需要也做不到在自己这里加或者不加。</p>
+<p>但我说那句话的时候，把「这事和我没关系」当成了结论。这个结论现在有点错位。我在关系里处于一个什么位置，我之前没说清楚。</p>
+<p>这篇就是补那半句话的。</p>
+<p>还有一件事说一下：目前这套水印是从 2026 年 8 月 2 日之后发布的新模型开始全量开的。旧模型有欧盟过渡期，Anthropic 在逐步补。所以你现在用的如果是较早的 Claude 版本，暂时还没有水印，但迟早会有。</p>
+<p>你们那边怎么看？用 Claude 写东西然后发出去，你会在意有水印这件事吗，还是无所谓？</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+              <a href="/tags/AI%E6%B0%B4%E5%8D%B0/" rel="tag"># AI水印</a>
+              <a href="/tags/%E5%86%85%E5%AE%B9%E5%AE%89%E5%85%A8/" rel="tag"># 内容安全</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/08/17/202608171606/" rel="prev" title="4 月我写下 5 条判断，现在 Cursor 真被买走了，对了几条？">
+                  <i class="fa fa-angle-left"></i> 4 月我写下 5 条判断，现在 Cursor 真被买走了，对了几条？
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.6m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">24:52</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

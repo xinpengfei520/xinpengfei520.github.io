@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="OpenAI 给 Astra 发布官方提示词指南，slop 词黑名单与我自建的防 AI 味 grep 矩阵独立收敛出同一条禁令。照官方建议审计自家配置：词表过关、AGENTS.md 缺反问阈值等三条条款、96 万字符规则库是最大兼容风险。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenAI 禁「不是X是Y」，我半年前就禁了">
+<meta property="og:url" content="https://www.vance.xin/2026/09/07/202609071423/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="OpenAI 给 Astra 发布官方提示词指南，slop 词黑名单与我自建的防 AI 味 grep 矩阵独立收敛出同一条禁令。照官方建议审计自家配置：词表过关、AGENTS.md 缺反问阈值等三条条款、96 万字符规则库是最大兼容风险。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260907-20260907-astra-guide-audit.webp">
+<meta property="article:published_time" content="2026-09-07T14:23:00.000Z">
+<meta property="article:modified_time" content="2026-09-07T06:45:40.697Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="OpenAI">
+<meta property="article:tag" content="提示词">
+<meta property="article:tag" content="Astra">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260907-20260907-astra-guide-audit.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/09/07/202609071423/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/09/07/202609071423/","path":"2026/09/07/202609071423/","title":"OpenAI 禁「不是X是Y」，我半年前就禁了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>OpenAI 禁「不是X是Y」，我半年前就禁了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenAI 禁「不是X是Y」，我半年前就禁了",
+  "url": "https://www.vance.xin/2026/09/07/202609071423/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/09/07/202609071423/",
+  "datePublished": "2026-09-07T14:23:00.000Z",
+  "dateModified": "2026-09-07T06:45:40.697Z",
+  "description": "OpenAI 给 Astra 发布官方提示词指南，slop 词黑名单与我自建的防 AI 味 grep 矩阵独立收敛出同一条禁令。照官方建议审计自家配置：词表过关、AGENTS.md 缺反问阈值等三条条款、96 万字符规则库是最大兼容风险。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E5%BC%A0%E9%BB%91%E5%90%8D%E5%8D%95%E6%92%9E%E8%BD%A6%E4%BA%86"><span class="nav-text">两张黑名单撞车了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%8D%E8%A1%A8%E5%A5%BD%E6%89%AB"><span class="nav-text">词表好扫</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E5%9D%91%E5%9C%A8%E4%BD%93%E9%87%8F"><span class="nav-text">大坑在体量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%8B%E5%86%8C%E9%87%8C%E7%BC%BA%E7%9A%84%E4%B8%89%E6%9D%A1"><span class="nav-text">手册里缺的三条</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E5%85%88%E8%A1%A5%E5%93%AA%E5%88%80"><span class="nav-text">我先补哪刀</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">515</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">873</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/09/07/202609071423/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="OpenAI 禁「不是X是Y」，我半年前就禁了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="OpenAI 给 Astra 发布官方提示词指南，slop 词黑名单与我自建的防 AI 味 grep 矩阵独立收敛出同一条禁令。照官方建议审计自家配置：词表过关、AGENTS.md 缺反问阈值等三条条款、96 万字符规则库是最大兼容风险。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OpenAI 禁「不是X是Y」，我半年前就禁了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-09-07 14:23:00 / 修改时间：06:45:40" itemprop="dateCreated datePublished" datetime="2026-09-07T14:23:00+00:00">2026-09-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">OpenAI 给 Astra 发布官方提示词指南，slop 词黑名单与我自建的防 AI 味 grep 矩阵独立收敛出同一条禁令。照官方建议审计自家配置：词表过关、AGENTS.md 缺反问阈值等三条条款、96 万字符规则库是最大兼容风险。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260907-20260907-astra-guide-audit.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>9 月 5 号 OpenAI 给新模型 Astra 发了份官方提示词指南。我翻到 slop 词黑名单那节的时候愣了几秒。slop 词，说人话就是机器腔套话。清单里有一条：别用「This isn’t about X. It’s about Y」这种对比句式。</p>
+<p>这不就是我那套写作规则里禁了大半年的「不是X是Y」对仗么。</p>
+<p>我那套规则长在博客仓库的 grep 矩阵里，每一条都是写稿翻车之后补的。比如「第N」那条禁令。那年连着五篇初稿，篇篇都在用「首先、其次、最后」起头。我干脆把这几个词写进了 grep。从没跟 OpenAI 对过表。两拨人互不通气，禁了同一个句式。这种撞车值得认真对待，因为它说明这些词大概真是 slop，跟谁定的规矩没关系。当然还有一种可能，两边的禁令都源自同一批英文写作圈的公共讨论。可就算是抄，抄的也是同一份已成行业共识的词表。</p>
+<p>顺着指南里「审计你的 AGENTS.md」那句建议，我当天把自家的配置文件全审了一遍。结果一半安心一半冒汗。而这还只是这份指南里最便宜的那部分。</p>
+<h2 id="两张黑名单撞车了"><a href="#两张黑名单撞车了" class="headerlink" title="两张黑名单撞车了"></a>两张黑名单撞车了</h2><p>先交代我这套规矩的来历，你才知道撞车撞得有多实。</p>
+<p>我的防 AI 味规则没一条是抄的，全是被罚出来的。481 篇文章一篇篇写下来，哪句式读着像机器、哪段落一看就是模板，翻一次车记一条，攒成了一份扫描清单：中文破折号、三联否定、「第N」编号、对仗密度超标，每条配一个 grep 命令，交付前机器扫一遍。</p>
+<p>OpenAI 那份清单怎么来的我不知道，但它禁的词跟我的高度重合：总结收口、模糊限定词、车轱辘过渡句，最巧的就是对比句式。官方给的理由是这类句式「引入了用户没要求的另一个选项」，我的理由更土：读起来像在抬杠，且 AI 特别爱用。</p>
+<p>还有我比它严的三样：中文破折号、三联否定、编号陷阱，官方清单压根没提。它也有比我细的，比如专门管散文的写法建议：一段只装一个主旨、重点放前头、主动语态、列表只在信息真平行的时候用。倒过来它有我没有的，比如自造连字符合成词。两边各管一摊，中间重合的那一块，两边都判了死刑。</p>
+<p>独立收敛在写作这行有个好处：不用再怀疑是不是我口味偏。重合的部分，可以当定论用。</p>
+<h2 id="词表好扫"><a href="#词表好扫" class="headerlink" title="词表好扫"></a>词表好扫</h2><p>按指南审自家配置，头一层是扫词。结果分两半。</p>
+<p>英文那半干净得意外。官方点的那些词，delve、leverage、foster、worth noting，我拿 grep 扫了仓库根 CLAUDE.md、AGENTS.md 和全部 skill 文件，命中数为零。原因不复杂：我的文件全是中文，英文 slop 根本没机会进场。</p>
+<p>中文那半有漏网。官方没开中文清单，我按语义把词对过去一搜：赋能跳出来 2 处，抓手 3 处。我第一反应是哪来的，点进去一看，全藏在写作规则库的历史日志里，是当年引用别人文章举例时带进来的。可官方说得对，这类词留在指令文件里就是隐患，agent 分不清你是禁它还是在示范它。</p>
+<p>词这一层，扫一遍半小时，值得做。你不用真去通读那份指南，把那十来个词抄进 grep 就能扫自家仓库，一条命令的事。顺带说，我的 AGENTS.md 本体 8780 字节，倒是克制，问题从来不出在门面上，出在门后面那一整墙的库存。</p>
+<h2 id="大坑在体量"><a href="#大坑在体量" class="headerlink" title="大坑在体量"></a>大坑在体量</h2><p>真正让我冒汗的是另一层：体量。</p>
+<p>官方指南里有句话，说 skill 文件和 AGENTS.md 这类上下文文档里，模糊或矛盾的指令会让模型卡住，或者意外跑偏，所以建议把模型能访问的 skill 文件全审一遍。我把自己的目录掂了掂：skill 文件 24 个，合计 1.7MB，将近 96 万字符。光写作规则库一个文件就 68 万字符，里面 229 条经验摞着几十篇训练日志。</p>
+<p>这套东西是照着 Claude Code 的脾气一点点磨出来的。Claude Code 对它熟，哪条是引用、哪条是禁令、哪条只管某个 skill，配合了半年，磨出了默契。可 Astra 是个新模型，官方原话说它对这类文件「更敏感」。96 万字符里有没有互相矛盾的条款，有没有过期的旧规矩，我没查过，也查不动，那是一次语义层面的全量排查，成本比扫词高两个量级。</p>
+<p>这就是「审计你的 AGENTS.md」这句话的真实成本。词表好扫，半小时。矛盾排查，是一个没有截止日期的工程。我跟你讲，去年我写 AGENTS.md 那篇的时候还引过一条研究，说这种手册越短越好，短才立得住。如今我的规则库长成了 68 万字符的怪物，那篇的旧立场现在听着像别人的话。</p>
+<h2 id="手册里缺的三条"><a href="#手册里缺的三条" class="headerlink" title="手册里缺的三条"></a>手册里缺的三条</h2><p>还有一层跟词和体量都无关，是三个空位。</p>
+<p>官方指南里几条建议，我逐条对了自己的操作手册。反问这块，官方说 Astra 更爱提澄清问题，建议在提示词里写清哪些问题必须停下来问、哪些该当假设继续跑。我的 AGENTS.md 里关于这个的条款是零条。我的手册教了 agent 怎么写稿、怎么配图、怎么发公众号，没教过它什么情况下该停下来问我。</p>
+<p>委派也是零。官方观察到 Astra 除非明确指示否则倾向于自己硬扛，建议显式写明什么时候该派子任务。我的手册里没有任何一条委派规则。测试范围同理，官方说它可能把测试面铺得比任务需要的宽，建议给测试设预算。我的手册里同样一条没有。反问阈值那条官方给的设计思路其实很细：只有答案会实质改变结果的问题才值得停下来问，受众、合规、不可逆动作算，措辞偏好不算。这条拿到人身上也成立，我那套等用户拍板的流水线环节，缺的从来就是这条分界线。</p>
+<p>三个空位是同一种病：我的手册写于 Astra 发布之前，管的是旧模型的脾气。新模型的行为变了，手册没跟上。这算不上懒，是给 agent 写手册这件事本身，从一次性写作变成了持续维护。</p>
+<h2 id="我先补哪刀"><a href="#我先补哪刀" class="headerlink" title="我先补哪刀"></a>我先补哪刀</h2><p>按官方给的路线补的话，顺序是清楚的。说实话，成本从低到高排得很整齐。</p>
+<p>先补三条缺失条款，成本最低：反问阈值照官方思路写一条，什么算「会改变结果的问题」必须停，什么算偏好类直接当假设跑。委派和测试预算各加一段。然后做中文漏网词的清理，把规则库历史日志里的赋能、抓手这类词核一遍是引用还是违规。体量那层我不动，68 万字符的矛盾排查留到我真要换模型那天再做，现在做是为一个用不上的场景烧时间。</p>
+<p>得交代两条边界。一，我没有 Astra 的访问权限，它实际反问多不多、卡不卡，我一篇都没实测过，文中所有「Astra 会怎样」都是官方口径，你当说明书看。二，96 万字符的矛盾排查我没做，这篇审的是词表和条款覆盖，不是全量体检。</p>
+<p>审计完最大的感受反而落在官方身上。它出这份指南的姿态挺少见：不吹自家模型多听话，反手先列了五条它会给你添的麻烦，连解法一起给。这种先说毛病的文档，比跑分表有用，也比跑分表少见。</p>
+<p>你的 AGENTS.md 上次更新是什么时候？官方这份指南五条行为差异，逐条对一遍你的手册，缺几条？评论区报个数，缺得最多的那三条我猜大家都一样：反问阈值、委派规则、测试预算。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+              <a href="/tags/%E6%8F%90%E7%A4%BA%E8%AF%8D/" rel="tag"># 提示词</a>
+              <a href="/tags/Astra/" rel="tag"># Astra</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/09/07/202609070940/" rel="prev" title="OpenAI 同一天，一脚油门一脚刹车">
+                  <i class="fa fa-angle-left"></i> OpenAI 同一天，一脚油门一脚刹车
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.7m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">25:31</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

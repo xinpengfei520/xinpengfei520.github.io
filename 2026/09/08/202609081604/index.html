@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="开源项目MiRemote把99元小米遥控器2 Pro改成macOS控制台，OK键批准、返回键拒绝，给AI agent做物理批准层；躺着批agent看不见diff，这事我持保留态度。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="躺着指挥 AI 写代码，批准时看不见代码">
+<meta property="og:url" content="https://www.vance.xin/2026/09/08/202609081604/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="开源项目MiRemote把99元小米遥控器2 Pro改成macOS控制台，OK键批准、返回键拒绝，给AI agent做物理批准层；躺着批agent看不见diff，这事我持保留态度。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260908-20260908-remote-agent-approval.webp">
+<meta property="article:published_time" content="2026-09-08T16:04:00.000Z">
+<meta property="article:modified_time" content="2026-09-08T10:41:18.491Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="开源">
+<meta property="article:tag" content="macOS">
+<meta property="article:tag" content="交互设计">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260908-20260908-remote-agent-approval.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/09/08/202609081604/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/09/08/202609081604/","path":"2026/09/08/202609081604/","title":"躺着指挥 AI 写代码，批准时看不见代码"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>躺着指挥 AI 写代码，批准时看不见代码 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "躺着指挥 AI 写代码，批准时看不见代码",
+  "url": "https://www.vance.xin/2026/09/08/202609081604/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/09/08/202609081604/",
+  "datePublished": "2026-09-08T16:04:00.000Z",
+  "dateModified": "2026-09-08T10:41:18.491Z",
+  "description": "开源项目MiRemote把99元小米遥控器2 Pro改成macOS控制台，OK键批准、返回键拒绝，给AI agent做物理批准层；躺着批agent看不见diff，这事我持保留态度。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E5%AD%A6%E7%94%9F%E5%92%8C-99-%E5%9D%97%E7%9A%84%E9%81%A5%E6%8E%A7%E5%99%A8"><span class="nav-text">一个学生和 99 块的遥控器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%81%A5%E6%8E%A7%E5%99%A8%E6%80%8E%E4%B9%88%E6%8E%A5%E7%AE%A1-Mac"><span class="nav-text">遥控器怎么接管 Mac</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%9F%E6%AD%A3%E6%88%B3%E6%88%91%E7%9A%84%E6%98%AF%E9%82%A3%E9%A2%97-OK-%E9%94%AE"><span class="nav-text">真正戳我的是那颗 OK 键</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B2%99%E5%8F%91%E4%B8%8A%E6%89%B9%E7%9A%84%E6%98%AF%E7%9C%8B%E4%B8%8D%E8%A7%81%E7%9A%84%E6%B4%BB"><span class="nav-text">沙发上批的是看不见的活</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E8%87%AA%E5%B7%B1%E5%B0%B1%E5%83%8F-agent-%E9%80%A0%E7%9A%84"><span class="nav-text">它自己就像 agent 造的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%B9%E5%87%86%E8%AF%A5%E9%A1%BA%E6%89%8B%E8%BF%98%E6%98%AF%E8%AF%A5%E6%B6%88%E5%A4%B1"><span class="nav-text">批准该顺手还是该消失</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">518</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">879</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/09/08/202609081604/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="躺着指挥 AI 写代码，批准时看不见代码 | 飞飞的AI实验室">
+      <meta itemprop="description" content="开源项目MiRemote把99元小米遥控器2 Pro改成macOS控制台，OK键批准、返回键拒绝，给AI agent做物理批准层；躺着批agent看不见diff，这事我持保留态度。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          躺着指挥 AI 写代码，批准时看不见代码
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-09-08 16:04:00 / 修改时间：10:41:18" itemprop="dateCreated datePublished" datetime="2026-09-08T16:04:00+00:00">2026-09-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">开源项目MiRemote把99元小米遥控器2 Pro改成macOS控制台，OK键批准、返回键拒绝，给AI agent做物理批准层；躺着批agent看不见diff，这事我持保留态度。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260908-20260908-remote-agent-approval.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>你要是也天天在终端里给 AI agent 按批准，这条新闻值得看一眼。一个中国学生，把 99 块钱的小米蓝牙遥控器 2 Pro，改成了 Mac 的控制台。项目开头写的主打场景就一句话：躺在沙发上指挥 AI 写代码。我刷到的时候，愣了得有十秒。遥控器我家里就有一个，它这辈子的工作是换台。</p>
+<p>方向键翻 agent 的结果，按住语音键说话，字直接落进终端。最绝的是它专门给批准做了一层：OK 键等于回车，就是批准；返回键等于 Esc，就是拒绝。批准这个在终端里按到手麻的动作，长出了自己的实体键。</p>
+<p>项目叫 godarrenw&#x2F;mi_remote_control。先交代底：我没装过它。这篇是我把 README、设计文档、源码注释一路啃下来的解读，里面所有「跑通了」「延迟如何」的说法都是作者口径。你当方向看，别当实测看。但有一句话我看完就想说：批准的本钱是看得见，躺到沙发上，这笔本钱正好花掉了。</p>
+<h2 id="一个学生和-99-块的遥控器"><a href="#一个学生和-99-块的遥控器" class="headerlink" title="一个学生和 99 块的遥控器"></a>一个学生和 99 块的遥控器</h2><p>这地方挑得准。遥控器本身是小米电视的配件，官方定价 99 元，蓝牙 5.4，带麦克风。蓝牙链路上，按键和语音还是两条独立的通道，刚好都能被 Mac 接管。</p>
+<p>项目这边更说明问题。7 月 19 号首发，放出的是 v0.1.0 公开预览版，没做 Apple 公证，每次升级要重新授权一回，一个学生的课余项目，就这条件，截至今天攒了 233 个 star。痛是真的：批准按到手麻这件事，憋着一群人呢。作者 GitHub 简介写着 from china, a normal student，粉丝 2 个。</p>
+<h2 id="遥控器怎么接管-Mac"><a href="#遥控器怎么接管-Mac" class="headerlink" title="遥控器怎么接管 Mac"></a>遥控器怎么接管 Mac</h2><p>拆开是两条链路。按键这条：遥控器 13 个键走标准 HID，说白了，就是键盘通用的那套协议，Mac 配对完直接把它当蓝牙键盘。麻烦在 macOS 不许程序抢蓝牙键盘。作者的绕法是先用系统自带的 hidutil，把一部分键改绑到 F14 到 F18。改绑之后，你按遥控器上那几颗键，在 macOS 眼里就等于按了一下 F15。这几个键系统从来不用，没有默认动作，也没人跟程序抢。再让程序用系统级的按键监听盯住它们，反查出你按的是遥控器上哪一颗。状态机判断完单击长按双击，再合成回车、切窗口这些真动作。退出时映射清空，恢复原样。</p>
+<p>语音那条更绕。按住语音键，声音不走普通蓝牙音频，走一条叫 ATVV 的私有通道。这是 Google 给 Android TV 电视盒子定的语音协议，小米是采用方。Mac 系统不认识这条通道，也就不去抢，程序就能独家接管。声音被压成 ADPCM 格式传过来，程序解开，喂给 BlackHole。这是个免费的虚拟声卡，装上等于系统里多了个假麦克风。豆包输入法把假麦克风当录音源，识别出字，打进你光标所在的框。识别环节整个是现成的，项目自己没碰任何 AI 模型。</p>
+<p>看到这我笑了。我自己做语音记账 App 的时候，走的是同一条路。按住说话记一笔账，端上规则解析是主力。它的翻车不报错，就两个暗号：金额认不出来，字段里躺着 0；类别认不出来，躺着 -1。程序就盯这两个数，逮到了把这句异步丢给后端的 LLM 再解析一回，2 秒不回来，降级用规则的结果凑合。识别这种又重又成熟的活，说真的，别自己造，把搬运和兜底做好就行。一个学生跟我想到了一处，这大概是工程判断的公约数。</p>
+<h2 id="真正戳我的是那颗-OK-键"><a href="#真正戳我的是那颗-OK-键" class="headerlink" title="真正戳我的是那颗 OK 键"></a>真正戳我的是那颗 OK 键</h2><p>打开 Presets.swift，批准层的绑定写得清清楚楚：OK 等于 Enter，批准；返回等于 Esc，拒绝或者中断；上下键在选项里挪；音量加减键是切 agent 标签页；菜单键等于 Shift+Tab，切自动模式。连逃生通道都想好了，长按菜单键 1.5 秒，强制清空所有模式。作者在代码注释里写，五家 AI CLI，就是终端里那批 AI 编程工具，审批界面高度一致，一套层能全部复用。这是作者口径，我没逐家核过。但 Enter 确认、Esc 中断、Shift+Tab 切模式这几条，在我天天用的 Claude Code 里属实。</p>
+<p>配套还有个提醒子系统：往 Claude Code 的 settings.json 注入三条 hooks，agent 等你批准的时候，遥控器那头会知道。你人躺在沙发上，提示来了，拇指往 OK 上按下去，agent 接着跑。</p>
+<p>这颗键的分量在这儿：批准这件事，高频到了值得单独长出硬件的地步。Claude Code 的权限弹窗借用的是键盘回车和 Esc。官方仓库里挂着 issue，说弹窗抢走按键导致误批准、误拒绝。Zed 社区专门开过讨论，要给批准弹窗配专属快捷键。有位开发者说得更直白：真正把 Claude Code 用户搞垮的，是点批准这个动作，一次又一次。</p>
+<p>痛点是真的，痛到有人给它配了颗实体键。</p>
+<h2 id="沙发上批的是看不见的活"><a href="#沙发上批的是看不见的活" class="headerlink" title="沙发上批的是看不见的活"></a>沙发上批的是看不见的活</h2><p>但我得说别扭的地方。我审 agent 的活靠三样：git diff 逐行过，测试跑没跑通，输出对不对。全是看结果，判断从来发生在看见之后。这是我那套土办法的根。</p>
+<p>遥控器没屏幕。</p>
+<p>你躺在沙发上，提示音响了，屏幕上有什么你看不清，手边只有一颗 OK 键。楼下按门铃，老式对讲机没有画面，你听个动静就按了开门。搁 agent 这儿，门里站着的是要跑命令的它。</p>
+<p>公道话得说：项目自己没吹过头。提醒子系统只管提醒，批准还是靠映射键发 Enter 和 Esc。它不替你审内容，文档里也没承诺你不用看。问题出在姿势上。批准的本钱是看得见，遥控器把按键搬到了你手边，把屏幕留在了你眼睛够不着的地方。</p>
+<p>我现在的办法是 Claude Code 后台 agents 那块看板，在跑、等你、干完了三栏。空格偷看一眼，回车钻进去接管。接管时它跑在单独的 worktree 里，弄不坏我的目录。这套的前提是我坐在电脑前。遥控器把入口搬到了沙发上，看板还留在原地。</p>
+<p>五月我写 Codex 进手机那篇，留过一句话：误审批怎么回滚、危险命令怎么二次确认，两家都没拿出完整方案。三个月过去，官方没交卷，民间先把批准做成了硬件。这个速度差，比遥控器本身有意思。</p>
+<h2 id="它自己就像-agent-造的"><a href="#它自己就像-agent-造的" class="headerlink" title="它自己就像 agent 造的"></a>它自己就像 agent 造的</h2><p>啃文档的时候我越看越眼熟。仓库根上有 CLAUDE.md。测试计划文件 59KB，还带自检命令。commit 记录里有「终审收口」「双评审并集修复」这种话术，还有以 Merge branch ‘worktree-agent’ 开头的合并记录。设计文档的触发模型枚举里嵌着八个字，「我要测试一下说话」。前后还有异常的空行，像是听写时留下的。</p>
+<p>作者没说过这项目是怎么开发出来的。上面这些全是公开可查的仓库事实，我只能摆到这，不下结论。有一条倒可以说：就算真是流水线造的，质量做得像模像样，CI、自检、实机验收清单一样不缺。这跟「AI 造的等于糙」那个老印象，对不上。</p>
+<p>我自己这篇稿子就是这么产出来的，搜料、初稿全跑在 Claude Code 上。一个学生用 agent 造出一个管 agent 的工具，我一点不稀奇，我只是没想到它偏偏长成一个遥控器。</p>
+<h2 id="批准该顺手还是该消失"><a href="#批准该顺手还是该消失" class="headerlink" title="批准该顺手还是该消失"></a>批准该顺手还是该消失</h2><p>还有一层更根本的分歧。Anthropic 在 8 月 14 号把 auto mode 设成了新会话默认。官方工程博客的说法是，让一个跑在 Sonnet 4.6 上的分类器在动作执行前逐条评估，当人类审批者的替身。说人话就是，官方的正式答案是把批准变少，这个民间项目的答案是让批准变顺手。两条路同时开着，谁对？</p>
+<p>要承认的是，auto mode 那条路有人抢着走。权限弹窗按到手麻是真的，放手让它自己跑心里没底也是真的，两边都有人在排队。</p>
+<p>分开看就有答案了。改坏了能 reset 回来的活，auto mode 替你把批准变少，这是省时间，这份便宜我领。越不敢松手的活，越说明那一步判断值钱，值钱的判断就该配一颗看得见内容的键。遥控器没偷走判断，它只是把判断挪到了你看不见的地方。</p>
+<p>我先把加购物车这件事按住了。等我真把它装上，亲手在沙发上批一回，再来写一篇讲讲手感和后怕。你呢，agent 等你批准的时候，你是在键盘前坐得笔直，还是也恨不得躺下？</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90/" rel="tag"># 开源</a>
+              <a href="/tags/macOS/" rel="tag"># macOS</a>
+              <a href="/tags/%E4%BA%A4%E4%BA%92%E8%AE%BE%E8%AE%A1/" rel="tag"># 交互设计</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/09/08/202609081449/" rel="prev" title="拿了欧洲最大一笔融资，它先换了自己的故事">
+                  <i class="fa fa-angle-left"></i> 拿了欧洲最大一笔融资，它先换了自己的故事
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.7m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">25:38</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

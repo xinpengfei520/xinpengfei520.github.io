@@ -256,6 +256,84 @@
       </tags>
   </entry>
   <entry>
+    <title>躺着指挥 AI 写代码，批准时看不见代码</title>
+    <url>/2026/09/08/202609081604/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260908-20260908-remote-agent-approval.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>你要是也天天在终端里给 AI agent 按批准，这条新闻值得看一眼。一个中国学生，把 99 块钱的小米蓝牙遥控器 2 Pro，改成了 Mac 的控制台。项目开头写的主打场景就一句话：躺在沙发上指挥 AI 写代码。我刷到的时候，愣了得有十秒。遥控器我家里就有一个，它这辈子的工作是换台。</p>
+<p>方向键翻 agent 的结果，按住语音键说话，字直接落进终端。最绝的是它专门给批准做了一层：OK 键等于回车，就是批准；返回键等于 Esc，就是拒绝。批准这个在终端里按到手麻的动作，长出了自己的实体键。</p>
+<p>项目叫 godarrenw&#x2F;mi_remote_control。先交代底：我没装过它。这篇是我把 README、设计文档、源码注释一路啃下来的解读，里面所有「跑通了」「延迟如何」的说法都是作者口径。你当方向看，别当实测看。但有一句话我看完就想说：批准的本钱是看得见，躺到沙发上，这笔本钱正好花掉了。</p>
+<h2 id="一个学生和-99-块的遥控器"><a href="#一个学生和-99-块的遥控器" class="headerlink" title="一个学生和 99 块的遥控器"></a>一个学生和 99 块的遥控器</h2><p>这地方挑得准。遥控器本身是小米电视的配件，官方定价 99 元，蓝牙 5.4，带麦克风。蓝牙链路上，按键和语音还是两条独立的通道，刚好都能被 Mac 接管。</p>
+<p>项目这边更说明问题。7 月 19 号首发，放出的是 v0.1.0 公开预览版，没做 Apple 公证，每次升级要重新授权一回，一个学生的课余项目，就这条件，截至今天攒了 233 个 star。痛是真的：批准按到手麻这件事，憋着一群人呢。作者 GitHub 简介写着 from china, a normal student，粉丝 2 个。</p>
+<h2 id="遥控器怎么接管-Mac"><a href="#遥控器怎么接管-Mac" class="headerlink" title="遥控器怎么接管 Mac"></a>遥控器怎么接管 Mac</h2><p>拆开是两条链路。按键这条：遥控器 13 个键走标准 HID，说白了，就是键盘通用的那套协议，Mac 配对完直接把它当蓝牙键盘。麻烦在 macOS 不许程序抢蓝牙键盘。作者的绕法是先用系统自带的 hidutil，把一部分键改绑到 F14 到 F18。改绑之后，你按遥控器上那几颗键，在 macOS 眼里就等于按了一下 F15。这几个键系统从来不用，没有默认动作，也没人跟程序抢。再让程序用系统级的按键监听盯住它们，反查出你按的是遥控器上哪一颗。状态机判断完单击长按双击，再合成回车、切窗口这些真动作。退出时映射清空，恢复原样。</p>
+<p>语音那条更绕。按住语音键，声音不走普通蓝牙音频，走一条叫 ATVV 的私有通道。这是 Google 给 Android TV 电视盒子定的语音协议，小米是采用方。Mac 系统不认识这条通道，也就不去抢，程序就能独家接管。声音被压成 ADPCM 格式传过来，程序解开，喂给 BlackHole。这是个免费的虚拟声卡，装上等于系统里多了个假麦克风。豆包输入法把假麦克风当录音源，识别出字，打进你光标所在的框。识别环节整个是现成的，项目自己没碰任何 AI 模型。</p>
+<p>看到这我笑了。我自己做语音记账 App 的时候，走的是同一条路。按住说话记一笔账，端上规则解析是主力。它的翻车不报错，就两个暗号：金额认不出来，字段里躺着 0；类别认不出来，躺着 -1。程序就盯这两个数，逮到了把这句异步丢给后端的 LLM 再解析一回，2 秒不回来，降级用规则的结果凑合。识别这种又重又成熟的活，说真的，别自己造，把搬运和兜底做好就行。一个学生跟我想到了一处，这大概是工程判断的公约数。</p>
+<h2 id="真正戳我的是那颗-OK-键"><a href="#真正戳我的是那颗-OK-键" class="headerlink" title="真正戳我的是那颗 OK 键"></a>真正戳我的是那颗 OK 键</h2><p>打开 Presets.swift，批准层的绑定写得清清楚楚：OK 等于 Enter，批准；返回等于 Esc，拒绝或者中断；上下键在选项里挪；音量加减键是切 agent 标签页；菜单键等于 Shift+Tab，切自动模式。连逃生通道都想好了，长按菜单键 1.5 秒，强制清空所有模式。作者在代码注释里写，五家 AI CLI，就是终端里那批 AI 编程工具，审批界面高度一致，一套层能全部复用。这是作者口径，我没逐家核过。但 Enter 确认、Esc 中断、Shift+Tab 切模式这几条，在我天天用的 Claude Code 里属实。</p>
+<p>配套还有个提醒子系统：往 Claude Code 的 settings.json 注入三条 hooks，agent 等你批准的时候，遥控器那头会知道。你人躺在沙发上，提示来了，拇指往 OK 上按下去，agent 接着跑。</p>
+<p>这颗键的分量在这儿：批准这件事，高频到了值得单独长出硬件的地步。Claude Code 的权限弹窗借用的是键盘回车和 Esc。官方仓库里挂着 issue，说弹窗抢走按键导致误批准、误拒绝。Zed 社区专门开过讨论，要给批准弹窗配专属快捷键。有位开发者说得更直白：真正把 Claude Code 用户搞垮的，是点批准这个动作，一次又一次。</p>
+<p>痛点是真的，痛到有人给它配了颗实体键。</p>
+<h2 id="沙发上批的是看不见的活"><a href="#沙发上批的是看不见的活" class="headerlink" title="沙发上批的是看不见的活"></a>沙发上批的是看不见的活</h2><p>但我得说别扭的地方。我审 agent 的活靠三样：git diff 逐行过，测试跑没跑通，输出对不对。全是看结果，判断从来发生在看见之后。这是我那套土办法的根。</p>
+<p>遥控器没屏幕。</p>
+<p>你躺在沙发上，提示音响了，屏幕上有什么你看不清，手边只有一颗 OK 键。楼下按门铃，老式对讲机没有画面，你听个动静就按了开门。搁 agent 这儿，门里站着的是要跑命令的它。</p>
+<p>公道话得说：项目自己没吹过头。提醒子系统只管提醒，批准还是靠映射键发 Enter 和 Esc。它不替你审内容，文档里也没承诺你不用看。问题出在姿势上。批准的本钱是看得见，遥控器把按键搬到了你手边，把屏幕留在了你眼睛够不着的地方。</p>
+<p>我现在的办法是 Claude Code 后台 agents 那块看板，在跑、等你、干完了三栏。空格偷看一眼，回车钻进去接管。接管时它跑在单独的 worktree 里，弄不坏我的目录。这套的前提是我坐在电脑前。遥控器把入口搬到了沙发上，看板还留在原地。</p>
+<p>五月我写 Codex 进手机那篇，留过一句话：误审批怎么回滚、危险命令怎么二次确认，两家都没拿出完整方案。三个月过去，官方没交卷，民间先把批准做成了硬件。这个速度差，比遥控器本身有意思。</p>
+<h2 id="它自己就像-agent-造的"><a href="#它自己就像-agent-造的" class="headerlink" title="它自己就像 agent 造的"></a>它自己就像 agent 造的</h2><p>啃文档的时候我越看越眼熟。仓库根上有 CLAUDE.md。测试计划文件 59KB，还带自检命令。commit 记录里有「终审收口」「双评审并集修复」这种话术，还有以 Merge branch ‘worktree-agent’ 开头的合并记录。设计文档的触发模型枚举里嵌着八个字，「我要测试一下说话」。前后还有异常的空行，像是听写时留下的。</p>
+<p>作者没说过这项目是怎么开发出来的。上面这些全是公开可查的仓库事实，我只能摆到这，不下结论。有一条倒可以说：就算真是流水线造的，质量做得像模像样，CI、自检、实机验收清单一样不缺。这跟「AI 造的等于糙」那个老印象，对不上。</p>
+<p>我自己这篇稿子就是这么产出来的，搜料、初稿全跑在 Claude Code 上。一个学生用 agent 造出一个管 agent 的工具，我一点不稀奇，我只是没想到它偏偏长成一个遥控器。</p>
+<h2 id="批准该顺手还是该消失"><a href="#批准该顺手还是该消失" class="headerlink" title="批准该顺手还是该消失"></a>批准该顺手还是该消失</h2><p>还有一层更根本的分歧。Anthropic 在 8 月 14 号把 auto mode 设成了新会话默认。官方工程博客的说法是，让一个跑在 Sonnet 4.6 上的分类器在动作执行前逐条评估，当人类审批者的替身。说人话就是，官方的正式答案是把批准变少，这个民间项目的答案是让批准变顺手。两条路同时开着，谁对？</p>
+<p>要承认的是，auto mode 那条路有人抢着走。权限弹窗按到手麻是真的，放手让它自己跑心里没底也是真的，两边都有人在排队。</p>
+<p>分开看就有答案了。改坏了能 reset 回来的活，auto mode 替你把批准变少，这是省时间，这份便宜我领。越不敢松手的活，越说明那一步判断值钱，值钱的判断就该配一颗看得见内容的键。遥控器没偷走判断，它只是把判断挪到了你看不见的地方。</p>
+<p>我先把加购物车这件事按住了。等我真把它装上，亲手在沙发上批一回，再来写一篇讲讲手感和后怕。你呢，agent 等你批准的时候，你是在键盘前坐得笔直，还是也恨不得躺下？</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>AI Agent</tag>
+        <tag>开源</tag>
+        <tag>macOS</tag>
+        <tag>交互设计</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>拿了欧洲最大一笔融资，它先换了自己的故事</title>
+    <url>/2026/09/08/202609081449/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260908-20260908-mistral-series-d.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>9 月 8 号刷到 Mistral 官宣：30 亿欧元 D 轮，投后估值超过 210 亿欧元，公司自己定性为欧洲科技公司有史以来最大的股权融资。这家巴黎公司成立才三年。我的第一反应不是看估值，是去翻自己 5 月写 DeepSeek 融资的那篇旧文。那句话还在那儿，一字没改，今天应验在了另一家公司身上。</p>
+<h2 id="一年翻倍的账"><a href="#一年翻倍的账" class="headerlink" title="一年翻倍的账"></a>一年翻倍的账</h2><p>先把钱的账摆出来。</p>
+<p>这一轮 30 亿欧元，三星电子领投，EQT 旗下基金和 PSG Equity 联合领投，BlackRock、Advent 这些新面孔进场，a16z、ASML、NVIDIA 这批老股东全数跟投。投后估值超过 210 亿欧元，按汇率折美元大约 240 亿。名单里有两个细节值得单看。一个是三星领投，消费电子巨头亲自下场投 AI 基建，亚洲资本当欧洲 AI 旗舰的头号买家，钱和市场的走向比口号诚实。另一个是 EQT 那只基金，背后锚着欧盟委员会 10 亿欧元的承诺，等于欧盟的官方资金绕道进了这轮。政府意志和商业资本坐上了同一张桌子。三星为什么会领投一家法国 AI 公司，公告没细说，具体动机我不猜。</p>
+<p>值得对照的是上一轮。去年 9 月，Mistral 拿的是 17 亿欧元 C 轮，投后估值 117 亿，领投的是做光刻机的 ASML。一年时间，估值翻了近一倍。再把时间轴往前拉，这家公司 2023 年在巴黎成立，三个创始人分别来自 Google DeepMind 和 Meta，出道时的标签是欧洲本土最强的模型团队。三年，三笔大钱，从零跑到 210 亿欧元估值。</p>
+<p>这中间它还融过一笔 8.3 亿美元的债，专门用来建数据中心。业务面上，它说自己现在运营 20 个国家，服务 125 家以上大型企业，客户名单里有空客、ASML、汇丰。下一阶段的计划是 2027 年底前在欧洲铺出 200 兆瓦算力。钱的用途写得很齐：前沿研究、算力基建、商业化扩张，一套组合拳。</p>
+<p>单看这张成绩单，三年走成这样，放在任何国家都算优等生。200 兆瓦算力是个什么量级，我拿自己写过的账对了一下：5 月那篇 Anthropic 算力文里，光 Amazon 一家的协议就是 5 吉瓦起步。200 兆瓦是它的二十五分之一，在欧洲算大手笔，放到最前面那几家里还是紧凑型。</p>
+<h2 id="故事确实换了"><a href="#故事确实换了" class="headerlink" title="故事确实换了"></a>故事确实换了</h2><p>但比钱更有意思的，是官方公告里讲故事的方式。</p>
+<p>本轮的宣传重心，已经放在「主权 AI」上：把基础设施和模型握在自己手里，让企业能自主部署。有欧洲媒体直接给它起了个新外号，叫欧洲最大的 neocloud，说人话就是卖算力和部署服务的云厂商。客户名单其实早就说明了一切：空客、ASML、汇丰，全是那种数据不许随便出境、监管一寸一寸抠的行业。它们买的就是可控，不是哪个模型跑分高。</p>
+<p>熟悉这家公司的人知道，它三年前出道时挂的是另一块牌子。巴黎团队、DeepMind 和 Meta 的人出来创办、给欧洲撑起自主 AI 的旗手、开源模型阵营里的明星。那几年它靠开放权重的模型在开发者社区攒足了名声，欧美两边的技术圈都把它当抗衡硅谷的旗子。那套叙事帮它拿到了最早的声量和资源。</p>
+<p>这两年它旗舰路线怎么走的，各家转述说法不一，本轮公告一个字没提。我没拿到新的官方口径，这块只标成背景，不下结论。但宣传重心的迁移是明摆着的：主权 AI 这个词，说的是让企业把数据和模型部署留在自己手里，卖点是可控，不是开放。换故事这件事本身不丢人。旗子挂了三年，客户盘子已经换了一轮，牌子跟着柜台走是常理。旗手的牌子还挂在墙上，柜台里主推的已经是主权部署和企业服务。欧洲企业买主权的逻辑，跟国内一些行业买本地化部署有点像，监管环境决定采购偏好，这条线上的钱最好赚。</p>
+<h2 id="零头也是真的"><a href="#零头也是真的" class="headerlink" title="零头也是真的"></a>零头也是真的</h2><p>「欧洲史上最大」这顶帽子是真的，另有一样东西也是真的：量级。</p>
+<p>对照一下大洋彼岸。OpenAI 累计融资金额接近 600 亿美元，Anthropic 在谈的估值是 2 万亿级。Mistral 这笔创纪录的 30 亿欧元，折美元 35 亿左右，放在美中两家面前，是个零头。</p>
+<p>营收的数更含糊，含糊到值得把三个口径摆在一起。路透引高管的话说，预计 2026 年底 ARR 到 10 亿美元；华尔街日报的口径是已经略微超过这个数；还有转述说年初才 4 亿出头。三个口径对不上，官方公告里压根没给营收数字。哪个准，现在没人说得清。这事本身比数字有意思：一家公司融到这个量级，连自己的营收都要靠媒体互相打架才能拼出来。</p>
+<p>所以准确的说法是两句话：这是欧洲科技公司拿过的最大一笔钱，这笔钱放在最前面那几家里还很小。两句话同时成立，删掉哪句都是在骗人。</p>
+<p>再补一个参照物。我 6 月写智谱科创板时查过，它当时港股市值约 910 亿美元，是 Mistral 这轮估值的近四倍，而且国产模型公司当时还在排队上市。所谓欧洲最强的故事，放到全球盘子上，排位比多数人想的靠后。</p>
+<h2 id="尺子也换了"><a href="#尺子也换了" class="headerlink" title="尺子也换了"></a>尺子也换了</h2><p>5 月那篇 DeepSeek 融资文里，我写过一段判断，抄在这里：500 亿美元估值加 75 亿融资之后，再说「我们用了 X 万美元做出了 GPT-5.4 级别」，舆论的对照系会自动切换，你是个 500 亿美元估值的公司，不是当年那个独立研究室。</p>
+<p>当时说的是 DeepSeek，今天的主角换成了 Mistral。两篇隔了四个月，说的是同一件事：叙事是借来的，账单是自己的。独立研究室、开源旗手、欧洲的希望，这些叙事帮它换来了最早的关注和支持；等 210 亿欧元到账，公众衡量它的尺子就自动换成了商业那把：营收、客户、算力、能不能跟巨头掰手腕。两种身份背后是两套商业模式。研究室的卖点是声量，靠声量换资源，考核指标是社区好感；商业公司卖的是部署和交付，考核指标是续约率和现金流。穿同一件衣服干两个行当，早晚要挑一件。这件事对读者也有个直接的用处。说白了，下回你看到任何一家公司还在讲情怀叙事，先查一眼它的估值和股东名单，对照系一换，很多话就得重听。</p>
+<p>得说清楚，叙事切换是观察，不是审判。拿了钱就要按拿钱的规矩被衡量，这本身就是行业成熟的标志之一。再交代一句我自己的位置：我的流水线里没有跑 Mistral 的模型，它对我日常工作的直接影响是零。我盯着它，是把它当一个行业叙事怎么换牌子的样本看。</p>
+<p>下一轮它用「主权 AI」还是换回开源旗手，到那天再对一次账。往下盯三个信号：开源策略会不会回摆，主权客户次年续不续约，IPO 时间表什么时候摆上桌。</p>
+<p>轮到你。你印象里 Mistral 是什么身份，开源旗手还是欧洲冠军？这轮融资之后，你对它的期待变了没有？评论区聊聊，两种身份你更买哪个的账。</p>
+]]></content>
+      <categories>
+        <category>产品</category>
+      </categories>
+      <tags>
+        <tag>Mistral</tag>
+        <tag>AI行业</tag>
+        <tag>融资</tag>
+        <tag>欧洲AI</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>AI 换脸、拟声、复活逝者，最高法把判法写明了</title>
     <url>/2026/09/08/202609081149/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260908-20260908-court-ai-opinion.webp" alt="cover"></p>
@@ -25647,9 +25725,9 @@
       <tags>
         <tag>Cursor</tag>
         <tag>IDE</tag>
+        <tag>Prompt Engineering</tag>
         <tag>AI 编程</tag>
         <tag>开发效率</tag>
-        <tag>Prompt Engineering</tag>
       </tags>
   </entry>
   <entry>
@@ -28387,8 +28465,8 @@
         <tag>AI Agent</tag>
         <tag>OpenClaw</tag>
         <tag>Skills</tag>
-        <tag>个人助手</tag>
         <tag>开源</tag>
+        <tag>个人助手</tag>
       </tags>
   </entry>
   <entry>
@@ -34848,8 +34926,8 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>AI 编程助手</tag>
         <tag>OpenClaw</tag>
+        <tag>AI 编程助手</tag>
         <tag>技术架构</tag>
       </tags>
   </entry>
@@ -36658,7 +36736,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#116;&#64;&#103;&#105;&#x74;&#x68;&#117;&#x62;&#46;&#99;&#x6f;&#109;">&#x67;&#105;&#116;&#64;&#103;&#105;&#x74;&#x68;&#117;&#x62;&#46;&#99;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#116;&#x40;&#103;&#105;&#x74;&#x68;&#x75;&#x62;&#46;&#x63;&#x6f;&#109;">&#x67;&#x69;&#116;&#x40;&#103;&#105;&#x74;&#x68;&#x75;&#x62;&#46;&#x63;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -38964,98 +39042,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
-    <url>/2017/09/24/201709242433/</url>
-    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
-<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
-<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
-<p>解决方法：</p>
-<p>参考：</p>
-<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
-<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
-<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
-<p>Thanks.</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>串口</tag>
-        <tag>NDK</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>CentOS7 安装 MySQL 8.0)</title>
-    <url>/2017/09/24/201709242432/</url>
-    <content><![CDATA[<p>个人服务器搭建一个 MySQL 数据库，来读写一些简单的接口数据处理。</p>
-<p>废话不多说，直接撸起。</p>
-<p>1.切换到用户目录</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd ~</span><br></pre></td></tr></table></figure>
-
-<p>2.下载 rpm 包</p>
-<p>在官网找到对应的 MySQL 的源，我们选择 <strong>mysql80-community-release-el7-1.noarch.rpm</strong> 社区免费正式发布版8.0</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
-
-<p>3.安装 rpm 包</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rpm -ivh mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
-
-<p>4.修改 MySQL 的repo源，使MySQL8.0可用</p>
-<p>使用 vim 编辑</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vi /etc/yum.repos.d/mysql-community.repo</span><br></pre></td></tr></table></figure>
-
-<p>找到 [mysql80-community] 确保 enabled&#x3D;1</p>
-<p>修改，保存并退出。</p>
-<p>5.安装 mysql-server</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install mysql-server</span><br></pre></td></tr></table></figure>
-
-<p>开始下载并安装 MySQL，中间会有几次询问你，一路 yes 即可，等待直到完成。</p>
-<p>6.修改 MySQL 的访问权限</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chown -R root:root /var/lib/mysql </span><br></pre></td></tr></table></figure>
-
-<p>7.重启 MySQL 服务</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service mysqld restart</span><br></pre></td></tr></table></figure>
-
-<p>至此 MySQL8.0 的安装就算完成了。</p>
-<p>安装完成后，我们要登录使用 MySQL，但是我们需要访问的密码，安装的时候已经为我们生成了一个随机密码，我们必须重置密码才能使用，因为 MySQL8.0 的密码重还比较麻烦，下一篇我来讲解如何重置密码。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>MySQL</tag>
-        <tag>CentOS</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>error please select android sdk</title>
-    <url>/2017/09/24/201709242434/</url>
-    <content><![CDATA[<p>点app运行时报如下错：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Error:please select android sdk</span><br></pre></td></tr></table></figure>
-
-<p>且app module上打了个红叉，无法点击运行</p>
-<p>提示找不到SDK</p>
-<p>打开app.iml文件修改如下：<br>删除旧的，添加新的一行：</p>
-<p><img src="https://img-blog.csdn.net/2018060919280432?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p>为方便大家直接复制下面的：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;orderEntry type=&quot;jdk&quot; jdkName=&quot;Android API 27 Platform&quot; jdkType=&quot;Android SDK&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>修改完成后rebuild</p>
-<p>app 上的红叉消失，显示正常，点击运行，ok</p>
-<p><img src="https://img-blog.csdn.net/20180609192822879?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p>更多参考文章：</p>
-<p><a href="https://blog.csdn.net/CHITTY1993/article/details/78779125">https://blog.csdn.net/CHITTY1993/article/details/78779125</a></p>
-<p><a href="https://blog.csdn.net/BruceHurrican/article/details/51755512">https://blog.csdn.net/BruceHurrican/article/details/51755512</a></p>
-<p><a href="https://blog.csdn.net/aqi00/article/details/78858336/">https://blog.csdn.net/aqi00/article/details/78858336/</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>SDK</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>CentOS7.x 搭建 GitLab 教程</title>
     <url>/2017/09/24/201709242431/</url>
     <content><![CDATA[<p>今天闲来无事，想起之前买了一个阿里云 ECS，一直闲置着没用，一时兴起就想搭个自己的 GitLab 玩玩，GitLab 官网也提供了安装教程，很简单，照着步骤一步步基本没什么问题，可能安装的过程中有一些坑需要自己去解决。</p>
@@ -39144,31 +39130,95 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Failed to resolve com.android.support</title>
-    <url>/2017/09/24/201709242435/</url>
-    <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
-<p>报错如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Failed to resolve com.android.support</span><br></pre></td></tr></table></figure>
+    <title>CentOS7 安装 MySQL 8.0)</title>
+    <url>/2017/09/24/201709242432/</url>
+    <content><![CDATA[<p>个人服务器搭建一个 MySQL 数据库，来读写一些简单的接口数据处理。</p>
+<p>废话不多说，直接撸起。</p>
+<p>1.切换到用户目录</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd ~</span><br></pre></td></tr></table></figure>
 
-<p>刚开始自己写了一个 module demo 编译、运行都没有问题，然后又新建了一个 module，因为在新建之前看到编译好的 module 中有个 xml 文件，感觉命名不好，就 Refactor -&gt; Rename 了一下，重命名了一下文件，一般在重命名的时候 AS 会弹出提示你是否在调用的地方也进行重命名，结果我就直接一路Refactor了，因为之前也是这样修改的，没有出过问题，然后在编译的时候就出现了上面的错误，然后定位到这一行依赖这里：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">implementation &#x27;com.android.support:appcompat-v7:27.1.1&#x27;</span><br></pre></td></tr></table></figure>
+<p>2.下载 rpm 包</p>
+<p>在官网找到对应的 MySQL 的源，我们选择 <strong>mysql80-community-release-el7-1.noarch.rpm</strong> 社区免费正式发布版8.0</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
 
-<p>我看了一下，毛线，这是系统生成的还能写错?为了不打脸，我还是复制了一行好的比对了一下，没有问题的，我看了一下网络，网络也没有问题啊，这不科学呀，懵逼中…</p>
-<p>于是乎，打开百度，输入如上错误，点击搜索，看到了一篇博主的文章：</p>
-<p><a href="https://blog.csdn.net/mhl18820672087/article/details/78385361">https://blog.csdn.net/mhl18820672087/article/details/78385361</a></p>
-<p>我看了一下，我的构建版本的工具是没有任何问题的，因为其他 module 都能编译过，就这一个 module 编译不通过，任然没有解决我的问题，打开我编译不过的 module 的 build.gradle 文件，细心的我发现了一个问题，看下图标红的地方：</p>
-<p><img src="https://img-blog.csdn.net/20180706171937624?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><img src="https://img-blog.csdn.net/20180706171947788?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><strong>test_page</strong> 这尼玛是什么鬼？这不是我刚才重命名的名字么？它竟然给我把这个地方的 test 重命名成了 test_page，真是无语了，第一次见这种错，我都没调用，你给我乱重命名，有点说不过去了哦，胸die!</p>
-<p>至此，问题算是解决完了…</p>
-<p>我发现新版本的 Android Studio 是越来越好用，但是会频繁的出现一些莫名奇葩的问题，大家遇到过吗？</p>
+<p>3.安装 rpm 包</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rpm -ivh mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
+
+<p>4.修改 MySQL 的repo源，使MySQL8.0可用</p>
+<p>使用 vim 编辑</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vi /etc/yum.repos.d/mysql-community.repo</span><br></pre></td></tr></table></figure>
+
+<p>找到 [mysql80-community] 确保 enabled&#x3D;1</p>
+<p>修改，保存并退出。</p>
+<p>5.安装 mysql-server</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install mysql-server</span><br></pre></td></tr></table></figure>
+
+<p>开始下载并安装 MySQL，中间会有几次询问你，一路 yes 即可，等待直到完成。</p>
+<p>6.修改 MySQL 的访问权限</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chown -R root:root /var/lib/mysql </span><br></pre></td></tr></table></figure>
+
+<p>7.重启 MySQL 服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service mysqld restart</span><br></pre></td></tr></table></figure>
+
+<p>至此 MySQL8.0 的安装就算完成了。</p>
+<p>安装完成后，我们要登录使用 MySQL，但是我们需要访问的密码，安装的时候已经为我们生成了一个随机密码，我们必须重置密码才能使用，因为 MySQL8.0 的密码重还比较麻烦，下一篇我来讲解如何重置密码。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
+        <tag>CentOS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
+    <url>/2017/09/24/201709242433/</url>
+    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
+<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
+<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
+<p>解决方法：</p>
+<p>参考：</p>
+<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
+<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
+<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
+<p>Thanks.</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>串口</tag>
+        <tag>NDK</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>error please select android sdk</title>
+    <url>/2017/09/24/201709242434/</url>
+    <content><![CDATA[<p>点app运行时报如下错：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Error:please select android sdk</span><br></pre></td></tr></table></figure>
+
+<p>且app module上打了个红叉，无法点击运行</p>
+<p>提示找不到SDK</p>
+<p>打开app.iml文件修改如下：<br>删除旧的，添加新的一行：</p>
+<p><img src="https://img-blog.csdn.net/2018060919280432?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p>为方便大家直接复制下面的：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;orderEntry type=&quot;jdk&quot; jdkName=&quot;Android API 27 Platform&quot; jdkType=&quot;Android SDK&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>修改完成后rebuild</p>
+<p>app 上的红叉消失，显示正常，点击运行，ok</p>
+<p><img src="https://img-blog.csdn.net/20180609192822879?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p>更多参考文章：</p>
+<p><a href="https://blog.csdn.net/CHITTY1993/article/details/78779125">https://blog.csdn.net/CHITTY1993/article/details/78779125</a></p>
+<p><a href="https://blog.csdn.net/BruceHurrican/article/details/51755512">https://blog.csdn.net/BruceHurrican/article/details/51755512</a></p>
+<p><a href="https://blog.csdn.net/aqi00/article/details/78858336/">https://blog.csdn.net/aqi00/article/details/78858336/</a></p>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
         <tag>Android</tag>
-        <tag>Failed</tag>
+        <tag>SDK</tag>
       </tags>
   </entry>
   <entry>
@@ -39973,82 +40023,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>深入浅出 Retrofit2.x (一)</title>
-    <url>/2017/09/24/201709242445/</url>
-    <content><![CDATA[<center>点击上面蓝色字体关注“IT大飞说”</center>
-
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061548094.jpeg"></p>
-<blockquote>
-<p>在 Android 开发中，从最原生的 <strong>HttpClient</strong> 和后来的 <strong>HttpUrlConnection</strong>，再到<strong>Volley、AsyncHttpClient</strong> 等网络请求框架，最后到 Square 公司开源的 <strong>okhttp</strong>，一时间 <strong>okhttp</strong> 风靡整个开发圈，进而衍生了好多大牛对 <strong>okhttp</strong> 的封装开源库，像鸿洋大神封装的 <strong>okhttputils</strong>，还有 <strong>Okgo</strong> … 然后就是 <strong>Retrofit</strong> 了，其实它也是对 <strong>okhttp</strong> 的封装，<strong>Retrofit</strong> 使得网络请求更优雅，灵活性更高，支持各种适配器和转换器，可以搭配 <strong>RxJava</strong> 一起使用，一度后来基于 <strong>RxJava + Retrofit + MVP</strong> 这种架构设计非常流行，网上关于这种的文章也更是层出不穷，目前 <strong>retrofit</strong> 在 GitHub 上有将近 3w 的 Star，目前可以说是非常稳定了。</p>
-</blockquote>
-<h2 id="1-初识-Retrofit"><a href="#1-初识-Retrofit" class="headerlink" title="1.初识 Retrofit"></a>1.初识 Retrofit</h2><p>简单说，<strong>Retrofit</strong> 是一个支持 <strong>RESTful api</strong> 架构的 <strong>http</strong> 网络请求框架的封装库，<strong>Retrofit</strong> 封装了许多自定义的注解，大大方便和简化了使用，另外灵活性也更高，底层采用 <strong>okhttp</strong> 实现真正的网络请求，他们的关系可以说是分工协作吧，总结一成一句话就是：<strong>Retrofit</strong> 让 <strong>okhttp</strong> 网络请求更优雅！</p>
-<p>他们的关系可以看下图可能更容易理解：</p>
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061548783.png"></p>
-<h2 id="2-小牛试刀"><a href="#2-小牛试刀" class="headerlink" title="2.小牛试刀"></a>2.小牛试刀</h2><h3 id="2-1我们先来个简单的-GET-请求"><a href="#2-1我们先来个简单的-GET-请求" class="headerlink" title="2.1我们先来个简单的 GET 请求"></a>2.1我们先来个简单的 GET 请求</h3><p>首先在 Gradle 中添加 Retrofit 的依赖：</p>
-<p><code>implementation &#39;com.squareup.retrofit2:retrofit:2.3.0&#39;</code></p>
-<p>然后我们定义一个接口：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public interface GithubService &#123;</span><br><span class="line">    @GET(&quot;/users/xinpengfei520&quot;)</span><br><span class="line">    Call&lt;ResponseBody&gt; getUserString();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>解释一下上面接口中的注解 <strong>@GET</strong>，这个代表 <strong>HTTP</strong> 的请求类型，同理 <strong>@POST，@PUT，@DELETE,@HEAD,@PATCH</strong> 分别代表 POST、PUT 和 DELETE、HEAD、PATCH 请求；括号中的字符串 <strong>“&#x2F;users&#x2F;xinpengfei520”</strong> 代表注解 <strong>@GET</strong> 的值，这里指的是 URL 中的 Path，请求的时候会拼接到BASE_URL 后面，BASE_URL 在构建 Retrofit 的时候设置，<strong>Call<ResponseBody></strong> 中的 Call 为方法的返回值类型，ResponseBody 为方法的返回值类型的泛型。</p>
-<p>接下来，我们构建一个 Retrofit 对象：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Retrofit retrofit = new Retrofit.Builder()</span><br><span class="line">                .baseUrl(&quot;https://api.github.com&quot;)</span><br><span class="line">                .build();</span><br></pre></td></tr></table></figure>
-
-<p>非常简单吧，这里使用了构建者模式，方便我们动态的配置各种参数，baseUrl 就是服务器的 HOST，一般是域名或者 ip，通常都带有端口，baseUrl 是一定要设置的，否则会抛异常  <code>throw new IllegalStateException(&quot;Base URL required.&quot;)</code>。</p>
-<p>然后，我们来进行一个异步请求：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GithubService service = retrofit.create(GithubService.class);</span><br><span class="line">       Call&lt;ResponseBody&gt; call = service.getUserString();</span><br><span class="line">       call.enqueue(new Callback&lt;ResponseBody&gt;() &#123;</span><br><span class="line">           @Override</span><br><span class="line">           public void onResponse(Call&lt;ResponseBody&gt; call, Response&lt;ResponseBody&gt; response) &#123;</span><br><span class="line">			String json = response.body().string();</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">           @Override</span><br><span class="line">           public void onFailure(Call&lt;ResponseBody&gt; call, Throwable t) &#123;</span><br><span class="line"></span><br><span class="line">           &#125;</span><br><span class="line">       &#125;);</span><br></pre></td></tr></table></figure>
-
-<p>上面的代码中先调用 Retrofit 的 create() 方法，方法的参数就是我们定义的接口的 class，create 的内部实现是使用了 Java 中的动态代理模式，考虑到一些基础比较差的同学，关于动态代理，我这里简单的解释一下：代理类在程序运行时创建的代理方式被成为动态代理，代理类并不是在Java代码中定义的，而是在运行时在 Java 代码中动态生成的，当我们使用代理对象执行代理对象的方法时，都会被替换成执行invoke方法，在 invoke 方法中可以拿到代理对象，代理对象的方法及参数，当然这里也涉及到一些反射相关的知识，这里就不详细展开了；结合上面的代码，service 就是代理对象，当 service 调用 getUserString() 方法时，就会触发 invoke 方法，进而通过反射可以拿到代理对象，方法及参数，具体的细节就不详细讲了，感兴趣的同学可以读 Retrofit 的源码进行理解；上面代码中拿到call 后就是网络请求了，一个成功和一个失败的回调方法，这样一次完整的Retrofit的网络请求就算完了。</p>
-<p>另外我们还可以使用Retrofit的同步请求接口(注意要放在子线程中请求)：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Response&lt;ResponseBody&gt; response = call.execute();</span><br></pre></td></tr></table></figure>
-
-<h3 id="2-2-优化接口定义"><a href="#2-2-优化接口定义" class="headerlink" title="2.2 优化接口定义"></a>2.2 优化接口定义</h3><p>在上面的请求中，很明显我们定义的 GitHubService 接口中的方法的注解的值是写死的，假如我们有另一个请求的接口是 <code>https://api.github.com/users/zhangsan</code> 也就是说 Path 是 <code>/users/zhangsan</code>，要想请求的话，有两种方式，在之前定义的接口中再增加一个方法，或者另外再重新定义一个接口，这样比较比较麻烦了，通用性和扩展性都不好，和之前定义的接口比较一下，只有 <strong>users&#x2F;</strong> 后面的内容不同，我们想如果这个可以动态作为传入就好了？当然是可以的，我们可以这样写：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public interface GitHubService &#123;</span><br><span class="line">  @GET(&quot;/users/&#123;user&#125;&quot;)</span><br><span class="line">  Call&lt;ResponseBody&gt; getUserString(@Path(&quot;user&quot;) String user);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上面代码中的user作为方法的参数传进来，并且我们使用了@Path注解，然后我们在@GET注解的值中使用 <strong>{user}</strong> 动态获取传进来的 user 的值，这样就达到了动态替换的效果，好了我们又学会了使用<br><strong>@Path</strong> 注解了，好棒棒！不过在使用 <strong>@Path</strong> 注解时应该注意一下几点:</p>
-<ul>
-<li>使用@Path时，Path对应的路径不能包含”&#x2F;”，否则会将其转化为 %2F，在遇到想动态的拼接多节url时，还是使用@Url；</li>
-<li>@Path只是用来做一层路径，如果路经是多层的，可以用多个@Path，或者用@Url；</li>
-<li>如果非要使用 @Path 注解来传入多层路径，那就必须指定 @Path的 encoded &#x3D; true；</li>
-</ul>
-<h3 id="2-3-进一步优化"><a href="#2-3-进一步优化" class="headerlink" title="2.3 进一步优化"></a>2.3 进一步优化</h3><p>通过上面的网络请求测试，感觉和其他网络请求也没什么两样啊，除了使用了 @Path 注解外，好像发现没什么好用的地方？跟你说 Retrofit 能着呢，别人能干的它都能干，别人不能干的它也能干！先别急，我们先慢慢一步一步来了解她，慢慢的你就会发现她的美！就和有的妹子一样，见第一眼觉得不怎么样，但是处的时间长了，你就会发现她越来越漂亮，越看越美…</p>
-<p>Retrofit 可以灵活的配置各种转换器，转换器什么鬼？通俗地讲，转换器的意思就是把一种数据类型解析并转换成另一种数据类型，现在不理解没关系，往后面看你就会明白，Retrofit支持的转换器有：</p>
-<ol>
-<li>Gson: com.squareup.retrofit2:converter-gson</li>
-<li>Jackson: com.squareup.retrofit2:converter-jackson</li>
-<li>Moshi: com.squareup.retrofit2:converter-moshi</li>
-<li>Protobuf: com.squareup.retrofit2:converter-protobuf</li>
-<li>Wire: com.squareup.retrofit2:converter-wire</li>
-<li>Simple XML: com.squareup.retrofit2:converter-simplexml</li>
-<li>Scalars (primitives, boxed, and String): com.squareup.retrofit2:converter-scalars</li>
-</ol>
-<p>一般情况下，我们使用 Gson 转换器比较多一些，现在我们就来试试转换器的威力吧。</p>
-<p>首先在 Gradle 中添加依赖:</p>
-<p><code>implementation &#39;com.squareup.retrofit2:converter-gson:2.3.0&#39;</code></p>
-<p>接下来我们在创建Retrofit 对象的时候设置它的转换器，代码如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Retrofit retrofit = new Retrofit.Builder()</span><br><span class="line">                .baseUrl(&quot;https://api.github.com&quot;)</span><br><span class="line">				.addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">                .build();</span><br></pre></td></tr></table></figure>
-
-<p>然后我们创建一个实体类 GithubUserBean，这个类其实就是上面接口返回数据对应的实体类，我们直接用 GsonFormat 插件自动生成即可。</p>
-<p>下一步，我们再修改接口中返回值类型的泛型，修改后如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public interface GithubService &#123;</span><br><span class="line"></span><br><span class="line">    @GET(&quot;/users/&#123;user&#125;&quot;)</span><br><span class="line">    Call&lt;GithubUserBean&gt; getUserString(@Path(&quot;user&quot;) String user);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>最后，我们再来发起一个异步请求：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GithubService service = retrofit.create(GithubService.class);</span><br><span class="line">       Call&lt;GithubUserBean&gt; call = service.getUserString(&quot;xinpengfei520&quot;);</span><br><span class="line">       call.enqueue(new Callback&lt;GithubUserBean&gt;() &#123;</span><br><span class="line">           @Override</span><br><span class="line">           public void onResponse(Call&lt;GithubUserBean&gt; call, Response&lt;GithubUserBean&gt; response) &#123;</span><br><span class="line">			GithubUserBean userBean = response.body();</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">           @Override</span><br><span class="line">           public void onFailure(Call&lt;GithubUserBean&gt; call, Throwable t) &#123;</span><br><span class="line"></span><br><span class="line">           &#125;</span><br><span class="line">       &#125;);</span><br></pre></td></tr></table></figure>
-
-<p>看上面的代码，仔细的你可能已经发现了，当请求接口成功时，我们拿到的直接就是对应的实体类了，不需要再解析了，这是因为 Retrofit 内部会根据这个转换工厂及返回数据所指定的泛型自动帮你直接转换成Bean了，就问你爽不爽？怎一个爽字了得？简直帅呆了！有木有？</p>
-<p>注意：接口中返回值类型Call的泛型要么是 ResponseBody，要么是实体类，不支持其他类型！ResponseBody 的子类也不行！</p>
-<p>本来打算写一两篇文章来介绍 Retrofit 的，结果发现一两篇文章的根本讲不清楚，因为涉及的知识比较多，另一方面如果是一两篇文章的话，可能篇幅比较长，读者很难坚持读下去，还有我写的时候考虑的东西也比较多，我觉得我的文章应该是面向大众的，尽可能覆盖到大多数的读者，包括一些初学者，由浅入深，由粗到细，这样才能便于大家更好的学习理解，文章中一些东西比较基础，对于觉得会的简单的直接跳过即可，后面的系列文章，我会写一些比较进阶的用法，从源码角度进行分析，便于大家更好的理解。</p>
-<p>好了，今天的分享就到这里，我还是你们的大飞哥，一个不止会敲代码的厨师！</p>
-<p>推荐阅读：<br><a href="https://mp.weixin.qq.com/s/ReJJFmQm6l55r9pvo7aFIA">给大家推荐一个神器</a><br><a href="https://mp.weixin.qq.com/s/3GlXPLakrVhuq74gOk1wmQ">MySQL8.0设置远程访问权限</a><br><a href="https://mp.weixin.qq.com/s/H8WqFy2RPYZWRpp63oBPfQ">不得不会的10点Java基础知识</a><br><a href="https://mp.weixin.qq.com/s/EwD4Tp9zvaHFfZ17ayTksg">CentOS7 重置 MySQL 8.0 密码</a>  </p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Retrofit2</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>深入浅出 Retrofit2.x (二)</title>
     <url>/2017/09/24/201709242446/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center><center>置顶公众号（**ID：ITBigFly**）第一时间收到推送</center>
@@ -40218,6 +40192,110 @@ Thanks all.
       <tags>
         <tag>GitHub</tag>
         <tag>Retrofit 2.x</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>深入浅出 Retrofit2.x (一)</title>
+    <url>/2017/09/24/201709242445/</url>
+    <content><![CDATA[<center>点击上面蓝色字体关注“IT大飞说”</center>
+
+<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061548094.jpeg"></p>
+<blockquote>
+<p>在 Android 开发中，从最原生的 <strong>HttpClient</strong> 和后来的 <strong>HttpUrlConnection</strong>，再到<strong>Volley、AsyncHttpClient</strong> 等网络请求框架，最后到 Square 公司开源的 <strong>okhttp</strong>，一时间 <strong>okhttp</strong> 风靡整个开发圈，进而衍生了好多大牛对 <strong>okhttp</strong> 的封装开源库，像鸿洋大神封装的 <strong>okhttputils</strong>，还有 <strong>Okgo</strong> … 然后就是 <strong>Retrofit</strong> 了，其实它也是对 <strong>okhttp</strong> 的封装，<strong>Retrofit</strong> 使得网络请求更优雅，灵活性更高，支持各种适配器和转换器，可以搭配 <strong>RxJava</strong> 一起使用，一度后来基于 <strong>RxJava + Retrofit + MVP</strong> 这种架构设计非常流行，网上关于这种的文章也更是层出不穷，目前 <strong>retrofit</strong> 在 GitHub 上有将近 3w 的 Star，目前可以说是非常稳定了。</p>
+</blockquote>
+<h2 id="1-初识-Retrofit"><a href="#1-初识-Retrofit" class="headerlink" title="1.初识 Retrofit"></a>1.初识 Retrofit</h2><p>简单说，<strong>Retrofit</strong> 是一个支持 <strong>RESTful api</strong> 架构的 <strong>http</strong> 网络请求框架的封装库，<strong>Retrofit</strong> 封装了许多自定义的注解，大大方便和简化了使用，另外灵活性也更高，底层采用 <strong>okhttp</strong> 实现真正的网络请求，他们的关系可以说是分工协作吧，总结一成一句话就是：<strong>Retrofit</strong> 让 <strong>okhttp</strong> 网络请求更优雅！</p>
+<p>他们的关系可以看下图可能更容易理解：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061548783.png"></p>
+<h2 id="2-小牛试刀"><a href="#2-小牛试刀" class="headerlink" title="2.小牛试刀"></a>2.小牛试刀</h2><h3 id="2-1我们先来个简单的-GET-请求"><a href="#2-1我们先来个简单的-GET-请求" class="headerlink" title="2.1我们先来个简单的 GET 请求"></a>2.1我们先来个简单的 GET 请求</h3><p>首先在 Gradle 中添加 Retrofit 的依赖：</p>
+<p><code>implementation &#39;com.squareup.retrofit2:retrofit:2.3.0&#39;</code></p>
+<p>然后我们定义一个接口：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public interface GithubService &#123;</span><br><span class="line">    @GET(&quot;/users/xinpengfei520&quot;)</span><br><span class="line">    Call&lt;ResponseBody&gt; getUserString();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释一下上面接口中的注解 <strong>@GET</strong>，这个代表 <strong>HTTP</strong> 的请求类型，同理 <strong>@POST，@PUT，@DELETE,@HEAD,@PATCH</strong> 分别代表 POST、PUT 和 DELETE、HEAD、PATCH 请求；括号中的字符串 <strong>“&#x2F;users&#x2F;xinpengfei520”</strong> 代表注解 <strong>@GET</strong> 的值，这里指的是 URL 中的 Path，请求的时候会拼接到BASE_URL 后面，BASE_URL 在构建 Retrofit 的时候设置，<strong>Call<ResponseBody></strong> 中的 Call 为方法的返回值类型，ResponseBody 为方法的返回值类型的泛型。</p>
+<p>接下来，我们构建一个 Retrofit 对象：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Retrofit retrofit = new Retrofit.Builder()</span><br><span class="line">                .baseUrl(&quot;https://api.github.com&quot;)</span><br><span class="line">                .build();</span><br></pre></td></tr></table></figure>
+
+<p>非常简单吧，这里使用了构建者模式，方便我们动态的配置各种参数，baseUrl 就是服务器的 HOST，一般是域名或者 ip，通常都带有端口，baseUrl 是一定要设置的，否则会抛异常  <code>throw new IllegalStateException(&quot;Base URL required.&quot;)</code>。</p>
+<p>然后，我们来进行一个异步请求：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GithubService service = retrofit.create(GithubService.class);</span><br><span class="line">       Call&lt;ResponseBody&gt; call = service.getUserString();</span><br><span class="line">       call.enqueue(new Callback&lt;ResponseBody&gt;() &#123;</span><br><span class="line">           @Override</span><br><span class="line">           public void onResponse(Call&lt;ResponseBody&gt; call, Response&lt;ResponseBody&gt; response) &#123;</span><br><span class="line">			String json = response.body().string();</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">           @Override</span><br><span class="line">           public void onFailure(Call&lt;ResponseBody&gt; call, Throwable t) &#123;</span><br><span class="line"></span><br><span class="line">           &#125;</span><br><span class="line">       &#125;);</span><br></pre></td></tr></table></figure>
+
+<p>上面的代码中先调用 Retrofit 的 create() 方法，方法的参数就是我们定义的接口的 class，create 的内部实现是使用了 Java 中的动态代理模式，考虑到一些基础比较差的同学，关于动态代理，我这里简单的解释一下：代理类在程序运行时创建的代理方式被成为动态代理，代理类并不是在Java代码中定义的，而是在运行时在 Java 代码中动态生成的，当我们使用代理对象执行代理对象的方法时，都会被替换成执行invoke方法，在 invoke 方法中可以拿到代理对象，代理对象的方法及参数，当然这里也涉及到一些反射相关的知识，这里就不详细展开了；结合上面的代码，service 就是代理对象，当 service 调用 getUserString() 方法时，就会触发 invoke 方法，进而通过反射可以拿到代理对象，方法及参数，具体的细节就不详细讲了，感兴趣的同学可以读 Retrofit 的源码进行理解；上面代码中拿到call 后就是网络请求了，一个成功和一个失败的回调方法，这样一次完整的Retrofit的网络请求就算完了。</p>
+<p>另外我们还可以使用Retrofit的同步请求接口(注意要放在子线程中请求)：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Response&lt;ResponseBody&gt; response = call.execute();</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-优化接口定义"><a href="#2-2-优化接口定义" class="headerlink" title="2.2 优化接口定义"></a>2.2 优化接口定义</h3><p>在上面的请求中，很明显我们定义的 GitHubService 接口中的方法的注解的值是写死的，假如我们有另一个请求的接口是 <code>https://api.github.com/users/zhangsan</code> 也就是说 Path 是 <code>/users/zhangsan</code>，要想请求的话，有两种方式，在之前定义的接口中再增加一个方法，或者另外再重新定义一个接口，这样比较比较麻烦了，通用性和扩展性都不好，和之前定义的接口比较一下，只有 <strong>users&#x2F;</strong> 后面的内容不同，我们想如果这个可以动态作为传入就好了？当然是可以的，我们可以这样写：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public interface GitHubService &#123;</span><br><span class="line">  @GET(&quot;/users/&#123;user&#125;&quot;)</span><br><span class="line">  Call&lt;ResponseBody&gt; getUserString(@Path(&quot;user&quot;) String user);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面代码中的user作为方法的参数传进来，并且我们使用了@Path注解，然后我们在@GET注解的值中使用 <strong>{user}</strong> 动态获取传进来的 user 的值，这样就达到了动态替换的效果，好了我们又学会了使用<br><strong>@Path</strong> 注解了，好棒棒！不过在使用 <strong>@Path</strong> 注解时应该注意一下几点:</p>
+<ul>
+<li>使用@Path时，Path对应的路径不能包含”&#x2F;”，否则会将其转化为 %2F，在遇到想动态的拼接多节url时，还是使用@Url；</li>
+<li>@Path只是用来做一层路径，如果路经是多层的，可以用多个@Path，或者用@Url；</li>
+<li>如果非要使用 @Path 注解来传入多层路径，那就必须指定 @Path的 encoded &#x3D; true；</li>
+</ul>
+<h3 id="2-3-进一步优化"><a href="#2-3-进一步优化" class="headerlink" title="2.3 进一步优化"></a>2.3 进一步优化</h3><p>通过上面的网络请求测试，感觉和其他网络请求也没什么两样啊，除了使用了 @Path 注解外，好像发现没什么好用的地方？跟你说 Retrofit 能着呢，别人能干的它都能干，别人不能干的它也能干！先别急，我们先慢慢一步一步来了解她，慢慢的你就会发现她的美！就和有的妹子一样，见第一眼觉得不怎么样，但是处的时间长了，你就会发现她越来越漂亮，越看越美…</p>
+<p>Retrofit 可以灵活的配置各种转换器，转换器什么鬼？通俗地讲，转换器的意思就是把一种数据类型解析并转换成另一种数据类型，现在不理解没关系，往后面看你就会明白，Retrofit支持的转换器有：</p>
+<ol>
+<li>Gson: com.squareup.retrofit2:converter-gson</li>
+<li>Jackson: com.squareup.retrofit2:converter-jackson</li>
+<li>Moshi: com.squareup.retrofit2:converter-moshi</li>
+<li>Protobuf: com.squareup.retrofit2:converter-protobuf</li>
+<li>Wire: com.squareup.retrofit2:converter-wire</li>
+<li>Simple XML: com.squareup.retrofit2:converter-simplexml</li>
+<li>Scalars (primitives, boxed, and String): com.squareup.retrofit2:converter-scalars</li>
+</ol>
+<p>一般情况下，我们使用 Gson 转换器比较多一些，现在我们就来试试转换器的威力吧。</p>
+<p>首先在 Gradle 中添加依赖:</p>
+<p><code>implementation &#39;com.squareup.retrofit2:converter-gson:2.3.0&#39;</code></p>
+<p>接下来我们在创建Retrofit 对象的时候设置它的转换器，代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Retrofit retrofit = new Retrofit.Builder()</span><br><span class="line">                .baseUrl(&quot;https://api.github.com&quot;)</span><br><span class="line">				.addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">                .build();</span><br></pre></td></tr></table></figure>
+
+<p>然后我们创建一个实体类 GithubUserBean，这个类其实就是上面接口返回数据对应的实体类，我们直接用 GsonFormat 插件自动生成即可。</p>
+<p>下一步，我们再修改接口中返回值类型的泛型，修改后如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public interface GithubService &#123;</span><br><span class="line"></span><br><span class="line">    @GET(&quot;/users/&#123;user&#125;&quot;)</span><br><span class="line">    Call&lt;GithubUserBean&gt; getUserString(@Path(&quot;user&quot;) String user);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后，我们再来发起一个异步请求：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">GithubService service = retrofit.create(GithubService.class);</span><br><span class="line">       Call&lt;GithubUserBean&gt; call = service.getUserString(&quot;xinpengfei520&quot;);</span><br><span class="line">       call.enqueue(new Callback&lt;GithubUserBean&gt;() &#123;</span><br><span class="line">           @Override</span><br><span class="line">           public void onResponse(Call&lt;GithubUserBean&gt; call, Response&lt;GithubUserBean&gt; response) &#123;</span><br><span class="line">			GithubUserBean userBean = response.body();</span><br><span class="line">           &#125;</span><br><span class="line"></span><br><span class="line">           @Override</span><br><span class="line">           public void onFailure(Call&lt;GithubUserBean&gt; call, Throwable t) &#123;</span><br><span class="line"></span><br><span class="line">           &#125;</span><br><span class="line">       &#125;);</span><br></pre></td></tr></table></figure>
+
+<p>看上面的代码，仔细的你可能已经发现了，当请求接口成功时，我们拿到的直接就是对应的实体类了，不需要再解析了，这是因为 Retrofit 内部会根据这个转换工厂及返回数据所指定的泛型自动帮你直接转换成Bean了，就问你爽不爽？怎一个爽字了得？简直帅呆了！有木有？</p>
+<p>注意：接口中返回值类型Call的泛型要么是 ResponseBody，要么是实体类，不支持其他类型！ResponseBody 的子类也不行！</p>
+<p>本来打算写一两篇文章来介绍 Retrofit 的，结果发现一两篇文章的根本讲不清楚，因为涉及的知识比较多，另一方面如果是一两篇文章的话，可能篇幅比较长，读者很难坚持读下去，还有我写的时候考虑的东西也比较多，我觉得我的文章应该是面向大众的，尽可能覆盖到大多数的读者，包括一些初学者，由浅入深，由粗到细，这样才能便于大家更好的学习理解，文章中一些东西比较基础，对于觉得会的简单的直接跳过即可，后面的系列文章，我会写一些比较进阶的用法，从源码角度进行分析，便于大家更好的理解。</p>
+<p>好了，今天的分享就到这里，我还是你们的大飞哥，一个不止会敲代码的厨师！</p>
+<p>推荐阅读：<br><a href="https://mp.weixin.qq.com/s/ReJJFmQm6l55r9pvo7aFIA">给大家推荐一个神器</a><br><a href="https://mp.weixin.qq.com/s/3GlXPLakrVhuq74gOk1wmQ">MySQL8.0设置远程访问权限</a><br><a href="https://mp.weixin.qq.com/s/H8WqFy2RPYZWRpp63oBPfQ">不得不会的10点Java基础知识</a><br><a href="https://mp.weixin.qq.com/s/EwD4Tp9zvaHFfZ17ayTksg">CentOS7 重置 MySQL 8.0 密码</a>  </p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Retrofit2</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Failed to resolve com.android.support</title>
+    <url>/2017/09/24/201709242435/</url>
+    <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
+<p>报错如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Failed to resolve com.android.support</span><br></pre></td></tr></table></figure>
+
+<p>刚开始自己写了一个 module demo 编译、运行都没有问题，然后又新建了一个 module，因为在新建之前看到编译好的 module 中有个 xml 文件，感觉命名不好，就 Refactor -&gt; Rename 了一下，重命名了一下文件，一般在重命名的时候 AS 会弹出提示你是否在调用的地方也进行重命名，结果我就直接一路Refactor了，因为之前也是这样修改的，没有出过问题，然后在编译的时候就出现了上面的错误，然后定位到这一行依赖这里：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">implementation &#x27;com.android.support:appcompat-v7:27.1.1&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>我看了一下，毛线，这是系统生成的还能写错?为了不打脸，我还是复制了一行好的比对了一下，没有问题的，我看了一下网络，网络也没有问题啊，这不科学呀，懵逼中…</p>
+<p>于是乎，打开百度，输入如上错误，点击搜索，看到了一篇博主的文章：</p>
+<p><a href="https://blog.csdn.net/mhl18820672087/article/details/78385361">https://blog.csdn.net/mhl18820672087/article/details/78385361</a></p>
+<p>我看了一下，我的构建版本的工具是没有任何问题的，因为其他 module 都能编译过，就这一个 module 编译不通过，任然没有解决我的问题，打开我编译不过的 module 的 build.gradle 文件，细心的我发现了一个问题，看下图标红的地方：</p>
+<p><img src="https://img-blog.csdn.net/20180706171937624?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><img src="https://img-blog.csdn.net/20180706171947788?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><strong>test_page</strong> 这尼玛是什么鬼？这不是我刚才重命名的名字么？它竟然给我把这个地方的 test 重命名成了 test_page，真是无语了，第一次见这种错，我都没调用，你给我乱重命名，有点说不过去了哦，胸die!</p>
+<p>至此，问题算是解决完了…</p>
+<p>我发现新版本的 Android Studio 是越来越好用，但是会频繁的出现一些莫名奇葩的问题，大家遇到过吗？</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>Failed</tag>
       </tags>
   </entry>
   <entry>

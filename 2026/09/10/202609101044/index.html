@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Mistral 官方复盘用 agent 迁移 40000 行 Fortran 77 油藏模拟器：全自主和纯 agent 协作两次翻车，人工审查门的结构化工作流走通，验证用的数值 checkpoint 与我六月黄金输出断言同构。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mistral 翻车两次的迁移记，验了我六月的土办法">
+<meta property="og:url" content="https://www.vance.xin/2026/09/10/202609101044/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Mistral 官方复盘用 agent 迁移 40000 行 Fortran 77 油藏模拟器：全自主和纯 agent 协作两次翻车，人工审查门的结构化工作流走通，验证用的数值 checkpoint 与我六月黄金输出断言同构。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260910-202609101044-fortran-migration-gate.webp">
+<meta property="article:published_time" content="2026-09-10T10:44:00.000Z">
+<meta property="article:modified_time" content="2026-09-10T03:29:57.651Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="工程实践">
+<meta property="article:tag" content="Mistral">
+<meta property="article:tag" content="代码迁移">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260910-202609101044-fortran-migration-gate.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/09/10/202609101044/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/09/10/202609101044/","path":"2026/09/10/202609101044/","title":"Mistral 翻车两次的迁移记，验了我六月的土办法"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Mistral 翻车两次的迁移记，验了我六月的土办法 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Mistral 翻车两次的迁移记，验了我六月的土办法",
+  "url": "https://www.vance.xin/2026/09/10/202609101044/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/09/10/202609101044/",
+  "datePublished": "2026-09-10T10:44:00.000Z",
+  "dateModified": "2026-09-10T03:29:57.651Z",
+  "description": "Mistral 官方复盘用 agent 迁移 40000 行 Fortran 77 油藏模拟器：全自主和纯 agent 协作两次翻车，人工审查门的结构化工作流走通，验证用的数值 checkpoint 与我六月黄金输出断言同构。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%96%E4%BB%AC%E8%BF%81%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-text">他们迁的是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E6%AC%A1%E7%BF%BB%E8%BD%A6%E8%AE%B0"><span class="nav-text">两次翻车记</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E7%A1%AC%E7%9A%84%E4%B8%80%E5%A4%84%E5%90%8C%E6%9E%84"><span class="nav-text">最硬的一处同构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%89%93%E7%AE%97%E6%8A%84%E5%9B%9E%E6%9D%A5%E7%9A%84%E4%B8%89%E6%8B%9B"><span class="nav-text">我打算抄回来的三招</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E8%AF%B4%E6%B8%85%E6%A5%9A%E4%BA%BA%E5%AE%B6%E7%9A%84%E5%89%8D%E6%8F%90"><span class="nav-text">先说清楚人家的前提</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">522</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">885</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/09/10/202609101044/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Mistral 翻车两次的迁移记，验了我六月的土办法 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Mistral 官方复盘用 agent 迁移 40000 行 Fortran 77 油藏模拟器：全自主和纯 agent 协作两次翻车，人工审查门的结构化工作流走通，验证用的数值 checkpoint 与我六月黄金输出断言同构。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Mistral 翻车两次的迁移记，验了我六月的土办法
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-09-10 10:44:00 / 修改时间：03:29:57" itemprop="dateCreated datePublished" datetime="2026-09-10T10:44:00+00:00">2026-09-10</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Mistral 官方复盘用 agent 迁移 40000 行 Fortran 77 油藏模拟器：全自主和纯 agent 协作两次翻车，人工审查门的结构化工作流走通，验证用的数值 checkpoint 与我六月黄金输出断言同构。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260910-202609101044-fortran-migration-gate.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>六月我拿 agent 把 7000 多行的老 Java 项目一天迁成 Kotlin 上了线，事后写了一套验证门的打法。写的时候我心里其实打鼓：这套土办法是摸着我那点代码量趟出来的，换个规模还灵不灵，我不知道。</p>
+<p>昨天 Mistral 发了篇官方复盘，他们用 agent 帮一家欧洲能源运营商迁油藏模拟器，40000 行 Fortran 77。</p>
+<p>我把复盘逐条对了一遍，先说结论：路子撞了，而且他们替我把两个极端的坑都趟了一遍。这篇就把两边的账摊开对。</p>
+<h2 id="他们迁的是什么"><a href="#他们迁的是什么" class="headerlink" title="他们迁的是什么"></a>他们迁的是什么</h2><p>Fortran 77，1977 年标准化的科学计算老语言，说人话就是编程界的活化石。</p>
+<p>官方复盘里列的几个特征，条条都是祖传味：状态全放在 COMMON blocks 里，说白了就是全班共用一块黑板，谁都能上去写；变量隐式定型，I 到 N 开头的名字自动是整数，拼错一个变量名不会报错，会静默新建一个变量；变量名最长六个字符；流程靠 GOTO 跳来跳去。</p>
+<p>更麻烦的是外围：没有测试套件，没有集中文档，资料散在旧 PDF 和代码注释里，原作者已经离职。整个代码库三十万行，这次只迁核心的四万行。</p>
+<p>这套设计的麻烦在于，任何一行代码都可能往黑板上写全员共享的状态，你翻译任何一段，都得先弄清别的角落谁在什么时候写过它。官方复盘头一回让 agent 一对一硬翻翻车，根子就埋在这儿。</p>
+<p>我六月面对的那个 529 行祖传 XSS 过滤器，搁这四万行面前，连个零头都算不上。但你要是往下看会发现，难的从来不是代码多大，是没人能告诉你「迁完之后行为还是原来那个行为」。</p>
+<h2 id="两次翻车记"><a href="#两次翻车记" class="headerlink" title="两次翻车记"></a>两次翻车记</h2><p>说实话，复盘里最值钱的是失败段，厂商复盘难得写得这么实。</p>
+<p>头一次，全自主。每条 Fortran 子程序派一个 agent 独立翻译，跑了一周。产物能跑，官方复盘的原话是「像用 C++ 语法重新抄了一遍 Fortran」：COMMON blocks 一比一变成全局 struct，GOTO 控制流原样保留。能编译，能出数，但该重构的一点没重构。</p>
+<p>另一回，纯 agent 协作。每个模块配 planner、coder、tester、reviewer 四种角色，质量确实上去了，但复杂度压垮了它们：碰到一个 bug，试几轮修复，然后停在那儿。停下来的样子是：任务干挂着，没了下一步，谁也不再来动它。原话是「attempt a few fixes, and stall」。</p>
+<p>走通的版本换了个思路：保留那套 agent 工作流，加回人类检查点。人负责审架构、审 PR，最关键的是 agent 卡死的时候有人来解卡。官方复盘的结论原话是：带人工审查门的结构化工作流，打赢了全自主和纯手动的两个极端。</p>
+<p>这句结论我看着眼熟。我六月那场迁移里，agent 把一个叫 isLiability 的字段悄悄并进了别的 class，名字凭空消失，编译通过测试也过，满屏 diff 看不出来，靠的是流水线里一组专门唱反调的对抗校验 agent 在报错时捞回来。它还会顺手把空指针判断「优化」掉、把分支悄悄改岔，且从不主动报告，一个任务来回改几十次是常态。</p>
+<p>两个样本，一个四万行一个七千行，各自摔出来的结论是同一句：谁出的活谁自己审，等于没审；人在门后面，这活才交得出去。</p>
+<p>还有个第三方参照。Bun 团队用同类工作流把整个项目从 Zig 移植到 Rust，七十五万行，每个文件配两个 reviewer agent，十一天从第一个 commit 走到 merge，原有测试 99.8% 通过。规模再大一个量级，走的还是「翻译的归翻译、审查的归审查」这个分法。</p>
+<h2 id="最硬的一处同构"><a href="#最硬的一处同构" class="headerlink" title="最硬的一处同构"></a>最硬的一处同构</h2><p>两边的打法里，有一招几乎一模一样，值得单独拎出来。</p>
+<p>我六月是这么干的：项目里那个 529 行的祖传过滤器，没人敢保证重写后正则行为一致，我让 AI 先拿旧版跑一批输入，抓下 19 条「黄金输出」，钉成断言。新版本任何一点行为漂移，测试立马变红。当时我不信「能编译」，是有缘故的：前文那桩字段消失，就发生在编译和测试全绿的版本里。编译器只管语法契约，不管行为漂没漂。</p>
+<p>Mistral 是这么干的：迁移前先建一套数值对账台，给 Fortran 代码插桩，把关键变量的中间状态导出来，比如 RHOG &#x3D; 42.71834 这种带好几位小数的快照；C++ 那边建测试框架加载这些检查点，逐个做数值断言。官方复盘说，数值相等是「容易验证且有说服力的证据」，并把这一步定为任何代码现代化项目的头一步。</p>
+<p>隔了三个月、隔着完全不同的代码量，两边独立收敛出了同一个动作：不信任「能编译」，只信「行为钉死」。区别在精度上，他们比我狠：我只钉了最终输出，他们连中间过程的关键点都设了检查站，中途哪一步数值飘了当场就报。</p>
+<h2 id="我打算抄回来的三招"><a href="#我打算抄回来的三招" class="headerlink" title="我打算抄回来的三招"></a>我打算抄回来的三招</h2><p>对照下来，有三招是我六月没做、这次记下要抄的。</p>
+<p>头一招，文档化先行。Mistral 把文档化做成了独立阶段：先用自研 parser 把整棵调用树画出来，说白了就是一张谁调用谁的族谱，然后派了一百多个 agent 照着这张族谱，从叶子节点往上逐个写文档、开 PR，还有 reviewer agent 挂定时循环专门审新文档，审出问题自动排修复任务。</p>
+<p>文档的原料也有讲究：散在旧 PDF 里的资料，靠文档库加 Mistral OCR 让 agent 自己去拉。复盘把「把这些散落资料统一整理到代码旁边」列为最大的副产品之一，迁一次代码，白捡一份整理好的文档。我六月直接从翻译开跑，规模小跳得过，四万行跳不过。</p>
+<p>另一招，中间点检查站，就是他们比我狠的那一处。这一招治的病很具体：中途漂和终点错是两种病，只验终值，中途的病会带到最后才发作。</p>
+<p>还有一招，切模块的经验值：单模块控制在一万行以内，按调用树切自包含的块。我六月是按「一次只动一个变量」控制步子，他们是按行数封顶切模块，两句话说的是同一件事，他们的数字能直接抄。</p>
+<h2 id="先说清楚人家的前提"><a href="#先说清楚人家的前提" class="headerlink" title="先说清楚人家的前提"></a>先说清楚人家的前提</h2><p>复盘自己也交代了边界，这几条得原样带上。</p>
+<p>这四万行代码是自包含、可运行的，官方复盘原话承认这是「有利起点」；如果你的老代码依赖外部系统、跑不起来、逻辑没有任何文档，难度要再上一个台阶，这篇复盘没讨论。</p>
+<p>复盘里说的有利起点，我六月其实也占着：老项目有测试、能本地跑，我还能起真 MySQL 和 Redis 做冒烟，真机那道门当年抓出过两个 bug，都是单看代码和跑测试都发现不了的那种。反过来想，要是当年那个项目没测试也起不来，我那套验证门的头一块砖就没了，整套打法得重新设计。这是读完这篇我最大的后怕。</p>
+<p>另外，整个项目的总周期、具体用的哪些模型、客户是谁，原文都没披露，而且这是厂商自述没有第三方验证，数字你当口径看。</p>
+<p>轮到你了：你手上迁过的最老的代码是哪年的？当时怎么验证迁完没迁坏？评论区报个年份，我想看看这条时间轴能拉到多长。顺带说一句，Mistral 那套数值对账台真不难搭，你下次迁任何有输出的老代码，都可以先搭这个再动手。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/" rel="tag"># 工程实践</a>
+              <a href="/tags/Mistral/" rel="tag"># Mistral</a>
+              <a href="/tags/%E4%BB%A3%E7%A0%81%E8%BF%81%E7%A7%BB/" rel="tag"># 代码迁移</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/09/09/202609091743/" rel="prev" title="蒸馏吵了一年，这回美国政府下场点名了六家">
+                  <i class="fa fa-angle-left"></i> 蒸馏吵了一年，这回美国政府下场点名了六家
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.7m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">25:49</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

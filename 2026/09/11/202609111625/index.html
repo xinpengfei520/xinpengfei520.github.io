@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="OpenAI 把 GPT-Live-1 全双工语音模型开放进 API，语音层每分钟 0.05 美元按秒计费，后端推理和工具调用另算，嘴和脑拆开计价；级联管线还是全双工，分界线是你的语音要不要对话。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenAI 新语音模型：嘴五美分一分钟，脑子另算">
+<meta property="og:url" content="https://www.vance.xin/2026/09/11/202609111625/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="OpenAI 把 GPT-Live-1 全双工语音模型开放进 API，语音层每分钟 0.05 美元按秒计费，后端推理和工具调用另算，嘴和脑拆开计价；级联管线还是全双工，分界线是你的语音要不要对话。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260911-20260911-gpt-live-1-mouth-brain-pricing.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260911-20260911-gpt-live-1-pipeline-vs-full-duplex.webp">
+<meta property="article:published_time" content="2026-09-11T16:25:00.000Z">
+<meta property="article:modified_time" content="2026-09-11T08:43:19.939Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="OpenAI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="API">
+<meta property="article:tag" content="语音">
+<meta property="article:tag" content="全双工">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260911-20260911-gpt-live-1-mouth-brain-pricing.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/09/11/202609111625/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/09/11/202609111625/","path":"2026/09/11/202609111625/","title":"OpenAI 新语音模型：嘴五美分一分钟，脑子另算"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>OpenAI 新语音模型：嘴五美分一分钟，脑子另算 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "OpenAI 新语音模型：嘴五美分一分钟，脑子另算",
+  "url": "https://www.vance.xin/2026/09/11/202609111625/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/09/11/202609111625/",
+  "datePublished": "2026-09-11T16:25:00.000Z",
+  "dateModified": "2026-09-11T08:43:19.939Z",
+  "description": "OpenAI 把 GPT-Live-1 全双工语音模型开放进 API，语音层每分钟 0.05 美元按秒计费，后端推理和工具调用另算，嘴和脑拆开计价；级联管线还是全双工，分界线是你的语音要不要对话。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%80%81%E7%AE%A1%E7%BA%BF%E7%9A%84%E6%B4%BB%E6%98%AF%E6%8E%92%E9%98%9F%E7%9A%84"><span class="nav-text">老管线的活是排队的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%A8%E5%8F%8C%E5%B7%A5%E6%98%AF%E8%BE%B9%E8%81%8A%E8%BE%B9%E5%B9%B2"><span class="nav-text">全双工是边聊边干</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%98%B4%E5%92%8C%E8%84%91%E5%88%86%E5%BC%80%E8%AE%A1%E4%BB%B7"><span class="nav-text">嘴和脑分开计价</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E7%9A%84%E8%AF%AD%E9%9F%B3%E8%A6%81%E5%AF%B9%E8%AF%9D%E5%90%97"><span class="nav-text">你的语音要对话吗</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">526</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">895</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/09/11/202609111625/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="OpenAI 新语音模型：嘴五美分一分钟，脑子另算 | 飞飞的AI实验室">
+      <meta itemprop="description" content="OpenAI 把 GPT-Live-1 全双工语音模型开放进 API，语音层每分钟 0.05 美元按秒计费，后端推理和工具调用另算，嘴和脑拆开计价；级联管线还是全双工，分界线是你的语音要不要对话。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OpenAI 新语音模型：嘴五美分一分钟，脑子另算
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-09-11 16:25:00 / 修改时间：08:43:19" itemprop="dateCreated datePublished" datetime="2026-09-11T16:25:00+00:00">2026-09-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">OpenAI 把 GPT-Live-1 全双工语音模型开放进 API，语音层每分钟 0.05 美元按秒计费，后端推理和工具调用另算，嘴和脑拆开计价；级联管线还是全双工，分界线是你的语音要不要对话。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260911-20260911-gpt-live-1-mouth-brain-pricing.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>这两天开发圈的注意力都在 GPT-6 Astra 上。如果你也刷到另一条公告，9 月 10 号 OpenAI 把 GPT-Live-1 开放进 API，语音层每分钟 0.05 美元，你八成会跟我一样愣一下：嘴五美分一分钟，脑子另算？</p>
+<p>我愣完的第一反应是：我那条语音记账管线，是不是该推倒重写了。</p>
+<p>看完公告我想明白的是另一件事。这次真正的新东西，不是模型多强，是嘴和脑第一次拆开来卖；至于你该不该用，分界线只有一条：你的语音要不要对话。</p>
+<h2 id="老管线的活是排队的"><a href="#老管线的活是排队的" class="headerlink" title="老管线的活是排队的"></a>老管线的活是排队的</h2><p>我的 App 里有个语音记账功能，你对它说一句「午饭花了三十五」，它得变成一条记账记录。</p>
+<p>实现走的是标准的级联管线，说人话就是接力赛：端上先跑一套规则解析，把这句话拆成金额和分类；规则拆不全的，异步丢给后端一个大模型兜底，设了 2 秒超时，超时就降级用规则的结果。</p>
+<p>为什么不用大模型一把梭？图的是账算得清。记账是高频小动作，大部分单子「午饭三十五」这种格式，规则零成本就能吃下；真剩下那些说不清的，才值得花一次大模型的钱。整条链路里每一步出问题会发生什么，我都事先知道：解析失败走兜底，兜底超时走降级，没有一步是黑盒。</p>
+<p>这套结构是行业里语音方案的通用形状：录音，转写成文字，文字喂给大模型，回答再交给语音合成念出来。四段排队，一段干完下一段才开工。</p>
+<p>排队有个隐藏代价，平时没人提。转写那一步会把声音里的时机信息全丢掉：你犹豫的那半秒、说到一半改口的那句话、「嗯」「啊」的附和，进了文字全没了。所以传统语音助手听不懂「等一下，我说错了」，它只能等你说完才开始想。</p>
+<p>我那条记账管线没这个问题，因为记账压根不需要对话。</p>
+<h2 id="全双工是边聊边干"><a href="#全双工是边聊边干" class="headerlink" title="全双工是边聊边干"></a>全双工是边聊边干</h2><p><img src="https://image.vance.xin/aigc/image/20260911-20260911-gpt-live-1-pipeline-vs-full-duplex.webp" alt="级联管线与全双工架构对比"></p>
+<p>先补个背景。GPT-Live-1 不是今天才存在的模型，7 月 8 号它就随 ChatGPT 语音模式上线了，当时只在自己家产品里跑，开发者够不着。两个月后开放 API，外头的人才算第一次拿到手。</p>
+<p>它干的事，是把排队改成同时。它听和说同时进行，进出两路音频都开着，模型自己在持续决定：继续听、继续说、停一下、接住打断，还是把手头的活递出去。</p>
+<p>官方给的对比数字是，在一个专测现场说话行为的 Full Duplex Bench 上，它比上一代 Realtime 模型高了 30 个百分点。这个基准测的东西挺特别：打断、轮次接替、背景里有人说话、听的人嗯嗯啊啊。传统跑分根本不测这些，没有哪张推理榜单管「语音助手会不会抢话」。</p>
+<p>有一个第三方实测我觉得比跑分有意思。语言学习平台 Speak 换上它之后，学员思考停顿时被打断的次数少了将近八成。你练过口语就懂这个场景：你卡壳想词，机器抢着开口，那一下多败兴致。</p>
+<p>它还能委托。对话进行到一半，它可以把需要动脑的活递给后端模型，比如 GPT-6 Astra，递出去之后嘴不停，接着跟你聊。简单请求路由给便宜模型，复杂请求才请出贵的。通话开着，不等于一直在烧最贵的推理。</p>
+<p>配套的细节还有一批：12 个声音跨口音和方言，电话场景直接支持，模型顺手把你说的话和它的回答都吐成文字，方便你留存。它走的是一条叫 live sessions 的独立通道，说人话就是专门跑实时语音的专线，老的 Chat Completions 文本接口接不了它。</p>
+<h2 id="嘴和脑分开计价"><a href="#嘴和脑分开计价" class="headerlink" title="嘴和脑分开计价"></a>嘴和脑分开计价</h2><p>计价方式比模型本身更值得盯。每分钟 0.05 美元只是语音层的价格，按秒计费不进位。后端模型的推理、工具调用，按它们自己的正常价另算。</p>
+<p>我把口径摊开，你自己算：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>口径</th>
+<th>价格</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>语音层</td>
+<td>按通话时长，按秒计</td>
+<td>每分钟 $0.05</td>
+</tr>
+<tr>
+<td>后端推理</td>
+<td>按模型 token，正常 API 价</td>
+<td>另算</td>
+</tr>
+<tr>
+<td>工具调用</td>
+<td>按所用工具的价</td>
+<td>另算</td>
+</tr>
+</tbody></table>
+<p>上次 GPT-5.6 是按聪明程度分档卖，这次是按器官分工卖：嘴一个价，脑一个价。</p>
+<p>拆着卖还有一层意思：嘴的价格锁死了，脑的部分你随便换。今天配 GPT-6 Astra，明天换成便宜的跑简单请求，嘴都不用动。计价切在嘴和脑之间，等于把选哪个脑子的权力，还给了开发者。</p>
+<p>账别只看嘴价。我做过一套有声书。合成之前我拿正文字数估了个成本，自以为很稳。结算那天账单出来，是预估的 1.7 倍。我翻着明细对了半天才发现：标点在算钱，空格在算钱，连每句话之间那半秒的停顿，都在算钱。语音这东西的账单，从来比标价胖。OpenAI 自己也提醒：该按每次接通解决任务的完整成本算，不是按分钟价。</p>
+<p>有个早期客户把级联语音栈换成 GPT-Live-1，转写、状态机、打断判断那一摞胶水代码全不要了，删了约两万三千行，相当于把接力赛四棒之间所有的交接棒代码整个撕掉。官方引用这个案例时老实标注了是个案，别拿它推自己的项目。</p>
+<p>跑分那边还有一组数：配套后端模型跑 Tau3，一个专测语音 agent 完成任务的评测，它配 GPT-6 Astra 排第一，任务成功率 86.2%，上一代 Realtime 是 45.7%。不过这些都是厂商发布口径，我自己那句老话还得放上：榜是别人的考场，我项目里好不好用才是我的考场。</p>
+<h2 id="你的语音要对话吗"><a href="#你的语音要对话吗" class="headerlink" title="你的语音要对话吗"></a>你的语音要对话吗</h2><p>回到开头。我为什么想岔了？因为记账场景里，级联管线反而是对的。</p>
+<p>我的语音记账不需要对话。用户说完一句话，要的是一条结构化记录，来回聊反而是打扰。级联加兜底便宜、可控、好调试：规则能吃下八成的单子，大模型只兜剩下的两成，兜不住还有 2 秒超时给我垫底。全双工的「同时」，在这个场景里是白付的能力。</p>
+<p>顺带交代我自己的语音入口。我天天口喷豆包，语音转成文字喂给 Claude Code 干活。看着是语音工作流，其实还是排队：豆包转完，Claude 接住才开干，中间没有「同时」。真给它配上全双工的耳朵和嘴，我的工作流会变成什么样，我自己也还没想清楚。</p>
+<p>做记账功能那阵子我还撞见过一个同路人。有个学生拿小米遥控器给 Mac 当控制器，语音那一步同样不自己做识别，把声音搬给现成的输入法。我当时看完只想到自己那套规则解析，原来绕了半天，聪明人的答案都一样：识别这种又重又成熟的活，别自己造，把搬运和兜底做好就行。这条工程直觉没变，只是全双工出现后，它的适用域被划得更清楚了。</p>
+<p>分界线在这儿。</p>
+<p>要对话、要打断、要边聊边办事的，客服、订座、语音 agent，全双工是正经新选项。一次输入、一个结果、不需要来回的，转写加大模型那条老路还是更省。</p>
+<p>老实交代，GPT-Live-1 我还没接，这篇讲的是公告和多方核实的事实，不是我的实测。厂商基准是发布时的口径，独立的生产实测还没跟上，延迟到底什么体感，得等我真接一段再说。全双工听着美好，打断接得顺不顺、背景噪音扛不扛得住、长时间通话稳不稳，这些只有真跑起来才知道。</p>
+<p>我打算拿它做个小实验：给记账加一个对话版，让它边聊边记，看看嘴价加脑价，算下来比我那条 2 秒超时的土管线贵多少。跑通了单独写一篇跟你对账。</p>
+<p>你手头有没有那种说出来比打字快的场景？你现在是语音转文字再喂给模型，还是已经在琢磨全双工的事了？评论区聊聊，我想看看有多少人的管线跟我一样，还在排队。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/API/" rel="tag"># API</a>
+              <a href="/tags/%E8%AF%AD%E9%9F%B3/" rel="tag"># 语音</a>
+              <a href="/tags/%E5%85%A8%E5%8F%8C%E5%B7%A5/" rel="tag"># 全双工</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/09/11/202609111154/" rel="prev" title="跨平台输的不是性能，是 agent 把写两遍打便宜了">
+                  <i class="fa fa-angle-left"></i> 跨平台输的不是性能，是 agent 把写两遍打便宜了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.7m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">26:01</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

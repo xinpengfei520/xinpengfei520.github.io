@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Shopify 用 6 人团队 12 周把破亿用户的 Shop app 从 React Native 重写为原生，Android 冷启动快一半、崩溃少 10 倍。转折点是 coding agent 把写两遍的成本打到不再是决定性因素。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="跨平台输的不是性能，是 agent 把写两遍打便宜了">
+<meta property="og:url" content="https://www.vance.xin/2026/09/11/202609111154/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Shopify 用 6 人团队 12 周把破亿用户的 Shop app 从 React Native 重写为原生，Android 冷启动快一半、崩溃少 10 倍。转折点是 coding agent 把写两遍的成本打到不再是决定性因素。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260911-20260911-shopify-back-to-native.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20260911-20260911-shopify-back-to-native-helix.webp">
+<meta property="article:published_time" content="2026-09-11T11:54:00.000Z">
+<meta property="article:modified_time" content="2026-09-11T05:36:06.608Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="移动开发">
+<meta property="article:tag" content="Shopify">
+<meta property="article:tag" content="React Native">
+<meta property="article:tag" content="跨平台开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260911-20260911-shopify-back-to-native.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/09/11/202609111154/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/09/11/202609111154/","path":"2026/09/11/202609111154/","title":"跨平台输的不是性能，是 agent 把写两遍打便宜了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>跨平台输的不是性能，是 agent 把写两遍打便宜了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "跨平台输的不是性能，是 agent 把写两遍打便宜了",
+  "url": "https://www.vance.xin/2026/09/11/202609111154/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/09/11/202609111154/",
+  "datePublished": "2026-09-11T11:54:00.000Z",
+  "dateModified": "2026-09-11T05:36:06.608Z",
+  "description": "Shopify 用 6 人团队 12 周把破亿用户的 Shop app 从 React Native 重写为原生，Android 冷启动快一半、崩溃少 10 倍。转折点是 coding agent 把写两遍的成本打到不再是决定性因素。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E4%B8%A4%E9%81%8D%E7%9A%84%E8%B4%A6%E5%8F%98%E4%BA%86"><span class="nav-text">写两遍的账变了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#12-%E5%91%A8%E9%87%8D%E5%86%99%E7%9C%9F%E7%9A%84%E9%A6%99%E5%90%97"><span class="nav-text">12 周重写真的香吗</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E6%B2%A1%E5%86%99%E7%9A%84%E9%82%A3%E4%B8%80%E5%8D%8A"><span class="nav-text">官方没写的那一半</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E4%BD%A0%E8%AF%A5%E8%B7%9F%E7%9D%80%E8%BF%81%E5%90%97"><span class="nav-text">那你该跟着迁吗</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">525</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">893</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/09/11/202609111154/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="跨平台输的不是性能，是 agent 把写两遍打便宜了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Shopify 用 6 人团队 12 周把破亿用户的 Shop app 从 React Native 重写为原生，Android 冷启动快一半、崩溃少 10 倍。转折点是 coding agent 把写两遍的成本打到不再是决定性因素。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          跨平台输的不是性能，是 agent 把写两遍打便宜了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-09-11 11:54:00 / 修改时间：05:36:06" itemprop="dateCreated datePublished" datetime="2026-09-11T11:54:00+00:00">2026-09-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Shopify 用 6 人团队 12 周把破亿用户的 Shop app 从 React Native 重写为原生，Android 冷启动快一半、崩溃少 10 倍。转折点是 coding agent 把写两遍的成本打到不再是决定性因素。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260911-20260911-shopify-back-to-native.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>这几天开发圈被 Shopify 一篇博客刷了屏。这家公司 2020 年把移动 app 全押 React Native。今年 1 月还在说这个框架未来光明、要继续投入。结果 9 月 10 号话锋一转：全部 app 迁回 Swift 和 Kotlin 原生。</p>
+<p>很多人第一反应跟我一样，是不是 RN 翻车了？我把原文从头到尾读了一遍，官方在开头就把这条路堵死了：React Native 没有问题，我们的 RN app 很快。真正变的，是另外一件事。</p>
+<h2 id="写两遍的账变了"><a href="#写两遍的账变了" class="headerlink" title="写两遍的账变了"></a>写两遍的账变了</h2><p>Shopify 当年选跨平台，理由摆出来人人都认。同一个功能不用写两遍，没有移动背景的开发者也能上手，不用天天追着两端功能对齐。这套账在人力时代完全成立，写两遍的成本高到没人愿意付。他们还专门提了一嘴，今年 1 月写那篇五年总结的时候，这个判断依然成立。RN 当时跑得好好的，今天也依然是个好框架。</p>
+<p>变化发生在去年底。他们的原话是，LLM 改掉了 2020 年那个决定背后的一条核心假设。说人话就是，写两遍这件事，不再贵得吓人了。</p>
+<p>他们先做了原型验证，发现 agent 拿着 iOS 版的实现当参考，能把 Android 版写出来，反过来也成立。这话不是嘴上说说，他们拿自家最大的几个 app 试过。工程师在不熟的平台也能干活，因为平台那部分脏活 agent 兜了。但原话里还跟着一句前提：原生专家仍然必不可少。维持两端一致的成本，也被共享的规格、测试和审查节点压了下去。</p>
+<p>有个细节官方自己补了句实在话：原生意味着维护两套代码，这个成本没有消失，只是不再是决定性因素了。</p>
+<p>这句话我盯着看了很久。与其说是认错，不如说是把账重算了一遍。天平两端，共享实现的好处被 agent 削小了，按平台写的好处一点没少。</p>
+<h2 id="12-周重写真的香吗"><a href="#12-周重写真的香吗" class="headerlink" title="12 周重写真的香吗"></a>12 周重写真的香吗</h2><p>光说道理没用，看数字。他们的旗舰 Shop app，服务几亿买家，6 个工程师组成的核心小组，从原型验证到双商店上架，用了 12 周。</p>
+<p>重写还是渐进，他们这次选了重写。行规里重写大 app 是大忌，2020 年迁 RN 时他们走的就是渐进式，因为推倒重来得停发新功能好几年。这次反过来直接推倒，理由是 agent 拿 RN 版当参考写原生很在行，重写还能甩掉历史包袱，原型显示重写速度远超从前。行规是人写的，成本变了，行规就该重估。</p>
+<p>对比实验的结果更扎眼。Android 冷启动从 4433 毫秒降到 2233 毫秒，快了一半。会话稳定性从 99.5% 涨到 99.95%，崩溃少了 10 倍。Android 包体积砍掉 109MB，体积少了三分之一还多。构建时间降了 75%，原来等一杯咖啡，现在等一口。iOS 包体积基本没动，这份红利是 Android 独享的。Pixel 上滚动信息流能跑到 120 帧，官方还补了一句，几乎没做优化。</p>
+<p>有个数字我觉得比成绩单更有意思。他们试过把整个 RN 代码库直接扔给模型，让它一键转原生，结果原文用了个词，slop，垃圾。一次成型跑出来的代码根本没法上线。</p>
+<p>所以他们做了套系统叫 Helix。开发者指定一个页面，Helix 先把工作拆成一串小切片，每片必须过四道关：测试证明行为没变，和运行中的 app 做视觉比对，扛过两个专挑毛病的对抗审查 agent，最后人点头才能提交。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260911-20260911-shopify-back-to-native-helix.webp" alt="流程图"></p>
+<p>方案还有个防抵赖的细节：人工验收通过时，方案内容会被算进一个指纹，方案改一个字，之前的验收立刻作废。审的是哪版，写的就得是哪版。</p>
+<p>还有条铁律值得记：迁移期间双端任何时刻都得功能对齐，以前靠共享代码库保证，现在靠开发流程硬卡。共享代码库散了，纪律不能散。</p>
+<p>再往深一层，他们把业务逻辑跟界面彻底解耦，让 agent 通过命令行直接调业务逻辑，毫秒级迭代，绕开了模拟器那个改代码几秒、验证几分钟的死结。</p>
+<p>所以香不香？香，但不是白捡的香。agent 把活干快了，验收那四道关一道没减。省下来的钱，全花在了确信上。</p>
+<h2 id="官方没写的那一半"><a href="#官方没写的那一半" class="headerlink" title="官方没写的那一半"></a>官方没写的那一半</h2><p>通读全文你会发现，这篇复盘没有一个失败案例。成绩单很漂亮，流程很完整，可翻过车没有，一个字没提。</p>
+<p>翻车史我倒是有，六月份我亲手验过一半这个判断。那会儿我用 agent 把 7600 行的 Java 老项目迁成 Kotlin，一个工作日上线。当时最值钱的反倒是我提前埋的那几道验证门，快只是顺带的好处：删旧代码前先让它交出 19 条黄金输出钉成断言，新版本任何一点行为漂移，测试立马变红。就这一道门，真抓出过编译器和老测试都发现不了的坑。</p>
+<p>那场迁移我还干了两件笨事。105 个依赖一个一个对齐，连被构建工具偷偷抬上去的版本号都锁死。88 个路由导成清单，前后逐字节比对，客户端那头感知不到任何动静才算过关。最后拿真的数据库从头到尾冒烟一遍，又捞出两个藏得很深的 bug。你看，快是 agent 给的，敢上线是我自己一寸一寸验出来的。</p>
+<p>坑也真的多。你要是也放手让 agent 干过活，这些场面应该眼熟。最吓人的一次，agent 把一个叫 isLiability 的字段悄悄并进了别的类。编译过，测试也绿，我把那段 diff 盯了两遍都没看出毛病。最后是流水线里一组专门唱反调的校验 agent 在报错时把它捞了回来。名字凭空消失这种事，靠肉眼是守不住的。</p>
+<p>上周我写 Mistral 那篇，里面官方复盘的原话是，agent 碰到 bug，试几轮修复，然后停摆。那句 attempt a few fixes, and stall，跟我踩过的姿势一模一样。</p>
+<p>把我的翻车史跟第一节那句「原生专家仍然必不可少」摆在一起，两边说的是同一件事：agent 能扛下重复实现，扛不下证明没写错。谁出的活谁自己审，等于没审。Helix 里那两个对抗审查 agent 加一个人工点头，翻译过来就是这个。</p>
+<p>他们没写的失败案例，我猜他们也翻过，只是没写进复盘。我把我的摆在这儿，算替他们补上另一半。</p>
+<h2 id="那你该跟着迁吗"><a href="#那你该跟着迁吗" class="headerlink" title="那你该跟着迁吗"></a>那你该跟着迁吗</h2><p>先别急。Hacker News 评论区里有个人泼了盆很清醒的冷水，他说 agent 能消灭双端开发，消灭不了双端发布。iOS 审核时长最近开始抽奖，同一周里有的 app 卡九天，有的八小时就过。web 技术的 app 还能不等审核直接热更新，线上 bug 一小时内修完，原生做不到。跨平台省的不只是开发那笔账，还有发布节奏这笔账，原文对后者一个字没回应。</p>
+<p>所以我的判断分三种情况。</p>
+<p>体验当门面的 app，性能、平台新能力、动画手感是命根子的，原生的价值回来了。这笔账重新划算。折叠屏 iPhone 一出来，多一端就是多一份活，这类团队尤其如此。</p>
+<p>小团队、还在快速验证方向、依赖热更新快迭代的，跨平台依然成立，别被一篇大厂博客吓得推倒重来。</p>
+<p>夹在中间的，可以看看另一条路。KMP 这套方案，业务逻辑共享一份，界面按平台各画各的。HN 上有句总结我很喜欢，说这算一种 token 优化，agent 不必再用 Swift 把逻辑重写一遍。</p>
+<p>说白了，框架谁赢谁输还没定数，先定下来的是重复劳动这项资产在贬值。我自己是 Android 开发，看到这条新闻的心情挺微妙，我吃饭的这门手艺，正在被重新定价。这种感觉很具体。以前两个平台各养一队人，是行业默认的分工，现在这个默认被拆了，动手拆它的，是我们自己天天在用的那些 agent。</p>
+<p>Shopify 主 app 有 300 多个屏幕，年内上线。Helix 和那套 agent 友好架构，他们说后面会写深文，我会蹲着。等它落地，正好验证一件事：重写大 app 的账，能不能一样漂亮。</p>
+<p>你的 app 是原生还是跨平台的？如果 agent 真能把另一端写到能上线，你迁吗？评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E7%A7%BB%E5%8A%A8%E5%BC%80%E5%8F%91/" rel="tag"># 移动开发</a>
+              <a href="/tags/Shopify/" rel="tag"># Shopify</a>
+              <a href="/tags/React-Native/" rel="tag"># React Native</a>
+              <a href="/tags/%E8%B7%A8%E5%B9%B3%E5%8F%B0%E5%BC%80%E5%8F%91/" rel="tag"># 跨平台开发</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/09/11/202609110905/" rel="prev" title="睡前一句话，35 年的 RSA 纪录没了">
+                  <i class="fa fa-angle-left"></i> 睡前一句话，35 年的 RSA 纪录没了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.7m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">25:57</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

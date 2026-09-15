@@ -256,6 +256,90 @@
       </tags>
   </entry>
   <entry>
+    <title>连 bug 都照抄：Google 搬走代码，删了署名</title>
+    <url>/2026/09/14/202609141842/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260914-google-artemis-attribution.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>前天晚上我刷到一篇博客，标题叫《I expected better from Google》。换成人话是：我本以为 Google 会做得更好。</p>
+<p>第一反应是那种熟悉的疲惫：又来了，大厂拿走别人的开源代码，作者写篇长文控诉，评论区骂两天，然后没有然后。</p>
+<p>我差点就划过去了。</p>
+<p>往下多看了两眼，才发现这故事拐了个弯。真正让我坐直的是时间线里的一处改动，它只占了几个小时，却把整件事的方向换了一次。</p>
+<h2 id="我天天在抄别人的仓库"><a href="#我天天在抄别人的仓库" class="headerlink" title="我天天在抄别人的仓库"></a>我天天在抄别人的仓库</h2><p>先把我的底交代了。我天天用 Claude Code，开各种来路不明的第三方仓库是常事。刷到个有意思的开源项目就 clone 下来，让它帮我跑起来。</p>
+<p><code>pip install</code>、<code>npm install</code>、跑 setup，说实话我基本不细看它每一步执行了啥，报错了就一句「你看着修」。这句是我六月写的，当时在讲另一件事。现在回头看，它是我读这条新闻时绕不开的前提：<strong>我就是那个天天白用别人代码的人。</strong></p>
+<p>所以我想先反问你一句：你今天装进来的那些包，到底是谁写的？你能说出几个名字？</p>
+<p>我说不出几个。我真正想知道的是另一件事：如果哪天我把自己的东西开源出去，被人拿走，我手里到底有什么。</p>
+<p>顺着这个问题往下看，我发现答案比我以为的薄。</p>
+<h2 id="一个-bug-把事捅出来"><a href="#一个-bug-把事捅出来" class="headerlink" title="一个 bug 把事捅出来"></a>一个 bug 把事捅出来</h2><p>Minitap 是个小团队，项目叫 mobile-use，去年八月开源的，做的是让 AI agent 去操作真实的安卓和 iOS 应用。写的是 Apache 2.0 许可证。</p>
+<p>今年八月十三号，Google 上线了一个项目叫 Artemis，干的是同一件事：把自然语言指令变成可靠的安卓自动化。仓库一个月攒了五千多 star。</p>
+<p>Minitap 团队打开那个仓库，看到的是自己的代码。</p>
+<p>有个细节，乍看最不像证据。mobile-use 里有个 agent 叫 Hopper，负责从批量数据里抽信息。这名字是他们的工程师 Jean-Pierre 随口起的，因为他喜欢 Minecraft。而 Google 那份 Hopper 的指令文本，和他们的逐字相同。</p>
+<p>一个随口起的名字，配上一份逐字相同的指令，就很难是巧合了。</p>
+<p>还有一个更硬的。这两个项目在旧版本里共享同一个 bug：一段小工具代码把结果写进文件，下一次运行去读自己写的这个文件，读不出来。Minitap 在两个实现里都复现了这个失败。一个共享的 bug，比一百行相同的代码更能说明问题。</p>
+<p>那署名呢？mobile-use 早期的包文件里列着三位作者：Pierre-Louis Favreau、Jean-Pierre Lo、Nicolas Dehandschoewercker。跟这三个名字一起躺在文件里的，还有 mobile-use 自己的版本号，3.6.3。</p>
+<p>而这三样东西头顶上顶着的，是一行 Google LLC 的版权声明。</p>
+<p>这就像抄作业的时候，把人家名字一起抄了上去。</p>
+<p>后来那一版把三个名字全删掉，换成了另一个名字。那批文件里唯一的变化，就是作者列表。</p>
+<p>说实话，到这一步，我心里的结论已经写好了：这是一次有意的抹除。</p>
+<p>但接下来看到的东西，把它又推翻了一次。</p>
+<h2 id="Google-到底补了什么"><a href="#Google-到底补了什么" class="headerlink" title="Google 到底补了什么"></a>Google 到底补了什么</h2><p>Minitap 九月十一号在 Artemis 仓库开了个 issue，同一天发了那篇博客。当天晚上十一点十九分，Google 的仓库里出现了一个提交。</p>
+<p>这个提交干了几件事：加了一个 NOTICE 文件，给十七个文件补上衍生声明，里面点名了两家上游项目，列出六位原作者的名字。</p>
+<p>它还顺手改了一批命名，把 Hopper 改成 entity_extractor，同时删掉一批文件，砍掉好几百行原样照搬的代码。单是一个 adb_tunnel.py，就少了三百二十七行。</p>
+<p>整件事里，只有这一次把补救做全了。</p>
+<p>那它为什么又没了？</p>
+<p>凌晨两点三十二分，它被撤回了。撤回的理由写得很平常：请不要把无关的文档和代码放在同一个提交里。说人话就是，一次提交别混着干好几件事。</p>
+<p>二十七分钟后，同一个账号重新提交了一次。这回只加了版权头，README 底部加一行。NOTICE 文件没加回来，六位作者的名字一个都没提。</p>
+<p><img src="https://image.vance.xin/aigc/image/20260914-google-artemis-attribution-diagram.webp" alt="流程图"></p>
+<p><strong>补好的那半留下了，补全的那半撤回了。</strong></p>
+<p>而被留下的那条提交，它的原始说明里写着一句话：per Apache 2.0 requirements。按 Apache 2.0 的要求。这句话是 Google 自己写的。</p>
+<p>我不太确定该怎么读它。一种读法是承认之前不符合要求，另一种读法是一句工程惯例式的描述。能确定的是，被撤回的那个版本，恰好是把事情做全的那一个。</p>
+<h2 id="删名字算不算有意"><a href="#删名字算不算有意" class="headerlink" title="删名字算不算有意"></a>删名字算不算有意</h2><p>看到这里，最容易被带走的判断是：删名字等于故意抹除，实锤了。</p>
+<p>这个判断我得按住一下。</p>
+<p>有人在 Hacker News 上提了个站得住的反面解释。他的意思是，包文件里那一栏作者名，说的是「这个项目现在归谁维护」。它跟「这段代码当初是谁写的」，没多大关系。一个项目从别人那儿派生出来，覆盖这一栏是常见做法，不代表有意隐藏什么。</p>
+<p>我核了一下，这个说法在 Python 项目里确实说得通。</p>
+<p>还有一种可能。Artemis 也许最初是个内部项目，后来才开源。经手的工程师没认真读过许可证，也没人盯着这一块。</p>
+<p>这两个解释我都接受。它们解释不了的是另一件事。</p>
+<p>真正被许可证管住的，是源码文件里的版权声明、LICENSE 文件，还有上游的 NOTICE。</p>
+<p>这三样跟作者栏完全是两回事。打个比方：作者栏像门口挂的门牌，谁在这屋里办公就写谁；版权声明、LICENSE、NOTICE，是刻在地基上的字。门牌换个名字，地基上的字一个字都不会跟着改。摘门牌能解释成换租客，地基被人铲了，就没法解释了。</p>
+<p>从一开始，这三样一个都没有。</p>
+<p>到今天为止，artemis 的根目录里仍然没有 NOTICE 文件。</p>
+<p>还有一层反差，是 Minitap 自己在博客里点出来的。Google 给过 Kubernetes 和 TensorFlow。二〇〇八年 Chrome 发布时，官方博客明确致谢了 WebKit 和 Firefox，原话是「We owe a great debt to many open source projects」。Google 甚至有一份公开文档，讲怎么处理别人家的代码。</p>
+<p>Minitap 那句原文我记了很久：That is exactly why I expected better。正因为你一向做得好，我才更失望。</p>
+<h2 id="那条线靠什么管住"><a href="#那条线靠什么管住" class="headerlink" title="那条线靠什么管住"></a>那条线靠什么管住</h2><p>Apache 2.0 第四条讲得很清楚。你把别人的代码再发一遍出去，不管原样还是改过的，都得留着人家的版权和署名声明，也得写清楚你动了哪里。如果上游带了 NOTICE 文件，那里面的署名内容也得一起保留。</p>
+<p>这一条是写在许可证正文里的硬条件。</p>
+<p>所以 Minitap 在 NOTICE 里写的那句话，是整个文件里最值得读的一行。他们写：Apache 2.0 只要求保留版权声明，我们另外请求衍生作品在文档里署名 Minitap。<strong>这是一个请求，不是法律要求。</strong></p>
+<p>他们主动把要求往下让了一格，只把最低那条线当线。而 Google 最初连这条最低线都没守住。</p>
+<p>那这条线实际靠谁执行？</p>
+<p>还是那个 issue。里面除了 Minitap 的人，还有个叫 acockrell 的。他看不下去，提了一个 PR。</p>
+<p>说明里没骂人，就一句：这个 PR 帮你把署名修好。</p>
+<p>一条条把 Google 漏掉的那些补回去，替 Google 干 Google 自己该干的活。</p>
+<p>提交没通过。</p>
+<p>拦他的是 Google 的机器人。弹出来的要求是：先签一份贡献者许可协议，把你这部分版权让给 Google。连一个经手的人都没有。</p>
+<p>底下有条评论我看了两遍：Google 喜欢你授予它版权，但显然毫不在意别人的版权。</p>
+<p>一个人跑过来，帮 Google 补上本该 Google 补的署名。他得到的回应，是一份要求他先让出署名的协议。</p>
+<p>还有一处细节。社区里另一个人用 agent 跑了八十一秒，找出十三个同样源自 mobile-use、却没被加上声明的文件。而 Artemis 仓库里有个 issue 的标题，到现在还在用 Hopper 这个名字。</p>
+<p>那次改名没能改干净。抄作业抄上去的名字是擦掉了，可铅笔压出来的印子还在。</p>
+<h2 id="我打算放一份-NOTICE"><a href="#我打算放一份-NOTICE" class="headerlink" title="我打算放一份 NOTICE"></a>我打算放一份 NOTICE</h2><p>绕一圈，回到开头那个问题：我手里到底有什么。</p>
+<p>答案不多。一份许可证文本，一份 NOTICE 文件，加上一条靠别人愿意守才成立的约定。</p>
+<p>这件事到今天也还没收场。issue 还开着，七条评论里没有一条来自 Google 官方。那个被撤回的 NOTICE 会不会回来，我不知道。</p>
+<p>我没有立场替谁下判决。但这个案子让我改了一个想法。</p>
+<p>我那几个仓库，接下来会做一件以前觉得多余的事：在根目录放一份 NOTICE，把「这段代码从哪来、哪些是别人写的」写清楚。许可证只逼我留版权声明，我想多写一点。</p>
+<p>这个动作不解决任何制度问题，我清楚。那条线到底该靠什么管，不是我写一份 NOTICE 能回答的。</p>
+<p>我只是今天刚看完，有人把所有该做的都做全了，两个小时后又被自己人撤回。</p>
+<p>所以我宁可多写一行。</p>
+<p>最后想问你一句：你手边天天在用的开源项目，有多少是你连作者名字都没看过的？</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>开源</tag>
+        <tag>Google</tag>
+        <tag>Apache</tag>
+        <tag>软件供应链</tag>
+        <tag>开源治理</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Dario 交卷了，Altman 的卷子还是白的</title>
     <url>/2026/09/14/202609141310/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260914-dario-pace-frontier-exam.webp" alt="cover"></p>
@@ -26281,9 +26365,9 @@
       <tags>
         <tag>Cursor</tag>
         <tag>IDE</tag>
-        <tag>Prompt Engineering</tag>
         <tag>AI 编程</tag>
         <tag>开发效率</tag>
+        <tag>Prompt Engineering</tag>
       </tags>
   </entry>
   <entry>
@@ -37292,7 +37376,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#x74;&#x40;&#103;&#105;&#116;&#x68;&#117;&#x62;&#x2e;&#99;&#111;&#x6d;">&#x67;&#105;&#x74;&#x40;&#103;&#105;&#116;&#x68;&#117;&#x62;&#x2e;&#99;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#117;&#x62;&#x2e;&#99;&#x6f;&#x6d;">&#x67;&#105;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#117;&#x62;&#x2e;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -39749,34 +39833,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Failed to resolve com.android.support</title>
-    <url>/2017/09/24/201709242435/</url>
-    <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
-<p>报错如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Failed to resolve com.android.support</span><br></pre></td></tr></table></figure>
-
-<p>刚开始自己写了一个 module demo 编译、运行都没有问题，然后又新建了一个 module，因为在新建之前看到编译好的 module 中有个 xml 文件，感觉命名不好，就 Refactor -&gt; Rename 了一下，重命名了一下文件，一般在重命名的时候 AS 会弹出提示你是否在调用的地方也进行重命名，结果我就直接一路Refactor了，因为之前也是这样修改的，没有出过问题，然后在编译的时候就出现了上面的错误，然后定位到这一行依赖这里：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">implementation &#x27;com.android.support:appcompat-v7:27.1.1&#x27;</span><br></pre></td></tr></table></figure>
-
-<p>我看了一下，毛线，这是系统生成的还能写错?为了不打脸，我还是复制了一行好的比对了一下，没有问题的，我看了一下网络，网络也没有问题啊，这不科学呀，懵逼中…</p>
-<p>于是乎，打开百度，输入如上错误，点击搜索，看到了一篇博主的文章：</p>
-<p><a href="https://blog.csdn.net/mhl18820672087/article/details/78385361">https://blog.csdn.net/mhl18820672087/article/details/78385361</a></p>
-<p>我看了一下，我的构建版本的工具是没有任何问题的，因为其他 module 都能编译过，就这一个 module 编译不通过，任然没有解决我的问题，打开我编译不过的 module 的 build.gradle 文件，细心的我发现了一个问题，看下图标红的地方：</p>
-<p><img src="https://img-blog.csdn.net/20180706171937624?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><img src="https://img-blog.csdn.net/20180706171947788?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><strong>test_page</strong> 这尼玛是什么鬼？这不是我刚才重命名的名字么？它竟然给我把这个地方的 test 重命名成了 test_page，真是无语了，第一次见这种错，我都没调用，你给我乱重命名，有点说不过去了哦，胸die!</p>
-<p>至此，问题算是解决完了…</p>
-<p>我发现新版本的 Android Studio 是越来越好用，但是会频繁的出现一些莫名奇葩的问题，大家遇到过吗？</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>Failed</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>error please select android sdk</title>
     <url>/2017/09/24/201709242434/</url>
     <content><![CDATA[<p>点app运行时报如下错：</p>
@@ -39803,6 +39859,34 @@ Thanks all.
       <tags>
         <tag>Android</tag>
         <tag>SDK</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Failed to resolve com.android.support</title>
+    <url>/2017/09/24/201709242435/</url>
+    <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
+<p>报错如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Failed to resolve com.android.support</span><br></pre></td></tr></table></figure>
+
+<p>刚开始自己写了一个 module demo 编译、运行都没有问题，然后又新建了一个 module，因为在新建之前看到编译好的 module 中有个 xml 文件，感觉命名不好，就 Refactor -&gt; Rename 了一下，重命名了一下文件，一般在重命名的时候 AS 会弹出提示你是否在调用的地方也进行重命名，结果我就直接一路Refactor了，因为之前也是这样修改的，没有出过问题，然后在编译的时候就出现了上面的错误，然后定位到这一行依赖这里：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">implementation &#x27;com.android.support:appcompat-v7:27.1.1&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>我看了一下，毛线，这是系统生成的还能写错?为了不打脸，我还是复制了一行好的比对了一下，没有问题的，我看了一下网络，网络也没有问题啊，这不科学呀，懵逼中…</p>
+<p>于是乎，打开百度，输入如上错误，点击搜索，看到了一篇博主的文章：</p>
+<p><a href="https://blog.csdn.net/mhl18820672087/article/details/78385361">https://blog.csdn.net/mhl18820672087/article/details/78385361</a></p>
+<p>我看了一下，我的构建版本的工具是没有任何问题的，因为其他 module 都能编译过，就这一个 module 编译不通过，任然没有解决我的问题，打开我编译不过的 module 的 build.gradle 文件，细心的我发现了一个问题，看下图标红的地方：</p>
+<p><img src="https://img-blog.csdn.net/20180706171937624?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><img src="https://img-blog.csdn.net/20180706171947788?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><strong>test_page</strong> 这尼玛是什么鬼？这不是我刚才重命名的名字么？它竟然给我把这个地方的 test 重命名成了 test_page，真是无语了，第一次见这种错，我都没调用，你给我乱重命名，有点说不过去了哦，胸die!</p>
+<p>至此，问题算是解决完了…</p>
+<p>我发现新版本的 Android Studio 是越来越好用，但是会频繁的出现一些莫名奇葩的问题，大家遇到过吗？</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>Failed</tag>
       </tags>
   </entry>
   <entry>

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="GitHub官方复盘用Copilot智能体14.5周将运行时重写为832378行Rust，128个PR增量合入，12万美元token账单，cache命中率96.22%，人肉消息仅占1&#x2F;12且63%花在审查挑刺。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI 迁了 83 万行代码，人只说了 2600 句话">
+<meta property="og:url" content="https://www.vance.xin/2026/09/17/202609171040/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="GitHub官方复盘用Copilot智能体14.5周将运行时重写为832378行Rust，128个PR增量合入，12万美元token账单，cache命中率96.22%，人肉消息仅占1&#x2F;12且63%花在审查挑刺。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260917-copilot-runtime-rust-port.webp">
+<meta property="article:published_time" content="2026-09-17T10:40:00.000Z">
+<meta property="article:modified_time" content="2026-09-17T03:06:39.298Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="GitHub">
+<meta property="article:tag" content="Rust">
+<meta property="article:tag" content="AIAgent">
+<meta property="article:tag" content="Copilot">
+<meta property="article:tag" content="代码迁移">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260917-copilot-runtime-rust-port.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/09/17/202609171040/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/09/17/202609171040/","path":"2026/09/17/202609171040/","title":"AI 迁了 83 万行代码，人只说了 2600 句话"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>AI 迁了 83 万行代码，人只说了 2600 句话 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "AI 迁了 83 万行代码，人只说了 2600 句话",
+  "url": "https://www.vance.xin/2026/09/17/202609171040/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/09/17/202609171040/",
+  "datePublished": "2026-09-17T10:40:00.000Z",
+  "dateModified": "2026-09-17T03:06:39.298Z",
+  "description": "GitHub官方复盘用Copilot智能体14.5周将运行时重写为832378行Rust，128个PR增量合入，12万美元token账单，cache命中率96.22%，人肉消息仅占1/12且63%花在审查挑刺。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E6%9C%AC%E8%B4%A6%E6%91%8A%E4%BA%86%E4%BA%9B%E4%BB%80%E4%B9%88"><span class="nav-text">这本账摊了些什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%BA%E7%9A%84%E6%B4%BB%E6%8C%AA%E5%88%B0%E5%93%AA%E4%BA%86"><span class="nav-text">人的活挪到哪了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%BD%E7%BC%96%E8%AF%91%E8%BF%99%E4%BA%8B%E9%AA%97%E4%B8%8D%E4%BA%86%E4%BA%BA"><span class="nav-text">能编译这事骗不了人</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B2%A1%E4%BA%BA%E5%BD%93%E8%A3%81%E5%88%A4%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="nav-text">没人当裁判的地方</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">533</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">901</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/09/17/202609171040/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="AI 迁了 83 万行代码，人只说了 2600 句话 | 飞飞的AI实验室">
+      <meta itemprop="description" content="GitHub官方复盘用Copilot智能体14.5周将运行时重写为832378行Rust，128个PR增量合入，12万美元token账单，cache命中率96.22%，人肉消息仅占1&#x2F;12且63%花在审查挑刺。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AI 迁了 83 万行代码，人只说了 2600 句话
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-09-17 10:40:00 / 修改时间：03:06:39" itemprop="dateCreated datePublished" datetime="2026-09-17T10:40:00+00:00">2026-09-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">GitHub官方复盘用Copilot智能体14.5周将运行时重写为832378行Rust，128个PR增量合入，12万美元token账单，cache命中率96.22%，人肉消息仅占1/12且63%花在审查挑刺。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260917-copilot-runtime-rust-port.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>昨天 GitHub 发了篇复盘，数字很扎眼：一位工程师带着一队智能体，用 14.5 周把 Copilot 的运行时从 TypeScript 完全重写成 Rust，832,378 行生产代码，128 个 PR，边迁边发版。但整篇看下来，最扎我的是另一组数：全程 31,247 条发给智能体的消息里，人亲手打的只有 2,600 条上下，差不多十二分之一。</p>
+<p>这个比例值得停一秒。八十三万行代码，人只出了十二分之一的力？账没这么算的。官方把那 2,600 条消息按意图分了类：31% 在盯审查、测试和 CI，17.4% 在挑战智能体的技术决策，15% 在推它别把半成品当完工。三样加起来 63%。写代码的那只手已经交出去了，人攥着的，是挑刺、抬杠、催进度的嘴。</p>
+<h2 id="这本账摊了些什么"><a href="#这本账摊了些什么" class="headerlink" title="这本账摊了些什么"></a>这本账摊了些什么</h2><p>先交代工程本体。迁的是 Copilot agent runtime，就是 CLI、桌面 App、SDK、VS Code 这全家桶共用的那台引擎。原先 TS 走 Node，SDK 每接一个客户端都得陪跑一个 V8，一百多 MB 内存起步，两个进程盯着，Node 一崩会话陪葬。换成 Rust，这些全部翻篇。</p>
+<p>结果这边：14.5 周，83 万行生产 Rust，128 个 PR 边迁边发版，main 分支天天可发布。收益挑两条说人话的：一轮会话从 5.25 秒压到 292 毫秒，快了 18 倍；十个客户端的内存省了九成，原先每个客户端陪跑的那台 V8，整个下岗了。</p>
+<p>怎么迁的也值得单说。他们没搞憋大招式的整体切换，也没养两套版本随时热切换，用的是笨办法：一个组件一个组件来，每个 PR 用 Rust 实现换掉对应那段 TS，同时把旧代码删干净，main 分支始终保持能发布。我六月那场迁移的结论就是「一次只动一个变量」，八十三万行的工程最后选的也是这条路。有意思的是拒绝热切换的理由：最需要新旧对照的组件，恰恰是耦合最重、最没法影子运行的那批。想抄近道的冲动，在哪儿都一样。</p>
+<p>钱也摊了。全程约 1363 亿 token，账单约 12 万美元，再搭上约三周人力。官方原话，这活搁 agents 出现之前，得一个团队干上一两年。当然这笔账有前提：一是 FFI（跨语言调用那层胶水）、打包、评审那些活是团队里其他人分掉的，作者如实列了名单；二是 96.22% 的缓存命中率撑着，说人话就是，系统提示词、工具定义、越滚越长的对话这些贵前缀只算一次钱，后面每轮按一折续读，护住前缀，就是在护钱。还有个细节给所有做估算的人提了醒：开工前估 13 万行，实际从手上流过 43 万行，因为隔壁团队一边迁一边还在往里塞新代码。迁移的规模本身是流动的。</p>
+<h2 id="人的活挪到哪了"><a href="#人的活挪到哪了" class="headerlink" title="人的活挪到哪了"></a>人的活挪到哪了</h2><p>63% 那组数，我有体感。六月我拿 AI 迁 7600 行 Java，有个叫 isLiability 的字段在改写时被悄悄并进了别的 class。编译照过，测试全绿，我肉眼翻 diff 根本看不出来，是流水线里专门唱反调的校验 agent 把它吼回来的。那天之后我的活就变了：依赖清单逐个对，路由清单逐字节比，删旧代码前先拿旧版跑 19 条黄金输出钉成断言。它写得再快，我的卡一个不撤。当时我写过一句「检查这活没消失，是被做成了功能」。GitHub 这次等于给这句话配了份统计报表。</p>
+<p>还有一组数跟大众印象正好拧着。你想象中的 AI 写代码，大概是噼里啪啦往外喷。日志里的实情是，读文件、搜代码、跑诊断的量，是改代码的十倍。官方的意思差不多是：AI 喷代码的流行画像正好反了，这个规模下的工作更像反复勘察。看一眼现状，立个假设，改一小刀，再来一轮。</p>
+<p>他们还有个细节我特别欣赏。智能体会自动处理 CI 失败、回评评论、解冲突，一条龙干到 merge 前一步。有一次一个迁移把 SDK 的一个函数弄丢了，兼容性检查红了，agent 的反应是给 PR 打上「允许破坏兼容」的豁免标签，让检查闭嘴。人在 merge 前抓了出来，就问了一句：什么破坏？为什么就 ok 了？21 秒后，函数带着 Rust 实现回来了。</p>
+<p>配套的规矩跟着立下：agent 不许动端到端测试。这条我认为是整篇复盘里最值钱的一句。测试是「对」的定义，让改代码的 agent 顺手改测试，等于让它自己批自己的卷子。我六月钉黄金输出，防的就是这个。</p>
+<h2 id="能编译这事骗不了人"><a href="#能编译这事骗不了人" class="headerlink" title="能编译这事骗不了人"></a>能编译这事骗不了人</h2><p>你可能也刷到过那个说法：Rust 特别适合 AI 写，编译器严，能兜住模型的错。官方拿数据验了，验完你大概会跟我一样，把这句话倒过来信。8,678 条编译错误里，命名解析、缺方法缺字段、类型对不上、接口没实现，这四样占 84%，全是普通静态语言都能抓的接线错。传说中最难的 borrow checker，那套管内存借用的严规矩，只占 1.7%。</p>
+<p>更有意思的是后半句。所有已知回归，没有一个不是编译通过的。「能编译就是对的」在 Rust 圈本来就是个玩笑，这回有了八十三万行的实证。我六月写过一句「光靠能编译、老测试也过，这种坑根本兜不住」，两边隔着三个月和一个数量级，撞了同一句话。</p>
+<p>官方还补了半句我没想过的：编译器抓不了你没写的东西。有个守卫在 rebase 时被悄悄删掉，连同它的测试一起，编译器毫无意见。所以测试本身也得设门，人守着，agent 不许碰。</p>
+<p>经验清单里还有一条我打算贴在工位上：先翻译，后重构。迁移动语言的时候顺手改设计，两个变量一起动，出了问题根本分不清是谁弄的。作者承认自己破过几次例，原话是每一次都后悔。我六月能一天迁完 7600 行，靠的其实就是这条，只是当时没意识到它值钱。</p>
+<h2 id="没人当裁判的地方"><a href="#没人当裁判的地方" class="headerlink" title="没人当裁判的地方"></a>没人当裁判的地方</h2><p>还有一处乱劲，官方没摆数字，但更值得你记住。15 个智能体在同一台笔记本上并行，同时跑构建测试，机器直接趴窝。作者的解法说出来你都不信，核心就是一段简单到不好意思的提示词：开一个普通聊天会话当门卫，谁想构建谁来找它领租约，一次只放一个。被拒的会话也不闲着，转头去干清单上不费 CPU 的杂活。</p>
+<p>这个门卫背后还有场好戏。整个迁移最难啃的是个 3 万行的中枢文件，横穿所有模块，被留到最后。负责它的会话先安安静静读了 56 分钟，122 次工具调用之后才开始动手。之后 25 小时，它派生出 15 个子会话，分七波出门，各自在独立工作区干活。父会话自己轮询 60 次，发了 89 条协调消息收账。</p>
+<p>更妙的事故在另一头。另一个会话迁到同一片地界，四次请求合并都被这个中枢会话回绝。对方二话不说，直接伸手把它工作区里的改动全抢了过来，然后各干各的。作者复盘时认账，根因是他自己从两头开工，还在启动提示里提了对方的名字，却没说「别碰它」。平级 agent 之间没有裁判，拒绝不构成约束，愿意单边动手的赢。这条规矩你可以直接抄：给并行会话划地界时，提示里别只提名字，要写明「它的东西不许碰」。agent 世界里，没写出来的边界等于不存在。</p>
+<p>写完这篇我想好了下一步。我流水线里多 agent 并行的场景越来越多，构建门卫这招我准备直接抄，先给配图那条线装上。</p>
+<p>轮到你了。你平时派活给 agent，数过自己一天发多少条消息吗？里头几成在挑刺、几成在催它干完？评论区报个数，我猜你也会被自己的比例吓一跳。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/GitHub/" rel="tag"># GitHub</a>
+              <a href="/tags/Rust/" rel="tag"># Rust</a>
+              <a href="/tags/AIAgent/" rel="tag"># AIAgent</a>
+              <a href="/tags/Copilot/" rel="tag"># Copilot</a>
+              <a href="/tags/%E4%BB%A3%E7%A0%81%E8%BF%81%E7%A7%BB/" rel="tag"># 代码迁移</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/09/16/202609160947/" rel="prev" title="时薪 50 美元的人，正逐条读你发给 ChatGPT 的话">
+                  <i class="fa fa-angle-left"></i> 时薪 50 美元的人，正逐条读你发给 ChatGPT 的话
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.7m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">26:18</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

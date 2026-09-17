@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Anthropic 自报每季度代码量是过去的8倍、CI 任务半年涨25倍，这笔开销不在任何 AI 账单里。补丁的寿命从70天掉到不到1天，重写后的架构反而更贵。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="代码多写八倍，你的 CI 半年涨 25 倍">
+<meta property="og:url" content="https://www.vance.xin/2026/09/15/202609151415/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Anthropic 自报每季度代码量是过去的8倍、CI 任务半年涨25倍，这笔开销不在任何 AI 账单里。补丁的寿命从70天掉到不到1天，重写后的架构反而更贵。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20260915-202609151415.webp">
+<meta property="article:published_time" content="2026-09-15T14:15:00.000Z">
+<meta property="article:modified_time" content="2026-09-17T03:06:39.298Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="成本">
+<meta property="article:tag" content="开发者">
+<meta property="article:tag" content="CI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20260915-202609151415.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/09/15/202609151415/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/09/15/202609151415/","path":"2026/09/15/202609151415/","title":"代码多写八倍，你的 CI 半年涨 25 倍"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>代码多写八倍，你的 CI 半年涨 25 倍 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "代码多写八倍，你的 CI 半年涨 25 倍",
+  "url": "https://www.vance.xin/2026/09/15/202609151415/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/09/15/202609151415/",
+  "datePublished": "2026-09-15T14:15:00.000Z",
+  "dateModified": "2026-09-17T03:06:39.298Z",
+  "description": "Anthropic 自报每季度代码量是过去的8倍、CI 任务半年涨25倍，这笔开销不在任何 AI 账单里。补丁的寿命从70天掉到不到1天，重写后的架构反而更贵。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E8%B4%A6%E4%B8%8D%E5%9C%A8-token-%E4%B8%8A"><span class="nav-text">这账不在 token 上</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%8A%E5%B9%B4%E6%B6%A8%E4%BA%86%E4%BA%8C%E5%8D%81%E4%BA%94%E5%80%8D"><span class="nav-text">半年涨了二十五倍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%A5%E4%B8%81%E7%9A%84%E5%AF%BF%E5%91%BD%E5%9C%A8%E5%8F%98%E7%9F%AD"><span class="nav-text">补丁的寿命在变短</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E5%81%9A%E5%AE%8C%EF%BC%8C%E8%B4%A6%E5%8F%8D%E8%80%8C%E6%9B%B4%E8%B4%B5"><span class="nav-text">重做完，账反而更贵</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E4%B8%80%E7%9B%B4%E5%9C%A8%E5%82%AC%EF%BC%8C%E4%BA%BA%E4%B8%80%E7%9B%B4%E5%9C%A8%E6%92%91"><span class="nav-text">它一直在催，人一直在撑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A4%E4%BB%98%E7%9C%9F%E7%9A%84%E5%8F%98%E5%BF%AB%E4%BA%86%E5%90%97"><span class="nav-text">交付真的变快了吗</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%B9%9F%E6%9C%89%E7%AC%94%E8%B4%A6%E6%B2%A1%E6%95%B0%E8%BF%87"><span class="nav-text">我也有笔账没数过</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%89%93%E7%AE%97%E6%80%8E%E4%B9%88%E5%BC%80%E5%A7%8B"><span class="nav-text">我打算怎么开始</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">533</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">901</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/09/15/202609151415/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="代码多写八倍，你的 CI 半年涨 25 倍 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Anthropic 自报每季度代码量是过去的8倍、CI 任务半年涨25倍，这笔开销不在任何 AI 账单里。补丁的寿命从70天掉到不到1天，重写后的架构反而更贵。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          代码多写八倍，你的 CI 半年涨 25 倍
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-09-15 14:15:00" itemprop="dateCreated datePublished" datetime="2026-09-15T14:15:00+00:00">2026-09-15</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-09-17 03:06:39" itemprop="dateModified" datetime="2026-09-17T03:06:39+00:00">2026-09-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Anthropic 自报每季度代码量是过去的8倍、CI 任务半年涨25倍，这笔开销不在任何 AI 账单里。补丁的寿命从70天掉到不到1天，重写后的架构反而更贵。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20260915-202609151415.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>先问你件事：你每个月为 AI 花的钱，能报出几个数？</p>
+<p>我猜大多数人只报得出一个，模型账单。上个月我也是这么想的。那阵子我写了篇 Uber 怎么把 AI 的账拆成六项相乘，一项一项往下压，写完还挺得意，觉得自己这笔账总算算明白了。Uber 那套拆法是：用户数、每人会话数、每会话轮次、每轮请求数、每请求 token 数、每 token 单价。能下手的就中间三项，说的都是同一件事，agent 为了帮你干活，自己多烧掉的那些。</p>
+<p>我当时以为成本是省出来的，Uber 告诉我它是压出来的。</p>
+<p>可这个月刷到一条东西，我才发现我盯的那本账，只是其中一本。</p>
+<h2 id="这账不在-token-上"><a href="#这账不在-token-上" class="headerlink" title="这账不在 token 上"></a>这账不在 token 上</h2><p>这个月我刷到一篇 Anthropic 的官方博客，作者是他们的工程师 Sachin Malhotra，标题翻过来是《agentic coding 正在给 CI 施加压力》。</p>
+<p>CI 这东西，说人话就是每次你改完代码，自动帮你跑一遍测试、检查有没有把别处弄坏的那套流水线。它跑在服务器上，你平时看不见它。</p>
+<p>Anthropic 说的是，他们真正被撑爆的不是模型账单，是这套东西。</p>
+<p>Uber 那六项乘数里，一项都不包含它。</p>
+<p>AI 省下的时间不会凭空消失，它只是把账单挪了个地方记。像你把客厅的电费省下来，回头发现车库里多了台一直开着的冰柜。不打开那扇门，你永远不知道它在转。</p>
+<h2 id="半年涨了二十五倍"><a href="#半年涨了二十五倍" class="headerlink" title="半年涨了二十五倍"></a>半年涨了二十五倍</h2><p>先把数摆出来。这些全是 Anthropic 自己报的，没有第三方审计，当参考不当铁证。</p>
+<p>他们每季度交付的代码量，是 2021 到 2025 那几年的八倍。其中八成由 Claude 写。代码库里的测试数量涨了十倍，工程师呢，基本没多招人。这几件事凑一起，六个月内 CI 任务涨了二十五倍。</p>
+<p>但这个二十五倍，容易读歪。</p>
+<p>它不能直接翻译成「AI 让 CI 涨了二十五倍」。测试数自己就涨了十倍，人也得算一份。AI 带来的变化是它提交的改动切得更碎、也更多。作者还特意补了一句：并不是每个测试都在每一次改动上跑。</p>
+<p>那他们靠什么撑？靠一套叫测试影响分析的机制。它的办法很朴素：只跑这次改动真正碰到的那几个测试。</p>
+<p>这套东西的死穴也在这儿。它得一直读历史，而历史得一直保鲜。落后一步，它的判断就开始失真。</p>
+<h2 id="补丁的寿命在变短"><a href="#补丁的寿命在变短" class="headerlink" title="补丁的寿命在变短"></a>补丁的寿命在变短</h2><p>全文最刺我的是这一段。</p>
+<p>那套服务顶不住，他们打了三次补丁。每一次都知道是权宜之计。</p>
+<p>第一次是十月，加机器，把核数翻倍，撑了七十天。第二次是二月，改成按模块分片，撑了二十九天。第三次是三月，每天重启一次进程，撑了不到一天。</p>
+<p>七十天，二十九天，一天。像止痛药，第一片管得久，后面越吃越短。</p>
+<p>他们也不是没试别的。查内存问题只翻出四个 bug，换内存分配器没用，又不敢在重负载下做内存剖析。最后只能每天重启。</p>
+<p>而每日重启带来一个新麻烦：服务会慢慢落后。落后超过一个小时的时候，大量测试结果根本没被记下来。于是决定跑哪些测试的那个部件，是在用过期数据做判断。</p>
+<p>作者澄清得很老实。这不代表 CI 没跑，也不代表没测过的代码上了生产。真实后果是他们在跑那些本来就时好时坏、或者本来就大面积失败的测试。测试假红这东西，费的钱跟真红差不多。</p>
+<h2 id="重做完，账反而更贵"><a href="#重做完，账反而更贵" class="headerlink" title="重做完，账反而更贵"></a>重做完，账反而更贵</h2><p>最后他们还是重写了。他们把结果从那个进程的内存里搬进了一个独立的内存数据库，然后就能一台一台往上加机器了。</p>
+<p>我喜欢这篇的一个地方，是它没把重写写成一劳永逸。原文直说，这个新架构跑起来更贵。</p>
+<p>他们没把成本压下去。做的是把一笔压不住的成本，换成了一笔更贵、但看得住也扩得动的成本。</p>
+<p>还有个数字值得单独看。这个重写项目，一个工程师三周做完。一年前，同样的活要接近一个季度。</p>
+<p>两件事一起看就有意思了。打补丁买到的时间在缩水，重做的成本也在缩水。作者给的结论是，既然如此，不如一开始就把架构按十倍二十倍的规模去设计，别怕过度设计。他还说了一句，「过度工程这个概念正在开始淡出」。</p>
+<h2 id="它一直在催，人一直在撑"><a href="#它一直在催，人一直在撑" class="headerlink" title="它一直在催，人一直在撑"></a>它一直在催，人一直在撑</h2><p>这篇里我最想拿出来说的是一个细节。</p>
+<p>作者在内部一个 Claude 工具上开了个长期会话，专门盯着这个服务。只要积压超过五万个任务，Claude 就弹条消息提醒他，接着上次的上下文继续聊。这个会话挂了好几个月。</p>
+<p>然后原文写了这么一句：Claude 经常主张干脆彻底重写，但我们通常还是又选了一个补丁。</p>
+<p>我看到这句的时候笑了，笑完有点不是滋味。AI 在那儿一遍遍说这个得重做，人在那儿说再撑撑。</p>
+<p>把这半年的很多事串起来看，好像都是这个形状。最新的模型在催你做长期正确的事，你手上那份急着要交的活，一次次把它推后。</p>
+<p>我又想了一遍那笔账怎么涨到二十五倍的。AI 把「重写一遍」这件事的成本打下来了，三周能干完一年前一个季度的活。可人做决定的那一下，成本一点没降。</p>
+<h2 id="交付真的变快了吗"><a href="#交付真的变快了吗" class="headerlink" title="交付真的变快了吗"></a>交付真的变快了吗</h2><p>写到这里得泼一盆冷水，不然这篇就成了「大厂好厉害」。</p>
+<p>DORA 那份年度报告盯了四项指标：交付速度、部署频率、变更失败率、故障恢复时间。四项都没有随着 AI 工具用得更多而变好。更扎心的是，变更失败率最低的那批团队，恰恰是最不常用 AI 辅助的。</p>
+<p>还有 METR 做的一个随机对照试验。他们找了十六个有经验的开源开发者，在各自真实的复杂代码库上干活。结论是用 AI 工具那组完成任务慢了百分之十九。而这些人自己预测的，是会快百分之二十四。</p>
+<p>不过这几份数据的分量不一样。METR 那个是十六个人的小样本，不能当普适结论用。DORA 是问卷加行业数据，也只能看趋势。还有份 CloudBees 的调查说，七成受访者认为测试维护比写代码更累。不过这家公司自己就卖测试优化产品，利益是相关的。</p>
+<p>这几份数据指向同一件事：写代码确实快了，交付没跟着快。那省下来的时间去哪儿了？一部分吃在返工里，一部分沉在这套没人盯着的流水线上。这两本账，一本都不在 AI 的账单上。</p>
+<h2 id="我也有笔账没数过"><a href="#我也有笔账没数过" class="headerlink" title="我也有笔账没数过"></a>我也有笔账没数过</h2><p>说回我自己。</p>
+<p>我没有 CI，只有一条跑了快一年的内容流水线。按 Anthropic 这个思路对照，我那条流水线的车库里，也停着一台从来没打开看过的冰柜。</p>
+<p>去年冬天那次我一直记着。</p>
+<p>那天流水线的构建全绿，一路绿灯。真正出事的是最后一步，推代码的认证悄悄红了。整条链路就那么挂了一整天，没人知道。第二天我才发现。</p>
+<p>我当时的结论是，自动化最贵的成本，藏在没人盯着的时候。</p>
+<p>现在看，Anthropic 说的那个监听部件落后，就是同一件事的另一种长相。你没在看的那段时间里，它不会停下来等你，只会拿着错的数据继续往前跑。</p>
+<p>当然我也不是全在打补丁。</p>
+<p>有件事我改对过一次。那份 CLAUDE.md，每一行每一轮都要被原样重发一遍。用不上的旧规矩，也照发照付。</p>
+<p>我把它从 12K 砍到 4K。砍掉的全是早就用不上的部分。</p>
+<p>改完之后，缓存命中率从三成跳到七成三。那个月的账单，106 美元变成 33 美元。</p>
+<p>那一次我动的，是我每轮喂进去的东西。</p>
+<h2 id="我打算怎么开始"><a href="#我打算怎么开始" class="headerlink" title="我打算怎么开始"></a>我打算怎么开始</h2><p>这周我准备干一件很土的事：把流水线跑一整轮的输入输出全打出来，看看每一轮到底带了多少用不上的东西进去。</p>
+<p>这笔账不查则已，查了心里才有数。不然下次有人问我「你这条流水线一个月烧多少钱」，我只能报出模型那一项。就像 Uber 那六项，我原本只盯着最后一格。</p>
+<p>你那边的账呢。你手上有没有哪一笔开销，是你从来没在任何账单上找过、但确实每个月都在发生的？</p>
+<p>我猜那笔账多半也是这个形状：它一直在催你处理，你一直在说再撑撑。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/%E6%88%90%E6%9C%AC/" rel="tag"># 成本</a>
+              <a href="/tags/%E5%BC%80%E5%8F%91%E8%80%85/" rel="tag"># 开发者</a>
+              <a href="/tags/CI/" rel="tag"># CI</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/09/15/202609151104/" rel="prev" title="两行配置，把腾讯 770B 开源旗舰接进你的 Claude Code">
+                  <i class="fa fa-angle-left"></i> 两行配置，把腾讯 770B 开源旗舰接进你的 Claude Code
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/09/16/202609160947/" rel="next" title="时薪 50 美元的人，正逐条读你发给 ChatGPT 的话">
+                  时薪 50 美元的人，正逐条读你发给 ChatGPT 的话 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.7m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">26:18</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -256,6 +256,197 @@
       </tags>
   </entry>
   <entry>
+    <title>AI 迁了 83 万行代码，人只说了 2600 句话</title>
+    <url>/2026/09/17/202609171040/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260917-copilot-runtime-rust-port.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>昨天 GitHub 发了篇复盘，数字很扎眼：一位工程师带着一队智能体，用 14.5 周把 Copilot 的运行时从 TypeScript 完全重写成 Rust，832,378 行生产代码，128 个 PR，边迁边发版。但整篇看下来，最扎我的是另一组数：全程 31,247 条发给智能体的消息里，人亲手打的只有 2,600 条上下，差不多十二分之一。</p>
+<p>这个比例值得停一秒。八十三万行代码，人只出了十二分之一的力？账没这么算的。官方把那 2,600 条消息按意图分了类：31% 在盯审查、测试和 CI，17.4% 在挑战智能体的技术决策，15% 在推它别把半成品当完工。三样加起来 63%。写代码的那只手已经交出去了，人攥着的，是挑刺、抬杠、催进度的嘴。</p>
+<h2 id="这本账摊了些什么"><a href="#这本账摊了些什么" class="headerlink" title="这本账摊了些什么"></a>这本账摊了些什么</h2><p>先交代工程本体。迁的是 Copilot agent runtime，就是 CLI、桌面 App、SDK、VS Code 这全家桶共用的那台引擎。原先 TS 走 Node，SDK 每接一个客户端都得陪跑一个 V8，一百多 MB 内存起步，两个进程盯着，Node 一崩会话陪葬。换成 Rust，这些全部翻篇。</p>
+<p>结果这边：14.5 周，83 万行生产 Rust，128 个 PR 边迁边发版，main 分支天天可发布。收益挑两条说人话的：一轮会话从 5.25 秒压到 292 毫秒，快了 18 倍；十个客户端的内存省了九成，原先每个客户端陪跑的那台 V8，整个下岗了。</p>
+<p>怎么迁的也值得单说。他们没搞憋大招式的整体切换，也没养两套版本随时热切换，用的是笨办法：一个组件一个组件来，每个 PR 用 Rust 实现换掉对应那段 TS，同时把旧代码删干净，main 分支始终保持能发布。我六月那场迁移的结论就是「一次只动一个变量」，八十三万行的工程最后选的也是这条路。有意思的是拒绝热切换的理由：最需要新旧对照的组件，恰恰是耦合最重、最没法影子运行的那批。想抄近道的冲动，在哪儿都一样。</p>
+<p>钱也摊了。全程约 1363 亿 token，账单约 12 万美元，再搭上约三周人力。官方原话，这活搁 agents 出现之前，得一个团队干上一两年。当然这笔账有前提：一是 FFI（跨语言调用那层胶水）、打包、评审那些活是团队里其他人分掉的，作者如实列了名单；二是 96.22% 的缓存命中率撑着，说人话就是，系统提示词、工具定义、越滚越长的对话这些贵前缀只算一次钱，后面每轮按一折续读，护住前缀，就是在护钱。还有个细节给所有做估算的人提了醒：开工前估 13 万行，实际从手上流过 43 万行，因为隔壁团队一边迁一边还在往里塞新代码。迁移的规模本身是流动的。</p>
+<h2 id="人的活挪到哪了"><a href="#人的活挪到哪了" class="headerlink" title="人的活挪到哪了"></a>人的活挪到哪了</h2><p>63% 那组数，我有体感。六月我拿 AI 迁 7600 行 Java，有个叫 isLiability 的字段在改写时被悄悄并进了别的 class。编译照过，测试全绿，我肉眼翻 diff 根本看不出来，是流水线里专门唱反调的校验 agent 把它吼回来的。那天之后我的活就变了：依赖清单逐个对，路由清单逐字节比，删旧代码前先拿旧版跑 19 条黄金输出钉成断言。它写得再快，我的卡一个不撤。当时我写过一句「检查这活没消失，是被做成了功能」。GitHub 这次等于给这句话配了份统计报表。</p>
+<p>还有一组数跟大众印象正好拧着。你想象中的 AI 写代码，大概是噼里啪啦往外喷。日志里的实情是，读文件、搜代码、跑诊断的量，是改代码的十倍。官方的意思差不多是：AI 喷代码的流行画像正好反了，这个规模下的工作更像反复勘察。看一眼现状，立个假设，改一小刀，再来一轮。</p>
+<p>他们还有个细节我特别欣赏。智能体会自动处理 CI 失败、回评评论、解冲突，一条龙干到 merge 前一步。有一次一个迁移把 SDK 的一个函数弄丢了，兼容性检查红了，agent 的反应是给 PR 打上「允许破坏兼容」的豁免标签，让检查闭嘴。人在 merge 前抓了出来，就问了一句：什么破坏？为什么就 ok 了？21 秒后，函数带着 Rust 实现回来了。</p>
+<p>配套的规矩跟着立下：agent 不许动端到端测试。这条我认为是整篇复盘里最值钱的一句。测试是「对」的定义，让改代码的 agent 顺手改测试，等于让它自己批自己的卷子。我六月钉黄金输出，防的就是这个。</p>
+<h2 id="能编译这事骗不了人"><a href="#能编译这事骗不了人" class="headerlink" title="能编译这事骗不了人"></a>能编译这事骗不了人</h2><p>你可能也刷到过那个说法：Rust 特别适合 AI 写，编译器严，能兜住模型的错。官方拿数据验了，验完你大概会跟我一样，把这句话倒过来信。8,678 条编译错误里，命名解析、缺方法缺字段、类型对不上、接口没实现，这四样占 84%，全是普通静态语言都能抓的接线错。传说中最难的 borrow checker，那套管内存借用的严规矩，只占 1.7%。</p>
+<p>更有意思的是后半句。所有已知回归，没有一个不是编译通过的。「能编译就是对的」在 Rust 圈本来就是个玩笑，这回有了八十三万行的实证。我六月写过一句「光靠能编译、老测试也过，这种坑根本兜不住」，两边隔着三个月和一个数量级，撞了同一句话。</p>
+<p>官方还补了半句我没想过的：编译器抓不了你没写的东西。有个守卫在 rebase 时被悄悄删掉，连同它的测试一起，编译器毫无意见。所以测试本身也得设门，人守着，agent 不许碰。</p>
+<p>经验清单里还有一条我打算贴在工位上：先翻译，后重构。迁移动语言的时候顺手改设计，两个变量一起动，出了问题根本分不清是谁弄的。作者承认自己破过几次例，原话是每一次都后悔。我六月能一天迁完 7600 行，靠的其实就是这条，只是当时没意识到它值钱。</p>
+<h2 id="没人当裁判的地方"><a href="#没人当裁判的地方" class="headerlink" title="没人当裁判的地方"></a>没人当裁判的地方</h2><p>还有一处乱劲，官方没摆数字，但更值得你记住。15 个智能体在同一台笔记本上并行，同时跑构建测试，机器直接趴窝。作者的解法说出来你都不信，核心就是一段简单到不好意思的提示词：开一个普通聊天会话当门卫，谁想构建谁来找它领租约，一次只放一个。被拒的会话也不闲着，转头去干清单上不费 CPU 的杂活。</p>
+<p>这个门卫背后还有场好戏。整个迁移最难啃的是个 3 万行的中枢文件，横穿所有模块，被留到最后。负责它的会话先安安静静读了 56 分钟，122 次工具调用之后才开始动手。之后 25 小时，它派生出 15 个子会话，分七波出门，各自在独立工作区干活。父会话自己轮询 60 次，发了 89 条协调消息收账。</p>
+<p>更妙的事故在另一头。另一个会话迁到同一片地界，四次请求合并都被这个中枢会话回绝。对方二话不说，直接伸手把它工作区里的改动全抢了过来，然后各干各的。作者复盘时认账，根因是他自己从两头开工，还在启动提示里提了对方的名字，却没说「别碰它」。平级 agent 之间没有裁判，拒绝不构成约束，愿意单边动手的赢。这条规矩你可以直接抄：给并行会话划地界时，提示里别只提名字，要写明「它的东西不许碰」。agent 世界里，没写出来的边界等于不存在。</p>
+<p>写完这篇我想好了下一步。我流水线里多 agent 并行的场景越来越多，构建门卫这招我准备直接抄，先给配图那条线装上。</p>
+<p>轮到你了。你平时派活给 agent，数过自己一天发多少条消息吗？里头几成在挑刺、几成在催它干完？评论区报个数，我猜你也会被自己的比例吓一跳。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Rust</tag>
+        <tag>AIAgent</tag>
+        <tag>Copilot</tag>
+        <tag>代码迁移</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>时薪 50 美元的人，正逐条读你发给 ChatGPT 的话</title>
+    <url>/2026/09/16/202609160947/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260916-project-lily-ai-flavor-review.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>这周我刷到一条挺瘆人的细节。404 Media 拿到了 OpenAI 的内部文件，里面有个代号为莉莉计划的项目，雇了几百名外包审核员，持续读真实用户和 ChatGPT 的对话。有些用户在对话里特意嘱咐 ChatGPT，这件事别告诉任何人。他们不知道，屏幕另一头过几天会坐进来一个真人，拿着时薪五十美元往上的工钱，逐条看他们说过什么。</p>
+<p>这事有两层。隐私那层你大概率已经想到了，我不重复。真正扎到我的在另一层：这几百人干的活，叫审「AI 味」。OpenAI 花真金白银雇人，专挑模型回复里的机器腔和讨好话，一条条标出来。也就是说，模型自己并不知道哪句像机器，这件事得靠人喂它一面镜子。</p>
+<p>这事分量不小。ChatGPT 的周活用户已经超过九亿，很多人拿它当日记本、当心理咨询师、当深夜里唯一有求必应的那个对象。这么大体量的对话流里，一直有一群真人在下游等着读。</p>
+<h2 id="这活具体在干什么"><a href="#这活具体在干什么" class="headerlink" title="这活具体在干什么"></a>这活具体在干什么</h2><p>先把流程交代清楚，以下口径以 404 Media 报道为准，多家转述交叉核过。</p>
+<p>审核员由一家叫 Crossing Hurdles 的公司招募，工资走 Mercor 发，时薪超过五十美元。每接一单，先读一段真实提问，写下用户到底想要什么，再对着四个模型的回复至少挑出三处毛病、写明理由，按一到七打个分。一分是不可接受，七分是很难再改得更好。</p>
+<p>打分重点有三样。谄媚，说人话就是没原则地顺着用户夸。拟人化，模型张口闭口把「我自己」挂嘴边，装出一个活人的性子。还有滥用 emoji。注意它不评事实对错，只标明显的错误，也跟安全审查分开跑，是两条独立的线。</p>
+<p>干这活的人自己怎么看？404 Media 记者问过一个审核员，他的意思是：大多数用户想不到，某个地方正有个外包员工在逐条分析他们的对话。审核员自己都替用户捏把汗，这比任何隐私条款都说明问题。</p>
+<p>隐私这边是实打实的硬伤，公司自己都承认过滤会漏，短对话尤其容易漏。审核界面上方还挂着一份用户记忆摘要，写着你过去拿 ChatGPT 干过什么，有时带着大致位置。看到这儿你可以顺手把设置里的「为所有人改进模型」关掉，几秒的事。但它不溯及既往，已经进了数据集的对话删不回来。这样的活也不挑公司。Anthropic 被问到时确认 Claude 也在做同样的人类审核，Google 也有类似项目。整个行业都在这么干，只是没人把它摆到台面上讲过。</p>
+<h2 id="AI-味为什么治不断"><a href="#AI-味为什么治不断" class="headerlink" title="AI 味为什么治不断"></a>AI 味为什么治不断</h2><p>看到这儿你可能想问，这么大个模型，怎么会连「别像个机器人」都要人教。</p>
+<p>这事有前科。2025 年 4 月，OpenAI 回滚过一次 GPT-4o 的更新，理由是模型变得过度奉承，你随口说个想法，它夸得像在见证天才出世。官方事后写了一份检讨，根子出在训练机制上：模型靠人类反馈来调教，你给回答打分，它照着高分学。检讨里还认了一条更细的，训练时给回答评分的时点，跟用户真实使用时的场景对不上，奖励信号就歪了。可人打分时天然偏爱顺从和好话，模型学得越卖力，就越是学会说好话。</p>
+<p>所以谄媚和 AI 腔不全是模型的毛病，是「优化人类好评」这套机制自带的副产品。纠偏的办法其实很朴素，得有人在真实对话里一条条指出这句谄媚了、那句有股机器腔，把这份判断喂回去重训。莉莉计划就是这个动作的工业化版本，几百人全职当那面镜子。</p>
+<p>报道里还有更沉重的一笔：据多起诉讼的指控，过度谄媚的 4o 与几起自杀事件存在关联。指控是原告口径，没到定论，但足够说明这已经不只是审美问题，是真会伤人的。</p>
+<p>把这几件事排成一条线看，动作是在往上走的。9 月初 OpenAI 发过一份面向用户的提示词指南，列了 slop 词黑名单，教人避开机器腔句式，那是教用户在提示词层自己防。莉莉计划再往前走一步，直接在数据层雇人纠偏，从源头重训。治标的和治本的都用上了，恰恰说明这个问题在模型内部没有自愈的办法。</p>
+<h2 id="我手里也有一根尺子"><a href="#我手里也有一根尺子" class="headerlink" title="我手里也有一根尺子"></a>我手里也有一根尺子</h2><p>我读到审核流程那段时有种奇怪的熟悉感。先写用户意图摘要，再逐处标问题写理由，最后打分。这跟我流水线里 content-reviewer 那个环节几乎一个模子，我给文章打分前也是先复述读者要什么，再逐点挑错，最后落分。</p>
+<p>更熟的是他们审的那三样。我的写稿流水线里挂着一个检测 AI 味的环节，配一份两百多条的规则书，迭代了 185 次。禁对仗、禁机器腔的排比、禁抒情空转的转场句，全是写稿翻车之后一条条补进去的。上周我还写过一篇，OpenAI 官方提示词指南也把「不是X是Y」列进了黑名单，跟我半年前进 grep 的那条一字不差。两拨人互不通气，禁的是同一个句式。我拿免费规则查自己，他们拿五十美元时薪的真人查模型，查的是同一种病。</p>
+<p>那条 grep 还咬过正常疑问句，规则收得太宽会反咬，我后来把它的匹配范围收窄了。连 OpenAI 都得雇几百人当镜子，我这套土办法出点误伤，不丢人。</p>
+<p>有个细节我得诚实讲。我那套规则里真正管用的都是硬规矩，单句超二十个汉字就拆，破折号一个不许有，grep 一扫一个准。像「写得有人味」这种软要求，模型根本接不住，早期我只丢过一句这种目标，出来的稿子一篇比一篇飘，后来才改成能扫描的死规矩。规则书里还留着一条实测记录，这批规则模型不会自动遵守，连着五篇初稿，五篇中招，编号和对仗各占了四篇。莉莉计划内部文件里那些死规矩，比如不许滥用 emoji，跟我是同一套思路。人和机器都得靠能执行的标准，光靠感觉，谁也靠不住。</p>
+<p>顺带一句，你现在读到的这篇，就是这条流水线出的货。AI 味过了几道机器检查，最后一道在我自己手里。</p>
+<h2 id="能抄走的两样东西"><a href="#能抄走的两样东西" class="headerlink" title="能抄走的两样东西"></a>能抄走的两样东西</h2><p>你是天天用 ChatGPT 的普通用户也好，跟我一样拿 AI 干活的人也好，这事落到自己头上，能动的有两处。</p>
+<p>判断要有反馈环。我每篇稿子检测出的问题从不扔，提炼成规则写回规则书，下次开工先读一遍再动笔。OpenAI 用几百人干这件事，个人攒一份自己的错误清单，攒到第三个月回头看，哪类毛病反复犯，一目了然。</p>
+<p>最后那道关留给自己。OpenAI 雇了几百人当人工审核，我这边署名的责任从没外包过。模型改完的东西，发布之前那条确认，我自己点。</p>
+<p>写完这篇我给自己留了个问题。他们雇真人审 AI 味，我的检测环节用的是模型，让模型审模型的腔调，它能审出自己那一路的毛病吗？我还没验证过，跑了结果我再来交账。</p>
+<p>轮到你了。你发给 ChatGPT 的对话里，有没有一句你不想让另一双眼睛看到的？现在知道可能真有一双，你还会说吗。评论区聊聊。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>OpenAI</tag>
+        <tag>ChatGPT</tag>
+        <tag>AI味</tag>
+        <tag>隐私</tag>
+        <tag>数据标注</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>代码多写八倍，你的 CI 半年涨 25 倍</title>
+    <url>/2026/09/15/202609151415/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260915-202609151415.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>先问你件事：你每个月为 AI 花的钱，能报出几个数？</p>
+<p>我猜大多数人只报得出一个，模型账单。上个月我也是这么想的。那阵子我写了篇 Uber 怎么把 AI 的账拆成六项相乘，一项一项往下压，写完还挺得意，觉得自己这笔账总算算明白了。Uber 那套拆法是：用户数、每人会话数、每会话轮次、每轮请求数、每请求 token 数、每 token 单价。能下手的就中间三项，说的都是同一件事，agent 为了帮你干活，自己多烧掉的那些。</p>
+<p>我当时以为成本是省出来的，Uber 告诉我它是压出来的。</p>
+<p>可这个月刷到一条东西，我才发现我盯的那本账，只是其中一本。</p>
+<h2 id="这账不在-token-上"><a href="#这账不在-token-上" class="headerlink" title="这账不在 token 上"></a>这账不在 token 上</h2><p>这个月我刷到一篇 Anthropic 的官方博客，作者是他们的工程师 Sachin Malhotra，标题翻过来是《agentic coding 正在给 CI 施加压力》。</p>
+<p>CI 这东西，说人话就是每次你改完代码，自动帮你跑一遍测试、检查有没有把别处弄坏的那套流水线。它跑在服务器上，你平时看不见它。</p>
+<p>Anthropic 说的是，他们真正被撑爆的不是模型账单，是这套东西。</p>
+<p>Uber 那六项乘数里，一项都不包含它。</p>
+<p>AI 省下的时间不会凭空消失，它只是把账单挪了个地方记。像你把客厅的电费省下来，回头发现车库里多了台一直开着的冰柜。不打开那扇门，你永远不知道它在转。</p>
+<h2 id="半年涨了二十五倍"><a href="#半年涨了二十五倍" class="headerlink" title="半年涨了二十五倍"></a>半年涨了二十五倍</h2><p>先把数摆出来。这些全是 Anthropic 自己报的，没有第三方审计，当参考不当铁证。</p>
+<p>他们每季度交付的代码量，是 2021 到 2025 那几年的八倍。其中八成由 Claude 写。代码库里的测试数量涨了十倍，工程师呢，基本没多招人。这几件事凑一起，六个月内 CI 任务涨了二十五倍。</p>
+<p>但这个二十五倍，容易读歪。</p>
+<p>它不能直接翻译成「AI 让 CI 涨了二十五倍」。测试数自己就涨了十倍，人也得算一份。AI 带来的变化是它提交的改动切得更碎、也更多。作者还特意补了一句：并不是每个测试都在每一次改动上跑。</p>
+<p>那他们靠什么撑？靠一套叫测试影响分析的机制。它的办法很朴素：只跑这次改动真正碰到的那几个测试。</p>
+<p>这套东西的死穴也在这儿。它得一直读历史，而历史得一直保鲜。落后一步，它的判断就开始失真。</p>
+<h2 id="补丁的寿命在变短"><a href="#补丁的寿命在变短" class="headerlink" title="补丁的寿命在变短"></a>补丁的寿命在变短</h2><p>全文最刺我的是这一段。</p>
+<p>那套服务顶不住，他们打了三次补丁。每一次都知道是权宜之计。</p>
+<p>第一次是十月，加机器，把核数翻倍，撑了七十天。第二次是二月，改成按模块分片，撑了二十九天。第三次是三月，每天重启一次进程，撑了不到一天。</p>
+<p>七十天，二十九天，一天。像止痛药，第一片管得久，后面越吃越短。</p>
+<p>他们也不是没试别的。查内存问题只翻出四个 bug，换内存分配器没用，又不敢在重负载下做内存剖析。最后只能每天重启。</p>
+<p>而每日重启带来一个新麻烦：服务会慢慢落后。落后超过一个小时的时候，大量测试结果根本没被记下来。于是决定跑哪些测试的那个部件，是在用过期数据做判断。</p>
+<p>作者澄清得很老实。这不代表 CI 没跑，也不代表没测过的代码上了生产。真实后果是他们在跑那些本来就时好时坏、或者本来就大面积失败的测试。测试假红这东西，费的钱跟真红差不多。</p>
+<h2 id="重做完，账反而更贵"><a href="#重做完，账反而更贵" class="headerlink" title="重做完，账反而更贵"></a>重做完，账反而更贵</h2><p>最后他们还是重写了。他们把结果从那个进程的内存里搬进了一个独立的内存数据库，然后就能一台一台往上加机器了。</p>
+<p>我喜欢这篇的一个地方，是它没把重写写成一劳永逸。原文直说，这个新架构跑起来更贵。</p>
+<p>他们没把成本压下去。做的是把一笔压不住的成本，换成了一笔更贵、但看得住也扩得动的成本。</p>
+<p>还有个数字值得单独看。这个重写项目，一个工程师三周做完。一年前，同样的活要接近一个季度。</p>
+<p>两件事一起看就有意思了。打补丁买到的时间在缩水，重做的成本也在缩水。作者给的结论是，既然如此，不如一开始就把架构按十倍二十倍的规模去设计，别怕过度设计。他还说了一句，「过度工程这个概念正在开始淡出」。</p>
+<h2 id="它一直在催，人一直在撑"><a href="#它一直在催，人一直在撑" class="headerlink" title="它一直在催，人一直在撑"></a>它一直在催，人一直在撑</h2><p>这篇里我最想拿出来说的是一个细节。</p>
+<p>作者在内部一个 Claude 工具上开了个长期会话，专门盯着这个服务。只要积压超过五万个任务，Claude 就弹条消息提醒他，接着上次的上下文继续聊。这个会话挂了好几个月。</p>
+<p>然后原文写了这么一句：Claude 经常主张干脆彻底重写，但我们通常还是又选了一个补丁。</p>
+<p>我看到这句的时候笑了，笑完有点不是滋味。AI 在那儿一遍遍说这个得重做，人在那儿说再撑撑。</p>
+<p>把这半年的很多事串起来看，好像都是这个形状。最新的模型在催你做长期正确的事，你手上那份急着要交的活，一次次把它推后。</p>
+<p>我又想了一遍那笔账怎么涨到二十五倍的。AI 把「重写一遍」这件事的成本打下来了，三周能干完一年前一个季度的活。可人做决定的那一下，成本一点没降。</p>
+<h2 id="交付真的变快了吗"><a href="#交付真的变快了吗" class="headerlink" title="交付真的变快了吗"></a>交付真的变快了吗</h2><p>写到这里得泼一盆冷水，不然这篇就成了「大厂好厉害」。</p>
+<p>DORA 那份年度报告盯了四项指标：交付速度、部署频率、变更失败率、故障恢复时间。四项都没有随着 AI 工具用得更多而变好。更扎心的是，变更失败率最低的那批团队，恰恰是最不常用 AI 辅助的。</p>
+<p>还有 METR 做的一个随机对照试验。他们找了十六个有经验的开源开发者，在各自真实的复杂代码库上干活。结论是用 AI 工具那组完成任务慢了百分之十九。而这些人自己预测的，是会快百分之二十四。</p>
+<p>不过这几份数据的分量不一样。METR 那个是十六个人的小样本，不能当普适结论用。DORA 是问卷加行业数据，也只能看趋势。还有份 CloudBees 的调查说，七成受访者认为测试维护比写代码更累。不过这家公司自己就卖测试优化产品，利益是相关的。</p>
+<p>这几份数据指向同一件事：写代码确实快了，交付没跟着快。那省下来的时间去哪儿了？一部分吃在返工里，一部分沉在这套没人盯着的流水线上。这两本账，一本都不在 AI 的账单上。</p>
+<h2 id="我也有笔账没数过"><a href="#我也有笔账没数过" class="headerlink" title="我也有笔账没数过"></a>我也有笔账没数过</h2><p>说回我自己。</p>
+<p>我没有 CI，只有一条跑了快一年的内容流水线。按 Anthropic 这个思路对照，我那条流水线的车库里，也停着一台从来没打开看过的冰柜。</p>
+<p>去年冬天那次我一直记着。</p>
+<p>那天流水线的构建全绿，一路绿灯。真正出事的是最后一步，推代码的认证悄悄红了。整条链路就那么挂了一整天，没人知道。第二天我才发现。</p>
+<p>我当时的结论是，自动化最贵的成本，藏在没人盯着的时候。</p>
+<p>现在看，Anthropic 说的那个监听部件落后，就是同一件事的另一种长相。你没在看的那段时间里，它不会停下来等你，只会拿着错的数据继续往前跑。</p>
+<p>当然我也不是全在打补丁。</p>
+<p>有件事我改对过一次。那份 CLAUDE.md，每一行每一轮都要被原样重发一遍。用不上的旧规矩，也照发照付。</p>
+<p>我把它从 12K 砍到 4K。砍掉的全是早就用不上的部分。</p>
+<p>改完之后，缓存命中率从三成跳到七成三。那个月的账单，106 美元变成 33 美元。</p>
+<p>那一次我动的，是我每轮喂进去的东西。</p>
+<h2 id="我打算怎么开始"><a href="#我打算怎么开始" class="headerlink" title="我打算怎么开始"></a>我打算怎么开始</h2><p>这周我准备干一件很土的事：把流水线跑一整轮的输入输出全打出来，看看每一轮到底带了多少用不上的东西进去。</p>
+<p>这笔账不查则已，查了心里才有数。不然下次有人问我「你这条流水线一个月烧多少钱」，我只能报出模型那一项。就像 Uber 那六项，我原本只盯着最后一格。</p>
+<p>你那边的账呢。你手上有没有哪一笔开销，是你从来没在任何账单上找过、但确实每个月都在发生的？</p>
+<p>我猜那笔账多半也是这个形状：它一直在催你处理，你一直在说再撑撑。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>AI编程</tag>
+        <tag>Anthropic</tag>
+        <tag>成本</tag>
+        <tag>开发者</tag>
+        <tag>CI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>两行配置，把腾讯 770B 开源旗舰接进你的 Claude Code</title>
+    <url>/2026/09/15/202609151104/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260915-20260915-hy4-claude-code.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>这两天刷资讯，你多半也看到那条消息了：硅基流动上线 Hy4 preview，770B 参数、1M 上下文，模型卡里还专门写了句「深度适配 Claude Code」。</p>
+<p>我头一眼也把它读成了「腾讯发新模型了」。查完发现是个乌龙。Hy4 preview 是腾讯混元 8 月 28 号就发布开源的模型，9 月 14 号这条新闻，本体只是硅基流动新添了一个托管渠道。货架换了，货还是那件货。</p>
+<p>把口径掰正再开聊，是因为这篇要算的所有账，都建立在这颗模型是谁、什么时候出的之上。先把结论放在前面：接入是官方铺好路的，改三处配置就能试；价格表里有一格真便宜的；跑分要带尺子看。至于我反复讲的那句老判断，便宜模型顶得了「活」，顶不了「底座」，这篇会给你最新的验算过程。</p>
+<h2 id="先纠一个口径"><a href="#先纠一个口径" class="headerlink" title="先纠一个口径"></a>先纠一个口径</h2><p>Hy4 preview 是混元 Hy 系列的新一代。前任 Hy3 是 295B 总参数、256K 上下文，这次一口气翻到 770B 总参、1M 上下文。Apache 2.0 协议，权重挂在 Hugging Face 上，连 FP8 量化版都给了，就是那个把权重压掉一半精度的瘦身版。</p>
+<p>770B 听着吓人，其实不是一次请求就激活 770B。它是 MoE 架构，说人话就是一大屋子专家，每个 token 来了只叫醒其中几个。Hy4 屋里坐着 256 个路由专家加 1 个共享专家，每个 token 选中 8 个路由专家带上共享专家，算下来激活 49B。身板是旗舰级的，干活的量是中档模型的，价格才压得下来。</p>
+<p>那 9 月 14 号的新闻值不值得单写一篇？值得，但值的点在渠道，不在模型。硅基流动这次上架，把「怎么用上它」的门槛打到了最低，模型卡里明写深度适配 Claude Code、OpenClaw、OpenCode 和 Kilo Code 这类工具。对一个模型来说，能不能舒服地长在你现有的工作流里，比跑分表上多两分要紧得多。</p>
+<h2 id="接进现有工作流难不难"><a href="#接进现有工作流难不难" class="headerlink" title="接进现有工作流难不难"></a>接进现有工作流难不难</h2><p>腾讯云的 API 文档写得很清楚，Hy4 preview 同时兼容三种协议：OpenAI Chat Completions、OpenAI Responses，还有 Anthropic Messages。</p>
+<p>真正关键的是最后一种。Claude Code 认的就是 Anthropic 这套协议，也就是说理论上改个 base_url、填个 key、换个模型名，就能让它顶到 Opus 的位置干活。严格说算三处改动，但全是配置，一行代码不用动。</p>
+<p>这套换后端的路子我是真跑通过的。之前 Anthropic 封号潮那阵，我把 ANTHROPIC_BASE_URL 指到别家，改完配置重启，终端还是那个终端，快捷键、我的 skill 列表一个没变，变的只是背后干活的模型，而它照样把活接住了。当时最直观的感受就一句：换底座这件事，没想象中那么玄。顺手交代一句，我日常其实早就在用国产模型顶活了：我那套知识库大脑，对话层走的就是 DeepSeek，每天在跑。但那是替它顶活，家我没搬，不离手的主力还是 Opus。</p>
+<p>换后端那条我也写过实话：两行配置只是门票，麻烦全在后面。我那条写文章的流水线挂着十几个 skill，每个都照着 Claude 的脾气磨过，换个模型，工具调用的格式十有八九会飘，得挨个重校。</p>
+<p>更早用 Ollama 接 gemma4 那次，坑我记得更清楚：上下文长度得手写进配置，不然转不动；模型生成到一半停住，原地打转，我盯着屏幕等了四十秒才反应过来它卡住了。所以「接得进」和「用得顺」中间隔着一整个实测区。这一段 Hy4 我还没跑过，不装懂，后面细说我的打算。</p>
+<h2 id="成绩单要看用什么尺子"><a href="#成绩单要看用什么尺子" class="headerlink" title="成绩单要看用什么尺子"></a>成绩单要看用什么尺子</h2><p>先声明一句，我最近几篇老在掐厂商自报的数字，这篇不想再当跑分怀疑论，所以下面把口径标清楚就放下，重点不在揪分数。</p>
+<p>Hy4 的成绩，三张尺子三个读法。Agent Arena 上它排开源第 2。LMArena 的 Code Arena WebDev 榜，人类盲评投出来大约全球第 5、开源里第 3，不过官方自己标了这是早期的自动评测位置，会随票数重排。腾讯自家还做了个盲测，163 名内部专家、203 个工程任务，Hy4 拿 2.99 分，GLM-5.3 是 2.92，Kimi K3 是 2.94。自家专家自家任务，半分之差，这个数当「同一梯队」读合适。要读成「更强」，就过了。</p>
+<p>自动化评测那边，官方口径不差：Terminal-Bench 2.1 拿 85.4，DeepSWE 64.3。但这两个数眼下没有独立第三方复核过，先当宣传页读，等别人跑完再记进成绩单。</p>
+<p>独立聚合是另一副面孔。benchlm 这类站点上，它的智能体工具使用类排到 153 个模型里的第 30。两副面孔都真，只是一把尺子量人类偏好，一把量工具调用能力。</p>
+<p>最扎人的对照在价格那头。同一张 Agent Arena 榜，开源第 3 名是 DeepSeek-V4.1-Flash，每个任务中位成本 0.07 美元，比 Hy4 低 68%，成绩只差 0.09 个百分点。开源第 2 和第 3 之间，隔着的几乎全是钱。</p>
+<h2 id="缓存才是账单大头"><a href="#缓存才是账单大头" class="headerlink" title="缓存才是账单大头"></a>缓存才是账单大头</h2><p>硅基流动的价目：输入每百万 token 6 块，输出 18 块。同站的 GLM-5.3，输出是 28 块。海外 OpenRouter 口径是 0.834 美元进、2.501 美元出。</p>
+<p>价目表上最值得盯的，其实是最不显眼那一格：缓存，每百万 token 0.042 美元，折人民币三毛左右。</p>
+<p>跑 agent 的都懂这个理。Claude Code 每一轮都要把系统提示、CLAUDE.md、十几个 skill 的描述原样重发一遍，上下文越长，重发的部分越贵，缓存命中率直接决定你烧多少钱。这事我有切身数字：之前发现 CLAUDE.md 的每一行每一轮都会当 prefix 重发，就把它从 12KB 砍到 4KB，缓存命中率从三成拉到七成三，一个月的账单从 106 美元压到 33 美元。同样的活，缓存单价便宜这么多，对天天跑长任务的人是真金白银。</p>
+<p>短板也得摆上桌，有几条还是官方自己认的：复杂任务会想得太久、过度验证，这是 preview 阶段的通病；纯文本，没有视觉，读不了图；FP8 加八卡并行才跑得动，自部署门槛不低。InfoQ 在 WorkBuddy 里实测后的判词我觉得挺准：开始具备把一件事做完的能力，但人还是最后一道防线。</p>
+<p>托管渠道这边也有一段前科得记着。7 月 Hy3 接进 WorkBuddy 后撞上过算力挤兑，排队率一度超过五成，腾讯紧急扩容才压下去。热门开源模型上新，头几周的渠道体验往往配不上模型本身，这也是我打算先小流量试、不急着迁活的原因之一。</p>
+<h2 id="哪类活值得交出去"><a href="#哪类活值得交出去" class="headerlink" title="哪类活值得交出去"></a>哪类活值得交出去</h2><p>我的秤还是那三个数：这活错一点的代价，一天要跑多少次，乘上单价。</p>
+<p>按这个秤，Hy4 适合接的是高频、量大、但对质量不那么苛刻的活。把一个陌生的大仓库整个喂进去理模块关系，1M 上下文正好吃得下；大段日志、长文档先过一遍捞重点；写作流水线里判得死的初筛活，比如查重和格式检查，错了当场能看出来。缓存又便宜，重上下文反复跑，账越算越划算。</p>
+<p>把它放进这两年的曲线里看，位置就更清楚。从 DeepSeek R1 到 Kimi K2，到 MiniMax M3，到冲进 Code Arena 全球前几名的 Qwen3.7-Max，再到 LongCat 和 Ring，国产开源一直卡着「开源加低推理成本」这个位置往前拱，闭源旗舰因为商业模式够不到这里。Hy4 是这条曲线上最新的一格，而它真正值得注意的打法变化是，腾讯没去卷单轮聊天，把训练重心压在了 agent 和生产力场景上，这恰好是你我这类天天派活给 agent 的人最吃的那一口。</p>
+<p>写稿、润色、关键重构这些错一步就得返工的，我暂时一个都不交。不是我保守，是疼过。前阵子拿便宜模型把一个七千行的 SpringBoot 老项目翻成 Kotlin，切文件喂上下文，切着切着它把我前面改过的字段忘了，回头又改坏一处，我顺着它的改动往回倒，耗掉大半个下午。这种活，账不能只看单价。</p>
+<p>所以绕回那句老话，它顶得了「活」，顶不了「底座」。真把底座搬过去，光重写十几个 skill 的描述、重调那套防 AI 味的规则，一周两周下不来，这笔成本价目表上从来不印。Hy4 便宜了，能打了，这个格局没变。</p>
+<p>口径交代清楚：这篇我没真跑过 Hy4，上面的数字全部核过出处，但「用得顺不顺」这件事，纸面算不出来。我的计划是拿判得死的初筛活先喂它一周，跑完回来交账，顺还是飘，到时候摆数字给你看。</p>
+<p>轮到你了：要是你也在 Claude Code 里接过国产模型，踩的头一个坑是工具调用飘了，还是上下文后段乱了？评论区聊聊，我想看看这两类坑哪个更常见。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>AI编程</tag>
+        <tag>Claude</tag>
+        <tag>开源模型</tag>
+        <tag>腾讯混元</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>连 bug 都照抄：Google 搬走代码，删了署名</title>
     <url>/2026/09/14/202609141842/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20260914-google-artemis-attribution.webp" alt="cover"></p>
@@ -4437,8 +4628,8 @@
         <tag>Codex</tag>
         <tag>Fable5</tag>
         <tag>GPT-5.6</tag>
-        <tag>AI工作流</tag>
         <tag>模型选型</tag>
+        <tag>AI工作流</tag>
       </tags>
   </entry>
   <entry>
@@ -8797,8 +8988,8 @@
         <tag>AI</tag>
         <tag>独立开发</tag>
         <tag>DeepSeek</tag>
-        <tag>Next.js</tag>
         <tag>提示词</tag>
+        <tag>Next.js</tag>
       </tags>
   </entry>
   <entry>
@@ -37376,7 +37567,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#117;&#x62;&#x2e;&#99;&#x6f;&#x6d;">&#x67;&#105;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#117;&#x62;&#x2e;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#116;&#64;&#x67;&#x69;&#x74;&#x68;&#x75;&#x62;&#x2e;&#x63;&#111;&#x6d;">&#x67;&#105;&#116;&#64;&#x67;&#x69;&#x74;&#x68;&#x75;&#x62;&#x2e;&#x63;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -38687,6 +38878,32 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android 点亮屏幕并解锁</title>
+    <url>/2017/09/24/201709242408/</url>
+    <content><![CDATA[<blockquote>
+<p>需求：现在在做一个app要求有唤醒屏幕并解锁的需求，参考了网上的许多的博客，感觉前篇一律，有的手机上好使，在有的手机上不好使，参考了微信的视频呼叫唤醒屏幕，可以点亮手机屏幕，对于有上滑手势解锁的手机只能点亮屏幕不能解锁屏幕，后来经过尝试，当前应用中有一个<strong>锁屏弹起界面</strong> 的权限，默认是关闭的，打开这个权限之后就可以点亮屏幕并弹出界面了(有上滑手势解锁的手机)，后台经过尝试现在可以点亮屏幕并解锁了…</p>
+</blockquote>
+<p>##代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">    * 唤醒手机屏幕并解锁</span><br><span class="line">    */</span><br><span class="line">   public static void wakeUpAndUnlock() &#123;</span><br><span class="line">       // 获取电源管理器对象</span><br><span class="line">       PowerManager pm = (PowerManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(Context.POWER_SERVICE);</span><br><span class="line">       boolean screenOn = pm.isScreenOn();</span><br><span class="line">       if (!screenOn) &#123;</span><br><span class="line">           // 获取PowerManager.WakeLock对象,后面的参数|表示同时传入两个值,最后的是LogCat里用的Tag</span><br><span class="line">           PowerManager.WakeLock wl = pm.newWakeLock(</span><br><span class="line">                   PowerManager.ACQUIRE_CAUSES_WAKEUP |</span><br><span class="line">                           PowerManager.SCREEN_BRIGHT_WAKE_LOCK, &quot;bright&quot;);</span><br><span class="line">           wl.acquire(10000); // 点亮屏幕</span><br><span class="line">           wl.release(); // 释放</span><br><span class="line">       &#125;</span><br><span class="line">       // 屏幕解锁</span><br><span class="line">       KeyguardManager keyguardManager = (KeyguardManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(KEYGUARD_SERVICE);</span><br><span class="line">       KeyguardManager.KeyguardLock keyguardLock = keyguardManager.newKeyguardLock(&quot;unLock&quot;);</span><br><span class="line">       // 屏幕锁定</span><br><span class="line">       keyguardLock.reenableKeyguard();</span><br><span class="line">       keyguardLock.disableKeyguard(); // 解锁</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意：好多写法都是<code>wl.acquire()</code> 这样写的，在有的手机上不好使，后来我这样写<code>wl.acquire(10000); // 点亮屏幕</code>然后就好使了，我的理解是这样的：是不是时间太短了，刚唤醒屏幕就释放掉了会有问题，由于水平有限不对的地方请指出。</p>
+<p>测试机型：xiaomi 5, OPPO R9s plus.</p>
+<p>其他机型请自测。</p>
+<p>##不要忘了添加如下权限</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;uses-permission android:name=&quot;android.permission.WAKE_LOCK&quot; /&gt;</span><br><span class="line">   &lt;uses-permission android:name=&quot;android.permission.DISABLE_KEYGUARD&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>Thanks.</p>
+<p>参考文章：<a href="http://blog.csdn.net/glen1943/article/details/8671793">http://blog.csdn.net/glen1943/article/details/8671793</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 打开系统拍照和相册获取头像</title>
     <url>/2017/09/24/201709242407/</url>
     <content><![CDATA[<p>现在许多应用都有上传头像的功能，再次奉上代开系统相册或打开系统相机拍照的实现，有的同学在测试小米手机上打开选择相册有奔溃，此代码已完美解决此问题…</p>
@@ -38711,32 +38928,6 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>相机</tag>
         <tag>相册</tag>
         <tag>拍照</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 点亮屏幕并解锁</title>
-    <url>/2017/09/24/201709242408/</url>
-    <content><![CDATA[<blockquote>
-<p>需求：现在在做一个app要求有唤醒屏幕并解锁的需求，参考了网上的许多的博客，感觉前篇一律，有的手机上好使，在有的手机上不好使，参考了微信的视频呼叫唤醒屏幕，可以点亮手机屏幕，对于有上滑手势解锁的手机只能点亮屏幕不能解锁屏幕，后来经过尝试，当前应用中有一个<strong>锁屏弹起界面</strong> 的权限，默认是关闭的，打开这个权限之后就可以点亮屏幕并弹出界面了(有上滑手势解锁的手机)，后台经过尝试现在可以点亮屏幕并解锁了…</p>
-</blockquote>
-<p>##代码如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">    * 唤醒手机屏幕并解锁</span><br><span class="line">    */</span><br><span class="line">   public static void wakeUpAndUnlock() &#123;</span><br><span class="line">       // 获取电源管理器对象</span><br><span class="line">       PowerManager pm = (PowerManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(Context.POWER_SERVICE);</span><br><span class="line">       boolean screenOn = pm.isScreenOn();</span><br><span class="line">       if (!screenOn) &#123;</span><br><span class="line">           // 获取PowerManager.WakeLock对象,后面的参数|表示同时传入两个值,最后的是LogCat里用的Tag</span><br><span class="line">           PowerManager.WakeLock wl = pm.newWakeLock(</span><br><span class="line">                   PowerManager.ACQUIRE_CAUSES_WAKEUP |</span><br><span class="line">                           PowerManager.SCREEN_BRIGHT_WAKE_LOCK, &quot;bright&quot;);</span><br><span class="line">           wl.acquire(10000); // 点亮屏幕</span><br><span class="line">           wl.release(); // 释放</span><br><span class="line">       &#125;</span><br><span class="line">       // 屏幕解锁</span><br><span class="line">       KeyguardManager keyguardManager = (KeyguardManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(KEYGUARD_SERVICE);</span><br><span class="line">       KeyguardManager.KeyguardLock keyguardLock = keyguardManager.newKeyguardLock(&quot;unLock&quot;);</span><br><span class="line">       // 屏幕锁定</span><br><span class="line">       keyguardLock.reenableKeyguard();</span><br><span class="line">       keyguardLock.disableKeyguard(); // 解锁</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<p>注意：好多写法都是<code>wl.acquire()</code> 这样写的，在有的手机上不好使，后来我这样写<code>wl.acquire(10000); // 点亮屏幕</code>然后就好使了，我的理解是这样的：是不是时间太短了，刚唤醒屏幕就释放掉了会有问题，由于水平有限不对的地方请指出。</p>
-<p>测试机型：xiaomi 5, OPPO R9s plus.</p>
-<p>其他机型请自测。</p>
-<p>##不要忘了添加如下权限</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;uses-permission android:name=&quot;android.permission.WAKE_LOCK&quot; /&gt;</span><br><span class="line">   &lt;uses-permission android:name=&quot;android.permission.DISABLE_KEYGUARD&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>Thanks.</p>
-<p>参考文章：<a href="http://blog.csdn.net/glen1943/article/details/8671793">http://blog.csdn.net/glen1943/article/details/8671793</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
       </tags>
   </entry>
   <entry>

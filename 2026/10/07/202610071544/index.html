@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="GitHub 要为 agent 规模重建 Git 底层，GitLab 早五个月做了同一件事，全平台 Git 活动量一年从 2182 亿涨到 4733 亿次；我数了自己仓库 607 条提交，agent 署名占 87.3%。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数完自己仓库我改口了：87.3% 的提交不是人写的">
+<meta property="og:url" content="https://www.vance.xin/2026/10/07/202610071544/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="GitHub 要为 agent 规模重建 Git 底层，GitLab 早五个月做了同一件事，全平台 Git 活动量一年从 2182 亿涨到 4733 亿次；我数了自己仓库 607 条提交，agent 署名占 87.3%。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261007-202610071544-github-git-infrastructure-agent-scale-v3.webp">
+<meta property="article:published_time" content="2026-10-07T15:44:00.000Z">
+<meta property="article:modified_time" content="2026-10-08T01:59:50.394Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="GitHub">
+<meta property="article:tag" content="Git">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="版本控制">
+<meta property="article:tag" content="基础设施">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261007-202610071544-github-git-infrastructure-agent-scale-v3.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/10/07/202610071544/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/10/07/202610071544/","path":"2026/10/07/202610071544/","title":"数完自己仓库我改口了：87.3% 的提交不是人写的"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>数完自己仓库我改口了：87.3% 的提交不是人写的 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "数完自己仓库我改口了：87.3% 的提交不是人写的",
+  "url": "https://www.vance.xin/2026/10/07/202610071544/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/10/07/202610071544/",
+  "datePublished": "2026-10-07T15:44:00.000Z",
+  "dateModified": "2026-10-08T01:59:50.394Z",
+  "description": "GitHub 要为 agent 规模重建 Git 底层，GitLab 早五个月做了同一件事，全平台 Git 活动量一年从 2182 亿涨到 4733 亿次；我数了自己仓库 607 条提交，agent 署名占 87.3%。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E5%AE%B6%E5%B9%B3%E5%8F%B0%E5%90%8C%E6%97%B6%E6%8B%86%E4%BA%86%E5%9C%B0%E5%9F%BA"><span class="nav-text">两家平台同时拆了地基</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E7%AC%94%E8%B4%A6%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E4%BA%94%E4%BA%BA%E4%BC%9A%E7%AD%BE"><span class="nav-text">一笔账为什么要五人会签</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E5%85%88%E6%95%B0%E4%BA%86%E8%87%AA%E5%B7%B1%E9%82%A3%E4%B8%AA%E4%BB%93%E5%BA%93"><span class="nav-text">我先数了自己那个仓库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E5%BD%93%E6%97%B6%E6%8A%8A%E8%AF%9D%E8%AF%B4%E5%BE%97%E5%A4%AA%E6%BB%A1%E4%BA%86"><span class="nav-text">我当时把话说得太满了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%8E%B0%E5%9C%A8%E7%9A%84%E6%8F%90%E4%BA%A4%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7"><span class="nav-text">我现在的提交长什么样</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E6%9D%A1%E7%BA%BF%E7%8E%B0%E5%9C%A8%E8%BF%98%E6%9C%89%E8%B0%81%E5%9C%A8%E8%AF%BB"><span class="nav-text">那条线现在还有谁在读</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">545</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">915</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/10/07/202610071544/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="数完自己仓库我改口了：87.3% 的提交不是人写的 | 飞飞的AI实验室">
+      <meta itemprop="description" content="GitHub 要为 agent 规模重建 Git 底层，GitLab 早五个月做了同一件事，全平台 Git 活动量一年从 2182 亿涨到 4733 亿次；我数了自己仓库 607 条提交，agent 署名占 87.3%。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数完自己仓库我改口了：87.3% 的提交不是人写的
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-10-07 15:44:00" itemprop="dateCreated datePublished" datetime="2026-10-07T15:44:00+00:00">2026-10-07</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-10-08 01:59:50" itemprop="dateModified" datetime="2026-10-08T01:59:50+00:00">2026-10-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">GitHub 要为 agent 规模重建 Git 底层，GitLab 早五个月做了同一件事，全平台 Git 活动量一年从 2182 亿涨到 4733 亿次；我数了自己仓库 607 条提交，agent 署名占 87.3%。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261007-202610071544-github-git-infrastructure-agent-scale-v3.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>10 月 6 号，GitHub 发了篇工程博客，主题是为 agent 规模重建 Git 的底层基础设施。开篇第一句就是：agent 驱动的软件开发，正在带来下一次架构级的迁移。</p>
+<p>我看完的第一下，是心里咯噔。因为三个半月前，我专门写过一篇，讲「要不要给 agent 换掉 git 的底座」。当时的结论是先不换，我守着这条 git 主线。而我数完自己的仓库才发现，最近这一段的提交里，87.3% 的署名不是我。</p>
+<p>你要是也天天让 agent 干活，回头数一下自己的仓库，这个数大概率也不低。</p>
+<p>现在有人真动手了。而且不是 GitHub 一家。</p>
+<p>这篇我想把两件事摊开看：GitHub 拆了什么，这个 87.3% 又是怎么长出来的。</p>
+<h2 id="两家平台同时拆了地基"><a href="#两家平台同时拆了地基" class="headerlink" title="两家平台同时拆了地基"></a>两家平台同时拆了地基</h2><p>先给数。</p>
+<p>GitHub 说，全平台的 Git 活动量，从 2025 年 9 月的 2182 亿次，涨到 2026 年 8 月的 4733 亿次，翻了一倍以上。注意这个口径：是「全平台的 Git 活动总量」，既不是提交数，也不是推送数。原文没有定义「活动」到底包含哪些操作，那我就照它的措辞写，不替它拆解。</p>
+<p>另外两个数更贴地。提交量，2026 年 9 月是 73.8 亿次。原文的说法是「开发者和 agent 一共」。GitHub 没把这两拨拆开，我一个字都不替它猜。</p>
+<p>推送量，从每月 6.9 亿次涨到 33.5 亿次，同比 4.9 倍。注意，这是推送的次数，跟多少人在推是两回事。</p>
+<p>GitHub 直说：agent 驱动的开发，是这次架构迁移的推手。但所有增长倍数用的都是「人和 agent 合计」的口径。所以我能写「同期涨了」，不能写「因为 agent 所以涨了这么多」。</p>
+<p>最有信息量的一条在这儿。GitLab 早在 2026 年 5 月就宣布了同一件事。它 CEO 在内部信里的原话是「Git 本身正在为机器规模重做一遍」。交给 SEC 的文件里写的是「一个为 agent 造的新 git，能撑住机器规模」。官方博客上的说法是「一个为 agent 规模并发而重建的 Git 引擎」，现在还在私有测试。</p>
+<p>两家是正面竞争对手，在同一段时间里各自去动同一个最底层，用词几乎能互换。判断真趋势，我有一把笨尺子：看对手肯不肯往同一个方向掏大钱。这次两家都掏了，而且是维护性的钱。这种钱最难掏，因为花出去没人给你鼓掌。</p>
+<p>而且 GitLab 比 GitHub 早五个月。</p>
+<h2 id="一笔账为什么要五人会签"><a href="#一笔账为什么要五人会签" class="headerlink" title="一笔账为什么要五人会签"></a>一笔账为什么要五人会签</h2><p>GitHub 这篇里最硬的一句是这句：我们用来做持久化的机制，和用来做扩展的机制，是同一个。</p>
+<p>现在每个仓库，默认在五台文件服务器的本地盘上，各留一份全量副本。这五份身兼三职：冗余、扛读、以及参与每一笔写。</p>
+<p>写成大白话就是：一笔账要五个人同时签字才算数。他们都在，这叫冗余；他们都能把账拿给人看，这叫扛读；每一笔改动他们五个都得签，这叫参与写。</p>
+<p>麻烦就出在这。你想给读加容量，多找一个人来看账，那么每笔账也跟着多签一个人，写反而更慢了。反过来，少一个人，读的容量就少一块。人要是凑不齐一半，整个写就停。</p>
+<p>为 A 目的买的保险，成了 B 目的上的税。</p>
+<p>这句 GitHub 没写过，是我自己读出来的。它讲的不只是 Git 的事：你在系统里把一个部件赋予两个目的，早晚会有一个目的把另一个拖死。</p>
+<p>GitHub 的解法是把这三件事拆开：权威数据挪到云存储上，只管持久化；读交给只做缓存的轻量进程；维护性的活挪出服务主机。它自报的写吞吐，最高提升 35 倍。</p>
+<p>这个 35 倍我得标清楚：是 GitHub 自己内部跑出来的，没有经过第三方独立复现，原文也没说自己怎么测的。听方向可以，别当铁的。</p>
+<h2 id="我先数了自己那个仓库"><a href="#我先数了自己那个仓库" class="headerlink" title="我先数了自己那个仓库"></a>我先数了自己那个仓库</h2><p>两家都在拆地基，那我自己那条线呢？</p>
+<p>三个半月前我写的那篇，主角是一个叫 Oak 的开源项目，它想给 agent 换掉 git。它戳的那个痛点我认：agent 把 git 历史写乱，我天天亲历。但最后我说，不换，至少现在不换。理由很现实，就一个字，贵。我这条写作流水线挂着十几个 skill，每一个都是顺着 git 那套规矩磨出来的。那工具当时又还是 v0.99.0 的公测版，我的真实仓库不会拿去给它当小白鼠。</p>
+<p>现在 GitHub 和 GitLab 两家，等于替我把这个底座动了。换成你，大概也会想：那等着就行？</p>
+<p>这念头我也冒出来过。我原以为有「人确认了才落进主线」这条规矩拦着，那条线上写东西的主要还是我。于是我把仓库打开，数了一遍。</p>
+<p>这个仓库 2022 年建的，到今天一共 607 条提交。带 Claude 署名尾注的，424 条，占 69.9%。</p>
+<p>但总数不重要，重要的是切开看。我拿 6 月 23 号那篇当刀口，那是我写下「先守着 git」的那天。再往前的我没算，跟这次对比无关。</p>
+<p>刀口之前，2026 年 3 月到 6 月 23 号，288 条提交，带 agent 尾注的 177 条，61.5%。</p>
+<p>刀口之后，6 月 24 号到今天，283 条提交，247 条带尾注，87.3%。</p>
+<p>最近 7 天，9 条提交，9 条都带。</p>
+<h2 id="我当时把话说得太满了"><a href="#我当时把话说得太满了" class="headerlink" title="我当时把话说得太满了"></a>我当时把话说得太满了</h2><p>数出这个 87.3%，我翻回 6 月 23 号那篇，确认自己真写过那句话。</p>
+<p>当时我在复述 Oak 作者那套思路：agent 每落一次提交都会污染历史，开销也大。正确的做法是把 agent 的工作流跟 git 解耦，让它先在自己那层折腾，等人确认了才落进给人看的那条主线。</p>
+<p>这句话我是认的。我甚至拿它当自己的路线。</p>
+<p>三个半月后，底座我确实没换，这条线我也没拆。线还在原地，提交量也还是那个量，288 条对 283 条。变的只是署名：带 agent 尾注的，从 61.5% 变成了 87.3%。</p>
+<p>更能说明问题的是两个提交之间的间隔。</p>
+<p>我翻了最近的记录。10 月 7 号 15 点 41 分 02 秒，一条提交，写的是新文章出稿。15 点 41 分 04 秒，第二条，写的是这轮提炼出来的写作经验入库。两条之间差 2 秒。</p>
+<p>10 月 6 号那次差 7 秒，10 月 4 号两次分别差 8 秒和 4 秒。</p>
+<p>一次流水线跑完，自动落两个提交，中间连你伸手的功夫都没有。</p>
+<p>还有一处，我翻配置才想起来。项目设置里早就预批了两条权限，git 暂存和 git 提交，agent 可以直接用，不用逐次问我。</p>
+<p>我说的「人确认了才落进主线」，在起点上还成立。选题要我拍板，发公众号要我点头，这两道闸我守着呢。可「确认」这个动作，在我这儿慢慢从当场的动作，变成了事前的授权。</p>
+<h2 id="我现在的提交长什么样"><a href="#我现在的提交长什么样" class="headerlink" title="我现在的提交长什么样"></a>我现在的提交长什么样</h2><p>那这算翻车吗？我想了想，也不算。</p>
+<p>它只是让我看清一件事：「人确认后才落进 git」这句话，守的方向是对的，守的量没守住。规矩一个字没改，改的是它每天放 agent 多少东西过去。</p>
+<p>而且三个半月前那篇，我留了个问题没答。结尾我写的是：你让 agent 改代码的时候，是宁可它一路别提交、最后自己收尾，还是宁可它一步一个 commit、把历史写成流水账？当时我说，这两种我都试过，没拿定主意。</p>
+<p>现在回头看，我走的是第三种。那两种我都没选。</p>
+<p>我让 agent 照常频繁提交，但每条提交得长成一个样子：我自己定的一套类型前缀，加一行署名尾注。</p>
+<p>我最近三十天用的前缀大概是这几类。<code>post:</code> 是发了新文章；<code>chore(training):</code> 是这轮提炼的写作经验入库，最新已经是第一百九十六次；<code>docs(geo):</code> 是 GEO 台账；<code>fix(distributor):</code> 是分发脚本修了 bug。</p>
+<p>所以规矩不是「提交几次」，是「提交长什么样」。</p>
+<p>这三个半月里，这条线上一共走了 283 条提交，其中 247 条不是我自己一个个敲出来的。但那 247 条，每一条都套着我自己定的那身衣服。</p>
+<h2 id="那条线现在还有谁在读"><a href="#那条线现在还有谁在读" class="headerlink" title="那条线现在还有谁在读"></a>那条线现在还有谁在读</h2><p>我三个半月前担心的是「主线会被 agent 写乱」。数完才发现，乱不乱其实是小事。真正变了的是另一头：那条给人看的主线，现在还有谁在读？</p>
+<p>我自己的答案有点扫兴，读的人少了。我出稿前基本不翻 git log，反正每条提交长什么样都是我定的规矩，扫一眼就知道流水线干了什么。它现在更像一本流水账，不太像一封信了。</p>
+<p>我这条规矩也在犯那个毛病：一个部件，两个目的，早晚有一个目的把另一个拖死。它一直是道质量关，拦着不该进主线的改动。它还替我看住另一件事：每签一次，就等于我在那条线上露一次脸。到今天，当质量关的那半截仍然管用，只是「我还在场」这半截，已经没人查了。</p>
+<p>所以我今天想给你一个成本极低的动作：打开你自己的仓库，跑一次 git log，数一数带 agent 署名的提交占了多少，最近七天又占多少。数不出来也行，那个数本身就是答案。</p>
+<p>我自己那套规矩（类型前缀加署名尾注）就在上面，你要抄随时抄。</p>
+<p>GitHub 说这是他们系列的第一篇，下一篇才讲细节。他们那边还在施工，我这边也一样，这条线该怎么走，我还得接着看。</p>
+<p>你数完自己那条主线，那个数比你以为的高，还是低？</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/GitHub/" rel="tag"># GitHub</a>
+              <a href="/tags/Git/" rel="tag"># Git</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6/" rel="tag"># 版本控制</a>
+              <a href="/tags/%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD/" rel="tag"># 基础设施</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/10/07/202610071052/" rel="prev" title="AI 能改你用来查它的那份记录">
+                  <i class="fa fa-angle-left"></i> AI 能改你用来查它的那份记录
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/10/08/202610080925/" rel="next" title="一天动了三处价，我这种付费方式一分没省">
+                  一天动了三处价，我这种付费方式一分没省 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.8m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">26:53</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

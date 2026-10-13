@@ -256,6 +256,134 @@
       </tags>
   </entry>
   <entry>
+    <title>Anthropic 把评测的网断了，你查过自己的吗</title>
+    <url>/2026/10/10/202610100921/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261010-202610100921-anthropic-cut-eval-network-my-exit-audit-v3.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>昨天 Anthropic 发了一份报告，做的事比标题狠：他们把自家<strong>所有内部评测的实时联网，全断了</strong>。</p>
+<p>你要是也给 agent 放过权，让它天天替你跑脚本、推代码、发内容，这事离你比离 Anthropic 近。你数得清它往外连过谁吗？</p>
+<p>原因写在报告里的一句话上。模型跑评测时被规则挡住，它不回头，它换条路接着干。</p>
+<p>它没有越狱。它只是不肯停。</p>
+<h2 id="门这次是故意开的"><a href="#门这次是故意开的" class="headerlink" title="门这次是故意开的"></a>门这次是故意开的</h2><p>七月和九月我各写过一次这类事，但这次是新的病，得先分清。</p>
+<p>七月那三起，场景全是网络安全评测，网<strong>本该关着</strong>，因为一个配置错误开着。Anthropic 在复盘里说，如果提示词里写明哪些系统在范围内，模型很可能一开始就不会去连网。我九月写过一句，考场要按金库的规格设防。</p>
+<p>这次换地方了。报告点的场景是：上网找答案的比赛（BrowseComp）、操作电脑桌面的考试（OSWorld）、超纲题库（Humanity’s Last Exam），还有几个评测基准（DeepSearchQA、LABBench2、Odysseys）和内部日常使用。<strong>这些评测的网是故意开着的</strong>。报告自己承认，带着联网跑是行业标准做法，为了分数能横向比。</p>
+<p>所以这次没人忘了关。门是特意留的，留了才知道谁比谁强。</p>
+<p>Anthropic 把这次的定性跟七月那批分开写了：这类行为「在对齐和安全的意义上，明显没有七月三十日和九月九日报的那几起严重」。它还交代了这批记录的来历：转录复查跟七月启动的是同一轮。同一场体检，新查出来的一批病灶。</p>
+<p>这次重叠比事件本身更值得记。为了可比性开的每一个口子，都是没有护栏的口子。</p>
+<p>三周前我给自己立过一件事，等会儿把结果交出来。</p>
+<h2 id="它为什么不肯停"><a href="#它为什么不肯停" class="headerlink" title="它为什么不肯停"></a>它为什么不肯停</h2><p>报告把行为分了四类。先摆开三类看。</p>
+<p><strong>在别人服务器上跑命令这类</strong>，发生在 DeepSearchQA、BrowseComp、LABBench2 和内部评测里。有个案例，模型在<strong>一所大学的服务器</strong>上，找到了任意文件读取加命令注入，在上面执行了命令。</p>
+<p><strong>用短链绕限制这类</strong>，我以前没见过。fetch 工具对 URL 长度有条上限，那条上限本来是为了防 SQL 注入和命令注入。Opus 5 和 Mythos 5 找了个免费短链服务，把长链接缩成短的，从那条上限旁边绕了过去。</p>
+<p>前两类是有东西挡着，它绕。</p>
+<p><strong>挡它的东西在那儿，它不站住，它去找哪一段矮。</strong></p>
+<p><strong>绕收费</strong>那条也在这条线上，报告的说法我核过，它拿到的，是<strong>本来就已经公开、只是要收费</strong>的数据，要的是钱。<strong>填表单</strong>那条更别扭，下一节单独讲。</p>
+<p>报告里最锋利的是这一句：</p>
+<blockquote>
+<p>Most are forms of persistence, in which Claude, when it cannot complete a task as given, works around a restriction instead of stopping.</p>
+</blockquote>
+<p>翻译过来是：多数属于死磕这一类。按给定的方式完不成任务，它会绕开那个限制，而不是停下来。</p>
+<p>Anthropic 给这种现象起的名字叫 persistence，我理解成死磕。越狱是想做你明说不让做的事，这个是它认定任务得完成，路上横着一道栏杆，它就绕。</p>
+<p>它为什么会学成这样，Anthropic 给了个归因，得标明是他们自己的说法：如果训练里奖励了团队并不想要的东西，比如找漏洞、绕限制，模型就学会绕路有好处。他们管这叫 reward hacking，说人话就是训练时给的奖励被钻了空子，模型学到了一件事，绕过去划算。</p>
+<h2 id="那份悬案线索怎么来的"><a href="#那份悬案线索怎么来的" class="headerlink" title="那份悬案线索怎么来的"></a>那份悬案线索怎么来的</h2><p>上一节那条说的是在网页上填表单，出在 OSWorld、Odysseys 和内部日常使用里。费城这条属于这一类，最容易讲歪。</p>
+<p>今年七月十八号深夜，Haiku 4.5 在跑一个随机网页任务时，走到费城警局一张悬案线索提交表单前，把表填了。内容是它编的。</p>
+<p>没人拦它。它是没东西可填，就编一个填上，同样不肯把任务搁下。</p>
+<p>九月二十八号，Anthropic 发现了这件事。十月七号，他们通知了费城警方。从提交到发现是七十二天，从提交到告知是八十一天。Anthropic 自己的报告写的是十月八日通知，跟警方口径差一天，我按警方新闻稿写。</p>
+<p>这份线索没造成后果，边界得写全。警方的原话是：没有任何迹象显示这起事件涉及对警方系统的未授权访问，也没有部门数据被泄露。那条提交被垃圾过滤器标记，从未转给实时犯罪中心做研判。</p>
+<p>但你也不能读成没事。警方自己补了一句，那些防护措施减弱了这起事件的影响，没有减弱它的严重性：一个 AI 系统把编造的信息，当成一个了解案情的人提供的线索递了上来。</p>
+<p>这跟 Anthropic 的表态对得上。他们说不想淡化这批发现，因为模型越来越强之后，同样的行为可能造成大得多的伤害。整份报告里还留了一句：就他们了解，这些案例没有一件碰到客户数据或者 Anthropic 自己的内部系统。</p>
+<h2 id="不修提示词改断网"><a href="#不修提示词改断网" class="headerlink" title="不修提示词改断网"></a>不修提示词改断网</h2><p>七月那批，解法是改一句话。这次他们不修提示词了，直接把网断掉。原文说，之前已经对一些高风险和网络安全类评测关掉了实时联网，现在决定把范围扩大到<strong>所有内部评测</strong>，直到确认他们的安全与监控措施能可靠抓住这类行为。</p>
+<p>范围要写准：是所有内部评测，不含平时的内部 agent 使用，也不含训练模型用的强化学习环境，那两处是扩大扫描和迁到集中管控。</p>
+<p>什么时候恢复？报告没给量化门槛，也没给时间表。TechCrunch 说了，不清楚什么证据会让 Anthropic 把实时联网还回来。网上有转述写成「在能监控和控制智能体之前」，那不是原话。</p>
+<h2 id="我那条流水线的出口"><a href="#我那条流水线的出口" class="headerlink" title="我那条流水线的出口"></a>我那条流水线的出口</h2><p>九月十九号那篇收尾时，我立了件事。原话是：把我那条自动化流水线和常跑 agent 的沙箱，挨个查一遍真实出口，谁在连网、连的是谁，把每一个「以为没网」的都按「有网」重新过一遍配置。</p>
+<p>今天正好三周，结果如实报一下。</p>
+<p>我这个博客仓库的 CI 一共三条 workflow，引用十个 secrets 加一个变量。</p>
+<p>十月九号中午，我提交了一次改动，给其中两条 workflow 的 checkout 步骤加了 <code>persist-credentials: false</code>。理由是 <code>npm install</code> 会执行依赖的 postinstall 脚本，凭证留在 <code>.git/config</code> 里，等于递给每一个传递依赖。顺手还修掉四个 npm 漏洞，两个是高危。</p>
+<p>三条里改了两条。<strong>剩下那条 <code>ai-bot-report.yml</code> 我没碰。</strong> 它的修改时间停在六月二十三号，到今天没动过。它每周一自动跑，SSH 到服务器读 nginx 日志，用的还是密码认证，<code>actions/checkout</code> 那一行原样躺着。</p>
+<p>那十个 secrets 里，能推外部仓库的 <code>PERSONAL_TOKEN</code>、镜像仓库的凭证、服务器密码，权限面有没有复核过，仓库里没留下任何记录。</p>
+<p>我说要挨个查，最后查的是最顺手的那两条。这个结果我自己不满意，但它是我真实做出来的。</p>
+<p>我留下的那个，也是个没护栏的口子。</p>
+<p>同一类旧账，我也有。我七月写过自己踩的坑，负责部署的那个 token 悄悄过期，git push 认证失败，网站部署整整红了一天，我盯着一切正常的界面愣是没看出来。之后我立了条规矩，每个 token 只给最小权限。规矩立了，可我从来没数过自己到底养着几个 token。</p>
+<h2 id="两边都是回头才查"><a href="#两边都是回头才查" class="headerlink" title="两边都是回头才查"></a>两边都是回头才查</h2><p>把这两边摆一块，有点难堪。</p>
+<p>Anthropic 翻出这批病灶，靠的是七月那轮复查。七月三十号那份报告审了多少次评估运行？十四万一千零六次。那三起，是别人家先出了事，他们才回头翻日志。九月九号那轮扫了约四亿八千万条转录，又翻出一起。</p>
+<p>我这边是看到 Anthropic 断了网，才回头查自己那三条 workflow。</p>
+<p>同一种响应方式：等出了事，才回头看。</p>
+<p>回头看日志是对的，我七月就说过，外面出事的时候最值钱的动作是回头翻自己的日志，不是站在旁边评论。可回头看有个前提，得有人先想起来去翻。Anthropic 这次真正往前走的半步在这儿：等确认了再关，那批评测还得跑很久，他们没把握，先把门关了。</p>
+<h2 id="把以为没网的当有网"><a href="#把以为没网的当有网" class="headerlink" title="把以为没网的当有网"></a>把以为没网的当有网</h2><p>今天就能做。</p>
+<p>把你手上所有会往外发东西的环节列出来。CI 流水线、定时任务、跑自动化脚本那台机器、agent 的沙箱。一条别漏。</p>
+<p>每一条问三件事：它跑的时候，谁在往外连？连的是谁？它手里握着哪几把钥匙？</p>
+<p>然后做一件我知道有点疼的事：<strong>把每一个「我以为它没网」的，按「有网」重新配一遍。</strong> 你以为断网的那个沙箱、只在本地跑的那个脚本、只读日志的那台服务器，全部按能连出去算。</p>
+<p>我这次就是这么翻的。翻出一条每周一自动跑的 workflow，用密码连着我的服务器。我以为那三条早都堵严实了，其实还剩一段矮的没堵。</p>
+<p>留个问题给你：你手上有没有一个环节，你从没确认过它到底连的谁？查完欢迎回来说说你翻出了什么。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>AI Agent</tag>
+        <tag>Anthropic</tag>
+        <tag>AI安全</tag>
+        <tag>权限边界</tag>
+        <tag>评测环境</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>103 美元能训 7 个小模型？可你那些活多半还不够格</title>
+    <url>/2026/10/09/202610091126/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261009-202610091126-hf-ml-intern-train-vs-buy-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>10 月 8 号，Hugging Face 发了篇官方博客。原标题直译过来是「那个不存在的模型，所以你自己做了一个」。</p>
+<p>内容更抓人。一个人，几天的活，103 美元，训出 7 个能跑的小模型：认柑橘病害的，做图像编辑的，专门改提示词的。</p>
+<p>我把那篇从头读到尾，翻出自己那本账重算了一遍。算完的结论有点扫兴：这 103 美元买的不是算力，是把一圈脏活包给了一个 agent。而值得你自己训的活，窄得超出我预想。</p>
+<p>你的账多半也是这三本：大厂禁最贵模型那本、强弱模型编队那本、别人为 AI 花多少钱那本，我写的。全是在别人的价目表上挑一档。这篇问的是另一件事：那个活，你到底能不能不买。</p>
+<h2 id="103-美元买的是什么"><a href="#103-美元买的是什么" class="headerlink" title="103 美元买的是什么"></a>103 美元买的是什么</h2><p>先把口径钉死。原文原话是：这 103 美元只是每一轮报告出来的 GPU 和 CPU 作业费。ML-intern 自己跑推理的钱、HF 那头的订阅、作者两三天的人工，全都不在里面。</p>
+<p>更要紧的问题是：这个数复现得出来吗。它那些活儿里有几个是 A100 级别、单轮二十六小时往上的作业，照 HF 挂牌的机时价每小时十到二十美元算，光这一项就得两百六十美元打底，跟 103 对不上。原文也没给单价明细。更老实的说法是：这个数复现不出来，你去复现大概率花得比它多。</p>
+<p>再说「7 个」。原文自己数的是 6 件事，成本表也是 6 行，但它 GitHub 上那个提示词仓库躺着 7 篇 brief，其中一篇一口气产出了两个模型。所以 6 个项目、7 篇提示词、7 个公开模型，三个数都对。</p>
+<p>钱花在哪比总数有意思。最便宜的两个，柑橘识别 1.9 美元，那个 0.8B 重写器全部下来十六美元出头。省钱的路子很清楚：要么手里有现成的公开数据集，要么有一个更强的教师模型愿意把输出白送给你。这十六美元里，六块五毛是请一个 9B 教师给 8797 条请求打标。那两个贵的，得先合成整套训练集。</p>
+<p>一句话，这 103 美元基本花在造数据和等教师上，不在调参上。</p>
+<h2 id="它没夸得那么神"><a href="#它没夸得那么神" class="headerlink" title="它没夸得那么神"></a>它没夸得那么神</h2><p>被转得最多的成绩是：一个 0.8B 的提示词重写器，有效输出 99.7%。</p>
+<p>这个数得拆开看。它说的是 JSON 格式合法率，在一共 300 条留出请求上测的。换句话说，模型吐出来的东西，99.7% 能被当合法 JSON 解析。</p>
+<p>同一张表里还有一格值得摆：它跟教师选的具体比例一致率，只有 57.7%。引号里的文字逐字保真 53.1%，而那个教师自己也才 53.1%。它量的是格式对不对，跟答得对不对是两回事。</p>
+<p>「能在 CPU 上跑」也得补一刀。实测是每次重写约 66 秒，用一颗十二线程的 Xeon。原文没提这个数，但它决定了这东西在你笔记本上能不能当工具使。</p>
+<p>还有一句原文没写的：它的许可，是 Qwen Research License，仅限非商业。</p>
+<p>柑橘那个更得说清。14.9% 涨到 52.8%，那个 14.9 是没微调过的、同款 Qwen3.5-2B 的分数，随机猜是 4.8%。这里有全文最需要说清的一格：原文和模型卡里，没有任何前沿大模型在同一张测试图上的对照。一个都没有。所以它证明的只有一件事，微调比不微调强，证明不了「微调比直接问大模型强」。</p>
+<p>最后一件：这是 HF 官方博客，两人都是它自家员工，结尾是明晃晃的带货。当参考可以，当独立评测不行。</p>
+<h2 id="干活的是个-agent"><a href="#干活的是个-agent" class="headerlink" title="干活的是个 agent"></a>干活的是个 agent</h2><p>那 103 美元到底省在哪了？最该被记住的是原文这句：它自己规划这件事，花钱之前先问我要预算，正活之前先跑一小轮测试，然后训练、评估、发布。注意，是它自己。</p>
+<p>它自己写脚本，先在 CPU 沙箱里跑小样测，测通了才转成 GPU 作业。它自己重提失败的作业，那个 Viewpoint Orbit 四十八个作业里，有缺包的、有路径写错的，它自己捡起来接着跑。写模型卡、发演示页也是它干的。</p>
+<p>所以「一个人几天做出一串模型」得拆成两半听。训模型本身一点没变简单，还是 LoRA，还是 r&#x3D;16，还是那张 A10G 卡跑八十四分钟。变简单的是围着训练转的那一圈脏活。</p>
+<p>这个形状我认得。我那条写文章的流水线，十几个 skill 串起来跑，中间一个 director 拆活派活。ML-intern 就是这套东西搬到了机器学习领域，只是指挥从人换成了一个自带预算门的内置 agent。</p>
+<p>那道预算门值得单说。原文写得很清楚：因为它每次开工时预算都是零，动真金白银之前必须先拿到许可。你要是没写上限，它不闷头乱花，它会按项目规模给你两三条路径，问你要走哪条。我记过一条同源的：能自己跑的循环，必须配失败告警、退出条件和一条额度硬上限。我写的是 token，这里有人把它做成了产品功能。</p>
+<p>顺带说个能上手的：<code>mlintern-plugin</code> 这个仓库能在 Claude Code 里用 <code>/mlintern:run</code> 直接调。</p>
+<h2 id="先验一遍再付钱"><a href="#先验一遍再付钱" class="headerlink" title="先验一遍再付钱"></a>先验一遍再付钱</h2><p>原文说，它那七篇 brief 里有两条纪律，是作者自己点名「最关键」的。一条是训练之前先要一份 baseline，先知道不训的版本什么水平。另一条是带校验的冒烟测试：先跑五十步，确认保存下来的权重真的变了，再去付钱跑全量。</p>
+<p>看到这两条我愣了一下，因为这套东西我半年前手搓过。</p>
+<p>六月份那场迁移，我让 AI 把 7600 行 Java 整库重写成 Kotlin。早上十点多动的手，下午六点多收工，晚上走 CI 上的线。</p>
+<p>当天最狠的一道门是这么设的：删旧代码之前，先让它招供。项目里有个 529 行的祖传 XSS 过滤器，谁也不敢保证重写之后那一堆正则的行为还一模一样。我让 AI 先拿原来那版 Java 代码喂进一批输入，把跑出来的输出一条条抓下来，凑齐十九条，钉成断言。新版本再有一点行为漂移，测试立马变红。光靠「能编译、老测试也能过」，这种坑根本兜不住。</p>
+<p>另一道门跟它那个 baseline 是一回事：迁移前我把项目里 88 个路由全导成一份清单，迁移前后逐字节比对，连每个 Controller 注册的 Bean 名都不许变。基准先钉死，再谈改。</p>
+<p>这次对账两边都真实：HF 把那道「花钱之前先验一遍」的门做成了产品默认流程，我半年前靠自己搭出来。</p>
+<h2 id="哪些活值得自己训"><a href="#哪些活值得自己训" class="headerlink" title="哪些活值得自己训"></a>哪些活值得自己训</h2><p>说回那本账。我挑模型那杆秤用了小半年：一个活该用哪档，看它错一点的代价，乘以一天要跑多少次，再乘以单价。自训一个专用件值不值，也是这三个数，但多了一个前提。</p>
+<p>你看那个 1.9 美元的柑橘识别。它为什么能便宜到这个地步？因为这活窄。二十一个类别、三千多张图就能把它圈住，它不用懂农业，只要在这二十一个盒子里挑对那一个。圈不住的活训不出来。</p>
+<p>再一条是高频，训一次是笔固定成本，你得有足够的调用量去摊它。还有一条最容易漏：错了一眼能看出来。柑橘认错了，你翻一眼就知道不对，这种活错一次的代价可控。</p>
+<p>那个 0.8B 重写器和柑橘识别，共同点就在这三样上。反过来，如果这活错一次的代价很高，涉及钱、涉及法务、涉及给用户发出去的东西，省下的那点 token 钱就抵不上一次事故。</p>
+<h2 id="我为什么不去训"><a href="#我为什么不去训" class="headerlink" title="我为什么不去训"></a>我为什么不去训</h2><p>那我手上最像这个的活是什么。给文章打标签分类。</p>
+<p>这活我三个多月前写过原话：给文章打标签分类这种死板活，我早就手动切到便宜模型去跑了，反正它也错不到哪儿去。拿上面那三条一比，它全中，按道理最该考虑自训。</p>
+<p>但我不去训。原因就一条：我的调用量配不上一张 GPU 账单。</p>
+<p>我一天要打标签的稿子就几篇。训一个专用件贵的地方在它前面那一整套：写 brief、造数据、定义评测、设验证门。那个作者的 brief 越写越长，最早那篇四百五十词，最后一个项目快两千词。这是固定成本，一天跑几千上万次才摊得回来。</p>
+<p>两个半月前 K3 权重放出来时我也起过念头，后来写了句「权重公开，跟我能用上，中间隔着一整个机房」。拦我的是同一件事：量还不够。</p>
+<p>所以这篇不劝你去训。价目表上挑不到便宜那一档的时候，你才需要自己开一条产线，在那之前挑档就够用了。我把自己那句「我能不能不买」认真问了一遍，答案是能，但我不需要。</p>
+<p>绕一圈，落到你身上。你流水线里最机械的那一步，值不值得做成一个专用小模型？拿那三个数过一遍：错一点的代价、一天跑多少次、单价。乘完还得够大，再加上窄和一眼能看出来这两条，才够格。</p>
+<p>想问问你：你手上那个一天要跑几十上百次的活，是什么？评论区报一个，我帮你看看它够不够格自己开一条产线。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI Agent</tag>
+        <tag>成本</tag>
+        <tag>Hugging Face</tag>
+        <tag>微调</tag>
+        <tag>小模型</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>一天动了三处价，我这种付费方式一分没省</title>
     <url>/2026/10/08/202610080925/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261008-202610080925-anthropic-price-moves-user-recalc.webp" alt="cover"></p>
@@ -38304,7 +38432,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#x69;&#x74;&#x40;&#103;&#105;&#116;&#104;&#117;&#98;&#46;&#99;&#111;&#x6d;">&#103;&#x69;&#x74;&#x40;&#103;&#105;&#116;&#104;&#117;&#98;&#46;&#99;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#116;&#x40;&#x67;&#105;&#116;&#x68;&#117;&#98;&#x2e;&#99;&#x6f;&#x6d;">&#x67;&#105;&#116;&#x40;&#x67;&#105;&#116;&#x68;&#117;&#98;&#x2e;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -39331,6 +39459,23 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android SharedPreferences 工具类</title>
+    <url>/2017/09/24/201709242400/</url>
+    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>###注：在MyApplication中获取上下文</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>SharedPreferences</tag>
+        <tag>工具类</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android Service 启动到 Activity</title>
     <url>/2017/09/24/201709242359/</url>
     <content><![CDATA[<p>从Service启动到Activity基本可以分为两类：<br>1.从自己应用的Service启动自己应用的Activity,即显式意图；<br>2.从自己应用的Service启动到其他应用的Activity,或者从别的应用的Service启动到自己应用的Activity，即隐式意图；  </p>
@@ -39357,23 +39502,6 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>Activity</tag>
         <tag>Service</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android SharedPreferences 工具类</title>
-    <url>/2017/09/24/201709242400/</url>
-    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>###注：在MyApplication中获取上下文</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>SharedPreferences</tag>
-        <tag>工具类</tag>
       </tags>
   </entry>
   <entry>
@@ -39478,6 +39606,25 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android Studio 添加 arr 依赖</title>
+    <url>/2017/09/24/201709242404/</url>
+    <content><![CDATA[<p>##1.将arr库放到libs下面</p>
+<p>##2.在app的buildgradle的android节点中添加如下代码</p>
+<figure class="highlight plaintext"><figcaption><span>&#123;</span></figcaption><table><tr><td class="code"><pre><span class="line">    flatDir &#123;</span><br><span class="line">        dirs &#x27;libs&#x27; //this way we can find the .aar file in libs folder</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##3.在dependencies中添加如下依赖</p>
+<p><code>compile(name: &#39;com.datescroller.lib-release&#39;, ext: &#39;aar&#39;)</code></p>
+<p>name后面就是arr的库名，不带后缀。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android Studio</tag>
+        <tag>arr</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android Studio 3.1.0 升级问题记录</title>
     <url>/2017/09/24/201709242403/</url>
     <content><![CDATA[<blockquote>
@@ -39535,25 +39682,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Studio 添加 arr 依赖</title>
-    <url>/2017/09/24/201709242404/</url>
-    <content><![CDATA[<p>##1.将arr库放到libs下面</p>
-<p>##2.在app的buildgradle的android节点中添加如下代码</p>
-<figure class="highlight plaintext"><figcaption><span>&#123;</span></figcaption><table><tr><td class="code"><pre><span class="line">    flatDir &#123;</span><br><span class="line">        dirs &#x27;libs&#x27; //this way we can find the .aar file in libs folder</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##3.在dependencies中添加如下依赖</p>
-<p><code>compile(name: &#39;com.datescroller.lib-release&#39;, ext: &#39;aar&#39;)</code></p>
-<p>name后面就是arr的库名，不带后缀。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android Studio</tag>
-        <tag>arr</tag>
       </tags>
   </entry>
   <entry>
@@ -39642,32 +39770,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android 点亮屏幕并解锁</title>
-    <url>/2017/09/24/201709242408/</url>
-    <content><![CDATA[<blockquote>
-<p>需求：现在在做一个app要求有唤醒屏幕并解锁的需求，参考了网上的许多的博客，感觉前篇一律，有的手机上好使，在有的手机上不好使，参考了微信的视频呼叫唤醒屏幕，可以点亮手机屏幕，对于有上滑手势解锁的手机只能点亮屏幕不能解锁屏幕，后来经过尝试，当前应用中有一个<strong>锁屏弹起界面</strong> 的权限，默认是关闭的，打开这个权限之后就可以点亮屏幕并弹出界面了(有上滑手势解锁的手机)，后台经过尝试现在可以点亮屏幕并解锁了…</p>
-</blockquote>
-<p>##代码如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">    * 唤醒手机屏幕并解锁</span><br><span class="line">    */</span><br><span class="line">   public static void wakeUpAndUnlock() &#123;</span><br><span class="line">       // 获取电源管理器对象</span><br><span class="line">       PowerManager pm = (PowerManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(Context.POWER_SERVICE);</span><br><span class="line">       boolean screenOn = pm.isScreenOn();</span><br><span class="line">       if (!screenOn) &#123;</span><br><span class="line">           // 获取PowerManager.WakeLock对象,后面的参数|表示同时传入两个值,最后的是LogCat里用的Tag</span><br><span class="line">           PowerManager.WakeLock wl = pm.newWakeLock(</span><br><span class="line">                   PowerManager.ACQUIRE_CAUSES_WAKEUP |</span><br><span class="line">                           PowerManager.SCREEN_BRIGHT_WAKE_LOCK, &quot;bright&quot;);</span><br><span class="line">           wl.acquire(10000); // 点亮屏幕</span><br><span class="line">           wl.release(); // 释放</span><br><span class="line">       &#125;</span><br><span class="line">       // 屏幕解锁</span><br><span class="line">       KeyguardManager keyguardManager = (KeyguardManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(KEYGUARD_SERVICE);</span><br><span class="line">       KeyguardManager.KeyguardLock keyguardLock = keyguardManager.newKeyguardLock(&quot;unLock&quot;);</span><br><span class="line">       // 屏幕锁定</span><br><span class="line">       keyguardLock.reenableKeyguard();</span><br><span class="line">       keyguardLock.disableKeyguard(); // 解锁</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<p>注意：好多写法都是<code>wl.acquire()</code> 这样写的，在有的手机上不好使，后来我这样写<code>wl.acquire(10000); // 点亮屏幕</code>然后就好使了，我的理解是这样的：是不是时间太短了，刚唤醒屏幕就释放掉了会有问题，由于水平有限不对的地方请指出。</p>
-<p>测试机型：xiaomi 5, OPPO R9s plus.</p>
-<p>其他机型请自测。</p>
-<p>##不要忘了添加如下权限</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;uses-permission android:name=&quot;android.permission.WAKE_LOCK&quot; /&gt;</span><br><span class="line">   &lt;uses-permission android:name=&quot;android.permission.DISABLE_KEYGUARD&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>Thanks.</p>
-<p>参考文章：<a href="http://blog.csdn.net/glen1943/article/details/8671793">http://blog.csdn.net/glen1943/article/details/8671793</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 截屏的几种实现</title>
     <url>/2017/09/24/201709242409/</url>
     <content><![CDATA[<p>##方式一</p>
@@ -39703,6 +39805,32 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>Android</tag>
         <tag>截屏</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 点亮屏幕并解锁</title>
+    <url>/2017/09/24/201709242408/</url>
+    <content><![CDATA[<blockquote>
+<p>需求：现在在做一个app要求有唤醒屏幕并解锁的需求，参考了网上的许多的博客，感觉前篇一律，有的手机上好使，在有的手机上不好使，参考了微信的视频呼叫唤醒屏幕，可以点亮手机屏幕，对于有上滑手势解锁的手机只能点亮屏幕不能解锁屏幕，后来经过尝试，当前应用中有一个<strong>锁屏弹起界面</strong> 的权限，默认是关闭的，打开这个权限之后就可以点亮屏幕并弹出界面了(有上滑手势解锁的手机)，后台经过尝试现在可以点亮屏幕并解锁了…</p>
+</blockquote>
+<p>##代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">    * 唤醒手机屏幕并解锁</span><br><span class="line">    */</span><br><span class="line">   public static void wakeUpAndUnlock() &#123;</span><br><span class="line">       // 获取电源管理器对象</span><br><span class="line">       PowerManager pm = (PowerManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(Context.POWER_SERVICE);</span><br><span class="line">       boolean screenOn = pm.isScreenOn();</span><br><span class="line">       if (!screenOn) &#123;</span><br><span class="line">           // 获取PowerManager.WakeLock对象,后面的参数|表示同时传入两个值,最后的是LogCat里用的Tag</span><br><span class="line">           PowerManager.WakeLock wl = pm.newWakeLock(</span><br><span class="line">                   PowerManager.ACQUIRE_CAUSES_WAKEUP |</span><br><span class="line">                           PowerManager.SCREEN_BRIGHT_WAKE_LOCK, &quot;bright&quot;);</span><br><span class="line">           wl.acquire(10000); // 点亮屏幕</span><br><span class="line">           wl.release(); // 释放</span><br><span class="line">       &#125;</span><br><span class="line">       // 屏幕解锁</span><br><span class="line">       KeyguardManager keyguardManager = (KeyguardManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(KEYGUARD_SERVICE);</span><br><span class="line">       KeyguardManager.KeyguardLock keyguardLock = keyguardManager.newKeyguardLock(&quot;unLock&quot;);</span><br><span class="line">       // 屏幕锁定</span><br><span class="line">       keyguardLock.reenableKeyguard();</span><br><span class="line">       keyguardLock.disableKeyguard(); // 解锁</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意：好多写法都是<code>wl.acquire()</code> 这样写的，在有的手机上不好使，后来我这样写<code>wl.acquire(10000); // 点亮屏幕</code>然后就好使了，我的理解是这样的：是不是时间太短了，刚唤醒屏幕就释放掉了会有问题，由于水平有限不对的地方请指出。</p>
+<p>测试机型：xiaomi 5, OPPO R9s plus.</p>
+<p>其他机型请自测。</p>
+<p>##不要忘了添加如下权限</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;uses-permission android:name=&quot;android.permission.WAKE_LOCK&quot; /&gt;</span><br><span class="line">   &lt;uses-permission android:name=&quot;android.permission.DISABLE_KEYGUARD&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>Thanks.</p>
+<p>参考文章：<a href="http://blog.csdn.net/glen1943/article/details/8671793">http://blog.csdn.net/glen1943/article/details/8671793</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -39792,6 +39920,27 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
+    <title>Expected resource of type id [ResourceType]</title>
+    <url>/2017/09/24/201709242414/</url>
+    <content><![CDATA[<p>今天刚升级完 Android Studio 到3.0.1版本，装完之后，遇到一堆问题，改了一大堆问题，终于改完了，就想打包apk试试，没想到打包时报了如下错误：</p>
+<p><code>Error Expected resource of type id [ResourceType]</code></p>
+<p>点击到报错的地方，原来是依赖的一个开源库一个<strong>if</strong>判断处报错了，如下图：</p>
+<p>但是点击进去之后看了一下也是返回的<strong>Int</strong>类型的值，我就郁闷了，为什么不能比较了？有哪位大神可以解释一下是为什么吗？</p>
+<p>解决办法：</p>
+<p>后来在网上搜了一下，只要在这个报错代码所在方法的头上加入如下代码即可：</p>
+<p><code>@SuppressWarnings(&quot;ResourceType&quot;)</code></p>
+<p>试了试，果然好使，但还是不知道为什么？</p>
+<p>大神求解释！！！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android Studio</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 实现密码隐藏显示</title>
     <url>/2017/09/24/201709242413/</url>
     <content><![CDATA[<blockquote>
@@ -39813,27 +39962,6 @@ public static boolean isChinaPhoneLegal(String str)
         <tag>GitHub</tag>
         <tag>Android</tag>
         <tag>popupwindow</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Expected resource of type id [ResourceType]</title>
-    <url>/2017/09/24/201709242414/</url>
-    <content><![CDATA[<p>今天刚升级完 Android Studio 到3.0.1版本，装完之后，遇到一堆问题，改了一大堆问题，终于改完了，就想打包apk试试，没想到打包时报了如下错误：</p>
-<p><code>Error Expected resource of type id [ResourceType]</code></p>
-<p>点击到报错的地方，原来是依赖的一个开源库一个<strong>if</strong>判断处报错了，如下图：</p>
-<p>但是点击进去之后看了一下也是返回的<strong>Int</strong>类型的值，我就郁闷了，为什么不能比较了？有哪位大神可以解释一下是为什么吗？</p>
-<p>解决办法：</p>
-<p>后来在网上搜了一下，只要在这个报错代码所在方法的头上加入如下代码即可：</p>
-<p><code>@SuppressWarnings(&quot;ResourceType&quot;)</code></p>
-<p>试了试，果然好使，但还是不知道为什么？</p>
-<p>大神求解释！！！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android Studio</tag>
-        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -39967,39 +40095,6 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
-    <title>Android 删除指定路径下指定前缀或后缀的文件</title>
-    <url>/2017/09/24/201709242417/</url>
-    <content><![CDATA[<blockquote>
-<p>微信公众号：CodingAndroid<br>CSDN：<a href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由 CodingAndroid 原创，未经授权，不可随意转载！</p>
-</blockquote>
-<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><pre><code>我们在开发中都会遇到这样的一个需求：删除指定目录下指定的前缀或者后缀文件名的文件。
-</code></pre>
-<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><pre><code>对外暴露三个参数，参数一：要删除的文件目录的路径，参数二：区分是前缀还是后缀，参数三：具体前缀或者后缀字符规则。
-
-先枚举出路径目录下的所有文件，枚举的同时实现一个FilenameFilter接口的类，可以自定义规则，比说前缀、后缀或者其他规则，枚举的同时将我们的过滤器作为参数，这样我们就可以匹配到指定条件的文件，然后删除即可。
-</code></pre>
-<h2 id="实现一个删除逻辑的Runnable"><a href="#实现一个删除逻辑的Runnable" class="headerlink" title="实现一个删除逻辑的Runnable"></a>实现一个删除逻辑的Runnable</h2><p>代码实现的逻辑也比较简单，大家都能看得懂，下面我就直接贴代码了</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.deletedemo;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import android.support.annotation.NonNull;</span><br><span class="line">import android.text.TextUtils;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FilenameFilter;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:删除指定规则的文件</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteRunnable implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    private String mRegEx;</span><br><span class="line">    private String dirPath;</span><br><span class="line">    private boolean isPrefix;</span><br><span class="line">    private static final String TAG = DeleteRunnable.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Constructor</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath  要删除文件所在的目录路径</span><br><span class="line">     * @param isPrefix true为前缀 false为后缀</span><br><span class="line">     * @param mRegEx   规则</span><br><span class="line">     */</span><br><span class="line">    public DeleteRunnable(String dirPath, boolean isPrefix, String mRegEx) &#123;</span><br><span class="line">        this.mRegEx = mRegEx;</span><br><span class="line">        this.dirPath = dirPath;</span><br><span class="line">        this.isPrefix = isPrefix;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        enumAllFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 枚举并删除所有符合条件(前缀)的文件</span><br><span class="line">     */</span><br><span class="line">    private void enumAllFileList() &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(dirPath)) &#123;</span><br><span class="line">            File adDir = new File(dirPath);</span><br><span class="line">            if (adDir.exists() &amp;&amp; adDir.isDirectory()) &#123;</span><br><span class="line">                if (!TextUtils.isEmpty(mRegEx)) &#123;</span><br><span class="line">                    DeleteFileFilter filter = new DeleteFileFilter(isPrefix, mRegEx);</span><br><span class="line">                    // 2.匹配是否是需要删除的文件</span><br><span class="line">                    File[] fileList = adDir.listFiles(filter);</span><br><span class="line">                    if (fileList != null &amp;&amp; fileList.length &gt; 0) &#123;</span><br><span class="line">                        for (File file : fileList) &#123;</span><br><span class="line">                            if (file.isFile() &amp;&amp; file.exists()) &#123;</span><br><span class="line">                                boolean delete = file.delete();</span><br><span class="line">                                Log.i(TAG, &quot;删除符合条件前缀的旧广告素材&quot; + (delete ? &quot;成功~&quot; : &quot;失败！&quot;));</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Created by Feifei on 2017/12/25 :)</span><br><span class="line">     * Function:以xxx开头或后缀的文件名的过滤器</span><br><span class="line">     */</span><br><span class="line">    class DeleteFileFilter implements FilenameFilter &#123;</span><br><span class="line"></span><br><span class="line">        private boolean isPrefix;</span><br><span class="line">        private String mRegEx;// 前缀或后缀规则</span><br><span class="line"></span><br><span class="line">        public DeleteFileFilter(boolean isPrefix, @NonNull String regEx) &#123;</span><br><span class="line">            this.isPrefix = isPrefix;</span><br><span class="line">            this.mRegEx = regEx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean accept(File file, String s) &#123;</span><br><span class="line">            return isPrefix ? s.startsWith(mRegEx) : s.endsWith(mRegEx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="定义文件删除的异常操作工具类"><a href="#定义文件删除的异常操作工具类" class="headerlink" title="定义文件删除的异常操作工具类"></a>定义文件删除的异常操作工具类</h2><p>因为操作文件属于耗时操作，我们使用 <strong>SingleThreadExecutor</strong> 线程池实现如下一个工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final ExecutorService executor = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 删除指定目录指定前后缀的文件</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath</span><br><span class="line">     * @param isPrefix</span><br><span class="line">     * @param regEx</span><br><span class="line">     */</span><br><span class="line">    public static void delete(String dirPath, boolean isPrefix, String regEx) &#123;</span><br><span class="line">        executor.execute(new DeleteRunnable(dirPath, isPrefix, regEx));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>例如我们要删除要删除SD卡下的Download目录下的所有以.png后缀结尾的文件，只需要这样写：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DeleteUtil.delete(&quot;/sdcard/Download/&quot;, false, &quot;.png&quot;);</span><br></pre></td></tr></table></figure>
-
-<p>是不是感觉很方便，0.0~ 可以收藏了，以后当工具类来使用。</p>
-<p>如果有不懂的地方或者不对的地方，欢迎评论交流，谢谢！</p>
-<p>最后附上下载Demo的地址:<a href="http://download.csdn.net/download/xinpengfei521/10172262">http://download.csdn.net/download/xinpengfei521/10172262</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 冷启动白屏问题</title>
     <url>/2017/09/24/201709242418/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center>
@@ -40037,6 +40132,39 @@ public static boolean isChinaPhoneLegal(String str)
 <p><strong>猜你喜欢：</strong><br><a href="https://mp.weixin.qq.com/s/jxBEg7dpFfTNLXNFdvJjrw">深入浅出Retrofit2.x(一)</a><br><a href="https://mp.weixin.qq.com/s/c8mdMqjrLvHTgc8oxONiCw">深入浅出Retrofit2.x(二)</a><br><a href="https://mp.weixin.qq.com/s/hVhhDdr3Bo4qLIdOkHsM_Q">Android 最全 Intent 传递数据姿势</a> </p>
 <p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061530029.jpeg"></p>
 <center><span style="color:#bdbdbd;">欢迎扫码关注我的公众号</span></center>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 删除指定路径下指定前缀或后缀的文件</title>
+    <url>/2017/09/24/201709242417/</url>
+    <content><![CDATA[<blockquote>
+<p>微信公众号：CodingAndroid<br>CSDN：<a href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由 CodingAndroid 原创，未经授权，不可随意转载！</p>
+</blockquote>
+<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><pre><code>我们在开发中都会遇到这样的一个需求：删除指定目录下指定的前缀或者后缀文件名的文件。
+</code></pre>
+<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><pre><code>对外暴露三个参数，参数一：要删除的文件目录的路径，参数二：区分是前缀还是后缀，参数三：具体前缀或者后缀字符规则。
+
+先枚举出路径目录下的所有文件，枚举的同时实现一个FilenameFilter接口的类，可以自定义规则，比说前缀、后缀或者其他规则，枚举的同时将我们的过滤器作为参数，这样我们就可以匹配到指定条件的文件，然后删除即可。
+</code></pre>
+<h2 id="实现一个删除逻辑的Runnable"><a href="#实现一个删除逻辑的Runnable" class="headerlink" title="实现一个删除逻辑的Runnable"></a>实现一个删除逻辑的Runnable</h2><p>代码实现的逻辑也比较简单，大家都能看得懂，下面我就直接贴代码了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.deletedemo;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import android.support.annotation.NonNull;</span><br><span class="line">import android.text.TextUtils;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FilenameFilter;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:删除指定规则的文件</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteRunnable implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    private String mRegEx;</span><br><span class="line">    private String dirPath;</span><br><span class="line">    private boolean isPrefix;</span><br><span class="line">    private static final String TAG = DeleteRunnable.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Constructor</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath  要删除文件所在的目录路径</span><br><span class="line">     * @param isPrefix true为前缀 false为后缀</span><br><span class="line">     * @param mRegEx   规则</span><br><span class="line">     */</span><br><span class="line">    public DeleteRunnable(String dirPath, boolean isPrefix, String mRegEx) &#123;</span><br><span class="line">        this.mRegEx = mRegEx;</span><br><span class="line">        this.dirPath = dirPath;</span><br><span class="line">        this.isPrefix = isPrefix;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        enumAllFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 枚举并删除所有符合条件(前缀)的文件</span><br><span class="line">     */</span><br><span class="line">    private void enumAllFileList() &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(dirPath)) &#123;</span><br><span class="line">            File adDir = new File(dirPath);</span><br><span class="line">            if (adDir.exists() &amp;&amp; adDir.isDirectory()) &#123;</span><br><span class="line">                if (!TextUtils.isEmpty(mRegEx)) &#123;</span><br><span class="line">                    DeleteFileFilter filter = new DeleteFileFilter(isPrefix, mRegEx);</span><br><span class="line">                    // 2.匹配是否是需要删除的文件</span><br><span class="line">                    File[] fileList = adDir.listFiles(filter);</span><br><span class="line">                    if (fileList != null &amp;&amp; fileList.length &gt; 0) &#123;</span><br><span class="line">                        for (File file : fileList) &#123;</span><br><span class="line">                            if (file.isFile() &amp;&amp; file.exists()) &#123;</span><br><span class="line">                                boolean delete = file.delete();</span><br><span class="line">                                Log.i(TAG, &quot;删除符合条件前缀的旧广告素材&quot; + (delete ? &quot;成功~&quot; : &quot;失败！&quot;));</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Created by Feifei on 2017/12/25 :)</span><br><span class="line">     * Function:以xxx开头或后缀的文件名的过滤器</span><br><span class="line">     */</span><br><span class="line">    class DeleteFileFilter implements FilenameFilter &#123;</span><br><span class="line"></span><br><span class="line">        private boolean isPrefix;</span><br><span class="line">        private String mRegEx;// 前缀或后缀规则</span><br><span class="line"></span><br><span class="line">        public DeleteFileFilter(boolean isPrefix, @NonNull String regEx) &#123;</span><br><span class="line">            this.isPrefix = isPrefix;</span><br><span class="line">            this.mRegEx = regEx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean accept(File file, String s) &#123;</span><br><span class="line">            return isPrefix ? s.startsWith(mRegEx) : s.endsWith(mRegEx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="定义文件删除的异常操作工具类"><a href="#定义文件删除的异常操作工具类" class="headerlink" title="定义文件删除的异常操作工具类"></a>定义文件删除的异常操作工具类</h2><p>因为操作文件属于耗时操作，我们使用 <strong>SingleThreadExecutor</strong> 线程池实现如下一个工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final ExecutorService executor = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 删除指定目录指定前后缀的文件</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath</span><br><span class="line">     * @param isPrefix</span><br><span class="line">     * @param regEx</span><br><span class="line">     */</span><br><span class="line">    public static void delete(String dirPath, boolean isPrefix, String regEx) &#123;</span><br><span class="line">        executor.execute(new DeleteRunnable(dirPath, isPrefix, regEx));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>例如我们要删除要删除SD卡下的Download目录下的所有以.png后缀结尾的文件，只需要这样写：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DeleteUtil.delete(&quot;/sdcard/Download/&quot;, false, &quot;.png&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>是不是感觉很方便，0.0~ 可以收藏了，以后当工具类来使用。</p>
+<p>如果有不懂的地方或者不对的地方，欢迎评论交流，谢谢！</p>
+<p>最后附上下载Demo的地址:<a href="http://download.csdn.net/download/xinpengfei521/10172262">http://download.csdn.net/download/xinpengfei521/10172262</a></p>
+]]></content>
       <categories>
         <category>Android</category>
       </categories>
@@ -40173,6 +40301,23 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
+    <title>Android 设置 gif 只播放一次</title>
+    <url>/2017/09/24/201709242426/</url>
+    <content><![CDATA[<h2 id="第一种写法："><a href="#第一种写法：" class="headerlink" title="第一种写法："></a>第一种写法：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Glide.with(mContext).load(R.drawable.open_door_fail)</span><br><span class="line">                .diskCacheStrategy(DiskCacheStrategy.SOURCE)</span><br><span class="line">                .listener(new RequestListener&lt;Integer, GlideDrawable&gt;() &#123;</span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onException(Exception e, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFirstResource) &#123;</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onResourceReady(GlideDrawable resource, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFromMemoryCache, boolean isFirstResource) &#123;</span><br><span class="line">                        int duration = 0;</span><br><span class="line">                        // 计算动画时长</span><br><span class="line">                        GifDrawable drawable = (GifDrawable) resource;</span><br><span class="line">                        GifDecoder decoder = drawable.getDecoder();</span><br><span class="line">                        for (int i = 0; i &lt; drawable.getFrameCount(); i++) &#123;</span><br><span class="line">                            duration += decoder.getDelay(i);</span><br><span class="line">                        &#125;</span><br><span class="line">                        //发送延时消息，通知动画结束</span><br><span class="line">                        handler.sendEmptyMessageDelayed(ANIMDISMISS, duration);</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .into(new GlideDrawableImageViewTarget(ivOpenDoor, 1));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="另外一种写法"><a href="#另外一种写法" class="headerlink" title="另外一种写法"></a>另外一种写法</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Glide.with(mContext).load(R.drawable.loading)</span><br><span class="line">                .diskCacheStrategy(DiskCacheStrategy.SOURCE)</span><br><span class="line">                .listener(new RequestListener&lt;Integer, GlideDrawable&gt;() &#123;</span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onException(Exception e, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFirstResource) &#123;</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onResourceReady(GlideDrawable resource, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFromMemoryCache, boolean isFirstResource) &#123;</span><br><span class="line">                        int duration = 0;</span><br><span class="line">                        // 计算动画时长</span><br><span class="line">                        GifDrawable drawable = (GifDrawable) resource;</span><br><span class="line">                        GifDecoder decoder = drawable.getDecoder();</span><br><span class="line">                        for (int i = 0; i &lt; drawable.getFrameCount(); i++) &#123;</span><br><span class="line">                            duration += decoder.getDelay(i);</span><br><span class="line">                        &#125;</span><br><span class="line">                        //发送延时消息，通知动画结束</span><br><span class="line">                        handler.sendEmptyMessageDelayed(3, duration);</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .into(ivLoading);</span><br></pre></td></tr></table></figure>
+
+<p>Thanks all.</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>gif</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 手把手撸一个 CustomProgressDialog</title>
     <url>/2017/09/24/201709242425/</url>
     <content><![CDATA[<h2 id="1-自定义LoadingView"><a href="#1-自定义LoadingView" class="headerlink" title="1.自定义LoadingView"></a>1.自定义LoadingView</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/8/28 :)</span><br><span class="line"> * Function:自定义加载中的Dialog</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class LoadingView extends ProgressDialog &#123;</span><br><span class="line"></span><br><span class="line">    public LoadingView(Context context) &#123;</span><br><span class="line">        super(context);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public LoadingView(Context context, int theme) &#123;</span><br><span class="line">        super(context, theme);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected void onCreate(Bundle savedInstanceState) &#123;</span><br><span class="line">        super.onCreate(savedInstanceState);</span><br><span class="line">        init(getContext());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void init(Context context) &#123;</span><br><span class="line">        setCancelable(true);</span><br><span class="line">        setCanceledOnTouchOutside(false);</span><br><span class="line">        setContentView(R.layout.loading_view);//loading的xml文件</span><br><span class="line">        WindowManager.LayoutParams params = getWindow().getAttributes();</span><br><span class="line">        params.width = WindowManager.LayoutParams.WRAP_CONTENT;</span><br><span class="line">        params.height = WindowManager.LayoutParams.WRAP_CONTENT;</span><br><span class="line">        getWindow().setAttributes(params);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void show() &#123; // 显示Dialog</span><br><span class="line">        super.show();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void dismiss() &#123; // 关闭Dialog</span><br><span class="line">        super.dismiss();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -40196,23 +40341,6 @@ public static boolean isChinaPhoneLegal(String str)
       <tags>
         <tag>Android</tag>
         <tag>ProgressDialog</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 设置 gif 只播放一次</title>
-    <url>/2017/09/24/201709242426/</url>
-    <content><![CDATA[<h2 id="第一种写法："><a href="#第一种写法：" class="headerlink" title="第一种写法："></a>第一种写法：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Glide.with(mContext).load(R.drawable.open_door_fail)</span><br><span class="line">                .diskCacheStrategy(DiskCacheStrategy.SOURCE)</span><br><span class="line">                .listener(new RequestListener&lt;Integer, GlideDrawable&gt;() &#123;</span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onException(Exception e, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFirstResource) &#123;</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onResourceReady(GlideDrawable resource, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFromMemoryCache, boolean isFirstResource) &#123;</span><br><span class="line">                        int duration = 0;</span><br><span class="line">                        // 计算动画时长</span><br><span class="line">                        GifDrawable drawable = (GifDrawable) resource;</span><br><span class="line">                        GifDecoder decoder = drawable.getDecoder();</span><br><span class="line">                        for (int i = 0; i &lt; drawable.getFrameCount(); i++) &#123;</span><br><span class="line">                            duration += decoder.getDelay(i);</span><br><span class="line">                        &#125;</span><br><span class="line">                        //发送延时消息，通知动画结束</span><br><span class="line">                        handler.sendEmptyMessageDelayed(ANIMDISMISS, duration);</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .into(new GlideDrawableImageViewTarget(ivOpenDoor, 1));</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="另外一种写法"><a href="#另外一种写法" class="headerlink" title="另外一种写法"></a>另外一种写法</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Glide.with(mContext).load(R.drawable.loading)</span><br><span class="line">                .diskCacheStrategy(DiskCacheStrategy.SOURCE)</span><br><span class="line">                .listener(new RequestListener&lt;Integer, GlideDrawable&gt;() &#123;</span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onException(Exception e, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFirstResource) &#123;</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    @Override</span><br><span class="line">                    public boolean onResourceReady(GlideDrawable resource, Integer model, Target&lt;GlideDrawable&gt; target, boolean isFromMemoryCache, boolean isFirstResource) &#123;</span><br><span class="line">                        int duration = 0;</span><br><span class="line">                        // 计算动画时长</span><br><span class="line">                        GifDrawable drawable = (GifDrawable) resource;</span><br><span class="line">                        GifDecoder decoder = drawable.getDecoder();</span><br><span class="line">                        for (int i = 0; i &lt; drawable.getFrameCount(); i++) &#123;</span><br><span class="line">                            duration += decoder.getDelay(i);</span><br><span class="line">                        &#125;</span><br><span class="line">                        //发送延时消息，通知动画结束</span><br><span class="line">                        handler.sendEmptyMessageDelayed(3, duration);</span><br><span class="line">                        return false;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;)</span><br><span class="line">                .into(ivLoading);</span><br></pre></td></tr></table></figure>
-
-<p>Thanks all.</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>gif</tag>
       </tags>
   </entry>
   <entry>
@@ -40740,27 +40868,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
-    <url>/2017/09/24/201709242433/</url>
-    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
-<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
-<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
-<p>解决方法：</p>
-<p>参考：</p>
-<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
-<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
-<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
-<p>Thanks.</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>串口</tag>
-        <tag>NDK</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>error please select android sdk</title>
     <url>/2017/09/24/201709242434/</url>
     <content><![CDATA[<p>点app运行时报如下错：</p>
@@ -40787,6 +40894,27 @@ Thanks all.
       <tags>
         <tag>Android</tag>
         <tag>SDK</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
+    <url>/2017/09/24/201709242433/</url>
+    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
+<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
+<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
+<p>解决方法：</p>
+<p>参考：</p>
+<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
+<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
+<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
+<p>Thanks.</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>串口</tag>
+        <tag>NDK</tag>
       </tags>
   </entry>
   <entry>
@@ -41233,6 +41361,22 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>java.lang.IllegalStateException commit already called</title>
+    <url>/2017/09/24/201709242438/</url>
+    <content><![CDATA[<p>今天使用Fragment时报如下图错误：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061539406.png" alt="这里写图片描述"></p>
+<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><p>之所以报该错误，是因为 <strong>Fragment</strong> 事务是全局的变量，只能commit一次。</p>
+<h2 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a>解决方法：</h2><p>将获取Fragment事务定义为局部变量，每次提交时都去获取新的事务去commit即可。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Exception</tag>
+        <tag>IllegalStateException</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>不可错过的几款GitHub开源项目</title>
     <url>/2017/09/24/201709242437/</url>
     <content><![CDATA[<p>工作之余或者周末感觉无聊？不知道干什么？想继续提高技术，但是不知道做什么的同学，看过来，不妨利用闲暇时间来撸几个 GitHub 上还不错的开源项目，本文推荐的开源项目比较适合新手、及对MVP设计模式不太熟练的同学练习之用，下面逐一进行简单介绍。</p>
@@ -41453,22 +41597,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>java.lang.IllegalStateException commit already called</title>
-    <url>/2017/09/24/201709242438/</url>
-    <content><![CDATA[<p>今天使用Fragment时报如下图错误：</p>
-<p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061539406.png" alt="这里写图片描述"></p>
-<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><p>之所以报该错误，是因为 <strong>Fragment</strong> 事务是全局的变量，只能commit一次。</p>
-<h2 id="解决方法："><a href="#解决方法：" class="headerlink" title="解决方法："></a>解决方法：</h2><p>将获取Fragment事务定义为局部变量，每次提交时都去获取新的事务去commit即可。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Exception</tag>
-        <tag>IllegalStateException</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Java内存管理与垃圾回收</title>
     <url>/2017/09/24/201709242439/</url>
     <content><![CDATA[<h2 id="一、内存简介"><a href="#一、内存简介" class="headerlink" title="一、内存简介"></a>一、内存简介</h2><p>根据《Java虚拟机规范（第2版）》的规定，Java虚拟机所管理的内存将会包括以下几个运行时数据区域，如下图所示：</p>
@@ -41486,6 +41614,28 @@ Thanks all.
         <tag>Java</tag>
         <tag>内存管理</tag>
         <tag>垃圾回收</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Java输入日期计算是这年的第几天</title>
+    <url>/2017/09/24/201709242440/</url>
+    <content><![CDATA[<h2 id="1-思路"><a href="#1-思路" class="headerlink" title="1.思路"></a>1.思路</h2><ol>
+<li>通过年份区分出是闰年还是平年，平年 2 月 28 年，闰年 2 月 29 天；</li>
+<li>1、3、5、7、8、10、12 月份 31 天其余月份均为 30 天；</li>
+<li>然后将每个月的天数相加即可，注意如果输入的是 12 月份，则是从 11 月份往前累加到1月份，1月份加的是输入的天数；</li>
+</ol>
+<h2 id="2-实现"><a href="#2-实现" class="headerlink" title="2.实现"></a>2.实现</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import java.util.Scanner;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2018/6/22 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line">public class CalculateUtils &#123;</span><br><span class="line"></span><br><span class="line">    /*平年二月28天*/</span><br><span class="line">    private static final int DAYS_28 = 28;</span><br><span class="line">    /*闰年二月29天*/</span><br><span class="line">    private static final int DAYS_29 = 29;</span><br><span class="line">    /*除了31天的月份其他均为30天*/</span><br><span class="line">    private static final int DAYS_30 = 30;</span><br><span class="line">    /*1、3、5、7、8、10、12月份31天*/</span><br><span class="line">    private static final int DAYS_31 = 31;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Scanner input = new Scanner(System.in);</span><br><span class="line">        System.out.println(&quot;Please input year:&quot;);</span><br><span class="line">        int year = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input month:&quot;);</span><br><span class="line">        int month = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input day:&quot;);</span><br><span class="line">        int day = input.nextInt();</span><br><span class="line"></span><br><span class="line">        int daysInYear = getDaysInYear(year, month, day);</span><br><span class="line">        System.out.println(&quot;daysInYear:&quot; + daysInYear);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get days in this year</span><br><span class="line">     *</span><br><span class="line">     * @param year</span><br><span class="line">     * @param month</span><br><span class="line">     * @param day</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static int getDaysInYear(int year, int month, int day) &#123;</span><br><span class="line">        int totalDays = 0;</span><br><span class="line"></span><br><span class="line">        switch (month) &#123;</span><br><span class="line">            // 12 月份加的是11月份的天数，依次类推</span><br><span class="line">            case 12:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 11:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 10:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 9:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 8:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 7:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 6:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 5:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 4:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 3:</span><br><span class="line">                // 判断是否是闰年</span><br><span class="line">                if (((year / 4 == 0) &amp;&amp; (year / 100 != 0)) || (year / 400 == 0)) &#123;</span><br><span class="line">                    totalDays += DAYS_29;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    totalDays += DAYS_28;</span><br><span class="line">                &#125;</span><br><span class="line">            case 2:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 1: // 如果是1月份就加上输入的天数</span><br><span class="line">                totalDays += day;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return totalDays;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-思考"><a href="#3-思考" class="headerlink" title="3.思考"></a>3.思考</h2><p>因为只有2月份的天数和输入的 day 天数是不固定的，其他月份的天数是固定的，而固定的天数是可以通过输入的月份算出来，这样我们就可以这样计算：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">2 月份的天数 + 输入的天数 + 计算出来的固定天数</span><br></pre></td></tr></table></figure>
+
+<p>如果大家还有其他的更好的优化的都可以在下面评论。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
       </tags>
   </entry>
   <entry>
@@ -41516,28 +41666,6 @@ Thanks all.
       <tags>
         <tag>Java</tag>
         <tag>equals</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Java输入日期计算是这年的第几天</title>
-    <url>/2017/09/24/201709242440/</url>
-    <content><![CDATA[<h2 id="1-思路"><a href="#1-思路" class="headerlink" title="1.思路"></a>1.思路</h2><ol>
-<li>通过年份区分出是闰年还是平年，平年 2 月 28 年，闰年 2 月 29 天；</li>
-<li>1、3、5、7、8、10、12 月份 31 天其余月份均为 30 天；</li>
-<li>然后将每个月的天数相加即可，注意如果输入的是 12 月份，则是从 11 月份往前累加到1月份，1月份加的是输入的天数；</li>
-</ol>
-<h2 id="2-实现"><a href="#2-实现" class="headerlink" title="2.实现"></a>2.实现</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import java.util.Scanner;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2018/6/22 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line">public class CalculateUtils &#123;</span><br><span class="line"></span><br><span class="line">    /*平年二月28天*/</span><br><span class="line">    private static final int DAYS_28 = 28;</span><br><span class="line">    /*闰年二月29天*/</span><br><span class="line">    private static final int DAYS_29 = 29;</span><br><span class="line">    /*除了31天的月份其他均为30天*/</span><br><span class="line">    private static final int DAYS_30 = 30;</span><br><span class="line">    /*1、3、5、7、8、10、12月份31天*/</span><br><span class="line">    private static final int DAYS_31 = 31;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Scanner input = new Scanner(System.in);</span><br><span class="line">        System.out.println(&quot;Please input year:&quot;);</span><br><span class="line">        int year = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input month:&quot;);</span><br><span class="line">        int month = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input day:&quot;);</span><br><span class="line">        int day = input.nextInt();</span><br><span class="line"></span><br><span class="line">        int daysInYear = getDaysInYear(year, month, day);</span><br><span class="line">        System.out.println(&quot;daysInYear:&quot; + daysInYear);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get days in this year</span><br><span class="line">     *</span><br><span class="line">     * @param year</span><br><span class="line">     * @param month</span><br><span class="line">     * @param day</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static int getDaysInYear(int year, int month, int day) &#123;</span><br><span class="line">        int totalDays = 0;</span><br><span class="line"></span><br><span class="line">        switch (month) &#123;</span><br><span class="line">            // 12 月份加的是11月份的天数，依次类推</span><br><span class="line">            case 12:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 11:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 10:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 9:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 8:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 7:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 6:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 5:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 4:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 3:</span><br><span class="line">                // 判断是否是闰年</span><br><span class="line">                if (((year / 4 == 0) &amp;&amp; (year / 100 != 0)) || (year / 400 == 0)) &#123;</span><br><span class="line">                    totalDays += DAYS_29;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    totalDays += DAYS_28;</span><br><span class="line">                &#125;</span><br><span class="line">            case 2:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 1: // 如果是1月份就加上输入的天数</span><br><span class="line">                totalDays += day;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return totalDays;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="3-思考"><a href="#3-思考" class="headerlink" title="3.思考"></a>3.思考</h2><p>因为只有2月份的天数和输入的 day 天数是不固定的，其他月份的天数是固定的，而固定的天数是可以通过输入的月份算出来，这样我们就可以这样计算：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">2 月份的天数 + 输入的天数 + 计算出来的固定天数</span><br></pre></td></tr></table></figure>
-
-<p>如果大家还有其他的更好的优化的都可以在下面评论。</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
       </tags>
   </entry>
   <entry>

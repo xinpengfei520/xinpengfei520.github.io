@@ -256,6 +256,76 @@
       </tags>
   </entry>
   <entry>
+    <title>AI 重写 Adobe 这事，先回仓库核三件事</title>
+    <url>/2026/10/13/202610131512/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261013-202610131512-ai-rewrite-adobe-recheck-boundary-v3.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>这几天我刷手机，老看到同一条消息在转。大意是：有个开发者用 AI 逆向重写了 Adobe 七款软件，开源了，项目逼近 10 万 Star。</p>
+<p>如果你也刷到过，先别急着转。我顺手去他仓库里核了一遍，回来发现那句话里几乎每个词都得改。真正有料的地方在别处：它顺手替所有人测了一道线。AI 把重写变得这么便宜之后，重写谁的软件还算不算数。更狠的一层我留到最后：同样是 AI 重写，验收标准攥在谁手里，结局不一样。</p>
+<h2 id="那条消息里错的几处"><a href="#那条消息里错的几处" class="headerlink" title="那条消息里错的几处"></a>那条消息里错的几处</h2><p>我回仓库核了三件事，先说最离谱的那一处。</p>
+<p>那个「逼近 10 万 Star」的项目，压根不是那个开发者的。</p>
+<p>它叫 REA，作者是 GitHub 上的 morluto，2026 年 4 月建仓，用 TypeScript 写，干的事是把 AI 接到 Ghidra、IDA 这类逆向工具上。10 月 13 日 15:05 我直连 GitHub 的 API 取数，它单库 174,259 Star，README 全文一个字没提 Adobe。</p>
+<p>Brandon Thomas 那边是另一码事。还是那次取数，他名下最大的 PhotoCraft 单库 5.4 万 Star。两个不相干的人、两个不相干的项目，被揉成了同一个故事。</p>
+<p>剩下几处也得改。Thomas 自己从头到尾说的是 clean-room reimplementation，干净室重写，规则文件里明文写着不许看 Adobe 源码，「逆向」两个字是转述的人后加的框架。「七款」也过期了，10 月 7 日之后他又加了办公三件套、AutoCAD 和 Pro Tools。「一名开发者」同样站不住：截至 10 月 13 日，PhotoCraft 单库的贡献者有 271 个人。</p>
+<p>真正经得起核的只有两样。Rust 是真的，README 挂着「100% Rust」的徽章，规则文件里还写着不用 Tauri、Electron 这类网页壳。Opus 5.5 算部分真：README 一个字没提它，硬证据是提交末尾那条 co-author 尾巴，署名 Claude Opus 5.5 的有 18 次。不过同一个仓库里，也躺着一次 GPT-6 的署名。</p>
+<h2 id="干净室是他自己封的"><a href="#干净室是他自己封的" class="headerlink" title="干净室是他自己封的"></a>干净室是他自己封的</h2><p>「干净室」有确切含义。</p>
+<p>严格意义上的干净室，墙要砌在<strong>两拨人</strong>中间。一拨人负责看别人的软件，写出规格说明书；另一拨人只拿着规格写代码，原件长什么样都不许看。要害不在写代码那拨人有多正派，在于看见的人和动手的人不是同一拨。</p>
+<p>Thomas 那条规则本身没毛病。原文我抄一句给你：</p>
+<blockquote>
+<p>We studied Photoshop and other proprietary editors for behaviour and look only. Never copy their code, shaders, profiles or assets.</p>
+</blockquote>
+<p>意思是，我们只研究它们的行为和观感，绝不复制代码、着色器、配置文件或素材。话说得挺硬。</p>
+<p>那执行起来呢？问题出在他自己的文档里。<code>ROADMAP.md</code> 10 月 10 日那行进度记录写着，那次重测是 against Photoshop 2026 27.11.0，括号里一句 installed bundle inspected，检查了装好的正版包。同一份 <code>docs/target-app-parity.md</code> 交代了细节：本机装了正版 Photoshop 2026，特意注明 <code>Inspected without launching it</code>。翻了什么？翻 Info.plist 里的文档类型，翻格式插件的 PiPL 读写标志，翻语言包和那张 <code>Default Keyboard Shortcuts.kys</code> 快捷键表（67 个工具箱工具、107 条菜单命令），翻插件清单，还翻了主二进制里的字符串，捞出 81 条「某某 Tool」的标题。</p>
+<p>一边是仓库里「只看行为和观感」的规矩，另一边是进度记录里「检查了装好的包」。没有启动它，这句我信。可包文件、语言包、快捷键表、二进制字符串，一样一样翻过去了。</p>
+<p>代码确实是重写的，这点我倾向于信他。但严格干净室的那道墙砌在两拨人中间，他这个项目里，墙砌在自己脑子里。</p>
+<p>墙上没别人站岗。</p>
+<h2 id="项目文档先把自己拆了"><a href="#项目文档先把自己拆了" class="headerlink" title="项目文档先把自己拆了"></a>项目文档先把自己拆了</h2><p>那它到底干成什么样了？Thomas 那边自己留了一份很诚实的账，就在 ROADMAP 和对齐文档里。</p>
+<p>功能覆盖面约 76%，是数出来的：菜单 628 项全对上，工具箱 68 项里对上 56 项。</p>
+<p>但专业人士能不能拿它把 Photoshop 替掉，文档自己给的数是**约 45%**。</p>
+<p>同一份文档里还写着：579 个 open issue，25 项性能预算里 22 项没达标，离完全对齐还需 2,300 到 4,100 个 Opus 5.5 的 agent 小时。</p>
+<p>76% 是数菜单数出来的，45% 是人和软件坐下来面对面才交得出的数。</p>
+<p>更值得看的是它的记性。10 月 3 日那份估计写的是「已完成 82%、还差 140 到 220 小时」，后来原文自己把它标了出来：只数了功能表面积，过于乐观。Thomas 也把「一个月内 100%」收回去，改成「几个月内 99%」（转引自 madrobot.blog）。</p>
+<p>所以「AI 一个周末重写 Adobe 全家桶」这个说法站不住。真实情况是 AI 让重写变快了，没让对齐变快。</p>
+<h2 id="重写和抄差在哪"><a href="#重写和抄差在哪" class="headerlink" title="重写和抄差在哪"></a>重写和抄差在哪</h2><p>我九月写过一篇，讲 Google 把一个开源项目的代码搬走、顺手删了署名。那篇说的是<strong>复制</strong>：别人的代码一行不改搬过来，再把名字抹掉。</p>
+<p>这次是另一件事。Thomas 那边一行 Adobe 的代码都没用，是从零实现的。区别看着小，其实决定性质。</p>
+<p>那重写到底算不算抄？法律上一般被认为可以接受。前提是不直接复制代码，只复刻功能。但「一般可以」不等于没风险，软肋有两处。</p>
+<p>一处是商业外观。界面观感做得太像，可能招来「造成混淆」的官司。像到什么程度算侵权，我没核到标准，这类事本来一案一议。</p>
+<p>另一处是专利。Adobe 握着数千项软件专利，覆盖的不只是代码，还有操作本身。就算你每一行都是自己敲的，某些交互流程本身也可能早被人圈了地。</p>
+<p>还有件事得说明白：到 10 月 13 日为止，<strong>没有任何人</strong>给他这套 ArtCraft 做过代码相似度检测。一份都没有。</p>
+<p>我特意提这句，是因为后面那个先例里有一份 1.3%，很容易被顺手挪过来。那是另一个项目的数。</p>
+<h2 id="那道线现在谁在守"><a href="#那道线现在谁在守" class="headerlink" title="那道线现在谁在守"></a>那道线现在谁在守</h2><p>先说一段更早的。2026 年 3 月，chardet 出了 v7。</p>
+<p>chardet 是个 2006 年就有的 Python 小库，用的是 LGPL 这种「衍生作品要沿用同样许可」的开源协议。2013 年起的维护者想把它送进 Python 标准库，两次都卡在这份协议上。他换了个法子：用 Claude Code 从头重写，开空仓库、先写设计文档、明令模型不许参考原来那份源码，发出来的版本换成 MIT 这种几乎不设限的许可。他管这叫「AI 干净室」。</p>
+<p>相似度用 JPlag 实测，不到 1.3%。</p>
+<p>原作者站出来了。他说得直接：一个在原代码上训练过的模型，不会因为你叫它别抄，就产出法律上干净的重写；旧协议要求衍生作品延续同样许可，这条义务跟开发过程没关系。反方也有，GPLv3 的起草人之一认为，新代码里指认不出旧的受版权材料，看不到必须延续旧许可的依据。</p>
+<p>后来 Simon Willison 扒出来，模型在某一步确实读过原来的源码，重写的人自己也承认，他的子 agent 在三个会话里读了旧代码。他把许可证换成了 0BSD，连署名都不要求。</p>
+<p>相似度不到 1.3%，争议照样没停。</p>
+<p>那这套判法能不能直接搬到 ArtCraft 身上？搬不动。chardet 是开源代码换许可，争的是「衍生作品」这条轴；ArtCraft 是闭源商业软件被重写，走的是逆向工程、商业外观、专利这条轴。两条轴不一样。</p>
+<p>已经动手的是别家。动视下架过一段 AI 反编译的《现代战争 2》影像，Bethesda 就一个 AI 做的《Fallout: New York》发了停止通知函（转引自 Decrypt）。</p>
+<p>Adobe 这边呢？至今零表态，有没有发过律师函，我没核到。它会不会开口，我盯着。</p>
+<p>这些线怎么划，我是外行。但用 AI 重写一整个库，我自己真干过一回，还是最大的一档。分界线在哪，我有体感。</p>
+<h2 id="我六月也重写过一整个库"><a href="#我六月也重写过一整个库" class="headerlink" title="我六月也重写过一整个库"></a>我六月也重写过一整个库</h2><p>六月，我让 AI 把自己 2022 年写的记账后端，从 7600 行 Java 重写成 Kotlin，241 个文件，早上十点多动手，下午六点多收工，当晚 CI 上生产。</p>
+<p>听着跟上面这出戏差不多，但差在一条上：那是我的代码。</p>
+<p>我敢把这么大的活交出去，是因为验收标准是我自己定的。删旧代码前，我先让它招供：项目里有个 529 行的祖传 XSS 过滤器，谁也说不准重写后那堆正则还一致不一致，我让 AI 拿原 Java 版跑一批输入，抓下 19 条「黄金输出」钉成断言，有一点行为漂移测试就变红。</p>
+<p>也翻过车。有个叫 isLiability 的字段，改写时被悄悄并进了别的类里，编译照过，测试全绿，我肉眼翻 diff 根本看不出来，是流水线里专门唱反调的校验 agent 把它吼回来的。</p>
+<p>Thomas 那边也讲对齐，也讲 parity，可两边站的位置不一样。我是自己给自己出卷子，卷子长什么样我说了算，客户那头感觉不到任何动静就算过关；他那边是拿别人的卷子当答案，菜单 628 项、工具 68 项，一个格一个格对着别人的软件追。</p>
+<p>同样是 AI 重写，一边的验收标准攥在自己手里，一边的攥在别人手里。这是两种完全不同的工程处境。</p>
+<h2 id="这事我收成两句判断"><a href="#这事我收成两句判断" class="headerlink" title="这事我收成两句判断"></a>这事我收成两句判断</h2><p>AI 把重写的成本砸下来了，但它没砸动「这是谁的软件」。技术门槛塌得很快，边界这头没怎么动。</p>
+<p>眼下真正在守线的，是社区，法院还没开口。</p>
+<p>所以下次再刷到「某人用 AI 重写、逆向、复刻了 XX」这类消息，建议先回仓库核三件事：Star 是几个库加起来的，作者自己用的哪个词，项目文档里写的完成度多少。回仓库待十分钟，比转十条消息管用。</p>
+<p>你手上那块最想交给 AI 重写的代码，是你自己的，还是别人的？</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>开源</tag>
+        <tag>逆向工程</tag>
+        <tag>软件许可</tag>
+        <tag>Adobe</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Anthropic 把评测的网断了，你查过自己的吗</title>
     <url>/2026/10/10/202610100921/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261010-202610100921-anthropic-cut-eval-network-my-exit-audit-v3.webp" alt="cover"></p>
@@ -447,8 +517,8 @@
         <tag>AI</tag>
         <tag>Anthropic</tag>
         <tag>Claude</tag>
-        <tag>订阅</tag>
         <tag>成本</tag>
+        <tag>订阅</tag>
       </tags>
   </entry>
   <entry>
@@ -675,8 +745,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>订阅</tag>
         <tag>成本</tag>
+        <tag>订阅</tag>
         <tag>A16Z</tag>
         <tag>消费者</tag>
       </tags>
@@ -21387,8 +21457,8 @@
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
         <tag>Remote Control</tag>
-        <tag>Channels</tag>
         <tag>远程开发</tag>
+        <tag>Channels</tag>
       </tags>
   </entry>
   <entry>
@@ -38432,7 +38502,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#116;&#x40;&#103;&#x69;&#116;&#104;&#x75;&#x62;&#46;&#x63;&#111;&#109;">&#103;&#105;&#116;&#x40;&#103;&#x69;&#116;&#104;&#x75;&#x62;&#46;&#x63;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#x74;&#x40;&#103;&#x69;&#116;&#x68;&#x75;&#x62;&#46;&#x63;&#111;&#x6d;">&#x67;&#x69;&#x74;&#x40;&#103;&#x69;&#116;&#x68;&#x75;&#x62;&#46;&#x63;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -39459,6 +39529,23 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android SharedPreferences 工具类</title>
+    <url>/2017/09/24/201709242400/</url>
+    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>###注：在MyApplication中获取上下文</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>SharedPreferences</tag>
+        <tag>工具类</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android Service 启动到 Activity</title>
     <url>/2017/09/24/201709242359/</url>
     <content><![CDATA[<p>从Service启动到Activity基本可以分为两类：<br>1.从自己应用的Service启动自己应用的Activity,即显式意图；<br>2.从自己应用的Service启动到其他应用的Activity,或者从别的应用的Service启动到自己应用的Activity，即隐式意图；  </p>
@@ -39488,20 +39575,39 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android SharedPreferences 工具类</title>
-    <url>/2017/09/24/201709242400/</url>
-    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>###注：在MyApplication中获取上下文</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
+    <title>Android Studio 曲折更新之路</title>
+    <url>/2017/09/24/201709242402/</url>
+    <content><![CDATA[<blockquote>
+<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
+</blockquote>
+<p>##1.开始更新</p>
+<p>打开AS 点击Help –&gt; Check for Updates…</p>
+<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
+<p>###1.1找到最新的版本号对应的串号</p>
+<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
+<p>如下图所示：</p>
+<p>###1.2下载你对应版本的到最新版本的补丁包</p>
+<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
+<p>然后拼接出一个下载补丁包的url:如下</p>
+<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
+<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
+<p>###1.3手动安装AS补丁包</p>
+<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
+<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
+<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
+<p>稍等一会更新包就安装完成了</p>
+<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
+<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
+<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
+<p>另外，感谢下面博主的博客：</p>
+<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
+]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
         <tag>GitHub</tag>
-        <tag>SharedPreferences</tag>
-        <tag>工具类</tag>
+        <tag>Android Studio</tag>
       </tags>
   </entry>
   <entry>
@@ -39570,39 +39676,22 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android Studio 曲折更新之路</title>
-    <url>/2017/09/24/201709242402/</url>
-    <content><![CDATA[<blockquote>
-<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
-</blockquote>
-<p>##1.开始更新</p>
-<p>打开AS 点击Help –&gt; Check for Updates…</p>
-<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
-<p>###1.1找到最新的版本号对应的串号</p>
-<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
-<p>如下图所示：</p>
-<p>###1.2下载你对应版本的到最新版本的补丁包</p>
-<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
-<p>然后拼接出一个下载补丁包的url:如下</p>
-<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
-<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
-<p>###1.3手动安装AS补丁包</p>
-<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
-<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
-<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
-<p>稍等一会更新包就安装完成了</p>
-<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
-<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
-<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
-<p>另外，感谢下面博主的博客：</p>
-<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
+    <title>Android Studio 添加 arr 依赖</title>
+    <url>/2017/09/24/201709242404/</url>
+    <content><![CDATA[<p>##1.将arr库放到libs下面</p>
+<p>##2.在app的buildgradle的android节点中添加如下代码</p>
+<figure class="highlight plaintext"><figcaption><span>&#123;</span></figcaption><table><tr><td class="code"><pre><span class="line">    flatDir &#123;</span><br><span class="line">        dirs &#x27;libs&#x27; //this way we can find the .aar file in libs folder</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##3.在dependencies中添加如下依赖</p>
+<p><code>compile(name: &#39;com.datescroller.lib-release&#39;, ext: &#39;aar&#39;)</code></p>
+<p>name后面就是arr的库名，不带后缀。</p>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
-        <tag>GitHub</tag>
         <tag>Android Studio</tag>
+        <tag>arr</tag>
       </tags>
   </entry>
   <entry>
@@ -39663,25 +39752,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Studio 添加 arr 依赖</title>
-    <url>/2017/09/24/201709242404/</url>
-    <content><![CDATA[<p>##1.将arr库放到libs下面</p>
-<p>##2.在app的buildgradle的android节点中添加如下代码</p>
-<figure class="highlight plaintext"><figcaption><span>&#123;</span></figcaption><table><tr><td class="code"><pre><span class="line">    flatDir &#123;</span><br><span class="line">        dirs &#x27;libs&#x27; //this way we can find the .aar file in libs folder</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##3.在dependencies中添加如下依赖</p>
-<p><code>compile(name: &#39;com.datescroller.lib-release&#39;, ext: &#39;aar&#39;)</code></p>
-<p>name后面就是arr的库名，不带后缀。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android Studio</tag>
-        <tag>arr</tag>
       </tags>
   </entry>
   <entry>
@@ -41617,6 +41687,28 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>Java输入日期计算是这年的第几天</title>
+    <url>/2017/09/24/201709242440/</url>
+    <content><![CDATA[<h2 id="1-思路"><a href="#1-思路" class="headerlink" title="1.思路"></a>1.思路</h2><ol>
+<li>通过年份区分出是闰年还是平年，平年 2 月 28 年，闰年 2 月 29 天；</li>
+<li>1、3、5、7、8、10、12 月份 31 天其余月份均为 30 天；</li>
+<li>然后将每个月的天数相加即可，注意如果输入的是 12 月份，则是从 11 月份往前累加到1月份，1月份加的是输入的天数；</li>
+</ol>
+<h2 id="2-实现"><a href="#2-实现" class="headerlink" title="2.实现"></a>2.实现</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import java.util.Scanner;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2018/6/22 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line">public class CalculateUtils &#123;</span><br><span class="line"></span><br><span class="line">    /*平年二月28天*/</span><br><span class="line">    private static final int DAYS_28 = 28;</span><br><span class="line">    /*闰年二月29天*/</span><br><span class="line">    private static final int DAYS_29 = 29;</span><br><span class="line">    /*除了31天的月份其他均为30天*/</span><br><span class="line">    private static final int DAYS_30 = 30;</span><br><span class="line">    /*1、3、5、7、8、10、12月份31天*/</span><br><span class="line">    private static final int DAYS_31 = 31;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Scanner input = new Scanner(System.in);</span><br><span class="line">        System.out.println(&quot;Please input year:&quot;);</span><br><span class="line">        int year = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input month:&quot;);</span><br><span class="line">        int month = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input day:&quot;);</span><br><span class="line">        int day = input.nextInt();</span><br><span class="line"></span><br><span class="line">        int daysInYear = getDaysInYear(year, month, day);</span><br><span class="line">        System.out.println(&quot;daysInYear:&quot; + daysInYear);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get days in this year</span><br><span class="line">     *</span><br><span class="line">     * @param year</span><br><span class="line">     * @param month</span><br><span class="line">     * @param day</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static int getDaysInYear(int year, int month, int day) &#123;</span><br><span class="line">        int totalDays = 0;</span><br><span class="line"></span><br><span class="line">        switch (month) &#123;</span><br><span class="line">            // 12 月份加的是11月份的天数，依次类推</span><br><span class="line">            case 12:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 11:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 10:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 9:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 8:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 7:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 6:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 5:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 4:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 3:</span><br><span class="line">                // 判断是否是闰年</span><br><span class="line">                if (((year / 4 == 0) &amp;&amp; (year / 100 != 0)) || (year / 400 == 0)) &#123;</span><br><span class="line">                    totalDays += DAYS_29;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    totalDays += DAYS_28;</span><br><span class="line">                &#125;</span><br><span class="line">            case 2:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 1: // 如果是1月份就加上输入的天数</span><br><span class="line">                totalDays += day;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return totalDays;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-思考"><a href="#3-思考" class="headerlink" title="3.思考"></a>3.思考</h2><p>因为只有2月份的天数和输入的 day 天数是不固定的，其他月份的天数是固定的，而固定的天数是可以通过输入的月份算出来，这样我们就可以这样计算：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">2 月份的天数 + 输入的天数 + 计算出来的固定天数</span><br></pre></td></tr></table></figure>
+
+<p>如果大家还有其他的更好的优化的都可以在下面评论。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Java 中 equals 与 == 区别</title>
     <url>/2017/09/24/201709242441/</url>
     <content><![CDATA[<p>**&#x3D;&#x3D;**是运算符而equals是比较方法。</p>
@@ -41644,28 +41736,6 @@ Thanks all.
       <tags>
         <tag>Java</tag>
         <tag>equals</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Java输入日期计算是这年的第几天</title>
-    <url>/2017/09/24/201709242440/</url>
-    <content><![CDATA[<h2 id="1-思路"><a href="#1-思路" class="headerlink" title="1.思路"></a>1.思路</h2><ol>
-<li>通过年份区分出是闰年还是平年，平年 2 月 28 年，闰年 2 月 29 天；</li>
-<li>1、3、5、7、8、10、12 月份 31 天其余月份均为 30 天；</li>
-<li>然后将每个月的天数相加即可，注意如果输入的是 12 月份，则是从 11 月份往前累加到1月份，1月份加的是输入的天数；</li>
-</ol>
-<h2 id="2-实现"><a href="#2-实现" class="headerlink" title="2.实现"></a>2.实现</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import java.util.Scanner;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2018/6/22 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line">public class CalculateUtils &#123;</span><br><span class="line"></span><br><span class="line">    /*平年二月28天*/</span><br><span class="line">    private static final int DAYS_28 = 28;</span><br><span class="line">    /*闰年二月29天*/</span><br><span class="line">    private static final int DAYS_29 = 29;</span><br><span class="line">    /*除了31天的月份其他均为30天*/</span><br><span class="line">    private static final int DAYS_30 = 30;</span><br><span class="line">    /*1、3、5、7、8、10、12月份31天*/</span><br><span class="line">    private static final int DAYS_31 = 31;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Scanner input = new Scanner(System.in);</span><br><span class="line">        System.out.println(&quot;Please input year:&quot;);</span><br><span class="line">        int year = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input month:&quot;);</span><br><span class="line">        int month = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input day:&quot;);</span><br><span class="line">        int day = input.nextInt();</span><br><span class="line"></span><br><span class="line">        int daysInYear = getDaysInYear(year, month, day);</span><br><span class="line">        System.out.println(&quot;daysInYear:&quot; + daysInYear);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get days in this year</span><br><span class="line">     *</span><br><span class="line">     * @param year</span><br><span class="line">     * @param month</span><br><span class="line">     * @param day</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static int getDaysInYear(int year, int month, int day) &#123;</span><br><span class="line">        int totalDays = 0;</span><br><span class="line"></span><br><span class="line">        switch (month) &#123;</span><br><span class="line">            // 12 月份加的是11月份的天数，依次类推</span><br><span class="line">            case 12:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 11:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 10:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 9:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 8:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 7:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 6:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 5:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 4:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 3:</span><br><span class="line">                // 判断是否是闰年</span><br><span class="line">                if (((year / 4 == 0) &amp;&amp; (year / 100 != 0)) || (year / 400 == 0)) &#123;</span><br><span class="line">                    totalDays += DAYS_29;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    totalDays += DAYS_28;</span><br><span class="line">                &#125;</span><br><span class="line">            case 2:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 1: // 如果是1月份就加上输入的天数</span><br><span class="line">                totalDays += day;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return totalDays;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="3-思考"><a href="#3-思考" class="headerlink" title="3.思考"></a>3.思考</h2><p>因为只有2月份的天数和输入的 day 天数是不固定的，其他月份的天数是固定的，而固定的天数是可以通过输入的月份算出来，这样我们就可以这样计算：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">2 月份的天数 + 输入的天数 + 计算出来的固定天数</span><br></pre></td></tr></table></figure>
-
-<p>如果大家还有其他的更好的优化的都可以在下面评论。</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
       </tags>
   </entry>
   <entry>

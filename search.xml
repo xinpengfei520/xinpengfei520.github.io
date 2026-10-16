@@ -256,6 +256,86 @@
       </tags>
   </entry>
   <entry>
+    <title>刷 AI 榜单的人，同一道题差 100 分</title>
+    <url>/2026/10/16/202610161159/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261016-202610161159-arc-agi-harness-two-treatments-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>你最近刷到 ARC-AGI-3 的消息，看到的数字大概率是 97.5%。Google 的新模型 Gemini 4 Argon 拿的，挂在官方榜上，仅次于 GPT-6 Astra 的 99.9%。</p>
+<p>但同一张榜、同一个模型、同一页纸上，还挂着另一个数：49.8%。也是官方发的。</p>
+<p>两个数差 47.7 个百分点。中间隔的是考官，跟模型版本、推理强度都没关系。</p>
+<p>七月那篇讲后训练的文章里，我写过一句话：同一个模型换个壳，分数能差出一大截。当时我举的例子，那个「一大截」是 0.7 分。两个半月后，它长成了 47.7 分，而且这次两个数都盖着官方的章。</p>
+<h2 id="一道题，0-分和-100-分"><a href="#一道题，0-分和-100-分" class="headerlink" title="一道题，0 分和 100 分"></a>一道题，0 分和 100 分</h2><p>先别看总分。官方把 25 个公开环境的逐关通过率全放出来了，看一局就够。</p>
+<p>有个环境叫 TU93。标准那套跑，5.3%；降到低思考档，0.0%。同一个 TU93，换一套跑，100%、100%、100%，三档全满。另一个环境 G50T 更干脆，0.0% 对 100%。</p>
+<p>同一道题，一边解都解不开，一边满分。</p>
+<p>差别不在分数高低，在于这道题解不解得开。</p>
+<p>而且这件事出题方三月那份技术报告里就记下来了：同一个模型，在环境 TR87 上，没有脚手架时 0.0%，配上 Duke 那套脚手架时 97.1%。</p>
+<p>ARC-AGI-3 从设计之初就知道会这样。</p>
+<h2 id="这-47-分是谁挣的"><a href="#这-47-分是谁挣的" class="headerlink" title="这 47 分是谁挣的"></a>这 47 分是谁挣的</h2><p>那两套考官，官方叫它 harness，说人话就是套在模型外面那一层脚手架。政策页给了定义，两段话只在同一处不一样。</p>
+<p>标准那套，允许模型带走「它自己选择保留的笔记」。</p>
+<p>另一套叫 Provider Adapter，可以理解成厂商自己的适配层，在两次请求之间保留「不透明的推理状态」，并对长对话做压缩。</p>
+<p>钥匙在「不透明」这三个字上。</p>
+<p>标准脚手架里，模型得把思考写成字，摊在桌上。它想留住什么，要自己动手写下来。Provider Adapter 里它不用写，那部分推理留在它那儿，不给人看。</p>
+<p>同一道题，一个逼你把草稿摊开，一个允许你在脑子里算。</p>
+<p>两家在官方开源仓库里的实现名也不一样。标准那套叫 <code>manual_rolling</code>，Provider Adapter 叫 <code>continuous_conversation</code>。仓库里连各家怎么接都写出来了，比如 Anthropic 那套，是上下文攒到 17.5 万这个阈值时触发原生压缩。这些都是真在跑的配置。</p>
+<p>这也解释了，为什么这个落差不是「再努力一点」能补上的。</p>
+<p>顺带说一个反直觉的：分高的那次，成本反而更低。Argon 是 4.8 千美元对 5.8 千美元，Astra 那边是 1.88 万对 2.61 万。这不是靠多烧算力堆出来的分。</p>
+<p>最狠的一组数还是 Astra 的。思考强度调到「none」，完全不思考，在 Provider Adapter 里还有 96.7%。比它在标准脚手架下的最高档，高出 34 个点。</p>
+<p>思考强度这个旋钮，在脚手架面前不太好使。</p>
+<p>官方的方法学页面写得很清楚：工具调用、推理步骤、重试，一律不算「动作」。而这个分数，恰恰是按动作算效率的。</p>
+<p>保留推理状态、做压缩，在这套账里不多记一个动作。可它把「能不能解开这道题」整个换掉了。</p>
+<h2 id="官方这么做没毛病"><a href="#官方这么做没毛病" class="headerlink" title="官方这么做没毛病"></a>官方这么做没毛病</h2><p>看到这儿，你八成已经想说「那这榜废了」。先别急，我得替它说句公道话。</p>
+<p>一个通用、不偏向任何一家厂商的脚手架，是个能站住的设计目标。要是每家都拿自己最顺手的那套来跑，比的就是工程团队的调优水平。跟模型本身关系不大。</p>
+<p>ARC Prize 在政策页写的那句我认：两套脚手架回答的是两个不同的问题，两个都合法。</p>
+<p>「没跑完也算分」听着像网开一面，其实是它本来的算法。ARC-AGI-3 的分数是个比率：人类花 10 个动作，模型花 20 个，这关就是 25 分。所以一局没跑完，已经挣到的分天然该留着。</p>
+<p>官方还主动做对了几件事：政策页把两套脚手架的定义写清，逐环境数据全放出来，配了回放，还自己说了「榜快满了不代表拿到了 AGI」。</p>
+<h2 id="可那个限定只留在网页里"><a href="#可那个限定只留在网页里" class="headerlink" title="可那个限定只留在网页里"></a>可那个限定只留在网页里</h2><p>那问题出在哪？</p>
+<p>出在分发。</p>
+<p>Argon 这一轮，标准脚手架只跑完了 55 局里的 42 局。中档 46 局，高档只有 19 局，原因是接口故障。</p>
+<p>官方结果页正文写得很清楚：55 局全部计入，跑不完的保留已得的部分分。高档那个点因为覆盖太差，干脆从图里拿掉了。</p>
+<p>但官方在 X 上公布的时候，这句话没了。</p>
+<p>X 帖里那一行原样是：ARC-AGI-3，97.5%，4.8 千美元（provider adapter harness），49.8%，5.8 千美元（standard harness）。</p>
+<p>光秃秃两个数，一句限定都没有。你刷到的是这条帖。那句「只跑完 42 局」，躺在网页正文里，没人转。</p>
+<p>这不是谁在挑刺。写得再清楚，也拦不住限定在转发里掉下去。</p>
+<p>官方榜上不只 Argon 一家。至少四家模型同时挂着两组官数：</p>
+<p>Astra 是 62.7% 对 99.9%，Argon 是 49.8% 对 97.5%，两家都是标准那套拿不到七成，换套脚手架就贴着满分。Gemini 3.8 Flash 和 GPT-6 Luna 也一样，落差一样在。</p>
+<p>这也不是头一回。Astra 那一轮就闹过，落差 37.2 个点，后来有一家媒体公开认账，说自己发稿时漏标了 harness 这个限定。Argon 这次是第二回，形态一模一样，可这一轮，已经没什么人再提那句限定了。</p>
+<h2 id="我也在吃脚手架这口饭"><a href="#我也在吃脚手架这口饭" class="headerlink" title="我也在吃脚手架这口饭"></a>我也在吃脚手架这口饭</h2><p>说回我自己，得先交代清楚。</p>
+<p>我没实测过 ARC-AGI，一次都没跑过，也不打算假装跑过。这篇里所有跟分数有关的话，来源都是核过的官方原文。我自己的体感，一句没有。</p>
+<p>但「脚手架决定同一个模型能干出什么」这件事，我不是旁观者。</p>
+<p>昨天我刚写过一篇，讲 Claude Code 空闲时也会压缩会话。压缩正是 Provider Adapter 那套的核心机制之一。</p>
+<p>我在自己终端里天天撞见它。三月有一次，会话拉得很长，上下文压过一轮，CLAUDE.md 里交代过的那条类型检查，它悄悄跳过了。我没注意，带类型错误的代码被提交。隔天上线，出了问题。</p>
+<p>昨天那篇的落点是「压缩会悄悄丢掉你交代过的约束」。今天这篇里，压缩加上保留推理状态，能把同一道题从 0 分抬到 100 分。</p>
+<p>同一个机制。我这边丢了个检查，它那边多挣了分。</p>
+<p>还有更近的一次对照。六月我写过小米开源的 MiMo Code，那个例子也是同一个模型塞进两套壳，SWE-Bench Pro 62% 对 57%，差 5 个点。我当时还专门提醒了一句：那是厂商自报、不在官方榜上。</p>
+<p>四个月过去，同样一句「同一个模型换个壳」，落差从 5 个点长到 47.7 个点，两颗都盖了官方的章。</p>
+<p>而我自己那条写文章的流水线，十几个 skill、一份越喂越厚的 CLAUDE.md、一套专门防 AI 味的 grep 规则，本来就是一坨很厚的脚手架。</p>
+<p>「这个分数里有多少是脚手架挣的」，这个问题轮到我身上，我也答不上来，因为我从没量过。</p>
+<p>脚手架的成本那头我倒算得清：同一篇稿子，从吃掉月度额度的 19% 压到 8% 到 9%。可钱这头我省下来过，分这头我一把尺子都没有。</p>
+<h2 id="下次看分先问四句"><a href="#下次看分先问四句" class="headerlink" title="下次看分先问四句"></a>下次看分先问四句</h2><p>我不打算把这写成「榜单都不可信」。ARC Prize 这次该给的都给了，是下游把限定磨平了。</p>
+<p>前三篇我量的都是同一把尺子上的数字怎么会变。今天这篇里，尺子没换，模型没换，题目一道没换，换的是考官。</p>
+<p>前两天那篇我给过三条读价钱的判据，这篇接在它后面，把判据换到考官这一层。下次你看到一个 AI 榜单的分数，可以先问四句：</p>
+<ul>
+<li>这个分，是哪个脚手架跑出来的</li>
+<li>题目跑完了几成，没跑完的算没算分</li>
+<li>同一套评测，有没有第二组官方数字</li>
+<li>这套脚手架是谁出的</li>
+</ul>
+<p>四句问完，那个 97.5% 就不会自己往你脑子里钻了。你会先想起它旁边还站着一个 49.8%。</p>
+<p>七月那句提醒，现在变成了同一张榜上的两个官方数字。两个数之间隔着的，是那个决定「思考要不要写给人看」的考官。</p>
+<p>你最近一次刷到 AI 分数觉得「哇，这么高」，是在哪儿看到的？官方榜、官方的 X 帖，还是别人转来的一张截图？评论区说一下。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>AI Agent</tag>
+        <tag>Gemini</tag>
+        <tag>基准测试</tag>
+        <tag>ARC-AGI</tag>
+        <tag>评测口径</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Claude Code 空闲也压缩，你的检查跑了吗</title>
     <url>/2026/10/15/202610151402/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261015-202610151402-claude-idle-compaction.webp" alt="cover"></p>
@@ -12221,8 +12301,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>Android Studio</tag>
         <tag>Android</tag>
+        <tag>Android Studio</tag>
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
         <tag>开发工作流</tag>
@@ -28826,9 +28906,9 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>Android Studio</tag>
         <tag>Android</tag>
         <tag>Gradle</tag>
+        <tag>Android Studio</tag>
         <tag>AGP</tag>
         <tag>Kotlin</tag>
       </tags>
@@ -38680,7 +38760,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#x74;&#x40;&#x67;&#105;&#116;&#x68;&#117;&#98;&#x2e;&#99;&#111;&#109;">&#103;&#105;&#x74;&#x40;&#x67;&#105;&#116;&#x68;&#117;&#98;&#x2e;&#99;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#x74;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#98;&#x2e;&#x63;&#x6f;&#109;">&#x67;&#x69;&#x74;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#98;&#x2e;&#x63;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -38787,8 +38867,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Windows</tag>
         <tag>iTunes</tag>
+        <tag>Windows</tag>
       </tags>
   </entry>
   <entry>
@@ -39062,8 +39142,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Windows</tag>
         <tag>iTunes</tag>
+        <tag>Windows</tag>
       </tags>
   </entry>
   <entry>
@@ -39812,8 +39892,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Plugin</tag>
         <tag>GitHub</tag>
+        <tag>Plugin</tag>
         <tag>Android Studio</tag>
       </tags>
   </entry>
@@ -40105,19 +40185,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android 使用原生动画工具类实现平移动画</title>
-    <url>/2017/09/24/201709242411/</url>
-    <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 向右边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, true));</span><br><span class="line">// 向右边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, true));</span><br><span class="line"> </span><br><span class="line">llVideo.setVisibility(View.VISIBLE);</span><br><span class="line">llVideo.setVisibility(View.GONE);</span><br><span class="line">// 向左边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, false));</span><br><span class="line">// 向左边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, false));</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>动画</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 最新手机号正则判断</title>
     <url>/2017/09/24/201709242412/</url>
     <content><![CDATA[<pre><code>/**
@@ -40208,8 +40275,8 @@ public static boolean isChinaPhoneLegal(String str)
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Android Studio</tag>
         <tag>Android</tag>
+        <tag>Android Studio</tag>
       </tags>
   </entry>
   <entry>
@@ -40525,8 +40592,8 @@ public static boolean isChinaPhoneLegal(String str)
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Intent</tag>
         <tag>Android</tag>
+        <tag>Intent</tag>
       </tags>
   </entry>
   <entry>
@@ -40543,8 +40610,8 @@ public static boolean isChinaPhoneLegal(String str)
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Bitmap</tag>
         <tag>Android</tag>
+        <tag>Bitmap</tag>
         <tag>高斯模糊</tag>
       </tags>
   </entry>
@@ -42243,6 +42310,19 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>Android 使用原生动画工具类实现平移动画</title>
+    <url>/2017/09/24/201709242411/</url>
+    <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 向右边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, true));</span><br><span class="line">// 向右边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, true));</span><br><span class="line"> </span><br><span class="line">llVideo.setVisibility(View.VISIBLE);</span><br><span class="line">llVideo.setVisibility(View.GONE);</span><br><span class="line">// 向左边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, false));</span><br><span class="line">// 向左边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, false));</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>动画</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Window10磁盘分区</title>
     <url>/2017/09/24/201709242200/</url>
     <content><![CDATA[<blockquote>
@@ -42262,8 +42342,8 @@ Thanks all.
         <category>Windows</category>
       </categories>
       <tags>
-        <tag>硬盘分区</tag>
         <tag>Windows</tag>
+        <tag>硬盘分区</tag>
       </tags>
   </entry>
   <entry>

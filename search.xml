@@ -256,6 +256,221 @@
       </tags>
   </entry>
   <entry>
+    <title>Anthropic 一天合三万条，你一天几条</title>
+    <url>/2026/10/16/202610161834/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261016-202610161834-commit-volume-threshold-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>先问你件事：你自己那个仓库，现在平均一天提交几条？我猜个位数，不少人可能连一条都不到。这个数今天变得重要了，因为有人刚给一条线刻上了刻度。</p>
+<p>今天中文圈到处在传，说 Anthropic 不用 git 了，版本控制整个换成了自己造的。我把官方原文逐字读了一遍，假的。他们迁的是自己那一个仓库，原文还专门留了一整段劝别人别学。而真事比传闻有意思：他们第一次给「什么量级才配动这个底座」这条线，配上了真实数字。</p>
+<p>我把那条线拿来量了一遍自己。差着四个数量级。</p>
+<h2 id="到处在传的那句话"><a href="#到处在传的那句话" class="headerlink" title="到处在传的那句话"></a>到处在传的那句话</h2><p>传的版本是这样：Anthropic 不用 git 了，自研了一套版本控制，把 git 整个换掉。</p>
+<p>我去读了那篇原文。原话是 <code>fully migrated our monorepo from git in five months</code>，翻过来是：五个月里，把我们那个 monorepo 完整迁出了 git。</p>
+<p>monorepo 说人话，就是全公司的代码装在同一个仓库里。多数团队一个项目一个仓库、一个人手上几个仓库。monorepo 反过来，全公司共用那一个。所以他们动的只是自己那一个仓库。</p>
+<p>更硬的反证在他们自己的收尾段，原文写了一句：<code>Scion is by no means a suitable replacement for git for general use.</code> 意思是，Scion 绝不适合拿去当 git 的通用替代品。这是 Anthropic 自己写的。</p>
+<p>那这条错为什么传得开？因为「大厂弃用 git」这个标题太顺了，顺到没人去核后半句。</p>
+<h2 id="他们到底迁了什么"><a href="#他们到底迁了什么" class="headerlink" title="他们到底迁了什么"></a>他们到底迁了什么</h2><p>Scion 是从存储层重写的完整版本控制系统。它有自己的数据单元、自己的客户端、自己的服务端和协议。</p>
+<p>他们自己特意提了一嘴，Scion 里没有 git 那种 packfile。说人话：git 每攒一批改动就压成一个包存起来，包一多就得定期拆开重装，仓库越大这道工序越贵。Scion 干脆取消了打包，所以它压根没有「仓库维护」这一说。底下那层是被整个换掉的，它没挂在 git 上。</p>
+<p>为什么要动？他们没写某一步崩了，写的是一整套已经撑不住的日常。</p>
+<p>他们的 main 分支，光历史就快 100 GB。CI 每天要跑大约 2,500 万次 checkout，平均每秒接近三百次，每一次都可能拖走整个仓库的一份拷贝。全量拉的话，一天要搬 600 PB 出去。</p>
+<p>峰值的时候他们跑着几百个内部 git 镜像。先到顶的是镜像的磁盘和内存。</p>
+<p>真正的病根在他们一句话里：<code>nearly all of our clients were agents and jobs that are online by definition.</code> 他们一直拿 git 当一个集中式系统用，留一份权威副本。可这个系统里的「客户端」，几乎全是永远在线的 agent 和任务。让 git 在分布式、离线场景里称王的那些设计，在这个用法下全变成了负担。</p>
+<p>那篇里有句话我印象很深：<code>Very often, we found that the role of the engineers was to tell Claude &#39;no.&#39;</code> 很多时候，工程师的活变成了去对 Claude 说不。</p>
+<p>这条路也有人走过。Google 的 Piper、Meta 的 Sapling 都是自研的版本控制，Anthropic 在那篇里也点了名。之前的那些，基本只留下一个名字。</p>
+<p>名字这事，10 月 14 号还闹过一场。Meta 那套 Mononoke 的建造者发文说 Scion 大量借鉴，用的词是「接近于剽窃」，可 Anthropic 那篇只列了 Sapling，一个字没提 Mononoke。第二天，Anthropic 把 Mononoke 补进了脚注。那位建造者后来补的一句，我觉得比指控本身更值得记：问题在署名，不在照抄。</p>
+<h2 id="官方自己劝你别换"><a href="#官方自己劝你别换" class="headerlink" title="官方自己劝你别换"></a>官方自己劝你别换</h2><p>最值钱的是这两句。门槛那句是：<code>The concepts we&#39;ve outlined here really only make sense for truly enormous monorepos, with either tens of thousands of engineers or swarms of agents prolifically writing code.</code></p>
+<p>翻过来：这套东西只对真正巨大的 monorepo 才成立，前提是你要么有几万个工程师，要么有一大群 agent 在那拼命写代码。</p>
+<p>另一句更直白：<code>Anthropic is unique in that our ability to spend tokens for internal use far exceeds what any other business would realistically want to spend.</code> 我们内部花 token 的能力，远超任何一家公司现实中愿意花的那个数。</p>
+<p>Anthropic 等于亲手给「什么时候才该动这个底座」画了一条线，还顺手报出了线上的刻度。</p>
+<p>一个七人团队，五个月搬完，同期还做了半打相关系统。做完之后他们花了不小篇幅劝你别学，还给了替代方案。把 Scion 里那几招搬回 git 就行。用他们的话说，git 的服务端没必要跟客户端一个玩法。</p>
+<h2 id="我-6-月那句还成立吗"><a href="#我-6-月那句还成立吗" class="headerlink" title="我 6 月那句还成立吗"></a>我 6 月那句还成立吗</h2><p>6 月 23 号，我写过一篇，主角是一个开源项目叫 Oak，它想给 agent 换掉 git。</p>
+<p>同一篇里我说了句挺满的话：不换，至少现在不会。理由两条。一条是迁移成本。我这条写作流水线挂着十几个 skill，配图的、查重的、发布的，每一个都是顺着 git 那套规矩磨出来的。另一条是 Oak 当时还是 v0.99.0 的公测版。我的真实仓库不拿去给一个 0.99 的版本控制系统当小白鼠。</p>
+<p>我还留过一个伏笔，原话是：等它过了 1.0、等有人拿真仓库跑出独立的实测数据，我大概会先拿它当草稿层试一试。</p>
+<p>今天来的，是后半句。真仓库的实测数据来了。Anthropic 把自己那个真仓库亮了出来，带着花了多久、几个人、迁移前后的数。一份完整的账。没来的那一半是前半句：Scion 不对外，我装不上，Oak 也还是没到 1.0。</p>
+<p>所以准确说，伏笔兑现了一半：真仓库的数据来了，能给我用的那个选项没来。</p>
+<p>那两句理由今天还成立吗？成立。我的十几个 skill 还长在 git 上，Oak 也还是那个版本号。</p>
+<p>但理由底下还压着一条，我当年没写出来。因为我当时不知道它画在哪。Anthropic 这篇，正好把它补上了。</p>
+<h2 id="我离那条线还差多远"><a href="#我离那条线还差多远" class="headerlink" title="我离那条线还差多远"></a>我离那条线还差多远</h2><p>要跟它比，我得先把自己那个数重新数一遍。</p>
+<p>今天跑了一趟 git log，窗口卡在 6 月 24 号到现在。这个仓库 2022 年 8 月建的，到今天一共 636 条提交。</p>
+<p>光是 6 月 24 号之后的 114 天里，就有 307 条。除下来，一天 2.7 条。</p>
+<p>上周三我数的时候是 607 条。九天才多了 29 条，日均那个数几乎没动。</p>
+<p>再把 Anthropic 那边摆过来。5 月，他们那个仓库平均每天合并大约 2,500 条改动；到 9 月，一天超过 30,000 条。</p>
+<p>9 月 9 号那天是个峰值，30,401 条。这个精确数出自第三方重绘的那张图。官方自己用的措辞是「涨了十倍以上」。</p>
+<p>这里有个坑我得说清。Simon Willison 重绘官方那张图的时候发现，每根柱子其实是两层叠的。蓝色是常规的合入请求，橙色那一种叫 antique change request，说白了是另一种改动单位。名字不用记，要紧的是它跟蓝色不是一回事。</p>
+<p>橙色 5 月底才冒出来，7 月中基本把 PR 全替掉了。所以 5 月的 2,500 和 9 月的 30,000 还不是同一种单位。中间隔着一次计量方式的更换。</p>
+<p>我的 2.7，对上它的 2,500，大约九百倍。对上 30,000，一万一千倍上下，差不多四个数量级。</p>
+<p>这个数我也得把丑话说完：我这边量的单位，是「提交到我自己那个单作者仓库」；它那边量的单位，是「合并进整个公司 monorepo 的改动」。这是两种东西，不能相减，也写不出「我差了 X 倍」这种精确话。但四个数量级这个量级判断，换成什么口径都站得住。</p>
+<p>换个好懂的算法。9 月 9 号那一天他们合并进去的量，差不多是我这个仓库从 2022 年建仓到今天全部提交的 48 倍。反过来说，我四年多攒下的这些，按它那天的速度，大约半个小时就能合并完。</p>
+<p>只有当写代码的量到了那个份上，连「读」都得整个重做一遍。Claude 开发者博客那篇开头就问了一句 <code>Does anyone read code anymore?</code>，还有人读代码吗。他们的回答是：团队里没人再在脑子里存着一份完整的代码地图，想知道哪一块，就让 Claude 现写一份讲解。这跟我上周问过的是同一个问题，官方比我干脆得多。</p>
+<p>这就是我当年漏掉的那一条。6 月的我，手上只有一杆「贵不贵」的秤；今天多了一把带刻度的尺子。</p>
+<p>该不该动这个底座，不在你觉得它多疼，在你手上有多少量。而我离那条线，大约差四个数量级。</p>
+<p>我 6 月留的那个伏笔，前半句还没到。Oak 还没过 1.0，Scion 也不对外。刻度有了，可线的那一边现在还站不上人。</p>
+<p>回到最开头那个问题：你自己那个仓库，一天几条？数完你要是愿意，来对个数。我挺想知道这条门槛在别人那儿长什么样。</p>
+]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>AI Agent</tag>
+        <tag>Anthropic</tag>
+        <tag>git</tag>
+        <tag>版本控制</tag>
+        <tag>基础设施</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ChatGPT 能用 Chrome，网站授权和任务范围要分开看</title>
+    <url>/2026/10/16/202610161359/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261016-202610161359-chatgpt-chrome-permissions.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>你把已经登录的 Chrome 交给 ChatGPT，最想省掉哪一步？复制网页，切标签，还是把后台里的消息挨条搬出来？我五月试 Codex 插件时，最喜欢的就是省掉重新登录。</p>
+<p>这次看到 ChatGPT 控制 Chrome 的消息，我翻回了自己的旧文。有句话得收窄：当时我把插件的广泛权限，写得像装上就能随意访问所有登录网站。</p>
+<p>当前官方文档把中间的授权写清楚了。安装插件、允许某个网站、访问历史记录，是不同的事。这个差别会直接影响你怎么给它派活。</p>
+<p>先交代范围：这次没有新上手记录。我核的是截至十月十六日的官方文档，对照五月的真实体验。下面的任务例子是建议写法，不是本次实测结果。</p>
+<h2 id="五月真省过一次搬运"><a href="#五月真省过一次搬运" class="headerlink" title="五月真省过一次搬运"></a>五月真省过一次搬运</h2><p>五月那次，我让 Codex 打开 LinkedIn 收件箱。找最近七天的招聘私信，按公司分组，每家公司给一句总结。</p>
+<p>那篇<a href="https://www.vance.xin/2026/05/09/202605091416/">踩坑实录</a>记着：它用了已登录的标签页，大约两分钟给出了列表。我同时还能干别的。那种不用把一串消息复制进聊天框的省心，确实试过。</p>
+<p>不过，为了装上它，我先切了登录方式，又折腾安装页。系统默认浏览器是 Arc，安装链接还被 Arc 接走。插件装好，桌面端仍显示没连接。重开应用没解决，重启整台 Mac 才识别。</p>
+<p>任务跑了约两分钟，安装却让我重启了电脑。五月那篇记录里，最曲折的是连接过程。</p>
+<p>这些都是五月的经过。节点能不能用、安装是否还需要那样绕，我这次没重测。今天安装，先按当前官方指引走。旧文只用来对照当时踩过的坑。</p>
+<p>五月原文里的任务是：</p>
+<blockquote>
+<p>@Chrome 打开我的 LinkedIn 收件箱，找出最近 7 天里所有标记为“招聘”的私信，按公司分组列出来，每个公司给一句话总结。</p>
+</blockquote>
+<p>它写出了时间、消息类型、分组方式。旧文记着列表交回来了，却没有留下逐条核对的记录。省掉搬运确实试过，分类准确率不能借这段经历保证。</p>
+<h2 id="先认清用哪只浏览器"><a href="#先认清用哪只浏览器" class="headerlink" title="先认清用哪只浏览器"></a>先认清用哪只浏览器</h2><p>官方现在的<a href="https://learn.chatgpt.com/docs/browser">浏览器指南</a>区分了几种环境。桌面内置浏览器有自己的浏览状态。想用平时 Chrome 里的登录状态和打开的页面，要走浏览器扩展。云端浏览器又是另一套环境。</p>
+<p>你在 Chrome 登录了某个后台，不能据此认定内置浏览器也登录了。</p>
+<p>这很容易在任务中暴露。你说“看看这个后台”，它却打开一个登录页。先核对浏览器和账号，比继续催它“你再试试”有用。</p>
+<p>我的旧体验还有个细节值得保留：我需要在对话里显式选 Chrome。当前指南也有选择浏览器和引用打开标签页的方式。给指定页面，比扔一句“去浏览器找”更容易核对结果。</p>
+<p>可这仍然回答不了一个更细的问题：一次引用标签页，究竟读了哪些内容？我没有做跨标签的边界测试。文档支持使用打开页面的上下文，不能被我扩写成“每次只会读你点中的那一页”。</p>
+<p>所以在五月那条任务里，“Chrome”先选定环境。登录的是谁，还得在操作前看一眼。收件箱里的消息属于哪个账号，这件事不能只靠网址判断。</p>
+<h2 id="安装提示说的是能力"><a href="#安装提示说的是能力" class="headerlink" title="安装提示说的是能力"></a>安装提示说的是能力</h2><p>五月旧文里，我说 OpenAI 拿到了浏览器里所有登录会话的访问权限。现在回看，这句话揉在一起的东西太多了。</p>
+<p><a href="https://learn.chatgpt.com/docs/chrome-extension">扩展官方指南</a>列出的安装权限确实很宽。但它同时写明，任务使用网站和历史记录，还受自己的确认、设置及允许或阻止名单约束。</p>
+<p><strong>安装时看到的权限，不能直接当成某次任务已经使用的范围。</strong></p>
+<p>反过来也一样。一次任务没读别的页面，不能证明扩展从技术上永远碰不到别的页面。你要核的是那次任务、当前设置，以及它实际做了什么。</p>
+<p>我五月开了一个独立 Chrome 个人资料，叫 codex-only。只登录自己愿意交给 AI 的几个账号。这是旧文记下的做法，我仍认可它的用途：减少混进任务里的账号。</p>
+<p>但我当时把它叫“沙盒”，也说得轻巧了。单独的个人资料方便分开登录，里面登录的账号本身能做什么，并没有因此缩小。要是仍登着权限很大的工作账号，换个名字也帮不了你。</p>
+<h2 id="允许网站要看清范围"><a href="#允许网站要看清范围" class="headerlink" title="允许网站要看清范围"></a>允许网站要看清范围</h2><p>当前扩展指南按网站主机管理访问。“允许一次”供这次使用。“允许此网站”保存这个站的授权，之后不再重复询问。“允许所有网站”则放开网站访问的确认。历史记录则单独请求，没有永久允许选项。具体入口和可用性以你的客户端、工作区设置为准。</p>
+<p>这些选择会改变你之后看到的提示。今天点过长期允许，明天没再弹窗，不能立刻断言它绕过了授权。得先回设置里看保存了什么。</p>
+<p>拿那条私信任务接着看。设置里允许的是 LinkedIn 这个网站；任务里指定的才是收件箱、最近七天和招聘消息。这两处说的范围不同。</p>
+<p>你在任务里圈定收件箱，并不能据此认定产品把访问能力锁在这一页。把收件箱网址写进提示词，也不能自动给站内其他页面加上技术限制。</p>
+<p>如果你以为“我只引用了这页，所以它一定看不到别页”，恰好就把任务要求当成了访问控制。我这次没有验证这个范围，先留着疑问。后续即便有调用记录，也要看记录够不够说明问题。</p>
+<p>以我那次 LinkedIn 任务为例，按公司列招聘消息，交付物是一张列表。“顺便帮我回复他们”，交付物就变了。收件人、措辞、发送账号，都得重新讲清楚。</p>
+<p>我的做法会是先让它读、分类，再把拟回复内容交回来。发给谁，正文是什么，我看完再明确下指令。这是我愿意放权到哪一步，不是对产品一定会在哪个按钮前停住的保证。</p>
+<p>尤其别把“这个网站可以用”理解成“这个网站里发生什么都算我同意”。网站名只说明了地点。你让它做的动作，仍然得说出来。</p>
+<h2 id="列表交回，回复另说"><a href="#列表交回，回复另说" class="headerlink" title="列表交回，回复另说"></a>列表交回，回复另说</h2><p>五月那条任务如果今天再派一次，我会保留最近七天、招聘消息和按公司分组。再把使用哪个账号写清楚，并要求每条总结能找到对应消息。</p>
+<p>交回列表后，先抽查几条。公司有没有分错，时间有没有超出范围，漏掉的消息能不能补。旧文没留下这部分核对，不能用“约两分钟完成”替它补一张准确率成绩单。</p>
+<p>至于回复，我会单独交代。先让它拟文案，再核收件人和正文。看过之后才明确让它发送。这样，整理过程有结果可验，发出去的话也经过了我的眼睛。</p>
+<p>这只是我建议的任务写法，还没拿这次功能跑过。能不能按要求停住，授权提示具体怎么出现，仍得用实际任务验证。</p>
+<p>我也会在选浏览器之前问一句：这件活需要登录吗？查公开产品说明，用公开页面就够了；整理自己的私信，才需要进入指定账号。省下重新登录很方便，没必要为了查公开资料去打开内部后台。</p>
+<p>这次还欠两项对照：引用一个标签后是否调用别的标签；改变网站授权后，后续任务的提示怎么变。没有足够的记录，我先不下结论。</p>
+<p>五月，我确认了省掉搬运的方便。这次核文档，我把安装权限和任务授权分开看了。下次再交出收件箱，我会写清账号、时间和交付内容：先把列表交回来，回复另说。</p>
+<p>如果让它整理你的收件箱，你会要求它在分类后停下，还是拟好回复再停？</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>Chrome</tag>
+        <tag>ChatGPT</tag>
+        <tag>Agent</tag>
+        <tag>浏览器</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Step 5 权重到了，我先认一笔欠账</title>
+    <url>/2026/10/16/202610161343/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261016-202610161343-step5-weights-followup.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>Step 5 权重到了，挑哪个版本、预留多少空间，你现在能查到具体答案了。九月二十号，我在旧文结尾写了「10 月 15 日见」。说好接进 Claude Code 跑两天，再掂量文件有多大。今天晚了一天，你该来催我了。</p>
+<p>权重确实到了。文件我核了，接入文档也找到了，连当时没找到的缓存价都有答案。可接进自己的流水线跑两天，这份作业我还没交。今天能交代的，是哪些条件补齐了，哪些仍然没测。</p>
+<h2 id="两件事要分开交代"><a href="#两件事要分开交代" class="headerlink" title="两件事要分开交代"></a>两件事要分开交代</h2><p>那篇<a href="https://www.vance.xin/2026/09/20/202609202254/">旧文</a>里，我留了两个具体动作。一个是看工具调用稳不稳；另一个是把 Step 5 的体积，跟 K3 那个旧数字摆一起。</p>
+<p>现在回看，后一个动作也没想周全。模型参数少了，下载文件就一定更小吗？还得先问，你拿的是哪种精度。</p>
+<p>精度可以理解成，保存模型数字时用多细的刻度。刻度压粗，文件通常会变小，但部署方式、效果与硬件支持也得跟着核。不能看见一个型号，就把所有版本当成同一份东西。</p>
+<p>这次我先把三份官方文件目录过了一遍。没有下载几百 GB 权重，也没有在本机启动模型。做的是文件元数据核对。数字算了哪些文件，得一起交代。</p>
+<h2 id="650GB-是哪一版"><a href="#650GB-是哪一版" class="headerlink" title="650GB 是哪一版"></a>650GB 是哪一版</h2><p>从阶跃星辰的 Hugging Face 仓库取文件大小，只加总 <code>.safetensors</code> 权重分片，得到这张表：</p>
+<table>
+<thead>
+<tr>
+<th>官方版本</th>
+<th align="right">权重分片合计</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BF16</td>
+<td align="right">约 1214.9 GB</td>
+</tr>
+<tr>
+<td>FP8</td>
+<td align="right">约 650.3 GB</td>
+</tr>
+<tr>
+<td>NVFP4</td>
+<td align="right">约 394.2 GB</td>
+</tr>
+</tbody></table>
+<p>核对时，我保留了文件名和各自的字节数。FP8 与 BF16 都有二十八个权重分片，NVFP4 是九十五个。把分片加起来，才有表里的数。分片多，只说明文件怎么切；它本身不能拿来判断模型更大或更强。</p>
+<p>页面上看着一样的下载列表，里面放的可能是不同版本。选错一项，连要预留多少磁盘空间都会跟着变。所以这份作业交到这里，至少得把版本写在数字旁边。</p>
+<p>表里的 GB 按十亿字节算。配置文件、分词文件没有加进去。三个目录分别是 <a href="https://huggingface.co/stepfun-ai/Step-5-Preview-BF16/tree/main">BF16</a>、<a href="https://huggingface.co/stepfun-ai/Step-5-Preview/tree/main">FP8</a> 和 <a href="https://huggingface.co/stepfun-ai/Step-5-Preview-NVFP4/tree/main">NVFP4</a>，核对日期是十月十六号。</p>
+<p>同一个 Step 5，光这三份权重，体积就隔了一大截。你转发一句「它有六百多 GB」，别人要是看的另一个版本，两个人聊半天都对不上。</p>
+<p>九月那篇拿 K3 的 594G 当参照，我这次先不算比例。旧数字没有在那一段锁定可比的精度和文件范围。用它对着 FP8 就判谁大谁小，得到的只是两个数字的大小。</p>
+<p>还有一件事得收住：文件体积不能直接当运行显存。模型要放进去，运行时的缓存和缓冲也要占位置。对话能拉多长、能同时接几个请求，都会影响余量。</p>
+<p>我<a href="https://www.vance.xin/2026/07/28/202607282028/">七月已经为这事改过口</a>。我先写 K3「根本装不进来」。隔天，有人用流式加载把它跑起来，我只好回去改口。它把权重按需拉取，换了一种加载办法。文件大这件事没消失，可“装不进来”的结论已经站不住了。</p>
+<h2 id="四张卡也得看型号"><a href="#四张卡也得看型号" class="headerlink" title="四张卡也得看型号"></a>四张卡也得看型号</h2><p>官方 <a href="https://huggingface.co/stepfun-ai/Step-5-Preview/blob/main/README.md">README</a> 给了部署示例。FP8 可以看四张 B300 那组，也有八张 H200 那组。这里的四张，指的是 B300。</p>
+<p>这几行，比“激活二百七十亿参数”更能回答我的部署问题。激活量说的是一次计算动用多少参数。要部署整个模型，仍得面对权重和运行空间。</p>
+<p>但我也不会把官方示例抄成最低配置。README 自己写了，实际内存要求会随框架、缓存分配和并发变化。别的实现能不能更省，得看具体结果。</p>
+<p>尤其别把 FP8 那组硬件，安到上面的 NVFP4 数字旁边。一个是某个版本的文件大小，一个是另一套部署示例，挨着排就容易让人误以为配套。</p>
+<h2 id="接入指南已经有了"><a href="#接入指南已经有了" class="headerlink" title="接入指南已经有了"></a>接入指南已经有了</h2><p>接 Claude Code 这件事，现在有了更明确的起点。</p>
+<p>StepFun 的<a href="https://platform.stepfun.ai/docs/en/guides/developer/integrations/claude-code">官方接入文档</a>写了 Messages API，能把 Step 模型接到 Claude Code 客户端。它的示例走 Step Plan 套餐通道，模型名用 <code>step-5-preview</code>。后面那张标准 API 价目表，算的是另一条按量计费通道。</p>
+<p>这和自己用 vLLM 起一个 OpenAI 兼容服务，走的是不同接法。看到模型能响应普通聊天，还不能直接算我那套工具链接好了。</p>
+<p>我更在意文档里那几个容易略过的地方。主对话选了 Step，子代理可能还有自己的模型配置；任务里如果写死别的模型名，也得单独看。只改最显眼的那一格，后台调用未必跟着走。</p>
+<p>连一键脚本，官方都交代了范围：会备份配置，但会替换整个 <code>env</code> 对象。原来放在里面的其他变量会被移走，顶层的其他字段才保留。已有配置的人，看到“有备份”也别跳过这句话。</p>
+<p>这篇我没有运行那个脚本，接通结果还交不出来。</p>
+<p>而且，<a href="https://code.claude.com/docs/en/llm-gateway">Anthropic 的网关文档</a>明确不支持把 Claude Code 路由到非 Claude 模型。模型方给出兼容接法，与客户端厂商为它提供支持，要分清。</p>
+<h2 id="缓存那格补上了"><a href="#缓存那格补上了" class="headerlink" title="缓存那格补上了"></a>缓存那格补上了</h2><p>九月我最惦记的，是价目表里没看到缓存命中价。跑长任务，每轮重复送进去的要求很多，这格会影响输入成本。</p>
+<p>这次找到<a href="https://platform.stepfun.ai/docs/en/guides/pricing/details">官方价目表</a>，按标准 API 的美元价格，每百万 token 是这样：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th align="right">美元单价</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>输入，缓存未命中</td>
+<td align="right">1.00</td>
+</tr>
+<tr>
+<td>输入，缓存命中</td>
+<td align="right">0.10</td>
+</tr>
+<tr>
+<td>输出</td>
+<td align="right">2.70</td>
+</tr>
+</tbody></table>
+<p>未命中的输入价，已经包含写入缓存。输出则把推理过程和最终回答一起算。这个表核到了，旧文里“缓存价那格没看到”的疑问可以收回。</p>
+<p>可它跟接入指南里的 Step Plan 额度，仍然是两种口径。不能抄着标准 API 的单价，算出一个数，就说套餐里实际扣了这些钱。</p>
+<p>同样，命中单价便宜，不代表我的任务一定省这么多。命中多少、输出多长、失败要重来几次，都还没在这套流程里量过。</p>
+<p>我的写作流水线挂着十几个 skill，也就是按任务加载的操作说明。换一个模型，麻烦经常藏在工具调用、格式约定和阶段交接里。旧文里我就说过，这些规则照着 Claude 的脾气磨过。价格表补齐了，迁移要花多少精力还得另算。</p>
+<h2 id="两天长测还欠着"><a href="#两天长测还欠着" class="headerlink" title="两天长测还欠着"></a>两天长测还欠着</h2><p>我现在能划掉的，是“权重尚未开放”。能补上的，是三种版本的文件体积、官方接入口，以及缓存计价。</p>
+<p>工具调用稳不稳，暂时还不能划勾。官方接入指南也把验证拆开了：普通对话、读文件改文件再运行、到平台核请求路由。看到一句回复，只完成了其中一小段。</p>
+<p>它给的工具测试也很朴素。先读一个 Python 文件，补名字参数。默认名字、指定名字，分别运行并检查输出。读、改、跑、核结果要连得上。这个测试比聊两句更接近我的需求，但通过它，仍然替不了那两天的真实任务。</p>
+<p>这篇稿子的生成过程，就有个现成例子。初稿正文中文字符只有 1861，检查脚本直接退回。补进真实分片统计和官方工具测试细节，才到了 2084，过了写稿阶段的检查。</p>
+<p>如果只收一句“文章写完了”，那个字数缺口就看不见。换底座也得保留这类检查，看每一阶段交出来的文件，别只看模型怎么报喜。这次我没有拿 Step 5 跑这篇流水线，不能把这个例子算进它的成绩。</p>
+<p>旧文给换底座设了“同分还便宜三倍以上”的条件。现在也还没到直接套这个条件的时候。分数看能力，价目表看单价。自己的任务能不能做完，还得拿结果说话。自己的任务结果没拿到，换不换还轮不到下结论。</p>
+<p>晚了一天，这次查清了权重有多大、官方给了什么接法、标准 API 怎么计价。能不能替我干完活，得等那两天的任务记录回答。你手上有哪一条正在用的流程，换模型之前一定要完整跑过一遍？</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>Claude Code</tag>
+        <tag>模型选型</tag>
+        <tag>Step 5</tag>
+        <tag>开放权重</tag>
+        <tag>缓存</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>刷 AI 榜单的人，同一道题差 100 分</title>
     <url>/2026/10/16/202610161159/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261016-202610161159-arc-agi-harness-two-treatments-v2.webp" alt="cover"></p>
@@ -12301,8 +12516,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>Android</tag>
         <tag>Android Studio</tag>
+        <tag>Android</tag>
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
         <tag>开发工作流</tag>
@@ -28906,9 +29121,9 @@
         <category>阅读</category>
       </categories>
       <tags>
+        <tag>Android Studio</tag>
         <tag>Android</tag>
         <tag>Gradle</tag>
-        <tag>Android Studio</tag>
         <tag>AGP</tag>
         <tag>Kotlin</tag>
       </tags>
@@ -38760,7 +38975,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#x74;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#98;&#x2e;&#x63;&#x6f;&#109;">&#x67;&#x69;&#x74;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#98;&#x2e;&#x63;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#x6d;">&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -38867,8 +39082,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>iTunes</tag>
         <tag>Windows</tag>
+        <tag>iTunes</tag>
       </tags>
   </entry>
   <entry>
@@ -39142,8 +39357,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>iTunes</tag>
         <tag>Windows</tag>
+        <tag>iTunes</tag>
       </tags>
   </entry>
   <entry>
@@ -39892,8 +40107,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>GitHub</tag>
         <tag>Plugin</tag>
+        <tag>GitHub</tag>
         <tag>Android Studio</tag>
       </tags>
   </entry>
@@ -40185,6 +40400,19 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android 使用原生动画工具类实现平移动画</title>
+    <url>/2017/09/24/201709242411/</url>
+    <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 向右边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, true));</span><br><span class="line">// 向右边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, true));</span><br><span class="line"> </span><br><span class="line">llVideo.setVisibility(View.VISIBLE);</span><br><span class="line">llVideo.setVisibility(View.GONE);</span><br><span class="line">// 向左边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, false));</span><br><span class="line">// 向左边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, false));</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>动画</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 最新手机号正则判断</title>
     <url>/2017/09/24/201709242412/</url>
     <content><![CDATA[<pre><code>/**
@@ -40275,8 +40503,8 @@ public static boolean isChinaPhoneLegal(String str)
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Android</tag>
         <tag>Android Studio</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -40592,8 +40820,8 @@ public static boolean isChinaPhoneLegal(String str)
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Android</tag>
         <tag>Intent</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -40610,8 +40838,8 @@ public static boolean isChinaPhoneLegal(String str)
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Android</tag>
         <tag>Bitmap</tag>
+        <tag>Android</tag>
         <tag>高斯模糊</tag>
       </tags>
   </entry>
@@ -41233,34 +41461,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Failed to resolve com.android.support</title>
-    <url>/2017/09/24/201709242435/</url>
-    <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
-<p>报错如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Failed to resolve com.android.support</span><br></pre></td></tr></table></figure>
-
-<p>刚开始自己写了一个 module demo 编译、运行都没有问题，然后又新建了一个 module，因为在新建之前看到编译好的 module 中有个 xml 文件，感觉命名不好，就 Refactor -&gt; Rename 了一下，重命名了一下文件，一般在重命名的时候 AS 会弹出提示你是否在调用的地方也进行重命名，结果我就直接一路Refactor了，因为之前也是这样修改的，没有出过问题，然后在编译的时候就出现了上面的错误，然后定位到这一行依赖这里：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">implementation &#x27;com.android.support:appcompat-v7:27.1.1&#x27;</span><br></pre></td></tr></table></figure>
-
-<p>我看了一下，毛线，这是系统生成的还能写错?为了不打脸，我还是复制了一行好的比对了一下，没有问题的，我看了一下网络，网络也没有问题啊，这不科学呀，懵逼中…</p>
-<p>于是乎，打开百度，输入如上错误，点击搜索，看到了一篇博主的文章：</p>
-<p><a href="https://blog.csdn.net/mhl18820672087/article/details/78385361">https://blog.csdn.net/mhl18820672087/article/details/78385361</a></p>
-<p>我看了一下，我的构建版本的工具是没有任何问题的，因为其他 module 都能编译过，就这一个 module 编译不通过，任然没有解决我的问题，打开我编译不过的 module 的 build.gradle 文件，细心的我发现了一个问题，看下图标红的地方：</p>
-<p><img src="https://img-blog.csdn.net/20180706171937624?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><img src="https://img-blog.csdn.net/20180706171947788?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><strong>test_page</strong> 这尼玛是什么鬼？这不是我刚才重命名的名字么？它竟然给我把这个地方的 test 重命名成了 test_page，真是无语了，第一次见这种错，我都没调用，你给我乱重命名，有点说不过去了哦，胸die!</p>
-<p>至此，问题算是解决完了…</p>
-<p>我发现新版本的 Android Studio 是越来越好用，但是会频繁的出现一些莫名奇葩的问题，大家遇到过吗？</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>Failed</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>写给程序员的 Git 使用指南</title>
     <url>/2017/09/24/201709242436/</url>
     <content><![CDATA[<p>初学者强烈推荐廖雪峰老师的 Git 系列教程，通俗易懂，<a href="https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000">点击此处即可开始学习</a></p>
@@ -41673,6 +41873,34 @@ Thanks all.
       <tags>
         <tag>GitHub</tag>
         <tag>Git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Failed to resolve com.android.support</title>
+    <url>/2017/09/24/201709242435/</url>
+    <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
+<p>报错如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Failed to resolve com.android.support</span><br></pre></td></tr></table></figure>
+
+<p>刚开始自己写了一个 module demo 编译、运行都没有问题，然后又新建了一个 module，因为在新建之前看到编译好的 module 中有个 xml 文件，感觉命名不好，就 Refactor -&gt; Rename 了一下，重命名了一下文件，一般在重命名的时候 AS 会弹出提示你是否在调用的地方也进行重命名，结果我就直接一路Refactor了，因为之前也是这样修改的，没有出过问题，然后在编译的时候就出现了上面的错误，然后定位到这一行依赖这里：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">implementation &#x27;com.android.support:appcompat-v7:27.1.1&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>我看了一下，毛线，这是系统生成的还能写错?为了不打脸，我还是复制了一行好的比对了一下，没有问题的，我看了一下网络，网络也没有问题啊，这不科学呀，懵逼中…</p>
+<p>于是乎，打开百度，输入如上错误，点击搜索，看到了一篇博主的文章：</p>
+<p><a href="https://blog.csdn.net/mhl18820672087/article/details/78385361">https://blog.csdn.net/mhl18820672087/article/details/78385361</a></p>
+<p>我看了一下，我的构建版本的工具是没有任何问题的，因为其他 module 都能编译过，就这一个 module 编译不通过，任然没有解决我的问题，打开我编译不过的 module 的 build.gradle 文件，细心的我发现了一个问题，看下图标红的地方：</p>
+<p><img src="https://img-blog.csdn.net/20180706171937624?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><img src="https://img-blog.csdn.net/20180706171947788?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><strong>test_page</strong> 这尼玛是什么鬼？这不是我刚才重命名的名字么？它竟然给我把这个地方的 test 重命名成了 test_page，真是无语了，第一次见这种错，我都没调用，你给我乱重命名，有点说不过去了哦，胸die!</p>
+<p>至此，问题算是解决完了…</p>
+<p>我发现新版本的 Android Studio 是越来越好用，但是会频繁的出现一些莫名奇葩的问题，大家遇到过吗？</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>Failed</tag>
       </tags>
   </entry>
   <entry>
@@ -42310,19 +42538,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Android 使用原生动画工具类实现平移动画</title>
-    <url>/2017/09/24/201709242411/</url>
-    <content><![CDATA[<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 向右边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, true));</span><br><span class="line">// 向右边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, true));</span><br><span class="line"> </span><br><span class="line">llVideo.setVisibility(View.VISIBLE);</span><br><span class="line">llVideo.setVisibility(View.GONE);</span><br><span class="line">// 向左边移入</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeInAnimation(this, false));</span><br><span class="line">// 向左边移出</span><br><span class="line">llVideo.setAnimation(AnimationUtils.makeOutAnimation(this, false));</span><br></pre></td></tr></table></figure>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>动画</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Window10磁盘分区</title>
     <url>/2017/09/24/201709242200/</url>
     <content><![CDATA[<blockquote>
@@ -42342,8 +42557,8 @@ Thanks all.
         <category>Windows</category>
       </categories>
       <tags>
-        <tag>Windows</tag>
         <tag>硬盘分区</tag>
+        <tag>Windows</tag>
       </tags>
   </entry>
   <entry>

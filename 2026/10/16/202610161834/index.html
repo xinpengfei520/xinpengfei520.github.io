@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Anthropic 把自家那一个 monorepo 迁出了 git，官方自报九月每天合并超 30,000 条改动；我数了自己的仓库是日均 2.7 条，大约差四个数量级。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Anthropic 一天合三万条，你一天几条">
+<meta property="og:url" content="https://www.vance.xin/2026/10/16/202610161834/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Anthropic 把自家那一个 monorepo 迁出了 git，官方自报九月每天合并超 30,000 条改动；我数了自己的仓库是日均 2.7 条，大约差四个数量级。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261016-202610161834-commit-volume-threshold-v2.webp">
+<meta property="article:published_time" content="2026-10-16T18:34:00.000Z">
+<meta property="article:modified_time" content="2026-10-16T11:01:06.709Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="git">
+<meta property="article:tag" content="版本控制">
+<meta property="article:tag" content="基础设施">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261016-202610161834-commit-volume-threshold-v2.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/10/16/202610161834/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/10/16/202610161834/","path":"2026/10/16/202610161834/","title":"Anthropic 一天合三万条，你一天几条"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Anthropic 一天合三万条，你一天几条 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Anthropic 一天合三万条，你一天几条",
+  "url": "https://www.vance.xin/2026/10/16/202610161834/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/10/16/202610161834/",
+  "datePublished": "2026-10-16T18:34:00.000Z",
+  "dateModified": "2026-10-16T11:01:06.709Z",
+  "description": "Anthropic 把自家那一个 monorepo 迁出了 git，官方自报九月每天合并超 30,000 条改动；我数了自己的仓库是日均 2.7 条，大约差四个数量级。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%B0%E5%A4%84%E5%9C%A8%E4%BC%A0%E7%9A%84%E9%82%A3%E5%8F%A5%E8%AF%9D"><span class="nav-text">到处在传的那句话</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%96%E4%BB%AC%E5%88%B0%E5%BA%95%E8%BF%81%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">他们到底迁了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E8%87%AA%E5%B7%B1%E5%8A%9D%E4%BD%A0%E5%88%AB%E6%8D%A2"><span class="nav-text">官方自己劝你别换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91-6-%E6%9C%88%E9%82%A3%E5%8F%A5%E8%BF%98%E6%88%90%E7%AB%8B%E5%90%97"><span class="nav-text">我 6 月那句还成立吗</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%A6%BB%E9%82%A3%E6%9D%A1%E7%BA%BF%E8%BF%98%E5%B7%AE%E5%A4%9A%E8%BF%9C"><span class="nav-text">我离那条线还差多远</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">554</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">927</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/10/16/202610161834/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Anthropic 一天合三万条，你一天几条 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Anthropic 把自家那一个 monorepo 迁出了 git，官方自报九月每天合并超 30,000 条改动；我数了自己的仓库是日均 2.7 条，大约差四个数量级。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Anthropic 一天合三万条，你一天几条
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-10-16 18:34:00 / 修改时间：11:01:06" itemprop="dateCreated datePublished" datetime="2026-10-16T18:34:00+00:00">2026-10-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Anthropic 把自家那一个 monorepo 迁出了 git，官方自报九月每天合并超 30,000 条改动；我数了自己的仓库是日均 2.7 条，大约差四个数量级。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261016-202610161834-commit-volume-threshold-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>先问你件事：你自己那个仓库，现在平均一天提交几条？我猜个位数，不少人可能连一条都不到。这个数今天变得重要了，因为有人刚给一条线刻上了刻度。</p>
+<p>今天中文圈到处在传，说 Anthropic 不用 git 了，版本控制整个换成了自己造的。我把官方原文逐字读了一遍，假的。他们迁的是自己那一个仓库，原文还专门留了一整段劝别人别学。而真事比传闻有意思：他们第一次给「什么量级才配动这个底座」这条线，配上了真实数字。</p>
+<p>我把那条线拿来量了一遍自己。差着四个数量级。</p>
+<h2 id="到处在传的那句话"><a href="#到处在传的那句话" class="headerlink" title="到处在传的那句话"></a>到处在传的那句话</h2><p>传的版本是这样：Anthropic 不用 git 了，自研了一套版本控制，把 git 整个换掉。</p>
+<p>我去读了那篇原文。原话是 <code>fully migrated our monorepo from git in five months</code>，翻过来是：五个月里，把我们那个 monorepo 完整迁出了 git。</p>
+<p>monorepo 说人话，就是全公司的代码装在同一个仓库里。多数团队一个项目一个仓库、一个人手上几个仓库。monorepo 反过来，全公司共用那一个。所以他们动的只是自己那一个仓库。</p>
+<p>更硬的反证在他们自己的收尾段，原文写了一句：<code>Scion is by no means a suitable replacement for git for general use.</code> 意思是，Scion 绝不适合拿去当 git 的通用替代品。这是 Anthropic 自己写的。</p>
+<p>那这条错为什么传得开？因为「大厂弃用 git」这个标题太顺了，顺到没人去核后半句。</p>
+<h2 id="他们到底迁了什么"><a href="#他们到底迁了什么" class="headerlink" title="他们到底迁了什么"></a>他们到底迁了什么</h2><p>Scion 是从存储层重写的完整版本控制系统。它有自己的数据单元、自己的客户端、自己的服务端和协议。</p>
+<p>他们自己特意提了一嘴，Scion 里没有 git 那种 packfile。说人话：git 每攒一批改动就压成一个包存起来，包一多就得定期拆开重装，仓库越大这道工序越贵。Scion 干脆取消了打包，所以它压根没有「仓库维护」这一说。底下那层是被整个换掉的，它没挂在 git 上。</p>
+<p>为什么要动？他们没写某一步崩了，写的是一整套已经撑不住的日常。</p>
+<p>他们的 main 分支，光历史就快 100 GB。CI 每天要跑大约 2,500 万次 checkout，平均每秒接近三百次，每一次都可能拖走整个仓库的一份拷贝。全量拉的话，一天要搬 600 PB 出去。</p>
+<p>峰值的时候他们跑着几百个内部 git 镜像。先到顶的是镜像的磁盘和内存。</p>
+<p>真正的病根在他们一句话里：<code>nearly all of our clients were agents and jobs that are online by definition.</code> 他们一直拿 git 当一个集中式系统用，留一份权威副本。可这个系统里的「客户端」，几乎全是永远在线的 agent 和任务。让 git 在分布式、离线场景里称王的那些设计，在这个用法下全变成了负担。</p>
+<p>那篇里有句话我印象很深：<code>Very often, we found that the role of the engineers was to tell Claude &#39;no.&#39;</code> 很多时候，工程师的活变成了去对 Claude 说不。</p>
+<p>这条路也有人走过。Google 的 Piper、Meta 的 Sapling 都是自研的版本控制，Anthropic 在那篇里也点了名。之前的那些，基本只留下一个名字。</p>
+<p>名字这事，10 月 14 号还闹过一场。Meta 那套 Mononoke 的建造者发文说 Scion 大量借鉴，用的词是「接近于剽窃」，可 Anthropic 那篇只列了 Sapling，一个字没提 Mononoke。第二天，Anthropic 把 Mononoke 补进了脚注。那位建造者后来补的一句，我觉得比指控本身更值得记：问题在署名，不在照抄。</p>
+<h2 id="官方自己劝你别换"><a href="#官方自己劝你别换" class="headerlink" title="官方自己劝你别换"></a>官方自己劝你别换</h2><p>最值钱的是这两句。门槛那句是：<code>The concepts we&#39;ve outlined here really only make sense for truly enormous monorepos, with either tens of thousands of engineers or swarms of agents prolifically writing code.</code></p>
+<p>翻过来：这套东西只对真正巨大的 monorepo 才成立，前提是你要么有几万个工程师，要么有一大群 agent 在那拼命写代码。</p>
+<p>另一句更直白：<code>Anthropic is unique in that our ability to spend tokens for internal use far exceeds what any other business would realistically want to spend.</code> 我们内部花 token 的能力，远超任何一家公司现实中愿意花的那个数。</p>
+<p>Anthropic 等于亲手给「什么时候才该动这个底座」画了一条线，还顺手报出了线上的刻度。</p>
+<p>一个七人团队，五个月搬完，同期还做了半打相关系统。做完之后他们花了不小篇幅劝你别学，还给了替代方案。把 Scion 里那几招搬回 git 就行。用他们的话说，git 的服务端没必要跟客户端一个玩法。</p>
+<h2 id="我-6-月那句还成立吗"><a href="#我-6-月那句还成立吗" class="headerlink" title="我 6 月那句还成立吗"></a>我 6 月那句还成立吗</h2><p>6 月 23 号，我写过一篇，主角是一个开源项目叫 Oak，它想给 agent 换掉 git。</p>
+<p>同一篇里我说了句挺满的话：不换，至少现在不会。理由两条。一条是迁移成本。我这条写作流水线挂着十几个 skill，配图的、查重的、发布的，每一个都是顺着 git 那套规矩磨出来的。另一条是 Oak 当时还是 v0.99.0 的公测版。我的真实仓库不拿去给一个 0.99 的版本控制系统当小白鼠。</p>
+<p>我还留过一个伏笔，原话是：等它过了 1.0、等有人拿真仓库跑出独立的实测数据，我大概会先拿它当草稿层试一试。</p>
+<p>今天来的，是后半句。真仓库的实测数据来了。Anthropic 把自己那个真仓库亮了出来，带着花了多久、几个人、迁移前后的数。一份完整的账。没来的那一半是前半句：Scion 不对外，我装不上，Oak 也还是没到 1.0。</p>
+<p>所以准确说，伏笔兑现了一半：真仓库的数据来了，能给我用的那个选项没来。</p>
+<p>那两句理由今天还成立吗？成立。我的十几个 skill 还长在 git 上，Oak 也还是那个版本号。</p>
+<p>但理由底下还压着一条，我当年没写出来。因为我当时不知道它画在哪。Anthropic 这篇，正好把它补上了。</p>
+<h2 id="我离那条线还差多远"><a href="#我离那条线还差多远" class="headerlink" title="我离那条线还差多远"></a>我离那条线还差多远</h2><p>要跟它比，我得先把自己那个数重新数一遍。</p>
+<p>今天跑了一趟 git log，窗口卡在 6 月 24 号到现在。这个仓库 2022 年 8 月建的，到今天一共 636 条提交。</p>
+<p>光是 6 月 24 号之后的 114 天里，就有 307 条。除下来，一天 2.7 条。</p>
+<p>上周三我数的时候是 607 条。九天才多了 29 条，日均那个数几乎没动。</p>
+<p>再把 Anthropic 那边摆过来。5 月，他们那个仓库平均每天合并大约 2,500 条改动；到 9 月，一天超过 30,000 条。</p>
+<p>9 月 9 号那天是个峰值，30,401 条。这个精确数出自第三方重绘的那张图。官方自己用的措辞是「涨了十倍以上」。</p>
+<p>这里有个坑我得说清。Simon Willison 重绘官方那张图的时候发现，每根柱子其实是两层叠的。蓝色是常规的合入请求，橙色那一种叫 antique change request，说白了是另一种改动单位。名字不用记，要紧的是它跟蓝色不是一回事。</p>
+<p>橙色 5 月底才冒出来，7 月中基本把 PR 全替掉了。所以 5 月的 2,500 和 9 月的 30,000 还不是同一种单位。中间隔着一次计量方式的更换。</p>
+<p>我的 2.7，对上它的 2,500，大约九百倍。对上 30,000，一万一千倍上下，差不多四个数量级。</p>
+<p>这个数我也得把丑话说完：我这边量的单位，是「提交到我自己那个单作者仓库」；它那边量的单位，是「合并进整个公司 monorepo 的改动」。这是两种东西，不能相减，也写不出「我差了 X 倍」这种精确话。但四个数量级这个量级判断，换成什么口径都站得住。</p>
+<p>换个好懂的算法。9 月 9 号那一天他们合并进去的量，差不多是我这个仓库从 2022 年建仓到今天全部提交的 48 倍。反过来说，我四年多攒下的这些，按它那天的速度，大约半个小时就能合并完。</p>
+<p>只有当写代码的量到了那个份上，连「读」都得整个重做一遍。Claude 开发者博客那篇开头就问了一句 <code>Does anyone read code anymore?</code>，还有人读代码吗。他们的回答是：团队里没人再在脑子里存着一份完整的代码地图，想知道哪一块，就让 Claude 现写一份讲解。这跟我上周问过的是同一个问题，官方比我干脆得多。</p>
+<p>这就是我当年漏掉的那一条。6 月的我，手上只有一杆「贵不贵」的秤；今天多了一把带刻度的尺子。</p>
+<p>该不该动这个底座，不在你觉得它多疼，在你手上有多少量。而我离那条线，大约差四个数量级。</p>
+<p>我 6 月留的那个伏笔，前半句还没到。Oak 还没过 1.0，Scion 也不对外。刻度有了，可线的那一边现在还站不上人。</p>
+<p>回到最开头那个问题：你自己那个仓库，一天几条？数完你要是愿意，来对个数。我挺想知道这条门槛在别人那儿长什么样。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/git/" rel="tag"># git</a>
+              <a href="/tags/%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6/" rel="tag"># 版本控制</a>
+              <a href="/tags/%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD/" rel="tag"># 基础设施</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/10/16/202610161359/" rel="prev" title="ChatGPT 能用 Chrome，网站授权和任务范围要分开看">
+                  <i class="fa fa-angle-left"></i> ChatGPT 能用 Chrome，网站授权和任务范围要分开看
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.8m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">27:19</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

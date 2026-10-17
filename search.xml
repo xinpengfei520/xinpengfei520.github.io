@@ -256,6 +256,71 @@
       </tags>
   </entry>
   <entry>
+    <title>一句话带偏十年，你用的曲线靠一串数说清</title>
+    <url>/2026/10/17/202610171431/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261017-20261017-202610171431-quote-fade-numbers-hold.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>10 月 16 号，Anthropic 发了篇研究，标题很平：ECDSA 曲线的来历。二十多年没人搞清楚的那五个种子，是一个 1997 年的时间戳。二十多年，有一句话被当成了主路。AI 没查那句话，它去查了那串数。</p>
+<p>你每天打开浏览器。地址栏那把锁背后，大概率站着其中一条曲线，P-256。它凭什么安全？有一角答案就压在「种子从哪来」上面。先把话说清楚：这不是破解，也没有让哪条曲线变弱。原文说没有要做的事。</p>
+<h2 id="那句记不清的俏皮话"><a href="#那句记不清的俏皮话" class="headerlink" title="那句记不清的俏皮话"></a>那句记不清的俏皮话</h2><p>ECDSA 是一种签名算法，靠椭圆曲线干活。曲线有一组参数，其中一个叫 b。b 是拿种子做 SHA-1 算出来的。种子随便，b 就随便；种子是被人挑的，b 就是被人挑的。谁挑种子，等于谁挑曲线。</p>
+<p>这批参数是 NSA 给的，没给解释。1999 年 ANSI X9.62 一发布，Usenet 上就有人问种子哪来的。2013 年斯诺登文件捅出 Dual_EC_DRBG 的后门，这口锅就再没摘下来。</p>
+<p>2015 年，参与过这事的 NSA 工程师 Jerry Solinas 给了个说法。他说，我记得用的是计数器，没反复做哈希。细节记不清了。消息大意是「给 Bob 和 Jerry 加薪」。代码是 Bob Reiter 写的，他也记不清。当年的存档找不到了，就算还在，大概也躺在约柜旁边的硬盘里。</p>
+<p>注意这句话的形状。「我记得」「我记不清」「他也记不清」。说话的人自己都在打鼓。</p>
+<p>行业主要顺着这句话追。十年下来，一无所获。2023 年 Solinas 去世，这条线也就断了。同年 10 月，Filippo Valsorda 自己掏钱挂了个悬赏，12,288 美元。指定捐慈善，翻三倍。资金是他个人的，NIST 没参与。</p>
+<h2 id="它没查话，查了数"><a href="#它没查话，查了数" class="headerlink" title="它没查话，查了数"></a>它没查话，查了数</h2><p>2026 年 10 月，Anthropic 一个员工去问内部的研究模型。提问时没把 Solinas 那句话告诉它，等于抽走了行业最主要的线索。</p>
+<p>模型换了个方向。它先不问「那句话是什么」。它先猜「当年写曲线的那个程序长什么样」。</p>
+<p>它猜的是 1990 年代 C 库自带的随机数生成器。那种东西弱到输出能被认出来。它写了个扫描器，把种子的比特位当窗口一格格滑过去。再看相邻几段，像不像同一个老式生成器连着吐出来的。试了 34 种组合。</p>
+<p>再往下，就是那一幕。十个种子里，有四个，每个 32 位字的最高位全是 0。碰巧出现这种事，概率是 1&#x2F;5810。这是 lrand48 的指纹。它只返回 48 位状态里的高 31 位。所以吐出来的每个字，顶位必然是 0。</p>
+<p>看到指纹，方向就定了。这个生成器的内部状态只有 48 位，吐出来的字还被砍掉一截。可砍得不够狠，几段输出拼起来，就够把它整个锁死。数学上这叫格基约减，用的算法叫 LLL。它正着跑反着跑一样容易。模型就一路往回退，退到 srand48 初始化时的固定形状，低 16 位是 0x330E。读出来，是一个 Unix 时间戳。</p>
+<p>P-256 用的那个，是 1997 年 8 月 16 日 01:52:34。</p>
+<p>有个数特别容易读岔。1842。它容易被读成「试了 1842 个时间戳」。不对，时间戳只有一个。1842 是这一次运行吐出来的第 1842 个候选种子。同一串随机流里，第 876 个候选就已经合格了，却没被采用。程序继续往下跑，又吐了 966 个，最后落在第 1842 个上。</p>
+<p>真正的暴力只有一处。四条二进制曲线，穷举了 2¹⁷ 个隐藏位。主力方法，是先猜机器长什么样，再看数认不认。</p>
+<p>这不是一家之言。悬赏的发起人 Valsorda 用 Go 把算法重写了一遍，对得上。他还补了一条 Anthropic 没找到的规则。阶的位长大于基域的位长，这个种子就拒掉。没有同行评审，话只能说这么多。</p>
+<p>这件事能被查清，还有个妙处。Aanchal Malhotra 在 X 上把这事说成一句话：弱，才是它可被审计的原因（The weakness is what made it auditable）。1990 年代那个随机数太弱，弱到输出带着指纹。正因为这样，它才留下了能被人认出来的痕迹。</p>
+<h2 id="它先怀疑自己在做梦"><a href="#它先怀疑自己在做梦" class="headerlink" title="它先怀疑自己在做梦"></a>它先怀疑自己在做梦</h2><p>先把「半小时」校准一下。原文说的是，从员工提问到发现来源，不到半小时。它没说这是墙上时间还是算力时间，也没点名哪个模型。只说是内部研究模型。别读成「AI 算了半小时」。</p>
+<p>更值得看的是它解出来之后那几秒。Anthropic 把模型的内心独白贴了出来。</p>
+<p>「这太惊人了，它解开了二十五年的谜。等等。我该怀疑一下：我是不是在一个模拟的测试环境里？……这些种子跟我记忆里的真实数值对得上……所以这确实是真的。哇，真的是个发现。」</p>
+<p>还有一段。</p>
+<p>「等等，这么明显的东西二十五年没人发现，是不是有点可疑？但我这边直接算出来了：32 位的种子加一个小序号，对上 160 位，十次。不可能是巧合。是真的。」</p>
+<p>我天天跟 agent 打交道，知道它最危险的时候不是答错，是答错了还很自信。它给你一个结构完整、语气笃定的错误答案。你要花半天才敢确认它错了。这次正好反过来。它拿到了答案，第一反应是怀疑自己在测试环境里。靠可复算的证据，它把自己一点点劝服。</p>
+<p>这个顺序，比答案本身更值得记住。</p>
+<h2 id="这算破解吗"><a href="#这算破解吗" class="headerlink" title="这算破解吗"></a>这算破解吗</h2><p>不算。原文写得很清楚：这不是密码学意义上的破解。它没有带来新的攻击手法，也谈不上 ECDSA 曲线的弱点。后面还跟了一句：没有任何要做的事。</p>
+<p>那它改变了什么？它把「有没有地方藏后门」这个问题，从一个形容词换成了一个数。</p>
+<p>2017 年，Bernstein 和 Lange 描述过一种手法。如果种子在挑选的时候有 70 位自由度，理论上就可以瞄准一小类弱曲线。70 位，就是 2⁷⁰ 种挑法。</p>
+<p>Valsorda 算的是另一头。就算 NSA 能随便挑 1997 到 1998 年的任何一个时间戳，再随便挑前 16 个合格候选，这已经往宽里算了。手里也只有大约 30 位。</p>
+<p>算术不复杂。一年大约 3150 万秒，差不多 2²⁵；乘以前 16 个候选，2⁴；合起来约 2²⁹。这就是那个「30 位」。</p>
+<p>30 装不下 70。差 2⁴⁰ 倍，一万亿倍。</p>
+<p>这句话里没有一个形容词。它是两个位长的比较。原文只说「可能性小得多」，Valsorda 把这句话算成了数。</p>
+<p>九月我写过两件事：Lean 判费马证明，两个数乘回去判 RSA 分解。问的都是「谁来判对错」。这篇没有裁判，也没有能乘回去的乘法。它问的是「犯错的空间有多大」。</p>
+<p>还有个反转。Valsorda 自己公开写，NIST 曲线的「修复弧」完整了。他现在个人会推荐 NIST 曲线胜过 Curve25519、Ed25519、X25519。刚好赶在它们被后量子签名替换之前。</p>
+<h2 id="种子要不要保密"><a href="#种子要不要保密" class="headerlink" title="种子要不要保密"></a>种子要不要保密</h2><p>现在说跟你有关系的那一段。</p>
+<p>这次挖出来的东西，说到底是一行代码。拿当前时间戳去初始化随机数生成器。同一行，用在两个地方，命完全不一样。</p>
+<p>用在曲线参数上，没事。参数本来就公开，种子也公开，谁都能重算一遍 b。它不需要保密，被猜出来也不损失什么。他们当年这么做没事，因为种子不是秘密，这不构成「NIST 曲线不安全」的理由。</p>
+<p>用在私钥上，是灾难。私钥必须保密，而时间戳的取值范围小得可怜。谁猜到那一秒，谁就能把同一个生成器重新跑一遍，让你的私钥原样吐出来。</p>
+<p>区别不在生成器，在这串数要不要保密。</p>
+<p>所以老规矩还成立：生成密钥，用操作系统的密码学随机源。Python 用 secrets，Node 用 crypto.randomBytes，别用 random，更别拿时间当种子。</p>
+<p>你可以现在就去项目里搜 srand、random、Math.random，看哪一处是在生成要保密的东西。搜到了，先看清楚它保护的是什么。</p>
+<h2 id="还没解完的那几笔账"><a href="#还没解完的那几笔账" class="headerlink" title="还没解完的那几笔账"></a>还没解完的那几笔账</h2><p>还得把没解完的摆出来，这篇跟别家不一样就在这儿。</p>
+<p>B-163 的种子没解开。原文的原话是，它跟试过的所有东西都不匹配，至今没有解释。</p>
+<p>P-224、P-256、P-384、P-521 的基点是怎么来的，也不知道。只有 1997 年 5 月那六条曲线的基点被解出来了。用的是 Arjen Lenstra 的大整数库 FreeLIP 里的随机数。拿小整数做种子，扔掉七个输出，再一个个试。</p>
+<p>为什么跳过某些候选，只解释了一半。Valsorda 那条规则用上之后，还剩大约一倍的候选解释不了。他给了两个猜测，都带着「也许」。其中一个：也许当年哪个算法有 bug，一半的时候算错了。这些计算今天用现成软件几分钟就跑完，可 1997 年，那是最前沿。</p>
+<p>Anthropic 自己也留了一句理论上的余地。如果当年真的是「搜时间戳，搜到一个想要的」，那也行得通。只是没人会这么干，除非他打算把时间戳当证据公开。数字里看不出当年到底跑了几次。</p>
+<p>所以这篇结不了案，给的是一张算到一半的账。素数曲线的种子全解出来了。二进制曲线五条，四条对上了，B-163 没有。基点解了六条，另四条没有答案。跳过的候选，还剩一半说不清。</p>
+<p>二十多年，行业主要追着一句话。这次追的是一串数。话会记错，数不会。</p>
+<p>你要是也有空，回去搜一下自己项目里的 random。搜到了，回来评论区说一声：你搜到的那处，是在生成参数，还是在生成密钥。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>随机数</tag>
+        <tag>AI</tag>
+        <tag>Anthropic</tag>
+        <tag>密码学</tag>
+        <tag>验证</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Anthropic 一天合三万条，你一天几条</title>
     <url>/2026/10/16/202610161834/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261016-202610161834-commit-volume-threshold-v2.webp" alt="cover"></p>
@@ -13396,9 +13461,9 @@
         <tag>iOS</tag>
         <tag>Google</tag>
         <tag>Agent Skills</tag>
-        <tag>本地大模型</tag>
         <tag>Gemma 4</tag>
         <tag>Edge Gallery</tag>
+        <tag>本地大模型</tag>
       </tags>
   </entry>
   <entry>
@@ -13611,9 +13676,9 @@
       <tags>
         <tag>Android</tag>
         <tag>iOS</tag>
+        <tag>本地大模型</tag>
         <tag>PocketPal</tag>
         <tag>Qwen</tag>
-        <tag>本地大模型</tag>
         <tag>离线 AI</tag>
       </tags>
   </entry>
@@ -16354,8 +16419,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>教程</tag>
         <tag>AI 编程</tag>
+        <tag>教程</tag>
         <tag>开发者工具</tag>
         <tag>powerup</tag>
       </tags>
@@ -18586,8 +18651,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>教程</tag>
         <tag>效率工具</tag>
+        <tag>教程</tag>
         <tag>快捷键</tag>
         <tag>终端</tag>
       </tags>
@@ -21646,9 +21711,9 @@
       <tags>
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>开发者工具</tag>
         <tag>Agent框架</tag>
         <tag>LangChain</tag>
+        <tag>开发者工具</tag>
       </tags>
   </entry>
   <entry>
@@ -21724,9 +21789,9 @@
       <tags>
         <tag>AI</tag>
         <tag>AI编程</tag>
+        <tag>开发者工具</tag>
         <tag>ChatGPT</tag>
         <tag>Claude</tag>
-        <tag>开发者工具</tag>
       </tags>
   </entry>
   <entry>
@@ -24272,9 +24337,9 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>教程</tag>
         <tag>Vibe Coding</tag>
         <tag>独立开发</tag>
+        <tag>教程</tag>
         <tag>OpenAI Codex</tag>
       </tags>
   </entry>
@@ -38975,7 +39040,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#x6d;">&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#116;&#x40;&#103;&#x69;&#x74;&#x68;&#117;&#x62;&#x2e;&#x63;&#111;&#x6d;">&#103;&#105;&#116;&#x40;&#103;&#x69;&#x74;&#x68;&#117;&#x62;&#x2e;&#x63;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -39434,6 +39499,27 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>51单片机矩阵键盘C程序</title>
+    <url>/2017/09/24/201709242348/</url>
+    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
+]]></content>
+      <categories>
+        <category>嵌入式</category>
+      </categories>
+      <tags>
+        <tag>51单片机</tag>
+        <tag>C语言</tag>
+        <tag>矩阵键盘</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>程序猿如何理财</title>
     <url>/2017/09/24/201709242347/</url>
     <content><![CDATA[<blockquote>
@@ -39477,27 +39563,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>开源项目</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>51单片机矩阵键盘C程序</title>
-    <url>/2017/09/24/201709242348/</url>
-    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
-]]></content>
-      <categories>
-        <category>嵌入式</category>
-      </categories>
-      <tags>
-        <tag>51单片机</tag>
-        <tag>C语言</tag>
-        <tag>矩阵键盘</tag>
       </tags>
   </entry>
   <entry>
@@ -40002,35 +40067,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android Service 启动到 Activity</title>
-    <url>/2017/09/24/201709242359/</url>
-    <content><![CDATA[<p>从Service启动到Activity基本可以分为两类：<br>1.从自己应用的Service启动自己应用的Activity,即显式意图；<br>2.从自己应用的Service启动到其他应用的Activity,或者从别的应用的Service启动到自己应用的Activity，即隐式意图；  </p>
-<p>##1.显式意图启动</p>
-<p>下面为示例写法：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent(EmqttService.this, CallingActivity.class);</span><br><span class="line">   intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">   startActivity(intent);</span><br></pre></td></tr></table></figure>
-
-<p>##2.隐式意图启动</p>
-<p>需要在manifest.xml中为该Activity配置<code>&lt;intent-filter&gt;</code>标签，为其配置action和category</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;activity android:name=&quot;.CallingActivity&quot; &gt;  </span><br><span class="line">        &lt;intent-filter&gt;  </span><br><span class="line">            &lt;action android:name=&quot;com.call&quot;&gt;&lt;/action&gt;  </span><br><span class="line">            &lt;category android:name=&quot;android.intent.category.DEFAULT&quot;/&gt;  </span><br><span class="line">        &lt;/intent-filter&gt;  </span><br><span class="line">&lt;/activity&gt;  </span><br></pre></td></tr></table></figure>
-
-<p>在要启动的Service里这样写：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent i = new Intent(&quot;com.call&quot;);  </span><br><span class="line">i.addCategory(Intent.CATEGORY_DEFAULT);  </span><br><span class="line">i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);  </span><br><span class="line">startActivity(i);</span><br></pre></td></tr></table></figure>
-
-<p>注意<code>“com.call”</code>为要启动Activity的Action.</p>
-<p>##3.为什么Android在Service 里面启动Activity要强制规定使用参数FLAG_ACTIVITY_NEW_TASK呢？</p>
-<p>我们可以来做这样一个假设，我们有这样一个需求：<br>我们在电话本里面启动一个Service，然后它执行5分钟后，启动一个Activity<br>那么很有可能用户在5分钟后已经不在电话本程序里面操作了，有可能去上网，打开浏览器程序了。<br>5分钟后，此时当前的Task是浏览器的task，那么弹出Activity，如果这个Activity在当前Task的话，也就是浏览器的Task；那么用户就会觉得莫名其妙；因为弹出的Activity和浏览器在一个Task，本来这个Activity应该属于电话本的。<br>所以，对于Service而言，干脆强制定义启动的Activity要创建一个新的Task.<br>这种设计，我觉得还是比较合理的。</p>
-<p>Thanks all.</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Activity</tag>
-        <tag>Service</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android SharedPreferences 工具类</title>
     <url>/2017/09/24/201709242400/</url>
     <content><![CDATA[<p>###新建一个SpUtil工具类</p>
@@ -40107,8 +40143,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Plugin</tag>
         <tag>GitHub</tag>
+        <tag>Plugin</tag>
         <tag>Android Studio</tag>
       </tags>
   </entry>
@@ -40209,6 +40245,35 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android Service 启动到 Activity</title>
+    <url>/2017/09/24/201709242359/</url>
+    <content><![CDATA[<p>从Service启动到Activity基本可以分为两类：<br>1.从自己应用的Service启动自己应用的Activity,即显式意图；<br>2.从自己应用的Service启动到其他应用的Activity,或者从别的应用的Service启动到自己应用的Activity，即隐式意图；  </p>
+<p>##1.显式意图启动</p>
+<p>下面为示例写法：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent intent = new Intent(EmqttService.this, CallingActivity.class);</span><br><span class="line">   intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);</span><br><span class="line">   startActivity(intent);</span><br></pre></td></tr></table></figure>
+
+<p>##2.隐式意图启动</p>
+<p>需要在manifest.xml中为该Activity配置<code>&lt;intent-filter&gt;</code>标签，为其配置action和category</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;activity android:name=&quot;.CallingActivity&quot; &gt;  </span><br><span class="line">        &lt;intent-filter&gt;  </span><br><span class="line">            &lt;action android:name=&quot;com.call&quot;&gt;&lt;/action&gt;  </span><br><span class="line">            &lt;category android:name=&quot;android.intent.category.DEFAULT&quot;/&gt;  </span><br><span class="line">        &lt;/intent-filter&gt;  </span><br><span class="line">&lt;/activity&gt;  </span><br></pre></td></tr></table></figure>
+
+<p>在要启动的Service里这样写：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Intent i = new Intent(&quot;com.call&quot;);  </span><br><span class="line">i.addCategory(Intent.CATEGORY_DEFAULT);  </span><br><span class="line">i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);  </span><br><span class="line">startActivity(i);</span><br></pre></td></tr></table></figure>
+
+<p>注意<code>“com.call”</code>为要启动Activity的Action.</p>
+<p>##3.为什么Android在Service 里面启动Activity要强制规定使用参数FLAG_ACTIVITY_NEW_TASK呢？</p>
+<p>我们可以来做这样一个假设，我们有这样一个需求：<br>我们在电话本里面启动一个Service，然后它执行5分钟后，启动一个Activity<br>那么很有可能用户在5分钟后已经不在电话本程序里面操作了，有可能去上网，打开浏览器程序了。<br>5分钟后，此时当前的Task是浏览器的task，那么弹出Activity，如果这个Activity在当前Task的话，也就是浏览器的Task；那么用户就会觉得莫名其妙；因为弹出的Activity和浏览器在一个Task，本来这个Activity应该属于电话本的。<br>所以，对于Service而言，干脆强制定义启动的Activity要创建一个新的Task.<br>这种设计，我觉得还是比较合理的。</p>
+<p>Thanks all.</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Activity</tag>
+        <tag>Service</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android Studio 添加 arr 依赖</title>
     <url>/2017/09/24/201709242404/</url>
     <content><![CDATA[<p>##1.将arr库放到libs下面</p>
@@ -40225,30 +40290,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>Android Studio</tag>
         <tag>arr</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Studio 打 JAR 包</title>
-    <url>/2017/09/24/201709242405/</url>
-    <content><![CDATA[<p>Android Studio 新增了依赖<strong>library</strong>的方式，有时候我们需要将一个 library 打成 jar 包供其他人使用下面就是具体打成的方法：</p>
-<p>##1.在library的buildgradle中添加如下代码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">task makeJar(type: Copy) &#123;</span><br><span class="line">    delete &#x27;build/libs/myjar.jar&#x27;</span><br><span class="line">    from(&#x27;build/intermediates/bundles/release/&#x27;)</span><br><span class="line">    into(&#x27;build/libs/&#x27;)</span><br><span class="line">    include(&#x27;classes.jar&#x27;)</span><br><span class="line">    rename(&#x27;classes.jar&#x27;, &#x27;myjar.jar&#x27;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>其实，当你编译完整个工程后，所有library库都已经生成了对应的包含class的classes.jar包，复制出这个jar包，修改名字后也可以使用了，默认生成的路径为：build&#x2F;intermediates&#x2F;bundles&#x2F;release下面就可以看到生成的<strong>classes.jar</strong>文件了。</p>
-<p>##2.如果你不想使用如上编译时生成的Jar包，你可以再Android Studio自带的Terminal中输入如下命令生成jar包<br>在终端执行生成JAR包<br><code>./gradlew build</code></p>
-<p>或者在buildgradle中再添加如下两行代码即可    </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">makeJar.dependsOn(build)   </span><br><span class="line">//build.finalizedBy makeJar</span><br></pre></td></tr></table></figure>
-
-<p>Android Studio新增了@arr的依赖方式，它的好处是可以将资源文件也可以打进去，所以，我更推荐大家使用这种依赖方式。</p>
-<p>最后他特别感谢如下博主的文章：</p>
-<p>参考：blog:<a href="http://blog.csdn.net/ta893115871/article/details/46955791">http://blog.csdn.net/ta893115871/article/details/46955791</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android Studio</tag>
-        <tag>JAR</tag>
       </tags>
   </entry>
   <entry>
@@ -40286,6 +40327,30 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android Studio 打 JAR 包</title>
+    <url>/2017/09/24/201709242405/</url>
+    <content><![CDATA[<p>Android Studio 新增了依赖<strong>library</strong>的方式，有时候我们需要将一个 library 打成 jar 包供其他人使用下面就是具体打成的方法：</p>
+<p>##1.在library的buildgradle中添加如下代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">task makeJar(type: Copy) &#123;</span><br><span class="line">    delete &#x27;build/libs/myjar.jar&#x27;</span><br><span class="line">    from(&#x27;build/intermediates/bundles/release/&#x27;)</span><br><span class="line">    into(&#x27;build/libs/&#x27;)</span><br><span class="line">    include(&#x27;classes.jar&#x27;)</span><br><span class="line">    rename(&#x27;classes.jar&#x27;, &#x27;myjar.jar&#x27;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其实，当你编译完整个工程后，所有library库都已经生成了对应的包含class的classes.jar包，复制出这个jar包，修改名字后也可以使用了，默认生成的路径为：build&#x2F;intermediates&#x2F;bundles&#x2F;release下面就可以看到生成的<strong>classes.jar</strong>文件了。</p>
+<p>##2.如果你不想使用如上编译时生成的Jar包，你可以再Android Studio自带的Terminal中输入如下命令生成jar包<br>在终端执行生成JAR包<br><code>./gradlew build</code></p>
+<p>或者在buildgradle中再添加如下两行代码即可    </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">makeJar.dependsOn(build)   </span><br><span class="line">//build.finalizedBy makeJar</span><br></pre></td></tr></table></figure>
+
+<p>Android Studio新增了@arr的依赖方式，它的好处是可以将资源文件也可以打进去，所以，我更推荐大家使用这种依赖方式。</p>
+<p>最后他特别感谢如下博主的文章：</p>
+<p>参考：blog:<a href="http://blog.csdn.net/ta893115871/article/details/46955791">http://blog.csdn.net/ta893115871/article/details/46955791</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android Studio</tag>
+        <tag>JAR</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 打开系统拍照和相册获取头像</title>
     <url>/2017/09/24/201709242407/</url>
     <content><![CDATA[<p>现在许多应用都有上传头像的功能，再次奉上代开系统相册或打开系统相机拍照的实现，有的同学在测试小米手机上打开选择相册有奔溃，此代码已完美解决此问题…</p>
@@ -40310,32 +40375,6 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>相机</tag>
         <tag>相册</tag>
         <tag>拍照</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 点亮屏幕并解锁</title>
-    <url>/2017/09/24/201709242408/</url>
-    <content><![CDATA[<blockquote>
-<p>需求：现在在做一个app要求有唤醒屏幕并解锁的需求，参考了网上的许多的博客，感觉前篇一律，有的手机上好使，在有的手机上不好使，参考了微信的视频呼叫唤醒屏幕，可以点亮手机屏幕，对于有上滑手势解锁的手机只能点亮屏幕不能解锁屏幕，后来经过尝试，当前应用中有一个<strong>锁屏弹起界面</strong> 的权限，默认是关闭的，打开这个权限之后就可以点亮屏幕并弹出界面了(有上滑手势解锁的手机)，后台经过尝试现在可以点亮屏幕并解锁了…</p>
-</blockquote>
-<p>##代码如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">    * 唤醒手机屏幕并解锁</span><br><span class="line">    */</span><br><span class="line">   public static void wakeUpAndUnlock() &#123;</span><br><span class="line">       // 获取电源管理器对象</span><br><span class="line">       PowerManager pm = (PowerManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(Context.POWER_SERVICE);</span><br><span class="line">       boolean screenOn = pm.isScreenOn();</span><br><span class="line">       if (!screenOn) &#123;</span><br><span class="line">           // 获取PowerManager.WakeLock对象,后面的参数|表示同时传入两个值,最后的是LogCat里用的Tag</span><br><span class="line">           PowerManager.WakeLock wl = pm.newWakeLock(</span><br><span class="line">                   PowerManager.ACQUIRE_CAUSES_WAKEUP |</span><br><span class="line">                           PowerManager.SCREEN_BRIGHT_WAKE_LOCK, &quot;bright&quot;);</span><br><span class="line">           wl.acquire(10000); // 点亮屏幕</span><br><span class="line">           wl.release(); // 释放</span><br><span class="line">       &#125;</span><br><span class="line">       // 屏幕解锁</span><br><span class="line">       KeyguardManager keyguardManager = (KeyguardManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(KEYGUARD_SERVICE);</span><br><span class="line">       KeyguardManager.KeyguardLock keyguardLock = keyguardManager.newKeyguardLock(&quot;unLock&quot;);</span><br><span class="line">       // 屏幕锁定</span><br><span class="line">       keyguardLock.reenableKeyguard();</span><br><span class="line">       keyguardLock.disableKeyguard(); // 解锁</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-
-<p>注意：好多写法都是<code>wl.acquire()</code> 这样写的，在有的手机上不好使，后来我这样写<code>wl.acquire(10000); // 点亮屏幕</code>然后就好使了，我的理解是这样的：是不是时间太短了，刚唤醒屏幕就释放掉了会有问题，由于水平有限不对的地方请指出。</p>
-<p>测试机型：xiaomi 5, OPPO R9s plus.</p>
-<p>其他机型请自测。</p>
-<p>##不要忘了添加如下权限</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;uses-permission android:name=&quot;android.permission.WAKE_LOCK&quot; /&gt;</span><br><span class="line">   &lt;uses-permission android:name=&quot;android.permission.DISABLE_KEYGUARD&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>Thanks.</p>
-<p>参考文章：<a href="http://blog.csdn.net/glen1943/article/details/8671793">http://blog.csdn.net/glen1943/article/details/8671793</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -40374,6 +40413,32 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>Android</tag>
         <tag>截屏</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 点亮屏幕并解锁</title>
+    <url>/2017/09/24/201709242408/</url>
+    <content><![CDATA[<blockquote>
+<p>需求：现在在做一个app要求有唤醒屏幕并解锁的需求，参考了网上的许多的博客，感觉前篇一律，有的手机上好使，在有的手机上不好使，参考了微信的视频呼叫唤醒屏幕，可以点亮手机屏幕，对于有上滑手势解锁的手机只能点亮屏幕不能解锁屏幕，后来经过尝试，当前应用中有一个<strong>锁屏弹起界面</strong> 的权限，默认是关闭的，打开这个权限之后就可以点亮屏幕并弹出界面了(有上滑手势解锁的手机)，后台经过尝试现在可以点亮屏幕并解锁了…</p>
+</blockquote>
+<p>##代码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">    * 唤醒手机屏幕并解锁</span><br><span class="line">    */</span><br><span class="line">   public static void wakeUpAndUnlock() &#123;</span><br><span class="line">       // 获取电源管理器对象</span><br><span class="line">       PowerManager pm = (PowerManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(Context.POWER_SERVICE);</span><br><span class="line">       boolean screenOn = pm.isScreenOn();</span><br><span class="line">       if (!screenOn) &#123;</span><br><span class="line">           // 获取PowerManager.WakeLock对象,后面的参数|表示同时传入两个值,最后的是LogCat里用的Tag</span><br><span class="line">           PowerManager.WakeLock wl = pm.newWakeLock(</span><br><span class="line">                   PowerManager.ACQUIRE_CAUSES_WAKEUP |</span><br><span class="line">                           PowerManager.SCREEN_BRIGHT_WAKE_LOCK, &quot;bright&quot;);</span><br><span class="line">           wl.acquire(10000); // 点亮屏幕</span><br><span class="line">           wl.release(); // 释放</span><br><span class="line">       &#125;</span><br><span class="line">       // 屏幕解锁</span><br><span class="line">       KeyguardManager keyguardManager = (KeyguardManager) MyApplication.getContext()</span><br><span class="line">               .getSystemService(KEYGUARD_SERVICE);</span><br><span class="line">       KeyguardManager.KeyguardLock keyguardLock = keyguardManager.newKeyguardLock(&quot;unLock&quot;);</span><br><span class="line">       // 屏幕锁定</span><br><span class="line">       keyguardLock.reenableKeyguard();</span><br><span class="line">       keyguardLock.disableKeyguard(); // 解锁</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意：好多写法都是<code>wl.acquire()</code> 这样写的，在有的手机上不好使，后来我这样写<code>wl.acquire(10000); // 点亮屏幕</code>然后就好使了，我的理解是这样的：是不是时间太短了，刚唤醒屏幕就释放掉了会有问题，由于水平有限不对的地方请指出。</p>
+<p>测试机型：xiaomi 5, OPPO R9s plus.</p>
+<p>其他机型请自测。</p>
+<p>##不要忘了添加如下权限</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;uses-permission android:name=&quot;android.permission.WAKE_LOCK&quot; /&gt;</span><br><span class="line">   &lt;uses-permission android:name=&quot;android.permission.DISABLE_KEYGUARD&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>Thanks.</p>
+<p>参考文章：<a href="http://blog.csdn.net/glen1943/article/details/8671793">http://blog.csdn.net/glen1943/article/details/8671793</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -41461,6 +41526,34 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>Failed to resolve com.android.support</title>
+    <url>/2017/09/24/201709242435/</url>
+    <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
+<p>报错如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Failed to resolve com.android.support</span><br></pre></td></tr></table></figure>
+
+<p>刚开始自己写了一个 module demo 编译、运行都没有问题，然后又新建了一个 module，因为在新建之前看到编译好的 module 中有个 xml 文件，感觉命名不好，就 Refactor -&gt; Rename 了一下，重命名了一下文件，一般在重命名的时候 AS 会弹出提示你是否在调用的地方也进行重命名，结果我就直接一路Refactor了，因为之前也是这样修改的，没有出过问题，然后在编译的时候就出现了上面的错误，然后定位到这一行依赖这里：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">implementation &#x27;com.android.support:appcompat-v7:27.1.1&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>我看了一下，毛线，这是系统生成的还能写错?为了不打脸，我还是复制了一行好的比对了一下，没有问题的，我看了一下网络，网络也没有问题啊，这不科学呀，懵逼中…</p>
+<p>于是乎，打开百度，输入如上错误，点击搜索，看到了一篇博主的文章：</p>
+<p><a href="https://blog.csdn.net/mhl18820672087/article/details/78385361">https://blog.csdn.net/mhl18820672087/article/details/78385361</a></p>
+<p>我看了一下，我的构建版本的工具是没有任何问题的，因为其他 module 都能编译过，就这一个 module 编译不通过，任然没有解决我的问题，打开我编译不过的 module 的 build.gradle 文件，细心的我发现了一个问题，看下图标红的地方：</p>
+<p><img src="https://img-blog.csdn.net/20180706171937624?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><img src="https://img-blog.csdn.net/20180706171947788?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><strong>test_page</strong> 这尼玛是什么鬼？这不是我刚才重命名的名字么？它竟然给我把这个地方的 test 重命名成了 test_page，真是无语了，第一次见这种错，我都没调用，你给我乱重命名，有点说不过去了哦，胸die!</p>
+<p>至此，问题算是解决完了…</p>
+<p>我发现新版本的 Android Studio 是越来越好用，但是会频繁的出现一些莫名奇葩的问题，大家遇到过吗？</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>Failed</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>写给程序员的 Git 使用指南</title>
     <url>/2017/09/24/201709242436/</url>
     <content><![CDATA[<p>初学者强烈推荐廖雪峰老师的 Git 系列教程，通俗易懂，<a href="https://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000">点击此处即可开始学习</a></p>
@@ -41873,34 +41966,6 @@ Thanks all.
       <tags>
         <tag>GitHub</tag>
         <tag>Git</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Failed to resolve com.android.support</title>
-    <url>/2017/09/24/201709242435/</url>
-    <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
-<p>报错如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Failed to resolve com.android.support</span><br></pre></td></tr></table></figure>
-
-<p>刚开始自己写了一个 module demo 编译、运行都没有问题，然后又新建了一个 module，因为在新建之前看到编译好的 module 中有个 xml 文件，感觉命名不好，就 Refactor -&gt; Rename 了一下，重命名了一下文件，一般在重命名的时候 AS 会弹出提示你是否在调用的地方也进行重命名，结果我就直接一路Refactor了，因为之前也是这样修改的，没有出过问题，然后在编译的时候就出现了上面的错误，然后定位到这一行依赖这里：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">implementation &#x27;com.android.support:appcompat-v7:27.1.1&#x27;</span><br></pre></td></tr></table></figure>
-
-<p>我看了一下，毛线，这是系统生成的还能写错?为了不打脸，我还是复制了一行好的比对了一下，没有问题的，我看了一下网络，网络也没有问题啊，这不科学呀，懵逼中…</p>
-<p>于是乎，打开百度，输入如上错误，点击搜索，看到了一篇博主的文章：</p>
-<p><a href="https://blog.csdn.net/mhl18820672087/article/details/78385361">https://blog.csdn.net/mhl18820672087/article/details/78385361</a></p>
-<p>我看了一下，我的构建版本的工具是没有任何问题的，因为其他 module 都能编译过，就这一个 module 编译不通过，任然没有解决我的问题，打开我编译不过的 module 的 build.gradle 文件，细心的我发现了一个问题，看下图标红的地方：</p>
-<p><img src="https://img-blog.csdn.net/20180706171937624?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><img src="https://img-blog.csdn.net/20180706171947788?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><strong>test_page</strong> 这尼玛是什么鬼？这不是我刚才重命名的名字么？它竟然给我把这个地方的 test 重命名成了 test_page，真是无语了，第一次见这种错，我都没调用，你给我乱重命名，有点说不过去了哦，胸die!</p>
-<p>至此，问题算是解决完了…</p>
-<p>我发现新版本的 Android Studio 是越来越好用，但是会频繁的出现一些莫名奇葩的问题，大家遇到过吗？</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>Failed</tag>
       </tags>
   </entry>
   <entry>

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="DeepSeek 的 Search 与 Fetch 各按每千次成功且有结果的请求 5 元计费，不能按文章数算。通过 DeepSeek API 的指定服务端工具调用将于 11 月 1 日收费；搜到摘要仍需核正文，本文未做新接口实测。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DeepSeek 搜索每千次 5 元，别按文章数算">
+<meta property="og:url" content="https://www.vance.xin/2026/10/17/202610171714/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="DeepSeek 的 Search 与 Fetch 各按每千次成功且有结果的请求 5 元计费，不能按文章数算。通过 DeepSeek API 的指定服务端工具调用将于 11 月 1 日收费；搜到摘要仍需核正文，本文未做新接口实测。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261017-202610171714-deepseek-search-request-cost.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20261017-202610171714-deepseek-search-fetch-flow.webp">
+<meta property="article:published_time" content="2026-10-17T17:14:08.000Z">
+<meta property="article:modified_time" content="2026-10-20T01:47:01.560Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="DeepSeek">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="API">
+<meta property="article:tag" content="搜索">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261017-202610171714-deepseek-search-request-cost.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/10/17/202610171714/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/10/17/202610171714/","path":"2026/10/17/202610171714/","title":"DeepSeek 搜索每千次 5 元，别按文章数算"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>DeepSeek 搜索每千次 5 元，别按文章数算 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "DeepSeek 搜索每千次 5 元，别按文章数算",
+  "url": "https://www.vance.xin/2026/10/17/202610171714/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/10/17/202610171714/",
+  "datePublished": "2026-10-17T17:14:08.000Z",
+  "dateModified": "2026-10-20T01:47:01.560Z",
+  "description": "DeepSeek 的 Search 与 Fetch 各按每千次成功且有结果的请求 5 元计费，不能按文章数算。通过 DeepSeek API 的指定服务端工具调用将于 11 月 1 日收费；搜到摘要仍需核正文，本文未做新接口实测。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%8A%8A%E4%BA%94%E5%9D%97%E9%92%B1%E6%8B%86%E5%BC%80"><span class="nav-text">先把五块钱拆开</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%B8%80%E6%9C%88%E6%98%AF%E5%93%AA%E9%83%A8%E5%88%86%E6%94%B6%E8%B4%B9"><span class="nav-text">十一月是哪部分收费</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%9C%E5%88%97%E8%A1%A8%E4%B8%8D%E7%AD%89%E4%BA%8E%E5%8E%9F%E6%96%87"><span class="nav-text">结果列表不等于原文</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%BB%A5%E5%89%8D%E5%8D%A1%E5%9C%A8%E6%8A%93%E5%8F%96%E8%BF%99%E4%B8%80%E6%AE%B5"><span class="nav-text">我以前卡在抓取这一段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E6%BB%A4%E5%A3%B0%E6%98%8E%E5%85%88%E5%BD%93%E5%BE%85%E9%AA%8C%E9%A1%B9"><span class="nav-text">过滤声明先当待验项</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">558</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">931</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/10/17/202610171714/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="DeepSeek 搜索每千次 5 元，别按文章数算 | 飞飞的AI实验室">
+      <meta itemprop="description" content="DeepSeek 的 Search 与 Fetch 各按每千次成功且有结果的请求 5 元计费，不能按文章数算。通过 DeepSeek API 的指定服务端工具调用将于 11 月 1 日收费；搜到摘要仍需核正文，本文未做新接口实测。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DeepSeek 搜索每千次 5 元，别按文章数算
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-10-17 17:14:08" itemprop="dateCreated datePublished" datetime="2026-10-17T17:14:08+00:00">2026-10-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-10-20 01:47:01" itemprop="dateModified" datetime="2026-10-20T01:47:01+00:00">2026-10-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">DeepSeek 的 Search 与 Fetch 各按每千次成功且有结果的请求 5 元计费，不能按文章数算。通过 DeepSeek API 的指定服务端工具调用将于 11 月 1 日收费；搜到摘要仍需核正文，本文未做新接口实测。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261017-202610171714-deepseek-search-request-cost.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>DeepSeek 把搜索接口开放了，每千次成功且有结果的请求 5 元。你要是也让 AI 搜资料，这个价格很容易顺手理解成“查一千篇文章，五块钱”。可它按请求计费，一篇稿子可能搜几次，再抓几页正文，数量得另算。</p>
+<p>我这条写稿流程最需要的，是少漏原文里的限定。这次就拿“11 月起收费”来对照：谁的调用开始收费，支撑这句话的正文有没有拿到，一次核对要算几次请求。</p>
+<p>先交代范围：本篇核了官方指南和接口说明，对照现有资料流程。我没有调用新接口，也没有测搜索质量、抓取成功率。这些不能用文档示例顶上。</p>
+<h2 id="先把五块钱拆开"><a href="#先把五块钱拆开" class="headerlink" title="先把五块钱拆开"></a>先把五块钱拆开</h2><p><a target="_blank" rel="noopener" href="https://api-docs.deepseek.com/zh-cn/guides/search">官方指南</a>把 Search 和 Fetch 分成两个接口。前者按搜索词找网页，返回结果列表；后者拿一个网址，抓回这页的 Markdown 正文。</p>
+<p>它们各按每千次成功请求 5 元计费。换算成单次，都是半分钱。Search 还要求结果列表非空，Fetch 要返回正文才计费。失败、搜索无结果或超时，文档写明不收这次的钱。</p>
+<p>这里的单位是请求次数。搜索返回五条还是五十条，不改变单次搜索价格。你要是把五十条结果逐页再抓一遍，那些成功的 Fetch 请求就要另计。</p>
+<p>做一笔预算算例，强调一下，这不是实测账单：</p>
+<table>
+<thead>
+<tr>
+<th>一组任务的设定</th>
+<th align="right">成功请求数</th>
+<th align="right">按文档单价计算</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>搜一次，直接用返回结果</td>
+<td align="right">1 次 Search</td>
+<td align="right">0.005 元</td>
+</tr>
+<tr>
+<td>搜一次，再分别抓三页</td>
+<td align="right">1 次 Search＋3 次 Fetch</td>
+<td align="right">0.02 元</td>
+</tr>
+<tr>
+<td>重复上一组一千遍</td>
+<td align="right">1000 次 Search＋3000 次 Fetch</td>
+<td align="right">20 元</td>
+</tr>
+</tbody></table>
+<p>表里假定请求成功且有结果。模型读这些材料、继续推理或写稿的 token 费用，还得另算。这张表没有替你估模型账单。</p>
+<p>不过，Search 也可以申请直接带正文。不能反过来照表机械接成“每条结果必须再抓一次”。正文已经够用的，没必要重复抓。费用能不能少，得先看实际返回了什么。</p>
+<h2 id="十一月是哪部分收费"><a href="#十一月是哪部分收费" class="headerlink" title="十一月是哪部分收费"></a>十一月是哪部分收费</h2><p>指南还有一段容易漏看。通过 DeepSeek API，在 DeepSeek Harness、Claude Code、Codex 里使用的服务端 Search、Fetch 工具调用，目前未计费。<strong>这部分将于北京时间 11 月 1 日零时开始按次收费。</strong></p>
+<p>限定词别丢：通过 DeepSeek API。</p>
+<p>这不表示所有 Claude Code、Codex 用户都要向 DeepSeek 付搜索费，也不能把它写成“新开放的独立搜索接口，月底前全部免费”。文档单列了接口价格，再说明上述工具调用的起收时间。</p>
+<p>你可以按自己的接法对照：直接请求独立 Search、Fetch 接口，先看接口价格表；通过 DeepSeek API 在这些编码工具里触发服务端搜索，看十一月起收的那段说明。单说“我用 Codex”，还判断不了是否属于这里点名的调用。</p>
+<p>这里也没承诺，只要用了 DeepSeek 模型，每个任务就必定搜索。一次纯代码修改究竟有没有触发工具，要看任务记录。把客户端名字当计费单位，和把文章数当请求数，一样会算错地方。</p>
+<p>如果你就在这些工具里接 DeepSeek，要把这部分调用次数算进去。只盯模型的输入输出 token，可能会漏下一笔。至于任务实际触发几次工具，我手里没有你的调用记录，不能替你报数。</p>
+<h2 id="结果列表不等于原文"><a href="#结果列表不等于原文" class="headerlink" title="结果列表不等于原文"></a>结果列表不等于原文</h2><p><img src="https://image.vance.xin/aigc/image/20261017-202610171714-deepseek-search-fetch-flow.webp" alt="资料核对流程示意"></p>
+<p>我现有的资料流程，本来就分搜索和读网页。先找到候选链接，再去看原文，保留来源，整理成写作材料。选题摘要只能指路，不能替原文下结论。</p>
+<p>DeepSeek 的<a target="_blank" rel="noopener" href="https://api-docs.deepseek.com/zh-cn/api/search">Search 接口说明</a>也把返回内容分开了。有给前端展示的短摘要，有给模型阅读的长摘要，还有正文。你接入时最该看清的参数，是 <code>need_content</code>。</p>
+<p>默认值是 false，这时正文就是空字符串。设成 true，才请求把正文带回来；但网页正文缺失时，仍然可能为空。</p>
+<p>这意味着，你收到了一份带标题、网址、长摘要的结果，不能就宣布“原文抓到了”。要查的是正文那一栏，有没有能支撑关键说法的那段内容。</p>
+<p>接口还会给排序分、权威性分和发布时间。它们有助于挑候选，不能代替核查。日期可能未知，评分也有自己的口径。我不会因为一页分高，就免掉对价格生效日、适用产品和例外条件的核对。</p>
+<p>拿这次收费说明来说，可以先限定 DeepSeek 官方文档。链接少一点，重点是能不能把那段计费说明拿回来。正文里有没有“通过 DeepSeek API”，有没有“Server 端工具调用”，比摘要写了多长更要紧。</p>
+<p>把这段原文跟摘要并排看，才知道摘要省掉了什么。要是手里只有一句“Claude Code 十一月搜索收费”，你连该查哪张账单都可能弄错。这是假设摘要丢掉限定时的风险，本篇没有测到某个搜索结果犯这种错。</p>
+<p>我会要求搜资料这一步，把结论和支撑它的正文一起交回来。只附一个首页链接，后面的写手仍得再找一遍。如果有链接却没正文，先把这页列为缺口。</p>
+<h2 id="我以前卡在抓取这一段"><a href="#我以前卡在抓取这一段" class="headerlink" title="我以前卡在抓取这一段"></a>我以前卡在抓取这一段</h2><p>六月写<a href="https://www.vance.xin/2026/06/26/202606262210/">内容工厂搭法</a>时，我记过一个坑：拉 AI 精选资讯的程序没带浏览器标识，被接口当成商业爬虫，返回了 403。当时排查了一圈，才确认问题在这里。</p>
+<p>六月那次，403 至少告诉我没拿到东西。这次要防的，还有另一种情况：搜索请求成功，标题和摘要都有，正文却是空的。只看成功状态，缺口就容易被带进写稿环节。这是接入前要检查的风险，本篇没有跑出这类故障。</p>
+<p><a target="_blank" rel="noopener" href="https://api-docs.deepseek.com/zh-cn/api/fetch">Fetch 接口</a>接收单个网址，返回标题和正文。官方也留了限定：目标网站能否访问、允许怎么访问，都会影响结果。页面没有可提取正文、被站点策略拦住，都可能抓不到。</p>
+<p>这跟六月那个坑不完全是一回事。六月是程序直接请求资讯接口；这次是让 DeepSeek 代抓网页。它可以减少我自己维护抓取逻辑的工作，却不能凭文档推出“所有站都能读”。</p>
+<p>还有个错误码细节值得记：这里的 Fetch 返回 404，原因可能是网址不可用，也可能是被站点策略拦住，或没有可提取正文。它不能单独证明原文章不存在。搜索没匹配结果也可能正常返回空数组，这次不收费，却仍然没有替你找到证据。</p>
+<p>我会把失败保留在资料结果里。找到链接但正文没拿到，就写清哪页缺正文。拿几段摘要拼成文章，再把状态标成“资料齐了”，后面的写手只会带着缺口往下跑。</p>
+<h2 id="过滤声明先当待验项"><a href="#过滤声明先当待验项" class="headerlink" title="过滤声明先当待验项"></a>过滤声明先当待验项</h2><p><a target="_blank" rel="noopener" href="https://api-docs.deepseek.com/zh-cn/updates/">发布说明</a>称，它会过滤 SEO 作弊、GEO 操纵和低质 AI 内容。说人话，就是希望搜索结果少被那些专门操纵排名和引用的内容占住。</p>
+<p>这属于官方对搜索引擎的描述。我没有独立测试，不能接着写“现在搜到的都可信”。网站愿意把来源写清、正文便于机器读，也不能仅凭这些就判成操纵。</p>
+<p>对我这条流程，有用的验收是把一个真实问题搜完，拿到原文，再核实一句重要的话。</p>
+<p>你要做同样的检查，可以拿这次发布当题目：限定 DeepSeek 官方文档，查搜索收费单位和生效时间。把来源网址、搜索摘要、能支持结论的正文段落并排放下；拿不到正文就单列缺口。检查那句“11 月起收费”旁边，是否保留了 DeepSeek API 和服务端工具调用的适用范围。</p>
+<p>这是下一步可做的对照方案，本篇没有跑出结果。我也先不替换整条资料链路。待验证的是能读回多少有用原文、有没有漏掉条件，以及一次完整核对用了多少成功请求。</p>
+<p>五块钱的单位已经清楚了。真正决定我换不换的，是那半分钱买回来的内容，能不能让我少漏一句关键限定。</p>
+<p>你最近留存的那条价格消息，只有摘要和链接，还是连适用范围的原文也存下来了？</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/DeepSeek/" rel="tag"># DeepSeek</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/API/" rel="tag"># API</a>
+              <a href="/tags/%E6%90%9C%E7%B4%A2/" rel="tag"># 搜索</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/10/17/202610171431/" rel="prev" title="一句话带偏十年，你用的曲线靠一串数说清">
+                  <i class="fa fa-angle-left"></i> 一句话带偏十年，你用的曲线靠一串数说清
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/10/19/202610191348/" rel="next" title="Anthropic 初级技术新招占比降到 9%，别把判断力当安慰">
+                  Anthropic 初级技术新招占比降到 9%，别把判断力当安慰 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.8m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">27:29</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="DeepSeek 开源的 DeepInfer 只覆盖离线推理和 V4.1-Flash 一个模型，完整服务缺 KV cache 管理等三样，最小高效部署要 128 张卡；性能全为自测，外部复现为零。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="开源的是算得快，没开的是不用重算">
+<meta property="og:url" content="https://www.vance.xin/2026/10/21/202610211433/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="DeepSeek 开源的 DeepInfer 只覆盖离线推理和 V4.1-Flash 一个模型，完整服务缺 KV cache 管理等三样，最小高效部署要 128 张卡；性能全为自测，外部复现为零。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261021-20261021-202610211433-deepinfer-half-open-v4.webp">
+<meta property="article:published_time" content="2026-10-21T14:33:00.000Z">
+<meta property="article:modified_time" content="2026-10-21T14:33:04.676Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="DeepSeek">
+<meta property="article:tag" content="开源">
+<meta property="article:tag" content="成本">
+<meta property="article:tag" content="推理框架">
+<meta property="article:tag" content="KV缓存">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261021-20261021-202610211433-deepinfer-half-open-v4.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/10/21/202610211433/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/10/21/202610211433/","path":"2026/10/21/202610211433/","title":"开源的是算得快，没开的是不用重算"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>开源的是算得快，没开的是不用重算 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "开源的是算得快，没开的是不用重算",
+  "url": "https://www.vance.xin/2026/10/21/202610211433/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/10/21/202610211433/",
+  "datePublished": "2026-10-21T14:33:00.000Z",
+  "dateModified": "2026-10-21T14:33:04.676Z",
+  "description": "DeepSeek 开源的 DeepInfer 只覆盖离线推理和 V4.1-Flash 一个模型，完整服务缺 KV cache 管理等三样，最小高效部署要 128 张卡；性能全为自测，外部复现为零。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E5%88%B0%E5%BA%95%E5%BC%80%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">它到底开了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BF%BB%E5%88%B0%E6%B2%A1%E7%BB%99%E7%9A%84%E9%82%A3%E4%B8%80%E6%AE%B5"><span class="nav-text">翻到没给的那一段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E8%B4%B5%E7%9A%84%E9%82%A3%E6%AD%A5%E6%98%AF%E9%87%8D%E8%AF%BB"><span class="nav-text">最贵的那步是重读</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E6%B2%A1%E7%BB%99%EF%BC%8C%E5%9B%BE%E7%BA%B8%E7%BB%99%E4%BA%86"><span class="nav-text">代码没给，图纸给了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%97%E5%BE%97%E5%BF%AB%E7%9A%84%E9%82%A3%E5%8D%8A%E9%9D%A0%E4%BB%80%E4%B9%88"><span class="nav-text">算得快的那半靠什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E5%AD%97%E6%98%AF%E8%B0%81%E6%B5%8B%E7%9A%84"><span class="nav-text">数字是谁测的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E7%AC%94%E8%B4%A6%E6%88%91%E8%BF%99%E8%BE%B9%E5%AF%B9%E4%B8%8A%E4%BA%86"><span class="nav-text">那笔账我这边对上了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%A0%E9%82%A3%E8%BE%B9%E8%83%BD%E6%8A%84%E7%9A%84%E4%B8%80%E4%BB%B6"><span class="nav-text">你那边能抄的一件</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">560</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">933</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/10/21/202610211433/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="开源的是算得快，没开的是不用重算 | 飞飞的AI实验室">
+      <meta itemprop="description" content="DeepSeek 开源的 DeepInfer 只覆盖离线推理和 V4.1-Flash 一个模型，完整服务缺 KV cache 管理等三样，最小高效部署要 128 张卡；性能全为自测，外部复现为零。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          开源的是算得快，没开的是不用重算
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-10-21 14:33:00 / 修改时间：14:33:04" itemprop="dateCreated datePublished" datetime="2026-10-21T14:33:00+00:00">2026-10-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">DeepSeek 开源的 DeepInfer 只覆盖离线推理和 V4.1-Flash 一个模型，完整服务缺 KV cache 管理等三样，最小高效部署要 128 张卡；性能全为自测，外部复现为零。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261021-20261021-202610211433-deepinfer-half-open-v4.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>早上那篇<a href="https://www.vance.xin/2026/10/21/202610211353/">算的是你买单这一头</a>：你反复发给 AI 的那段固定说明，缓存留得越久，第一次写入越贵，先看复用次数。那篇问的是「我该不该开长缓存」。下午翻完 DeepSeek 的部署问答，我发现卖的那一头，算的是另一本账。</p>
+<p>DeepSeek 昨天开源了它生产环境用的推理框架，叫 DeepInfer。我第一遍翻，眼里只有两个数：一天 155 万亿 token，每 GPU 小时 38 美元，觉得这买卖真划算。第二遍往下翻，才撞见一节标题，直译是「要跑成一套完整服务，还需要这些，本次没有包含」。开出来的是「算得快」的那一半，「根本不用重算」的那一半没给。</p>
+<p>这篇只算卖的那一头：一个一天处理 155 万亿 token 的集群，凭什么卖这么便宜，账本长什么样，哪几页没交出来。</p>
+<h2 id="它到底开了什么"><a href="#它到底开了什么" class="headerlink" title="它到底开了什么"></a>它到底开了什么</h2><p>Apache 2.0，仓库 deepseek-ai&#x2F;DeepInfer，十月二十号放出来的。它只服务一个模型，DeepSeek-V4.1-Flash。也只做离线推理，README 原话是 this open-source release provides offline inference。</p>
+<p>官方给了两个招牌数字。一个集群一天处理 155 万亿 token；每 GPU 小时收入 38 美元。</p>
+<p>这两个数都得带着括号读。</p>
+<p>155 万亿那一行，官方没拆输入、输出、缓存命中各占多少。它大概率包含大量重复读进去的输入，不能当成「一天生成了 155 万亿个 token」。</p>
+<p>38 美元那一行，括号里写着 at valley pricing，谷时价。意思是这取的是一天里最便宜那个时段，地板价，平均下来要比它高。而且原文写的是 revenue，收入，没扣电费，也没扣折旧和闲置成本。收入跟利润是两本账。</p>
+<p>数字都很好看。可这两个数说的，都是这台引擎跑得有多快、有多划算。真正把它们托起来的另一半，README 里另有一段。</p>
+<h2 id="翻到没给的那一段"><a href="#翻到没给的那一段" class="headerlink" title="翻到没给的那一段"></a>翻到没给的那一段</h2><p>就是刚才那节标题。</p>
+<p>底下三行。一套 KV cache 系统；视觉编码器、读入、生成三段拆开部署；数据并行副本之间的负载均衡。</p>
+<p>说人话。KV cache 是模型读过一段话之后留下的笔记，下次碰到同样的开头，直接翻笔记，不用重读。负载均衡是决定哪个副本接哪个请求的那层调度，副本之间活儿分不匀，快的等慢的，账就上去了。</p>
+<p>拆开部署那条后面有个括号，我得替它说清楚：大部分必需的引擎功能已经实现了。缺的是把它们拼起来的那一层。这块本身做了大半，别读成完全没动。</p>
+<p>还有一个门槛，官方写得很直白：最小的高效部署单元，是 64 张卡做读入、64 张卡做生成。128 张起。这条一摆，「自己部署一个试试」这个念头可以先放下。</p>
+<h2 id="最贵的那步是重读"><a href="#最贵的那步是重读" class="headerlink" title="最贵的那步是重读"></a>最贵的那步是重读</h2><p>部署问答里，官方列了三个设计目标。多厂商硬件、普通机器就能做读入和生成，压轴那条是把 KV cache 留 72 小时以上。</p>
+<p>压轴这条最有意思。它不只要求有个缓存，还要求缓存留得够久。</p>
+<p>模型接一个活，得先把整段材料读一遍，这一步叫 prefill，说人话就是把书读进去。再一个字一个字往外写，叫 decode，照着讲出来。读一遍最贵。重复的材料，下次还得从头再读。</p>
+<p>把读过的结果存下来，下次直接翻，这就是缓存。存多久，决定省多少。</p>
+<p>官方定价里，每百万 token 的输入价：命中缓存 0.003 美元，没命中 0.15 美元。同一个 token，算过的和没算过的，差 50 倍。这就是「不用重算」那半为什么值钱。</p>
+<p>DeepSeek 的选择：agent 流量留 3 天，聊天机器人流量留 7 天，用约 100 PiB 的 SSD 装。100 PiB 是十万 TB。按一块 4TB 的硬盘算，得两万五千块。</p>
+<p>为什么聊天机器人要留更久？官方说它的命中长尾特别重，少量缓存被反复读很多次，丢了整体命中率掉得更多。原话是，3 天的留存期会让聊天机器人掉 0.5% 到 1% 的命中率。这个数听着小，可它一天的盘子是 155 万亿 token。</p>
+<p>现在再回头看 README 那三行。排在最前面的那一样，是一套 KV cache 系统。我上面讲的笔记、留存期、100 PiB 的盘，全是它没交出来的部分。</p>
+<h2 id="代码没给，图纸给了"><a href="#代码没给，图纸给了" class="headerlink" title="代码没给，图纸给了"></a>代码没给，图纸给了</h2><p>看到这儿容易得出一个结论：DeepSeek 留了一手。</p>
+<p>它自己在问答里写得很清楚：KV cache 管理和负载均衡这两块，跟内部基础设施绑得太死，所以代码还没完全开源。紧接着一句，这两块怎么设计的，写在我们那篇知乎博客里了。</p>
+<p>代码没给，图纸给了。这个姿态我挺佩服。它没把「我们有个很厉害的缓存」当宣传口号，反而把设计目标、架构、关键实现摊开讲，包括那两个没开源的组件。</p>
+<p>所以「只开了一半」只是在描述事实。我不觉得这是藏私。想抄整套作业的人抄不到，想知道它怎么想的人，能看得很清楚。</p>
+<h2 id="算得快的那半靠什么"><a href="#算得快的那半靠什么" class="headerlink" title="算得快的那半靠什么"></a>算得快的那半靠什么</h2><p>开源出来的这一半，确实有东西。</p>
+<p>缓存没命中的时候，它不重算整段，只重算最后 128 个 token。原话说，重算成本因此变成一个常数，跟上下文长度、层数都无关。在生成那一侧，每次只补提示词末尾这一小段，几乎砍掉一半的读入计算。</p>
+<p>128 个 token，大概一百来个字。你的上下文是四千还是二十五万，要补的永远是这一小段。</p>
+<p>另一个是投机解码，官方叫 DSpark。先让一个小模型一口气猜 5 个 token，再用一个置信度头挑出值得验证的那几个，把算力花在胜算最大的地方。生产工作点下，每步验证的草稿数从 5.00 个降到 3.2 到 4.4 个，吞吐涨 4% 到 7%。</p>
+<p>同样的卡，一小时多干这么多活。</p>
+<p>同一段里还有个反向的数：并发只有 16 的时候，它是负 1.5%。并发越高越赚，低并发反而亏。这种数字愿意写出来，比只报好消息可信。</p>
+<p>异步调度也默认开着，把 CPU 的排班和 GPU 的计算叠起来，让卡少空转。</p>
+<p>这三样管的是「算的时候更快」：重算得少一点，猜得准一点，排班叠一点。它们解决不了「根本不用重算」，那是缓存那半的活。</p>
+<h2 id="数字是谁测的"><a href="#数字是谁测的" class="headerlink" title="数字是谁测的"></a>数字是谁测的</h2><p>性能数字全部是 DeepSeek 自己测的。测法写在 README 里：4 张 SM100 做读入，64 张做生成。这跟前面 64+64 的最小部署单元不是一个数：那边是部署门槛，这边是测吞吐的配置。</p>
+<p>硬件支持两家的卡，NVIDIA 的 SM100 和华为 Ascend 950。但性能数字只有 NVIDIA 的，Ascend 一个都没有。还有两个功能明写只支持 NVIDIA：一个让结果不受批次影响，一个是确定性采样。</p>
+<p>外部独立复现，到现在是零。Bloomberg 的报道里有一句，还没有外部机构测过它的效率提升。</p>
+<p>官方自己还承认了一处：负载均衡只能做到理想离线基准的约 80%。这句很诚实，也提醒你，上面那些百分比是在什么前提下拿到的。</p>
+<p>血统也得交代。原话是，DeepInfer 最初主要建在 vLLM 上，就是眼下用得最广的那个开源推理框架，另外参考了 SGLang 和 TensorRT-LLM。它是从通用框架里长出来的，顺手把「什么模型都支持」那部分的代价砍掉了。只支持一个模型还能跑这么快，原因在这儿。</p>
+<h2 id="那笔账我这边对上了"><a href="#那笔账我这边对上了" class="headerlink" title="那笔账我这边对上了"></a>那笔账我这边对上了</h2><p>说回我自己。</p>
+<p>我那个 AI 大脑，对话模型就是 deepseek-v4-flash。七月那篇旧文里我贴过配置，两行：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">LLM_BASE_URL=https://api.deepseek.com</span><br><span class="line">LLM_MODEL=deepseek-v4-flash</span><br></pre></td></tr></table></figure>
+
+<p>按官方说法，跑 V4.1-Flash 的服务就是 DeepInfer。我没法确认每一次请求都穿过它，可能是别的部署。这层我说不清，就不装作说得清。</p>
+<p>但账能对上一半。九月调价那篇我抄过官方价格，就是前面那个 50 倍。我当时写的是，大脑里系统提示词、常驻规则、索引说明这些前缀每次都一字不差，全落在 cache 里。</p>
+<p>两天前那篇，我问的是这些重复前缀能不能复用。今天翻部署问答，DeepSeek 没只回一句「有这个功能」。它给了个更具体的数：我们把它们留了三天到七天，用 100 PiB 的盘装着。</p>
+<p>我记得住，是因为有人替我把笔记留住了。</p>
+<h2 id="你那边能抄的一件"><a href="#你那边能抄的一件" class="headerlink" title="你那边能抄的一件"></a>你那边能抄的一件</h2><p>翻一个开源发布，先找 README 里那段「本次没有包含」，它比 star 数重要。</p>
+<p>star 数说明有多少人围观，not included 说明你拿到手能干什么。DeepInfer 一天就攒了上万星，可它开的是离线推理加一个模型，完整服务缺三样。这两件事不冲突，但你得先看后者。</p>
+<p>我打算做一件小事：以后每看到一个想试的开源仓库，先把 README 里没给的那几样抄进笔记，再判断值不值得试。这个动作不解决任何技术问题，只是让我少在「它居然开源了」这句话上白高兴一场。</p>
+<p>绕回开头。DeepInfer 开源的不是一台能直接开张的店，是一张把关键设计写清楚的图纸。那两样没交出来的东西，它也在知乎博客里讲了怎么设计。缺的部分标得明明白白，没假装整套都给了。</p>
+<p>你最近一次被「开源」两个字吸引，翻到最后才发现只给了一半，是什么时候？评论区说说，我想看看你踩过的是哪一半。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/DeepSeek/" rel="tag"># DeepSeek</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90/" rel="tag"># 开源</a>
+              <a href="/tags/%E6%88%90%E6%9C%AC/" rel="tag"># 成本</a>
+              <a href="/tags/%E6%8E%A8%E7%90%86%E6%A1%86%E6%9E%B6/" rel="tag"># 推理框架</a>
+              <a href="/tags/KV%E7%BC%93%E5%AD%98/" rel="tag"># KV缓存</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/10/21/202610211353/" rel="prev" title="OpenAI 缓存留12小时，你的账会更便宜吗">
+                  <i class="fa fa-angle-left"></i> OpenAI 缓存留12小时，你的账会更便宜吗
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.8m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">27:35</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

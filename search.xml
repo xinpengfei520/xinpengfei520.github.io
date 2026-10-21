@@ -256,6 +256,75 @@
       </tags>
   </entry>
   <entry>
+    <title>开源的是算得快，没开的是不用重算</title>
+    <url>/2026/10/21/202610211433/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261021-20261021-202610211433-deepinfer-half-open-v4.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>早上那篇<a href="https://www.vance.xin/2026/10/21/202610211353/">算的是你买单这一头</a>：你反复发给 AI 的那段固定说明，缓存留得越久，第一次写入越贵，先看复用次数。那篇问的是「我该不该开长缓存」。下午翻完 DeepSeek 的部署问答，我发现卖的那一头，算的是另一本账。</p>
+<p>DeepSeek 昨天开源了它生产环境用的推理框架，叫 DeepInfer。我第一遍翻，眼里只有两个数：一天 155 万亿 token，每 GPU 小时 38 美元，觉得这买卖真划算。第二遍往下翻，才撞见一节标题，直译是「要跑成一套完整服务，还需要这些，本次没有包含」。开出来的是「算得快」的那一半，「根本不用重算」的那一半没给。</p>
+<p>这篇只算卖的那一头：一个一天处理 155 万亿 token 的集群，凭什么卖这么便宜，账本长什么样，哪几页没交出来。</p>
+<h2 id="它到底开了什么"><a href="#它到底开了什么" class="headerlink" title="它到底开了什么"></a>它到底开了什么</h2><p>Apache 2.0，仓库 deepseek-ai&#x2F;DeepInfer，十月二十号放出来的。它只服务一个模型，DeepSeek-V4.1-Flash。也只做离线推理，README 原话是 this open-source release provides offline inference。</p>
+<p>官方给了两个招牌数字。一个集群一天处理 155 万亿 token；每 GPU 小时收入 38 美元。</p>
+<p>这两个数都得带着括号读。</p>
+<p>155 万亿那一行，官方没拆输入、输出、缓存命中各占多少。它大概率包含大量重复读进去的输入，不能当成「一天生成了 155 万亿个 token」。</p>
+<p>38 美元那一行，括号里写着 at valley pricing，谷时价。意思是这取的是一天里最便宜那个时段，地板价，平均下来要比它高。而且原文写的是 revenue，收入，没扣电费，也没扣折旧和闲置成本。收入跟利润是两本账。</p>
+<p>数字都很好看。可这两个数说的，都是这台引擎跑得有多快、有多划算。真正把它们托起来的另一半，README 里另有一段。</p>
+<h2 id="翻到没给的那一段"><a href="#翻到没给的那一段" class="headerlink" title="翻到没给的那一段"></a>翻到没给的那一段</h2><p>就是刚才那节标题。</p>
+<p>底下三行。一套 KV cache 系统；视觉编码器、读入、生成三段拆开部署；数据并行副本之间的负载均衡。</p>
+<p>说人话。KV cache 是模型读过一段话之后留下的笔记，下次碰到同样的开头，直接翻笔记，不用重读。负载均衡是决定哪个副本接哪个请求的那层调度，副本之间活儿分不匀，快的等慢的，账就上去了。</p>
+<p>拆开部署那条后面有个括号，我得替它说清楚：大部分必需的引擎功能已经实现了。缺的是把它们拼起来的那一层。这块本身做了大半，别读成完全没动。</p>
+<p>还有一个门槛，官方写得很直白：最小的高效部署单元，是 64 张卡做读入、64 张卡做生成。128 张起。这条一摆，「自己部署一个试试」这个念头可以先放下。</p>
+<h2 id="最贵的那步是重读"><a href="#最贵的那步是重读" class="headerlink" title="最贵的那步是重读"></a>最贵的那步是重读</h2><p>部署问答里，官方列了三个设计目标。多厂商硬件、普通机器就能做读入和生成，压轴那条是把 KV cache 留 72 小时以上。</p>
+<p>压轴这条最有意思。它不只要求有个缓存，还要求缓存留得够久。</p>
+<p>模型接一个活，得先把整段材料读一遍，这一步叫 prefill，说人话就是把书读进去。再一个字一个字往外写，叫 decode，照着讲出来。读一遍最贵。重复的材料，下次还得从头再读。</p>
+<p>把读过的结果存下来，下次直接翻，这就是缓存。存多久，决定省多少。</p>
+<p>官方定价里，每百万 token 的输入价：命中缓存 0.003 美元，没命中 0.15 美元。同一个 token，算过的和没算过的，差 50 倍。这就是「不用重算」那半为什么值钱。</p>
+<p>DeepSeek 的选择：agent 流量留 3 天，聊天机器人流量留 7 天，用约 100 PiB 的 SSD 装。100 PiB 是十万 TB。按一块 4TB 的硬盘算，得两万五千块。</p>
+<p>为什么聊天机器人要留更久？官方说它的命中长尾特别重，少量缓存被反复读很多次，丢了整体命中率掉得更多。原话是，3 天的留存期会让聊天机器人掉 0.5% 到 1% 的命中率。这个数听着小，可它一天的盘子是 155 万亿 token。</p>
+<p>现在再回头看 README 那三行。排在最前面的那一样，是一套 KV cache 系统。我上面讲的笔记、留存期、100 PiB 的盘，全是它没交出来的部分。</p>
+<h2 id="代码没给，图纸给了"><a href="#代码没给，图纸给了" class="headerlink" title="代码没给，图纸给了"></a>代码没给，图纸给了</h2><p>看到这儿容易得出一个结论：DeepSeek 留了一手。</p>
+<p>它自己在问答里写得很清楚：KV cache 管理和负载均衡这两块，跟内部基础设施绑得太死，所以代码还没完全开源。紧接着一句，这两块怎么设计的，写在我们那篇知乎博客里了。</p>
+<p>代码没给，图纸给了。这个姿态我挺佩服。它没把「我们有个很厉害的缓存」当宣传口号，反而把设计目标、架构、关键实现摊开讲，包括那两个没开源的组件。</p>
+<p>所以「只开了一半」只是在描述事实。我不觉得这是藏私。想抄整套作业的人抄不到，想知道它怎么想的人，能看得很清楚。</p>
+<h2 id="算得快的那半靠什么"><a href="#算得快的那半靠什么" class="headerlink" title="算得快的那半靠什么"></a>算得快的那半靠什么</h2><p>开源出来的这一半，确实有东西。</p>
+<p>缓存没命中的时候，它不重算整段，只重算最后 128 个 token。原话说，重算成本因此变成一个常数，跟上下文长度、层数都无关。在生成那一侧，每次只补提示词末尾这一小段，几乎砍掉一半的读入计算。</p>
+<p>128 个 token，大概一百来个字。你的上下文是四千还是二十五万，要补的永远是这一小段。</p>
+<p>另一个是投机解码，官方叫 DSpark。先让一个小模型一口气猜 5 个 token，再用一个置信度头挑出值得验证的那几个，把算力花在胜算最大的地方。生产工作点下，每步验证的草稿数从 5.00 个降到 3.2 到 4.4 个，吞吐涨 4% 到 7%。</p>
+<p>同样的卡，一小时多干这么多活。</p>
+<p>同一段里还有个反向的数：并发只有 16 的时候，它是负 1.5%。并发越高越赚，低并发反而亏。这种数字愿意写出来，比只报好消息可信。</p>
+<p>异步调度也默认开着，把 CPU 的排班和 GPU 的计算叠起来，让卡少空转。</p>
+<p>这三样管的是「算的时候更快」：重算得少一点，猜得准一点，排班叠一点。它们解决不了「根本不用重算」，那是缓存那半的活。</p>
+<h2 id="数字是谁测的"><a href="#数字是谁测的" class="headerlink" title="数字是谁测的"></a>数字是谁测的</h2><p>性能数字全部是 DeepSeek 自己测的。测法写在 README 里：4 张 SM100 做读入，64 张做生成。这跟前面 64+64 的最小部署单元不是一个数：那边是部署门槛，这边是测吞吐的配置。</p>
+<p>硬件支持两家的卡，NVIDIA 的 SM100 和华为 Ascend 950。但性能数字只有 NVIDIA 的，Ascend 一个都没有。还有两个功能明写只支持 NVIDIA：一个让结果不受批次影响，一个是确定性采样。</p>
+<p>外部独立复现，到现在是零。Bloomberg 的报道里有一句，还没有外部机构测过它的效率提升。</p>
+<p>官方自己还承认了一处：负载均衡只能做到理想离线基准的约 80%。这句很诚实，也提醒你，上面那些百分比是在什么前提下拿到的。</p>
+<p>血统也得交代。原话是，DeepInfer 最初主要建在 vLLM 上，就是眼下用得最广的那个开源推理框架，另外参考了 SGLang 和 TensorRT-LLM。它是从通用框架里长出来的，顺手把「什么模型都支持」那部分的代价砍掉了。只支持一个模型还能跑这么快，原因在这儿。</p>
+<h2 id="那笔账我这边对上了"><a href="#那笔账我这边对上了" class="headerlink" title="那笔账我这边对上了"></a>那笔账我这边对上了</h2><p>说回我自己。</p>
+<p>我那个 AI 大脑，对话模型就是 deepseek-v4-flash。七月那篇旧文里我贴过配置，两行：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">LLM_BASE_URL=https://api.deepseek.com</span><br><span class="line">LLM_MODEL=deepseek-v4-flash</span><br></pre></td></tr></table></figure>
+
+<p>按官方说法，跑 V4.1-Flash 的服务就是 DeepInfer。我没法确认每一次请求都穿过它，可能是别的部署。这层我说不清，就不装作说得清。</p>
+<p>但账能对上一半。九月调价那篇我抄过官方价格，就是前面那个 50 倍。我当时写的是，大脑里系统提示词、常驻规则、索引说明这些前缀每次都一字不差，全落在 cache 里。</p>
+<p>两天前那篇，我问的是这些重复前缀能不能复用。今天翻部署问答，DeepSeek 没只回一句「有这个功能」。它给了个更具体的数：我们把它们留了三天到七天，用 100 PiB 的盘装着。</p>
+<p>我记得住，是因为有人替我把笔记留住了。</p>
+<h2 id="你那边能抄的一件"><a href="#你那边能抄的一件" class="headerlink" title="你那边能抄的一件"></a>你那边能抄的一件</h2><p>翻一个开源发布，先找 README 里那段「本次没有包含」，它比 star 数重要。</p>
+<p>star 数说明有多少人围观，not included 说明你拿到手能干什么。DeepInfer 一天就攒了上万星，可它开的是离线推理加一个模型，完整服务缺三样。这两件事不冲突，但你得先看后者。</p>
+<p>我打算做一件小事：以后每看到一个想试的开源仓库，先把 README 里没给的那几样抄进笔记，再判断值不值得试。这个动作不解决任何技术问题，只是让我少在「它居然开源了」这句话上白高兴一场。</p>
+<p>绕回开头。DeepInfer 开源的不是一台能直接开张的店，是一张把关键设计写清楚的图纸。那两样没交出来的东西，它也在知乎博客里讲了怎么设计。缺的部分标得明明白白，没假装整套都给了。</p>
+<p>你最近一次被「开源」两个字吸引，翻到最后才发现只给了一半，是什么时候？评论区说说，我想看看你踩过的是哪一半。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>DeepSeek</tag>
+        <tag>开源</tag>
+        <tag>成本</tag>
+        <tag>推理框架</tag>
+        <tag>KV缓存</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>OpenAI 缓存留12小时，你的账会更便宜吗</title>
     <url>/2026/10/21/202610211353/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261021-202610211353-openai-cache.webp" alt="cover"></p>
@@ -5821,8 +5890,8 @@
         <tag>Ollama</tag>
         <tag>工作流</tag>
         <tag>本地模型</tag>
-        <tag>模型选型</tag>
         <tag>隐私</tag>
+        <tag>模型选型</tag>
       </tags>
   </entry>
   <entry>
@@ -39330,7 +39399,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#x74;&#64;&#103;&#105;&#x74;&#104;&#x75;&#x62;&#46;&#x63;&#111;&#109;">&#x67;&#105;&#x74;&#64;&#103;&#105;&#x74;&#104;&#x75;&#x62;&#46;&#x63;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#x69;&#x74;&#64;&#x67;&#105;&#x74;&#104;&#117;&#98;&#x2e;&#x63;&#x6f;&#109;">&#103;&#x69;&#x74;&#64;&#x67;&#105;&#x74;&#104;&#117;&#98;&#x2e;&#x63;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -39835,6 +39904,27 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>51单片机矩阵键盘C程序</title>
+    <url>/2017/09/24/201709242348/</url>
+    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
+]]></content>
+      <categories>
+        <category>嵌入式</category>
+      </categories>
+      <tags>
+        <tag>51单片机</tag>
+        <tag>C语言</tag>
+        <tag>矩阵键盘</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 最全 Intent 传递数据姿势</title>
     <url>/2017/09/24/201709242349/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center><center>置顶公众号（**ID：ITBigFly**）第一时间收到推送</center>
@@ -39916,27 +40006,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Intent</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>51单片机矩阵键盘C程序</title>
-    <url>/2017/09/24/201709242348/</url>
-    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
-]]></content>
-      <categories>
-        <category>嵌入式</category>
-      </categories>
-      <tags>
-        <tag>51单片机</tag>
-        <tag>C语言</tag>
-        <tag>矩阵键盘</tag>
       </tags>
   </entry>
   <entry>
@@ -40842,27 +40911,6 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
-    <title>Android 产生随机数</title>
-    <url>/2017/09/24/201709242415/</url>
-    <content><![CDATA[<p>##1.产生指定位数的随机数</p>
-<p>以产生6位数随机数为例</p>
-<p><code>int num = (int) ((Math.random() * 9 + 1) * 100000);</code></p>
-<p>产生其他位数随机数在最后面要乘的数即 <em>100000</em> 后加0即可</p>
-<p>##2.产生指定范围的随机数</p>
-<p>以产生[10,99]范围内的随机数为例</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">int min=10;</span><br><span class="line">int max=99;</span><br><span class="line">Random random = new Random();</span><br><span class="line">int num = random.nextInt(max)%(max-min+1) + min;</span><br></pre></td></tr></table></figure>
-
-<p>end ~</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>随机数</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Expected resource of type id [ResourceType]</title>
     <url>/2017/09/24/201709242414/</url>
     <content><![CDATA[<p>今天刚升级完 Android Studio 到3.0.1版本，装完之后，遇到一堆问题，改了一大堆问题，终于改完了，就想打包apk试试，没想到打包时报了如下错误：</p>
@@ -40881,6 +40929,27 @@ public static boolean isChinaPhoneLegal(String str)
       <tags>
         <tag>Android Studio</tag>
         <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 产生随机数</title>
+    <url>/2017/09/24/201709242415/</url>
+    <content><![CDATA[<p>##1.产生指定位数的随机数</p>
+<p>以产生6位数随机数为例</p>
+<p><code>int num = (int) ((Math.random() * 9 + 1) * 100000);</code></p>
+<p>产生其他位数随机数在最后面要乘的数即 <em>100000</em> 后加0即可</p>
+<p>##2.产生指定范围的随机数</p>
+<p>以产生[10,99]范围内的随机数为例</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">int min=10;</span><br><span class="line">int max=99;</span><br><span class="line">Random random = new Random();</span><br><span class="line">int num = random.nextInt(max)%(max-min+1) + min;</span><br></pre></td></tr></table></figure>
+
+<p>end ~</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>随机数</tag>
       </tags>
   </entry>
   <entry>
@@ -40993,6 +41062,39 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
+    <title>Android 删除指定路径下指定前缀或后缀的文件</title>
+    <url>/2017/09/24/201709242417/</url>
+    <content><![CDATA[<blockquote>
+<p>微信公众号：CodingAndroid<br>CSDN：<a href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由 CodingAndroid 原创，未经授权，不可随意转载！</p>
+</blockquote>
+<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><pre><code>我们在开发中都会遇到这样的一个需求：删除指定目录下指定的前缀或者后缀文件名的文件。
+</code></pre>
+<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><pre><code>对外暴露三个参数，参数一：要删除的文件目录的路径，参数二：区分是前缀还是后缀，参数三：具体前缀或者后缀字符规则。
+
+先枚举出路径目录下的所有文件，枚举的同时实现一个FilenameFilter接口的类，可以自定义规则，比说前缀、后缀或者其他规则，枚举的同时将我们的过滤器作为参数，这样我们就可以匹配到指定条件的文件，然后删除即可。
+</code></pre>
+<h2 id="实现一个删除逻辑的Runnable"><a href="#实现一个删除逻辑的Runnable" class="headerlink" title="实现一个删除逻辑的Runnable"></a>实现一个删除逻辑的Runnable</h2><p>代码实现的逻辑也比较简单，大家都能看得懂，下面我就直接贴代码了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.deletedemo;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import android.support.annotation.NonNull;</span><br><span class="line">import android.text.TextUtils;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FilenameFilter;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:删除指定规则的文件</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteRunnable implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    private String mRegEx;</span><br><span class="line">    private String dirPath;</span><br><span class="line">    private boolean isPrefix;</span><br><span class="line">    private static final String TAG = DeleteRunnable.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Constructor</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath  要删除文件所在的目录路径</span><br><span class="line">     * @param isPrefix true为前缀 false为后缀</span><br><span class="line">     * @param mRegEx   规则</span><br><span class="line">     */</span><br><span class="line">    public DeleteRunnable(String dirPath, boolean isPrefix, String mRegEx) &#123;</span><br><span class="line">        this.mRegEx = mRegEx;</span><br><span class="line">        this.dirPath = dirPath;</span><br><span class="line">        this.isPrefix = isPrefix;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        enumAllFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 枚举并删除所有符合条件(前缀)的文件</span><br><span class="line">     */</span><br><span class="line">    private void enumAllFileList() &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(dirPath)) &#123;</span><br><span class="line">            File adDir = new File(dirPath);</span><br><span class="line">            if (adDir.exists() &amp;&amp; adDir.isDirectory()) &#123;</span><br><span class="line">                if (!TextUtils.isEmpty(mRegEx)) &#123;</span><br><span class="line">                    DeleteFileFilter filter = new DeleteFileFilter(isPrefix, mRegEx);</span><br><span class="line">                    // 2.匹配是否是需要删除的文件</span><br><span class="line">                    File[] fileList = adDir.listFiles(filter);</span><br><span class="line">                    if (fileList != null &amp;&amp; fileList.length &gt; 0) &#123;</span><br><span class="line">                        for (File file : fileList) &#123;</span><br><span class="line">                            if (file.isFile() &amp;&amp; file.exists()) &#123;</span><br><span class="line">                                boolean delete = file.delete();</span><br><span class="line">                                Log.i(TAG, &quot;删除符合条件前缀的旧广告素材&quot; + (delete ? &quot;成功~&quot; : &quot;失败！&quot;));</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Created by Feifei on 2017/12/25 :)</span><br><span class="line">     * Function:以xxx开头或后缀的文件名的过滤器</span><br><span class="line">     */</span><br><span class="line">    class DeleteFileFilter implements FilenameFilter &#123;</span><br><span class="line"></span><br><span class="line">        private boolean isPrefix;</span><br><span class="line">        private String mRegEx;// 前缀或后缀规则</span><br><span class="line"></span><br><span class="line">        public DeleteFileFilter(boolean isPrefix, @NonNull String regEx) &#123;</span><br><span class="line">            this.isPrefix = isPrefix;</span><br><span class="line">            this.mRegEx = regEx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean accept(File file, String s) &#123;</span><br><span class="line">            return isPrefix ? s.startsWith(mRegEx) : s.endsWith(mRegEx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="定义文件删除的异常操作工具类"><a href="#定义文件删除的异常操作工具类" class="headerlink" title="定义文件删除的异常操作工具类"></a>定义文件删除的异常操作工具类</h2><p>因为操作文件属于耗时操作，我们使用 <strong>SingleThreadExecutor</strong> 线程池实现如下一个工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final ExecutorService executor = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 删除指定目录指定前后缀的文件</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath</span><br><span class="line">     * @param isPrefix</span><br><span class="line">     * @param regEx</span><br><span class="line">     */</span><br><span class="line">    public static void delete(String dirPath, boolean isPrefix, String regEx) &#123;</span><br><span class="line">        executor.execute(new DeleteRunnable(dirPath, isPrefix, regEx));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>例如我们要删除要删除SD卡下的Download目录下的所有以.png后缀结尾的文件，只需要这样写：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DeleteUtil.delete(&quot;/sdcard/Download/&quot;, false, &quot;.png&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>是不是感觉很方便，0.0~ 可以收藏了，以后当工具类来使用。</p>
+<p>如果有不懂的地方或者不对的地方，欢迎评论交流，谢谢！</p>
+<p>最后附上下载Demo的地址:<a href="http://download.csdn.net/download/xinpengfei521/10172262">http://download.csdn.net/download/xinpengfei521/10172262</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 冷启动白屏问题</title>
     <url>/2017/09/24/201709242418/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center>
@@ -41030,39 +41132,6 @@ public static boolean isChinaPhoneLegal(String str)
 <p><strong>猜你喜欢：</strong><br><a href="https://mp.weixin.qq.com/s/jxBEg7dpFfTNLXNFdvJjrw">深入浅出Retrofit2.x(一)</a><br><a href="https://mp.weixin.qq.com/s/c8mdMqjrLvHTgc8oxONiCw">深入浅出Retrofit2.x(二)</a><br><a href="https://mp.weixin.qq.com/s/hVhhDdr3Bo4qLIdOkHsM_Q">Android 最全 Intent 传递数据姿势</a> </p>
 <p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061530029.jpeg"></p>
 <center><span style="color:#bdbdbd;">欢迎扫码关注我的公众号</span></center>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 删除指定路径下指定前缀或后缀的文件</title>
-    <url>/2017/09/24/201709242417/</url>
-    <content><![CDATA[<blockquote>
-<p>微信公众号：CodingAndroid<br>CSDN：<a href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由 CodingAndroid 原创，未经授权，不可随意转载！</p>
-</blockquote>
-<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><pre><code>我们在开发中都会遇到这样的一个需求：删除指定目录下指定的前缀或者后缀文件名的文件。
-</code></pre>
-<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><pre><code>对外暴露三个参数，参数一：要删除的文件目录的路径，参数二：区分是前缀还是后缀，参数三：具体前缀或者后缀字符规则。
-
-先枚举出路径目录下的所有文件，枚举的同时实现一个FilenameFilter接口的类，可以自定义规则，比说前缀、后缀或者其他规则，枚举的同时将我们的过滤器作为参数，这样我们就可以匹配到指定条件的文件，然后删除即可。
-</code></pre>
-<h2 id="实现一个删除逻辑的Runnable"><a href="#实现一个删除逻辑的Runnable" class="headerlink" title="实现一个删除逻辑的Runnable"></a>实现一个删除逻辑的Runnable</h2><p>代码实现的逻辑也比较简单，大家都能看得懂，下面我就直接贴代码了</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.deletedemo;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import android.support.annotation.NonNull;</span><br><span class="line">import android.text.TextUtils;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FilenameFilter;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:删除指定规则的文件</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteRunnable implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    private String mRegEx;</span><br><span class="line">    private String dirPath;</span><br><span class="line">    private boolean isPrefix;</span><br><span class="line">    private static final String TAG = DeleteRunnable.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Constructor</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath  要删除文件所在的目录路径</span><br><span class="line">     * @param isPrefix true为前缀 false为后缀</span><br><span class="line">     * @param mRegEx   规则</span><br><span class="line">     */</span><br><span class="line">    public DeleteRunnable(String dirPath, boolean isPrefix, String mRegEx) &#123;</span><br><span class="line">        this.mRegEx = mRegEx;</span><br><span class="line">        this.dirPath = dirPath;</span><br><span class="line">        this.isPrefix = isPrefix;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        enumAllFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 枚举并删除所有符合条件(前缀)的文件</span><br><span class="line">     */</span><br><span class="line">    private void enumAllFileList() &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(dirPath)) &#123;</span><br><span class="line">            File adDir = new File(dirPath);</span><br><span class="line">            if (adDir.exists() &amp;&amp; adDir.isDirectory()) &#123;</span><br><span class="line">                if (!TextUtils.isEmpty(mRegEx)) &#123;</span><br><span class="line">                    DeleteFileFilter filter = new DeleteFileFilter(isPrefix, mRegEx);</span><br><span class="line">                    // 2.匹配是否是需要删除的文件</span><br><span class="line">                    File[] fileList = adDir.listFiles(filter);</span><br><span class="line">                    if (fileList != null &amp;&amp; fileList.length &gt; 0) &#123;</span><br><span class="line">                        for (File file : fileList) &#123;</span><br><span class="line">                            if (file.isFile() &amp;&amp; file.exists()) &#123;</span><br><span class="line">                                boolean delete = file.delete();</span><br><span class="line">                                Log.i(TAG, &quot;删除符合条件前缀的旧广告素材&quot; + (delete ? &quot;成功~&quot; : &quot;失败！&quot;));</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Created by Feifei on 2017/12/25 :)</span><br><span class="line">     * Function:以xxx开头或后缀的文件名的过滤器</span><br><span class="line">     */</span><br><span class="line">    class DeleteFileFilter implements FilenameFilter &#123;</span><br><span class="line"></span><br><span class="line">        private boolean isPrefix;</span><br><span class="line">        private String mRegEx;// 前缀或后缀规则</span><br><span class="line"></span><br><span class="line">        public DeleteFileFilter(boolean isPrefix, @NonNull String regEx) &#123;</span><br><span class="line">            this.isPrefix = isPrefix;</span><br><span class="line">            this.mRegEx = regEx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean accept(File file, String s) &#123;</span><br><span class="line">            return isPrefix ? s.startsWith(mRegEx) : s.endsWith(mRegEx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="定义文件删除的异常操作工具类"><a href="#定义文件删除的异常操作工具类" class="headerlink" title="定义文件删除的异常操作工具类"></a>定义文件删除的异常操作工具类</h2><p>因为操作文件属于耗时操作，我们使用 <strong>SingleThreadExecutor</strong> 线程池实现如下一个工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final ExecutorService executor = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 删除指定目录指定前后缀的文件</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath</span><br><span class="line">     * @param isPrefix</span><br><span class="line">     * @param regEx</span><br><span class="line">     */</span><br><span class="line">    public static void delete(String dirPath, boolean isPrefix, String regEx) &#123;</span><br><span class="line">        executor.execute(new DeleteRunnable(dirPath, isPrefix, regEx));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>例如我们要删除要删除SD卡下的Download目录下的所有以.png后缀结尾的文件，只需要这样写：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DeleteUtil.delete(&quot;/sdcard/Download/&quot;, false, &quot;.png&quot;);</span><br></pre></td></tr></table></figure>
-
-<p>是不是感觉很方便，0.0~ 可以收藏了，以后当工具类来使用。</p>
-<p>如果有不懂的地方或者不对的地方，欢迎评论交流，谢谢！</p>
-<p>最后附上下载Demo的地址:<a href="http://download.csdn.net/download/xinpengfei521/10172262">http://download.csdn.net/download/xinpengfei521/10172262</a></p>
-]]></content>
       <categories>
         <category>Android</category>
       </categories>
@@ -42495,28 +42564,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Java输入日期计算是这年的第几天</title>
-    <url>/2017/09/24/201709242440/</url>
-    <content><![CDATA[<h2 id="1-思路"><a href="#1-思路" class="headerlink" title="1.思路"></a>1.思路</h2><ol>
-<li>通过年份区分出是闰年还是平年，平年 2 月 28 年，闰年 2 月 29 天；</li>
-<li>1、3、5、7、8、10、12 月份 31 天其余月份均为 30 天；</li>
-<li>然后将每个月的天数相加即可，注意如果输入的是 12 月份，则是从 11 月份往前累加到1月份，1月份加的是输入的天数；</li>
-</ol>
-<h2 id="2-实现"><a href="#2-实现" class="headerlink" title="2.实现"></a>2.实现</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import java.util.Scanner;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2018/6/22 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line">public class CalculateUtils &#123;</span><br><span class="line"></span><br><span class="line">    /*平年二月28天*/</span><br><span class="line">    private static final int DAYS_28 = 28;</span><br><span class="line">    /*闰年二月29天*/</span><br><span class="line">    private static final int DAYS_29 = 29;</span><br><span class="line">    /*除了31天的月份其他均为30天*/</span><br><span class="line">    private static final int DAYS_30 = 30;</span><br><span class="line">    /*1、3、5、7、8、10、12月份31天*/</span><br><span class="line">    private static final int DAYS_31 = 31;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Scanner input = new Scanner(System.in);</span><br><span class="line">        System.out.println(&quot;Please input year:&quot;);</span><br><span class="line">        int year = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input month:&quot;);</span><br><span class="line">        int month = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input day:&quot;);</span><br><span class="line">        int day = input.nextInt();</span><br><span class="line"></span><br><span class="line">        int daysInYear = getDaysInYear(year, month, day);</span><br><span class="line">        System.out.println(&quot;daysInYear:&quot; + daysInYear);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get days in this year</span><br><span class="line">     *</span><br><span class="line">     * @param year</span><br><span class="line">     * @param month</span><br><span class="line">     * @param day</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static int getDaysInYear(int year, int month, int day) &#123;</span><br><span class="line">        int totalDays = 0;</span><br><span class="line"></span><br><span class="line">        switch (month) &#123;</span><br><span class="line">            // 12 月份加的是11月份的天数，依次类推</span><br><span class="line">            case 12:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 11:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 10:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 9:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 8:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 7:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 6:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 5:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 4:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 3:</span><br><span class="line">                // 判断是否是闰年</span><br><span class="line">                if (((year / 4 == 0) &amp;&amp; (year / 100 != 0)) || (year / 400 == 0)) &#123;</span><br><span class="line">                    totalDays += DAYS_29;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    totalDays += DAYS_28;</span><br><span class="line">                &#125;</span><br><span class="line">            case 2:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 1: // 如果是1月份就加上输入的天数</span><br><span class="line">                totalDays += day;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return totalDays;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="3-思考"><a href="#3-思考" class="headerlink" title="3.思考"></a>3.思考</h2><p>因为只有2月份的天数和输入的 day 天数是不固定的，其他月份的天数是固定的，而固定的天数是可以通过输入的月份算出来，这样我们就可以这样计算：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">2 月份的天数 + 输入的天数 + 计算出来的固定天数</span><br></pre></td></tr></table></figure>
-
-<p>如果大家还有其他的更好的优化的都可以在下面评论。</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-      <tags>
-        <tag>Java</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Java内存管理与垃圾回收</title>
     <url>/2017/09/24/201709242439/</url>
     <content><![CDATA[<h2 id="一、内存简介"><a href="#一、内存简介" class="headerlink" title="一、内存简介"></a>一、内存简介</h2><p>根据《Java虚拟机规范（第2版）》的规定，Java虚拟机所管理的内存将会包括以下几个运行时数据区域，如下图所示：</p>
@@ -42537,22 +42584,25 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Java 基本数据类型转换为 String</title>
-    <url>/2017/09/24/201709242442/</url>
-    <content><![CDATA[<blockquote>
-<p>我们都知道把一个基本数据类型转为 String 类型，一般有三种方式，例如：有一个 Integer 型数据 a，可以使用i.toString()、String.valueOf(i)、i+”” 三种方式，三种方式的效率如何，接下来我们做一个小测试：</p>
-</blockquote>
-<h2 id="1-测试代码如下："><a href="#1-测试代码如下：" class="headerlink" title="1.测试代码如下："></a>1.测试代码如下：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 把一个基本数据类型转为字符串</span><br><span class="line">     */</span><br><span class="line">    private void testExecuteTime() &#123;</span><br><span class="line">        int loopTime = 100000;</span><br><span class="line">        //Integer i = 0;</span><br><span class="line">        Long i = 0L;</span><br><span class="line">        long startTime;</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = String.valueOf(i);</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;String.valueOf()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i.toString();</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;Integer.toString()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i + &quot;&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;i + \&quot;\&quot;：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+    <title>Java输入日期计算是这年的第几天</title>
+    <url>/2017/09/24/201709242440/</url>
+    <content><![CDATA[<h2 id="1-思路"><a href="#1-思路" class="headerlink" title="1.思路"></a>1.思路</h2><ol>
+<li>通过年份区分出是闰年还是平年，平年 2 月 28 年，闰年 2 月 29 天；</li>
+<li>1、3、5、7、8、10、12 月份 31 天其余月份均为 30 天；</li>
+<li>然后将每个月的天数相加即可，注意如果输入的是 12 月份，则是从 11 月份往前累加到1月份，1月份加的是输入的天数；</li>
+</ol>
+<h2 id="2-实现"><a href="#2-实现" class="headerlink" title="2.实现"></a>2.实现</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import java.util.Scanner;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2018/6/22 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line">public class CalculateUtils &#123;</span><br><span class="line"></span><br><span class="line">    /*平年二月28天*/</span><br><span class="line">    private static final int DAYS_28 = 28;</span><br><span class="line">    /*闰年二月29天*/</span><br><span class="line">    private static final int DAYS_29 = 29;</span><br><span class="line">    /*除了31天的月份其他均为30天*/</span><br><span class="line">    private static final int DAYS_30 = 30;</span><br><span class="line">    /*1、3、5、7、8、10、12月份31天*/</span><br><span class="line">    private static final int DAYS_31 = 31;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) &#123;</span><br><span class="line">        Scanner input = new Scanner(System.in);</span><br><span class="line">        System.out.println(&quot;Please input year:&quot;);</span><br><span class="line">        int year = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input month:&quot;);</span><br><span class="line">        int month = input.nextInt();</span><br><span class="line">        System.out.println(&quot;Please input day:&quot;);</span><br><span class="line">        int day = input.nextInt();</span><br><span class="line"></span><br><span class="line">        int daysInYear = getDaysInYear(year, month, day);</span><br><span class="line">        System.out.println(&quot;daysInYear:&quot; + daysInYear);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * get days in this year</span><br><span class="line">     *</span><br><span class="line">     * @param year</span><br><span class="line">     * @param month</span><br><span class="line">     * @param day</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public static int getDaysInYear(int year, int month, int day) &#123;</span><br><span class="line">        int totalDays = 0;</span><br><span class="line"></span><br><span class="line">        switch (month) &#123;</span><br><span class="line">            // 12 月份加的是11月份的天数，依次类推</span><br><span class="line">            case 12:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 11:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 10:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 9:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 8:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 7:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 6:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 5:</span><br><span class="line">                totalDays += DAYS_30;</span><br><span class="line">            case 4:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 3:</span><br><span class="line">                // 判断是否是闰年</span><br><span class="line">                if (((year / 4 == 0) &amp;&amp; (year / 100 != 0)) || (year / 400 == 0)) &#123;</span><br><span class="line">                    totalDays += DAYS_29;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    totalDays += DAYS_28;</span><br><span class="line">                &#125;</span><br><span class="line">            case 2:</span><br><span class="line">                totalDays += DAYS_31;</span><br><span class="line">            case 1: // 如果是1月份就加上输入的天数</span><br><span class="line">                totalDays += day;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        return totalDays;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="2-测试结果"><a href="#2-测试结果" class="headerlink" title="2.测试结果"></a>2.测试结果</h2><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061540759.png" alt="这里写图片描述"></p>
-<h2 id="3-结论"><a href="#3-结论" class="headerlink" title="3.结论"></a>3.结论</h2><p>把一个基本数据类型转换为String,使用**.toString()<strong>是最快的方式、</strong>String.valueOf<strong>和</strong>toString<strong>差不多、</strong>数据+””**的效率最慢，其实这些执行都是毫秒级，现在处理器的性能都比较强悍，其实影响不大，对于用户来说，没有什么感觉，但是我们可以再写代码的时候养成一个良好的习惯，有时候不用抠这么细，毕竟不是底层的代码，应用层，主要先以实现业务功能为主，这样后续有时间可以优化，记住一点：大行不顾细谨，大理不辞小让！</p>
+<h2 id="3-思考"><a href="#3-思考" class="headerlink" title="3.思考"></a>3.思考</h2><p>因为只有2月份的天数和输入的 day 天数是不固定的，其他月份的天数是固定的，而固定的天数是可以通过输入的月份算出来，这样我们就可以这样计算：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">2 月份的天数 + 输入的天数 + 计算出来的固定天数</span><br></pre></td></tr></table></figure>
+
+<p>如果大家还有其他的更好的优化的都可以在下面评论。</p>
 ]]></content>
       <categories>
-        <category>Android</category>
+        <category>Java</category>
       </categories>
       <tags>
         <tag>Java</tag>
-        <tag>String</tag>
       </tags>
   </entry>
   <entry>
@@ -42586,32 +42636,22 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Multiple dex files define Lokhttp3/internal/wsWebSocketProtocol</title>
-    <url>/2017/09/24/201709242444/</url>
-    <content><![CDATA[<h2 id="老套路，先晒图"><a href="#老套路，先晒图" class="headerlink" title="老套路，先晒图"></a>老套路，先晒图</h2><p>图一：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536778.png" alt="这里写图片描述"><br>如题，在编译打包时遇到了如上错误，很明显这是一个依赖库冲突的问题，我的app下依赖一个 <strong>ad</strong> library,而 <strong>ad</strong> library有依赖了一个 <strong>http</strong> library,这是一个我用okhttp封装的网络请求库，而 <strong>ad</strong> library 又依赖了 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 这依赖关系确实有点混乱，那这时候有人说了，你的 <strong>ad</strong> library为什么不用 <strong>http</strong> library里面的okhttp呢？自从AS3.0 gradle4.0开始依赖使用 <strong>implementation</strong> 代替了 <strong>compile</strong> 关键字，因此 <strong>compile</strong> 就被过期了，<strong>http</strong> 虽然依赖了 <strong>okhttp</strong> ，但是 <strong>ad</strong> library要想使用 <strong>okhttp</strong> 是不可以的，因为使用<strong>implementation</strong> 对于<strong>ad</strong> library 是不可见的，所以<strong>ad</strong> library又依赖了一次 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 因为 <strong>ad</strong> library需要单独的进行定制化的网络请求配置，所以 <strong>ad</strong> library中的网络请求是没有封装进<strong>http</strong> library中的，所以导致了重复依赖的问题，使用  <strong>implementation</strong> 关键字虽然可以屏蔽<strong>ad</strong> library访问 <strong>http</strong> library中 <strong>okhttp</strong> 的api,但是依赖冲突的问题确实还是存在的…</p>
-<p>于是乎，网上搜了一篇帖子：</p>
-<p><a href="https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp">https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp</a></p>
-<p>看来一下和我的情况一毛一样，报的错误也一样，直接戳到Answer处，解决方式如下</p>
-<p>图二：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536096.png" alt="这里写图片描述"></p>
-<p>然后直接去除掉重复的依赖，修改如下后，再rebuild</p>
-<p>图三：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537896.png" alt="这里写图片描述"></p>
-<p>心里想着，这个问题终于解决了，喝了口水，长呼了一口气。。。</p>
-<p>我擦，竟然又爆红了，我勒个去，什么情况？这不科学啊，什么鬼？心里很郁闷，这是为什么呢？</p>
-<p>不行啊，看来我必须要放大招了，心里开始仔细揣摩了，认真想想，绝逼哪里肯定是有问题的，start thinking…</p>
-<p>认真起来的男人是最帅的 0.0~</p>
-<p>仔细看了看<strong>http</strong> library中的 <strong>okhttp</strong> 是3.3.1,而 <strong>ad</strong> library中的 <strong>okhttp</strong> 3.9.1,忽然想起来之前遇到过同时依赖两个不同版本的库也会出现这样的问题，于是，灵光一现，立马把版本号改一样试试，修改后如下:</p>
-<p>图四：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537328.png" alt="这里写图片描述"></p>
-<p>然后再rebuild…</p>
-<p>oh yeah ~ 搞定，就是这么6… 怎一个爽快了得？</p>
-<p>好了，今天就分享这么多吧，一来呢总结一下自己遇到的一些问题及解决办法，如果你也遇到，希望能帮助到你们，二来呢，希望大家如果真的帮助到你们了，麻烦你们给我点个赞或者在文章底部给我评论，或者你有什么意见或者意见都可以相互交流，谢谢你们！</p>
-<p>一个逗比的码农和一个逗比的故事，如果想看到更多的文章，请点左侧头像下面的关注！</p>
+    <title>Java 基本数据类型转换为 String</title>
+    <url>/2017/09/24/201709242442/</url>
+    <content><![CDATA[<blockquote>
+<p>我们都知道把一个基本数据类型转为 String 类型，一般有三种方式，例如：有一个 Integer 型数据 a，可以使用i.toString()、String.valueOf(i)、i+”” 三种方式，三种方式的效率如何，接下来我们做一个小测试：</p>
+</blockquote>
+<h2 id="1-测试代码如下："><a href="#1-测试代码如下：" class="headerlink" title="1.测试代码如下："></a>1.测试代码如下：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line">     * 把一个基本数据类型转为字符串</span><br><span class="line">     */</span><br><span class="line">    private void testExecuteTime() &#123;</span><br><span class="line">        int loopTime = 100000;</span><br><span class="line">        //Integer i = 0;</span><br><span class="line">        Long i = 0L;</span><br><span class="line">        long startTime;</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = String.valueOf(i);</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;String.valueOf()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i.toString();</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;Integer.toString()：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line"></span><br><span class="line">        startTime = System.currentTimeMillis();</span><br><span class="line">        for (int j = 0; j &lt; loopTime; j++) &#123;</span><br><span class="line">            String str = i + &quot;&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">        Log.e(&quot;TAG&quot;, &quot;i + \&quot;\&quot;：&quot; + (System.currentTimeMillis() - startTime) + &quot;ms&quot;);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-测试结果"><a href="#2-测试结果" class="headerlink" title="2.测试结果"></a>2.测试结果</h2><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061540759.png" alt="这里写图片描述"></p>
+<h2 id="3-结论"><a href="#3-结论" class="headerlink" title="3.结论"></a>3.结论</h2><p>把一个基本数据类型转换为String,使用**.toString()<strong>是最快的方式、</strong>String.valueOf<strong>和</strong>toString<strong>差不多、</strong>数据+””**的效率最慢，其实这些执行都是毫秒级，现在处理器的性能都比较强悍，其实影响不大，对于用户来说，没有什么感觉，但是我们可以再写代码的时候养成一个良好的习惯，有时候不用抠这么细，毕竟不是底层的代码，应用层，主要先以实现业务功能为主，这样后续有时间可以优化，记住一点：大行不顾细谨，大理不辞小让！</p>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
-        <tag>Excepiton</tag>
-        <tag>okhttp3</tag>
+        <tag>Java</tag>
+        <tag>String</tag>
       </tags>
   </entry>
   <entry>
@@ -42642,6 +42682,35 @@ Thanks all.
       <tags>
         <tag>ListView</tag>
         <tag>widget</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Multiple dex files define Lokhttp3/internal/wsWebSocketProtocol</title>
+    <url>/2017/09/24/201709242444/</url>
+    <content><![CDATA[<h2 id="老套路，先晒图"><a href="#老套路，先晒图" class="headerlink" title="老套路，先晒图"></a>老套路，先晒图</h2><p>图一：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536778.png" alt="这里写图片描述"><br>如题，在编译打包时遇到了如上错误，很明显这是一个依赖库冲突的问题，我的app下依赖一个 <strong>ad</strong> library,而 <strong>ad</strong> library有依赖了一个 <strong>http</strong> library,这是一个我用okhttp封装的网络请求库，而 <strong>ad</strong> library 又依赖了 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 这依赖关系确实有点混乱，那这时候有人说了，你的 <strong>ad</strong> library为什么不用 <strong>http</strong> library里面的okhttp呢？自从AS3.0 gradle4.0开始依赖使用 <strong>implementation</strong> 代替了 <strong>compile</strong> 关键字，因此 <strong>compile</strong> 就被过期了，<strong>http</strong> 虽然依赖了 <strong>okhttp</strong> ，但是 <strong>ad</strong> library要想使用 <strong>okhttp</strong> 是不可以的，因为使用<strong>implementation</strong> 对于<strong>ad</strong> library 是不可见的，所以<strong>ad</strong> library又依赖了一次 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 因为 <strong>ad</strong> library需要单独的进行定制化的网络请求配置，所以 <strong>ad</strong> library中的网络请求是没有封装进<strong>http</strong> library中的，所以导致了重复依赖的问题，使用  <strong>implementation</strong> 关键字虽然可以屏蔽<strong>ad</strong> library访问 <strong>http</strong> library中 <strong>okhttp</strong> 的api,但是依赖冲突的问题确实还是存在的…</p>
+<p>于是乎，网上搜了一篇帖子：</p>
+<p><a href="https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp">https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp</a></p>
+<p>看来一下和我的情况一毛一样，报的错误也一样，直接戳到Answer处，解决方式如下</p>
+<p>图二：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536096.png" alt="这里写图片描述"></p>
+<p>然后直接去除掉重复的依赖，修改如下后，再rebuild</p>
+<p>图三：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537896.png" alt="这里写图片描述"></p>
+<p>心里想着，这个问题终于解决了，喝了口水，长呼了一口气。。。</p>
+<p>我擦，竟然又爆红了，我勒个去，什么情况？这不科学啊，什么鬼？心里很郁闷，这是为什么呢？</p>
+<p>不行啊，看来我必须要放大招了，心里开始仔细揣摩了，认真想想，绝逼哪里肯定是有问题的，start thinking…</p>
+<p>认真起来的男人是最帅的 0.0~</p>
+<p>仔细看了看<strong>http</strong> library中的 <strong>okhttp</strong> 是3.3.1,而 <strong>ad</strong> library中的 <strong>okhttp</strong> 3.9.1,忽然想起来之前遇到过同时依赖两个不同版本的库也会出现这样的问题，于是，灵光一现，立马把版本号改一样试试，修改后如下:</p>
+<p>图四：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537328.png" alt="这里写图片描述"></p>
+<p>然后再rebuild…</p>
+<p>oh yeah ~ 搞定，就是这么6… 怎一个爽快了得？</p>
+<p>好了，今天就分享这么多吧，一来呢总结一下自己遇到的一些问题及解决办法，如果你也遇到，希望能帮助到你们，二来呢，希望大家如果真的帮助到你们了，麻烦你们给我点个赞或者在文章底部给我评论，或者你有什么意见或者意见都可以相互交流，谢谢你们！</p>
+<p>一个逗比的码农和一个逗比的故事，如果想看到更多的文章，请点左侧头像下面的关注！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Excepiton</tag>
+        <tag>okhttp3</tag>
       </tags>
   </entry>
   <entry>
@@ -42966,8 +43035,8 @@ Thanks all.
       </categories>
       <tags>
         <tag>MySQL</tag>
-        <tag>数据库</tag>
         <tag>CentOS</tag>
+        <tag>数据库</tag>
       </tags>
   </entry>
   <entry>

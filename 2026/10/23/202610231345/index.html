@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Anthropic 10 月 22 日指南建议按共享上下文逐个评估子 Agent 合并。八个 skill 不等于八次独立执行；对照七月评阅空转旧事，先分清规则切换、独立验证与上下文隔离，本文未做合并性能实测。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一条流水线八个 skill，真要八个 Agent 吗">
+<meta property="og:url" content="https://www.vance.xin/2026/10/23/202610231345/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Anthropic 10 月 22 日指南建议按共享上下文逐个评估子 Agent 合并。八个 skill 不等于八次独立执行；对照七月评阅空转旧事，先分清规则切换、独立验证与上下文隔离，本文未做合并性能实测。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261023-202610231345-fold-subagents.webp">
+<meta property="article:published_time" content="2026-10-23T13:45:00.000Z">
+<meta property="article:modified_time" content="2026-10-23T08:09:59.841Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="Skills">
+<meta property="article:tag" content="工作流">
+<meta property="article:tag" content="Claude">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261023-202610231345-fold-subagents.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/10/23/202610231345/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/10/23/202610231345/","path":"2026/10/23/202610231345/","title":"一条流水线八个 skill，真要八个 Agent 吗"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>一条流水线八个 skill，真要八个 Agent 吗 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "一条流水线八个 skill，真要八个 Agent 吗",
+  "url": "https://www.vance.xin/2026/10/23/202610231345/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/10/23/202610231345/",
+  "datePublished": "2026-10-23T13:45:00.000Z",
+  "dateModified": "2026-10-23T08:09:59.841Z",
+  "description": "Anthropic 10 月 22 日指南建议按共享上下文逐个评估子 Agent 合并。八个 skill 不等于八次独立执行；对照七月评阅空转旧事，先分清规则切换、独立验证与上下文隔离，本文未做合并性能实测。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8D%E5%AD%97%E4%B8%8D%E5%90%8C%E4%B8%8D%E4%BB%A3%E8%A1%A8%E5%88%86%E8%BA%AB"><span class="nav-text">名字不同不代表分身</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%99%E7%A8%BF%E6%94%B9%E7%A8%BF%E5%85%B1%E7%94%A8%E4%BB%80%E4%B9%88"><span class="nav-text">写稿改稿共用什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E6%AC%A1%E7%A9%BA%E8%BD%AC%E6%80%AA%E8%B0%81"><span class="nav-text">那次空转怪谁</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%A6%E4%B8%80%E5%8F%8C%E7%9C%BC%E7%9D%9B%E7%95%99%E7%9D%80"><span class="nav-text">另一双眼睛留着</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%9F%A5%E6%89%A7%E8%A1%8C%E8%AE%B0%E5%BD%95"><span class="nav-text">先查执行记录</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">564</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">936</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/10/23/202610231345/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="一条流水线八个 skill，真要八个 Agent 吗 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Anthropic 10 月 22 日指南建议按共享上下文逐个评估子 Agent 合并。八个 skill 不等于八次独立执行；对照七月评阅空转旧事，先分清规则切换、独立验证与上下文隔离，本文未做合并性能实测。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一条流水线八个 skill，真要八个 Agent 吗
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-10-23 13:45:00 / 修改时间：08:09:59" itemprop="dateCreated datePublished" datetime="2026-10-23T13:45:00+00:00">2026-10-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Anthropic 10 月 22 日指南建议按共享上下文逐个评估子 Agent 合并。八个 skill 不等于八次独立执行；对照七月评阅空转旧事，先分清规则切换、独立验证与上下文隔离，本文未做合并性能实测。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261023-202610231345-fold-subagents.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>你把调研、写稿、润色、评阅拆成不同岗位，是不是就该给每个岗位配一个 Agent？我这条写作流水线，正好能拿来对照。</p>
+<p>八个专业 skill，不必对应八份独立上下文。需要换一套规则，主会话可以接着读。独立查错、并行研究或隔开大量一次性材料，才值得考虑另开上下文。</p>
+<p>Anthropic 十月二十二日的<a target="_blank" rel="noopener" href="https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop">新指南</a>，面向企业 Agent 部署，讨论哪些子 Agent 可以收回主循环。我还没有做合并前后的耗时、token 对照。这次先核指南，再看自己哪些边界值得保留。</p>
+<h2 id="名字不同不代表分身"><a href="#名字不同不代表分身" class="headerlink" title="名字不同不代表分身"></a>名字不同不代表分身</h2><p>我这条链分成调研、写稿、润色、评阅、训练、配图、分发、发布八个专业 skill。发布按用户意图选择运行，其余按依赖接起来。</p>
+<p>其中有 content-writer、content-polisher、content-reviewer。名字像三个岗位，可“岗位”只是把专业要求分清，不能直接说明它们如何运行。</p>
+<p>skill 是一份可复用的做事说明。写稿读写作要求，润色读表达规则，同一个主会话可以接着做。稿件、原始资料和刚才为什么改那一句，都还在手边。</p>
+<p>子 Agent 则另开一份上下文，带着自己的指令和工具去干活，再把结果交回来。<a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/sub-agents">Claude Code 文档</a>也按这个区别建议：反复修改、多个阶段共享大量背景时，主会话往往更合适；输出很大、工作独立、需要限制工具时，再考虑子 Agent。</p>
+<p>两种东西也能搭在一起。<a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/skills">skill 文档</a>允许用 <code>context: fork</code> 把一次 skill 任务放进独立子上下文。看见 SKILL.md，只能确认有规则文件，不能数成一次新 Agent 调用。</p>
+<p>还有些步骤根本不必再请模型判一次。正文中文字符够不够、小标题有没有超长，仓库里已有脚本检查。把这些硬条件交给程序，能直接报出哪项不合格；再让一个“格式专家”把同一个数字读一遍，未必增加价值。</p>
+<p>这与合并子 Agent 是两种改动。保留检查，把执行方式换成确定的工具；专业判断仍由模型做。我不会为了少一次调用，把必须通过的检查一起删掉。</p>
+<p>所以，我这条流水线该数的，是实际开了多少次独立执行。不是目录里有多少个专业名字。</p>
+<h2 id="写稿改稿共用什么"><a href="#写稿改稿共用什么" class="headerlink" title="写稿改稿共用什么"></a>写稿改稿共用什么</h2><p>拿我的文章说，调研找到的原文里，常有一句不能丢的限定。写稿要用，润色也得守住。</p>
+<p>十七号那篇 DeepSeek 搜索接口稿，就得分清按请求计费和按文章数算钱。写得顺口了，也不能把“每千次成功且有结果的请求”揉成“每千篇文章”。</p>
+<p>假如写稿交给一位，润色再交给另一位，后者只拿到一段“文章已核事实”的摘要，那句限定就可能没跟过去。这是对交接风险的分析，不是说那篇真的发生了漏传。</p>
+<p>让主会话读完写作 skill，接着读润色 skill，能少一道把来龙去脉重新压成摘要的过程。专业标准照样分开，文章仍是同一份文件。</p>
+<p>但共享上下文也有成本。原文、草稿、删掉的句子堆多了，后面每一步都要背着这些东西走。我不能因为少交接，就把所有旧材料一直留着。该落盘的落盘，关键限定留到交接记录里，仍然要做。</p>
+<p>这也是我不打算把八份说明揉成一份巨大提示词的原因。需要哪段专业规则时再读哪段，和让模型每次从头吞一整本手册，负担不同。</p>
+<h2 id="那次空转怪谁"><a href="#那次空转怪谁" class="headerlink" title="那次空转怪谁"></a>那次空转怪谁</h2><p>七月十九日的<a href="https://www.vance.xin/2026/07/19/202607190032/">旧文</a>，记过一轮批量出稿。十篇稿子排进去，我想着让它们自己跑。回来看，八篇撞到三轮重改上限，仍在等我拍板。</p>
+<p>它们没有停着不干。整个批次已经跑了约六十四次 Agent 调用、烧掉两百七十万 token。调用在涨，交付却没出来。</p>
+<p>看着这笔旧账，很容易顺口接一句“Agent 太多，果然浪费”。可旧记录支撑不了这个因果。</p>
+<p>那时的规矩是低于八十分就打回，最多三轮，仍不达标就停。每轮评阅重新看全文，修改又没用对专业方法。它可以一遍遍提出意见，却没有把稿子推到能交的状态。</p>
+<p>后来改的是循环规则：只做一轮定点重改，改完如实报分，主观评分默认不再把整条流水线锁住。现有 reviewer skill 仍留着这段复盘。</p>
+<p>这证明我曾经把停止条件和改稿方式设计坏了。可换成一个 Agent，同一批稿子就能更快更好了吗？旧账回答不了。后者需要同材料、同验收条件的对照，旧文里没有。</p>
+<p>我更想问的是，每次调用带回了什么。如果只是一张和上一轮很像的意见单，再多开一位评审，也救不了没人落实的修改。</p>
+<h2 id="另一双眼睛留着"><a href="#另一双眼睛留着" class="headerlink" title="另一双眼睛留着"></a>另一双眼睛留着</h2><p>有一道边界，我仍会保留：独立评阅。</p>
+<p>写完再给自己打分，容易沿着刚才的写法解释“这句为什么合理”。另起一个没参与改稿的上下文，只给成稿、证据和评分标准，至少能让它从不同起点挑错。</p>
+<p>我这套 reviewer 的要求就是 fresh subagent。主观分数仍会有波动，所以边界分还会追加独立评阅。独立上下文提供的是一次重新审视的机会，不保证它一定客观，更不保证多叫一个就多发现一个错。</p>
+<p>另一类值得隔开的，是会塞进大量一次性输出的研究。四月那篇省 token 旧文里，我写过把目录探索交给子 Agent，只让摘要回来。这个方向与今天的建议并不冲突。</p>
+<p>关键在回来以后做什么。涉及文章主结论，摘要给了网址和判断，我还得回原文看。把一大堆搜索过程留在外面，可以减负；把支撑结论的限定也一起扔掉，就省错了地方。</p>
+<p>所以保留子 Agent 的理由，得落在独立验证、可并行的独立工作、工具权限或上下文负担上。“它听起来像个专家”，还不够。</p>
+<h2 id="先查执行记录"><a href="#先查执行记录" class="headerlink" title="先查执行记录"></a>先查执行记录</h2><p>你可以先拿一篇完整稿子的执行记录看：写作和润色是否各开了新上下文？后者是否又重读同一份原文、草稿和规则？</p>
+<p>两项都中，就值得列为合并候选。若本来就是主会话按顺序读两个 skill，就没有两位执行者可合，别为了追新建议再改一遍。</p>
+<p>放到我这条链，眼下能分清的是这些边界：</p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>为什么这样分</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>写稿接润色</td>
+<td>连着用同稿和事实限定，值得检查是否有重复交接</td>
+</tr>
+<tr>
+<td>字数和标题检查</td>
+<td>规则明确，脚本能报具体不合格项</td>
+</tr>
+<tr>
+<td>独立评阅</td>
+<td>要另一份上下文重新挑错，保留独立执行的理由</td>
+</tr>
+<tr>
+<td>大量搜索与探索</td>
+<td>看输出量和独立性决定，不能只因叫调研就拆开</td>
+</tr>
+</tbody></table>
+<p>这张表不是合并完成的成绩单。它给每一条边界一个可核的理由。写稿接润色列成候选，也不等于马上把检查删掉。</p>
+<p>真正动手前，还得给候选留一份对照。原始材料、规则版本、要交的文件和外部评阅标准固定，只改变这一段怎样执行。</p>
+<p>记录整段耗时，主会话和子任务的用量一起计，再逐篇看哪些规则漏了、哪些地方多改了一轮。不能拆开时用独立评阅，合并后只听主会话说“不错”，再把分数相近当成质量没变。</p>
+<p>官方指南恰好给了一个反例：示例客服 Agent 合并后延迟低了，却绕过配送专家，没取配送日期就回答。原来能过的流程，反而坏了。</p>
+<p>这条比“少一次调用”更值得记。同一份材料也要多跑，逐项看原先能守住的规则有没有丢，不只看平均分。变快了，却漏掉必须完成的一步，这段就先别合。</p>
+<p>对照还没做，流水线配置也没在这篇里动。我眼下能做的，是给每一次另开上下文写出理由：它带回独立问题，挡住一大堆一次性材料，还是只把同一段话再转一次？</p>
+<p>八个专业名字可以留下。执行记录里多出来的每一次等待，得能对应上一件值得它花的事。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/Skills/" rel="tag"># Skills</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/" rel="tag"># 工作流</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/10/22/202610221342/" rel="prev" title="Claude Duet 会主动提醒，急事能等几小时吗">
+                  <i class="fa fa-angle-left"></i> Claude Duet 会主动提醒，急事能等几小时吗
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/10/23/202610231536/" rel="next" title="Claude 下周不问你，能撤回的才配默认">
+                  Claude 下周不问你，能撤回的才配默认 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.8m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">27:46</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -256,6 +256,91 @@
       </tags>
   </entry>
   <entry>
+    <title>Node 里这个洞两头咬人，先看你在哪边</title>
+    <url>/2026/10/24/202610241121/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261024-202610241121-node-brotli-two-way-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>这几天安全圈在传一个漏洞，编号 CVE-2026-111497，有人给它起名叫 Node2Shell。传得最凶的是「未认证远程代码执行」，也就是 RCE。听着像谁都能隔着网线把你服务器端走。</p>
+<p>我把 OpenAI 的原文、Node 的公告、还有两拨人的分析都翻过一遍。你要是也做后端、也写脚本拉别人的接口，这篇值得花五分钟。因为大部分人先问的是「我有多危险」。真正该先问的是「我站在哪一边」。</p>
+<p>OpenAI 自己写得很清楚：</p>
+<blockquote>
+<p>an unpatched server that accepts compressed input could be taken over by a malicious client, and an unpatched client that accepts compressed input (such as “curl –compressed”) could be taken over by a malicious server.</p>
+</blockquote>
+<p>翻成人话。一边是别人往你这儿发压缩数据，你解压的时候中招。另一边是你去拉别人的数据，你解压响应的时候中招。两个方向，共用底层同一份解码器。</p>
+<p>你要是既写服务端接口，又天天 fetch 别人的地址，那你可能两边都站着。</p>
+<h2 id="两边的入口在哪"><a href="#两边的入口在哪" class="headerlink" title="两边的入口在哪"></a>两边的入口在哪</h2><p>服务端这一面的入口窄得多。裸的 http.createServer() 收到一个 Content-Encoding: br 的请求体，它不会自己去解。Imperva 的原话是：A bare Node.js HTTP server does not decode incoming Brotli bodies simply by receiving them.</p>
+<p>真正会解的是中间件。Express 5 配 body-parser 2，inflate 默认是 true，而且明确支持 br；Express 5.3.0 依赖的正是 body-parser ^2.3.0。再往上，Koa 配 co-body、Fastify 配 @fastify&#x2F;compress，还有你自己手写 createBrotliDecompress() 的地方，都算入口。Imperva 实测覆盖了 Express 5.0 到 5.3、body-parser 2.0 到 2.3。</p>
+<p>客户端这一面更容易被漏掉。Node 内置的 fetch() 会自动解 Brotli 响应，curl –compressed 算一个。</p>
+<p>Python 那边装了 Brotli 或者 brotlicffi，requests、urllib3、httpx 也会自动解。浏览器同理，只是据第三方清单，主流浏览器已经带上修复，具体版本号我没核到。</p>
+<p>这个库用得有多广？W3Techs 说 38.4% 的网站开着 Brotli 压缩。这个数算的是服务器给浏览器发压缩，不是请求体解压。请求体解压没有可靠统计，我不编。</p>
+<h2 id="我查了自己的两处"><a href="#我查了自己的两处" class="headerlink" title="我查了自己的两处"></a>我查了自己的两处</h2><p>看完这些，我先查线上那台，把响应头打出来：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ curl -sS --compressed -D - -o /dev/null https://www.vance.xin/</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Server: nginx/1.25.5</span><br><span class="line">Content-Encoding: gzip</span><br></pre></td></tr></table></figure>
+
+<p>gzip，不是 br。这个博客的 Dockerfile 第一行就是 FROM nginx:latest，纯静态托管，仓库里 grep 不到任何 brotli 配置。官方 nginx 镜像默认也不带 brotli 模块。</p>
+<p>线上这台不在服务端受影响范围。它给读者发的也是 gzip，不会反过来拿 br 打别人。</p>
+<p>本机不一样。我在这个仓库里敲了两条：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ node -v</span><br><span class="line">v22.23.2</span><br><span class="line">$ cat .nvmrc</span><br><span class="line">24</span><br></pre></td></tr></table></figure>
+
+<p>package.json 里 engines 写的是 &gt;&#x3D;24 &lt;25。这个项目本来就要求 Node 24，我一直跑着 22。而这次受影响的是 22.x 里低于 22.23.4 的版本。我停在 22.23.2，差两个补丁版本，正好在区间里。</p>
+<p>我没想到的是，升到 24.22.1 以上，项目要求的版本和这次的安全修复，一件事一起解决。</p>
+<p>老实说，我以为自己在栈里，结果只有一半在。线上那半没事，天天开着的这半有事。</p>
+<p>而且这不是我第一次只查一半。上次说要挨个查自动化流水线，最后只查了最顺手的那两条。这回我先查的又是最好查的那台，照旧从博客开始。</p>
+<p>容器镜像、CI runner、Lambda、我那几个跑在别处的服务，一个都还没查。今晚要补的就是这几处。</p>
+<p>这次的代码在 Node 的二进制里，一行都不给我看。我能做的，是数清楚自己跑着几份。</p>
+<h2 id="补丁为什么躺了七个月"><a href="#补丁为什么躺了七个月" class="headerlink" title="补丁为什么躺了七个月"></a>补丁为什么躺了七个月</h2><p>这个漏洞最扎人的地方，是时间。</p>
+<p>修复提交是 0ed4268a，作者是 Google 的 Evgenii Kliuchnikov，提交时间 2026 年 2 月 27 日。提交信息只有一句：Detect and report invalid stream earlier. 里面没有一个字提到安全。</p>
+<p>Brotli 上一个正式版本 1.2.0 是 2025 年 10 月 27 日发的。下一个要等到 2026 年 10 月 21 日，那天一口气发了 1.0.10、1.1.1、1.2.1 三个分支。修复从公开到发版，隔了 236 天，七个多月。两个正式版本之间，隔了 359 天。</p>
+<p>CVE 记录里有个字段叫 datePublic，填的就是 2026 年 2 月 27 日。也就是说，这份修复在公开仓库里躺了七个月，会 diff 的人都看得到那几行改动。</p>
+<p>OpenAI 自己的解释是：当时没人知道它是个安全漏洞，之后也没有新版本把它带出去。原文是 This root cause issue was actually fixed in the Brotli source code in February, but it wasn’t known at the time that it gave rise to a security vulnerability and there was no more recent release of Brotli.</p>
+<p>前天我写 PHP 那个洞，结论是「没人有义务修」。PHP 8.1 及更早已经停止维护，不会再发补丁，那批机器永远等不到。</p>
+<p>这一篇正好反过来。补丁二月就写好了，只是没人把它发出来。同一个「等不到」的结果，上次卡在没人修，这次卡在修了没发版。</p>
+<p>开源库的「修了」和「发布了」，中间可以隔七个月。</p>
+<p>而你的依赖树只认发版。</p>
+<p>还有一条时间线要说清。OpenAI 这条帖挂在那篇训练环境加固博客的同一条线程下面，帖子里写的是 During this red-teaming exercise。但根因修复在二月，比九月二十号的 DNS 事件和十月这轮红队都早。十月二十三号那篇博客的正文里，Brotli 这个词一次都没出现。准确的说法是：同一轮对外发布，同一条线程，但时间线对不上，官方没解释。把它算成「十月红队打出来的」，现在没有依据。</p>
+<p>报告者是 OpenAI Codex Security 的 Khai Tran 和 Sylvie Mayer。这条线程里，比署名更值钱的是那个时间差：二月修好，十月才发版。</p>
+<h2 id="打没打成，三方没对上"><a href="#打没打成，三方没对上" class="headerlink" title="打没打成，三方没对上"></a>打没打成，三方没对上</h2><p>同一个洞，三份说法。</p>
+<p>CVE 记录写的是 potentially execute arbitrary code。CVSS 4.0 给了 9.2，Critical。但这个分是 Google 打的，向量里带 AT:P，意思是目标侧得满足特定条件才能打，不是无脑通杀。Node.js 自己的公告只写 High，没给分。</p>
+<p>Imperva 那边说打成了。他们在官方 Node.js 24.22.0 的 Linux arm64 镜像上，用 Brotli 数据里的代码创建了一个应用本来不会创建的文件。同样的输入在 24.22.1 上被拒绝。原话里还有两句限定：execution took multiple attempts in our setup，We did not test every Node.js build or application。利用代码没有公开，只测了 arm64 和他们自己的应用配置。</p>
+<p>Qi Deng 的 brotli2crash 说打不成。原话是 The vulnerability is real but structurally unreachable，实际影响是 DoS，也就是把服务打瘫，不是 RCE。他的论证是规范里的长度上限让那条路径永远走不到。但他全文没提 Imperva 的实测，没给 fuzz 方法、迭代次数和 Node 版本，README 里还把报告者写错了。</p>
+<p>一方说打成了，另一方说结构上打不成，中间没有人复现对方的结论。我不替任何一方下判决。「RCE 已确凿」和「其实只是 DoS」，这两句话现在都站不住。</p>
+<p>这不影响今天该不该升。公开的 PoC 在标准构建上主要是崩溃和有限的内存读取，崩溃已经够升了。截至十月二十三、二十四号，没有看到在野利用的可靠报道。CISA 的已知被利用目录里没有它，第三方给的利用概率估值是 0.0048。不用恐慌，也不用拖。</p>
+<h2 id="出站那条路没人看"><a href="#出站那条路没人看" class="headerlink" title="出站那条路没人看"></a>出站那条路没人看</h2><p>很多团队的第一反应是上 WAF。WAF 就是网站前面替你挡请求的那一层。入站这一面，它确实能挡。Imperva 说自己加了专用规则，验证能挡住他们复现的攻击。但同一段里他们也写了：Complete remediation requires updating Node.js.</p>
+<p>出站这一面，WAF 根本不在那条路上。你的服务去 fetch 一个用户给的地址，响应是对方发回来的。解压发生在你的进程里，门口的墙看不到。</p>
+<p>把 Accept-Encoding 里的 br 删掉也不够。Patch the Planet 的原话：Removing br from Accept-Encoding alone does not stop a server from sending it. 恶意服务器可以硬发一份 br 响应，客户端按响应里的 Content-Encoding 选解码器。</p>
+<p>nginx 的 ngx_brotli 是压缩模块，管把响应压小，不管解压请求体；nginx 主线和 Apache 默认都不解 Brotli。所以「开了 br 压缩」不等于「会解 br 请求体」。第三方有个 ngx_unbrotli 会解响应，版本状态我没核到，不下结论。</p>
+<p>完整的修复只有一条：升级运行时，然后重启进程。跑着的进程会一直用旧解码器，不重启等于没升。</p>
+<p>麻烦在于「运行时」不是一个。本地、镜像、CI、serverless，各一份，每一份都要单独重建、单独确认。</p>
+<p>对我来说，真正要紧的是这台天天开着的 Mac。十几个 skill、CLAUDE.md、memory、一堆 API key 和登录态，全在它上面。它一天要 fetch 多少个地址，我自己都数不清。它跑的 Node 是 22.23.2。</p>
+<h2 id="今天先把版本查了"><a href="#今天先把版本查了" class="headerlink" title="今天先把版本查了"></a>今天先把版本查了</h2><p>清单不长，照着跑就行，建议直接存下来。</p>
+<p>先记住一条，它比查版本更要紧：升完要重启。跑着的进程会一直用旧解码器，只换个版本号不重启，等于没升。</p>
+<p>Node.js：22.x 升到 22.23.4 或以上，24.x 升到 24.22.1 或以上，26.x 升到 26.12.1 或以上。20 及更早、23、25 没有补丁，只能迁移。查法是每个环境各跑一次 node -v。</p>
+<ul>
+<li>本机：node -v</li>
+<li>容器镜像：docker run –rm 你的镜像 node -v</li>
+<li>CI：看 workflow 里 setup-node 读的是 .nvmrc 还是写死的版本号，再按那个版本对一遍</li>
+<li>Lambda 这类 serverless：看运行时配置里钉的版本，不是你本地那个</li>
+</ul>
+<p>别只看 process.versions.brotli。Node 是 cherry-pick 修复，修复版也可能还报 1.2.0，以 Node 自己的版本号为准。</p>
+<p>Python 那边：pip show Brotli brotlicffi。用不上就卸掉，requests、urllib3、aiohttp 会自动退回 gzip。要用就升到 Brotli 1.2.1、brotlicffi 1.2.1.0。注意不 import 也会中招，装了包，客户端库就会自动替你解。</p>
+<p>其他运行时：Bun 1.4.4；Envoy 1.40.0、1.39.3、1.38.6、1.37.8；Istio 1.29.9、1.30.6、1.31.2。用 curl –compressed 的，还要看系统的 libbrotli，dpkg -l | grep -i brotli，或者 rpm -qa、apk info -v 那套。</p>
+<p>上游 Brotli 库本身：1.0.3 到 1.2.0 受影响，修在 1.0.10、1.1.1、1.2.1。</p>
+<p>清单之外还有一条容易忘的。你的服务有没有 fetch 用户给的 URL？有的话，入站 WAF 救不了它，这条只能靠升级。</p>
+<p>我今晚先把 node 从 22.23.2 换到 24.22.1 以上，再把没查的那几个环境列出来，一个一个跑 node -v。这次我尽量不只在博客上查完就发文章。</p>
+<p>开头我写，该先问的不是「我有多危险」，是「我站在哪一边」。现在有答案了：线上那台不用管，真正要换的是这台装着所有钥匙的 Mac。</p>
+<p>你查完 node -v 是多少，打在评论区。要是也停在 22.x，说一声；要是数到第三份就不想数了，更该说一声。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>安全</tag>
+        <tag>Brotli</tag>
+        <tag>Node.js</tag>
+        <tag>CVE</tag>
+        <tag>供应链</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>三天前我立的 9 分之问，月之暗面交卷了</title>
     <url>/2026/10/24/202610240922/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261024-202610240922-kimi-k31-pro-nine-point-answered.webp" alt="cover"></p>
@@ -39764,7 +39849,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#98;&#46;&#99;&#111;&#x6d;">&#103;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#98;&#46;&#99;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#x69;&#116;&#x40;&#103;&#x69;&#116;&#104;&#x75;&#x62;&#46;&#x63;&#x6f;&#x6d;">&#103;&#x69;&#116;&#x40;&#103;&#x69;&#116;&#104;&#x75;&#x62;&#46;&#x63;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -40269,27 +40354,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>51单片机矩阵键盘C程序</title>
-    <url>/2017/09/24/201709242348/</url>
-    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
-]]></content>
-      <categories>
-        <category>嵌入式</category>
-      </categories>
-      <tags>
-        <tag>51单片机</tag>
-        <tag>C语言</tag>
-        <tag>矩阵键盘</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 最全 Intent 传递数据姿势</title>
     <url>/2017/09/24/201709242349/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center><center>置顶公众号（**ID：ITBigFly**）第一时间收到推送</center>
@@ -40371,6 +40435,27 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Intent</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>51单片机矩阵键盘C程序</title>
+    <url>/2017/09/24/201709242348/</url>
+    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
+]]></content>
+      <categories>
+        <category>嵌入式</category>
+      </categories>
+      <tags>
+        <tag>51单片机</tag>
+        <tag>C语言</tag>
+        <tag>矩阵键盘</tag>
       </tags>
   </entry>
   <entry>
@@ -40820,23 +40905,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android SharedPreferences 工具类</title>
-    <url>/2017/09/24/201709242400/</url>
-    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>###注：在MyApplication中获取上下文</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>SharedPreferences</tag>
-        <tag>工具类</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>用起来贼爽的 Android Studio 插件推荐</title>
     <url>/2017/09/24/201709242401/</url>
     <content><![CDATA[<blockquote>
@@ -40899,6 +40967,23 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>Plugin</tag>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android SharedPreferences 工具类</title>
+    <url>/2017/09/24/201709242400/</url>
+    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>###注：在MyApplication中获取上下文</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>SharedPreferences</tag>
+        <tag>工具类</tag>
       </tags>
   </entry>
   <entry>

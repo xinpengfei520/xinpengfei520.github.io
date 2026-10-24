@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="补丁二月二十七日就进了 Brotli 仓库，到十月二十一日才随 1.2.1 发版，隔了 236 天。这个洞双向咬人，Node 服务端解请求体、客户端 fetch 解响应体都会中招，升到 22.23.4 或 24.22.1 以上才修完。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Node 里这个洞两头咬人，先看你在哪边">
+<meta property="og:url" content="https://www.vance.xin/2026/10/24/202610241121/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="补丁二月二十七日就进了 Brotli 仓库，到十月二十一日才随 1.2.1 发版，隔了 236 天。这个洞双向咬人，Node 服务端解请求体、客户端 fetch 解响应体都会中招，升到 22.23.4 或 24.22.1 以上才修完。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261024-202610241121-node-brotli-two-way-v2.webp">
+<meta property="article:published_time" content="2026-10-24T11:21:00.000Z">
+<meta property="article:modified_time" content="2026-10-24T06:07:11.642Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Brotli">
+<meta property="article:tag" content="Node.js">
+<meta property="article:tag" content="CVE">
+<meta property="article:tag" content="供应链">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261024-202610241121-node-brotli-two-way-v2.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/10/24/202610241121/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/10/24/202610241121/","path":"2026/10/24/202610241121/","title":"Node 里这个洞两头咬人，先看你在哪边"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Node 里这个洞两头咬人，先看你在哪边 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Node 里这个洞两头咬人，先看你在哪边",
+  "url": "https://www.vance.xin/2026/10/24/202610241121/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/10/24/202610241121/",
+  "datePublished": "2026-10-24T11:21:00.000Z",
+  "dateModified": "2026-10-24T06:07:11.642Z",
+  "description": "补丁二月二十七日就进了 Brotli 仓库，到十月二十一日才随 1.2.1 发版，隔了 236 天。这个洞双向咬人，Node 服务端解请求体、客户端 fetch 解响应体都会中招，升到 22.23.4 或 24.22.1 以上才修完。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E8%BE%B9%E7%9A%84%E5%85%A5%E5%8F%A3%E5%9C%A8%E5%93%AA"><span class="nav-text">两边的入口在哪</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E6%9F%A5%E4%BA%86%E8%87%AA%E5%B7%B1%E7%9A%84%E4%B8%A4%E5%A4%84"><span class="nav-text">我查了自己的两处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%A5%E4%B8%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BA%BA%E4%BA%86%E4%B8%83%E4%B8%AA%E6%9C%88"><span class="nav-text">补丁为什么躺了七个月</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%93%E6%B2%A1%E6%89%93%E6%88%90%EF%BC%8C%E4%B8%89%E6%96%B9%E6%B2%A1%E5%AF%B9%E4%B8%8A"><span class="nav-text">打没打成，三方没对上</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%BA%E7%AB%99%E9%82%A3%E6%9D%A1%E8%B7%AF%E6%B2%A1%E4%BA%BA%E7%9C%8B"><span class="nav-text">出站那条路没人看</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8A%E5%A4%A9%E5%85%88%E6%8A%8A%E7%89%88%E6%9C%AC%E6%9F%A5%E4%BA%86"><span class="nav-text">今天先把版本查了</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">567</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">941</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/10/24/202610241121/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Node 里这个洞两头咬人，先看你在哪边 | 飞飞的AI实验室">
+      <meta itemprop="description" content="补丁二月二十七日就进了 Brotli 仓库，到十月二十一日才随 1.2.1 发版，隔了 236 天。这个洞双向咬人，Node 服务端解请求体、客户端 fetch 解响应体都会中招，升到 22.23.4 或 24.22.1 以上才修完。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Node 里这个洞两头咬人，先看你在哪边
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-10-24 11:21:00 / 修改时间：06:07:11" itemprop="dateCreated datePublished" datetime="2026-10-24T11:21:00+00:00">2026-10-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">补丁二月二十七日就进了 Brotli 仓库，到十月二十一日才随 1.2.1 发版，隔了 236 天。这个洞双向咬人，Node 服务端解请求体、客户端 fetch 解响应体都会中招，升到 22.23.4 或 24.22.1 以上才修完。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261024-202610241121-node-brotli-two-way-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>这几天安全圈在传一个漏洞，编号 CVE-2026-111497，有人给它起名叫 Node2Shell。传得最凶的是「未认证远程代码执行」，也就是 RCE。听着像谁都能隔着网线把你服务器端走。</p>
+<p>我把 OpenAI 的原文、Node 的公告、还有两拨人的分析都翻过一遍。你要是也做后端、也写脚本拉别人的接口，这篇值得花五分钟。因为大部分人先问的是「我有多危险」。真正该先问的是「我站在哪一边」。</p>
+<p>OpenAI 自己写得很清楚：</p>
+<blockquote>
+<p>an unpatched server that accepts compressed input could be taken over by a malicious client, and an unpatched client that accepts compressed input (such as “curl –compressed”) could be taken over by a malicious server.</p>
+</blockquote>
+<p>翻成人话。一边是别人往你这儿发压缩数据，你解压的时候中招。另一边是你去拉别人的数据，你解压响应的时候中招。两个方向，共用底层同一份解码器。</p>
+<p>你要是既写服务端接口，又天天 fetch 别人的地址，那你可能两边都站着。</p>
+<h2 id="两边的入口在哪"><a href="#两边的入口在哪" class="headerlink" title="两边的入口在哪"></a>两边的入口在哪</h2><p>服务端这一面的入口窄得多。裸的 http.createServer() 收到一个 Content-Encoding: br 的请求体，它不会自己去解。Imperva 的原话是：A bare Node.js HTTP server does not decode incoming Brotli bodies simply by receiving them.</p>
+<p>真正会解的是中间件。Express 5 配 body-parser 2，inflate 默认是 true，而且明确支持 br；Express 5.3.0 依赖的正是 body-parser ^2.3.0。再往上，Koa 配 co-body、Fastify 配 @fastify&#x2F;compress，还有你自己手写 createBrotliDecompress() 的地方，都算入口。Imperva 实测覆盖了 Express 5.0 到 5.3、body-parser 2.0 到 2.3。</p>
+<p>客户端这一面更容易被漏掉。Node 内置的 fetch() 会自动解 Brotli 响应，curl –compressed 算一个。</p>
+<p>Python 那边装了 Brotli 或者 brotlicffi，requests、urllib3、httpx 也会自动解。浏览器同理，只是据第三方清单，主流浏览器已经带上修复，具体版本号我没核到。</p>
+<p>这个库用得有多广？W3Techs 说 38.4% 的网站开着 Brotli 压缩。这个数算的是服务器给浏览器发压缩，不是请求体解压。请求体解压没有可靠统计，我不编。</p>
+<h2 id="我查了自己的两处"><a href="#我查了自己的两处" class="headerlink" title="我查了自己的两处"></a>我查了自己的两处</h2><p>看完这些，我先查线上那台，把响应头打出来：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ curl -sS --compressed -D - -o /dev/null https://www.vance.xin/</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Server: nginx/1.25.5</span><br><span class="line">Content-Encoding: gzip</span><br></pre></td></tr></table></figure>
+
+<p>gzip，不是 br。这个博客的 Dockerfile 第一行就是 FROM nginx:latest，纯静态托管，仓库里 grep 不到任何 brotli 配置。官方 nginx 镜像默认也不带 brotli 模块。</p>
+<p>线上这台不在服务端受影响范围。它给读者发的也是 gzip，不会反过来拿 br 打别人。</p>
+<p>本机不一样。我在这个仓库里敲了两条：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ node -v</span><br><span class="line">v22.23.2</span><br><span class="line">$ cat .nvmrc</span><br><span class="line">24</span><br></pre></td></tr></table></figure>
+
+<p>package.json 里 engines 写的是 &gt;&#x3D;24 &lt;25。这个项目本来就要求 Node 24，我一直跑着 22。而这次受影响的是 22.x 里低于 22.23.4 的版本。我停在 22.23.2，差两个补丁版本，正好在区间里。</p>
+<p>我没想到的是，升到 24.22.1 以上，项目要求的版本和这次的安全修复，一件事一起解决。</p>
+<p>老实说，我以为自己在栈里，结果只有一半在。线上那半没事，天天开着的这半有事。</p>
+<p>而且这不是我第一次只查一半。上次说要挨个查自动化流水线，最后只查了最顺手的那两条。这回我先查的又是最好查的那台，照旧从博客开始。</p>
+<p>容器镜像、CI runner、Lambda、我那几个跑在别处的服务，一个都还没查。今晚要补的就是这几处。</p>
+<p>这次的代码在 Node 的二进制里，一行都不给我看。我能做的，是数清楚自己跑着几份。</p>
+<h2 id="补丁为什么躺了七个月"><a href="#补丁为什么躺了七个月" class="headerlink" title="补丁为什么躺了七个月"></a>补丁为什么躺了七个月</h2><p>这个漏洞最扎人的地方，是时间。</p>
+<p>修复提交是 0ed4268a，作者是 Google 的 Evgenii Kliuchnikov，提交时间 2026 年 2 月 27 日。提交信息只有一句：Detect and report invalid stream earlier. 里面没有一个字提到安全。</p>
+<p>Brotli 上一个正式版本 1.2.0 是 2025 年 10 月 27 日发的。下一个要等到 2026 年 10 月 21 日，那天一口气发了 1.0.10、1.1.1、1.2.1 三个分支。修复从公开到发版，隔了 236 天，七个多月。两个正式版本之间，隔了 359 天。</p>
+<p>CVE 记录里有个字段叫 datePublic，填的就是 2026 年 2 月 27 日。也就是说，这份修复在公开仓库里躺了七个月，会 diff 的人都看得到那几行改动。</p>
+<p>OpenAI 自己的解释是：当时没人知道它是个安全漏洞，之后也没有新版本把它带出去。原文是 This root cause issue was actually fixed in the Brotli source code in February, but it wasn’t known at the time that it gave rise to a security vulnerability and there was no more recent release of Brotli.</p>
+<p>前天我写 PHP 那个洞，结论是「没人有义务修」。PHP 8.1 及更早已经停止维护，不会再发补丁，那批机器永远等不到。</p>
+<p>这一篇正好反过来。补丁二月就写好了，只是没人把它发出来。同一个「等不到」的结果，上次卡在没人修，这次卡在修了没发版。</p>
+<p>开源库的「修了」和「发布了」，中间可以隔七个月。</p>
+<p>而你的依赖树只认发版。</p>
+<p>还有一条时间线要说清。OpenAI 这条帖挂在那篇训练环境加固博客的同一条线程下面，帖子里写的是 During this red-teaming exercise。但根因修复在二月，比九月二十号的 DNS 事件和十月这轮红队都早。十月二十三号那篇博客的正文里，Brotli 这个词一次都没出现。准确的说法是：同一轮对外发布，同一条线程，但时间线对不上，官方没解释。把它算成「十月红队打出来的」，现在没有依据。</p>
+<p>报告者是 OpenAI Codex Security 的 Khai Tran 和 Sylvie Mayer。这条线程里，比署名更值钱的是那个时间差：二月修好，十月才发版。</p>
+<h2 id="打没打成，三方没对上"><a href="#打没打成，三方没对上" class="headerlink" title="打没打成，三方没对上"></a>打没打成，三方没对上</h2><p>同一个洞，三份说法。</p>
+<p>CVE 记录写的是 potentially execute arbitrary code。CVSS 4.0 给了 9.2，Critical。但这个分是 Google 打的，向量里带 AT:P，意思是目标侧得满足特定条件才能打，不是无脑通杀。Node.js 自己的公告只写 High，没给分。</p>
+<p>Imperva 那边说打成了。他们在官方 Node.js 24.22.0 的 Linux arm64 镜像上，用 Brotli 数据里的代码创建了一个应用本来不会创建的文件。同样的输入在 24.22.1 上被拒绝。原话里还有两句限定：execution took multiple attempts in our setup，We did not test every Node.js build or application。利用代码没有公开，只测了 arm64 和他们自己的应用配置。</p>
+<p>Qi Deng 的 brotli2crash 说打不成。原话是 The vulnerability is real but structurally unreachable，实际影响是 DoS，也就是把服务打瘫，不是 RCE。他的论证是规范里的长度上限让那条路径永远走不到。但他全文没提 Imperva 的实测，没给 fuzz 方法、迭代次数和 Node 版本，README 里还把报告者写错了。</p>
+<p>一方说打成了，另一方说结构上打不成，中间没有人复现对方的结论。我不替任何一方下判决。「RCE 已确凿」和「其实只是 DoS」，这两句话现在都站不住。</p>
+<p>这不影响今天该不该升。公开的 PoC 在标准构建上主要是崩溃和有限的内存读取，崩溃已经够升了。截至十月二十三、二十四号，没有看到在野利用的可靠报道。CISA 的已知被利用目录里没有它，第三方给的利用概率估值是 0.0048。不用恐慌，也不用拖。</p>
+<h2 id="出站那条路没人看"><a href="#出站那条路没人看" class="headerlink" title="出站那条路没人看"></a>出站那条路没人看</h2><p>很多团队的第一反应是上 WAF。WAF 就是网站前面替你挡请求的那一层。入站这一面，它确实能挡。Imperva 说自己加了专用规则，验证能挡住他们复现的攻击。但同一段里他们也写了：Complete remediation requires updating Node.js.</p>
+<p>出站这一面，WAF 根本不在那条路上。你的服务去 fetch 一个用户给的地址，响应是对方发回来的。解压发生在你的进程里，门口的墙看不到。</p>
+<p>把 Accept-Encoding 里的 br 删掉也不够。Patch the Planet 的原话：Removing br from Accept-Encoding alone does not stop a server from sending it. 恶意服务器可以硬发一份 br 响应，客户端按响应里的 Content-Encoding 选解码器。</p>
+<p>nginx 的 ngx_brotli 是压缩模块，管把响应压小，不管解压请求体；nginx 主线和 Apache 默认都不解 Brotli。所以「开了 br 压缩」不等于「会解 br 请求体」。第三方有个 ngx_unbrotli 会解响应，版本状态我没核到，不下结论。</p>
+<p>完整的修复只有一条：升级运行时，然后重启进程。跑着的进程会一直用旧解码器，不重启等于没升。</p>
+<p>麻烦在于「运行时」不是一个。本地、镜像、CI、serverless，各一份，每一份都要单独重建、单独确认。</p>
+<p>对我来说，真正要紧的是这台天天开着的 Mac。十几个 skill、CLAUDE.md、memory、一堆 API key 和登录态，全在它上面。它一天要 fetch 多少个地址，我自己都数不清。它跑的 Node 是 22.23.2。</p>
+<h2 id="今天先把版本查了"><a href="#今天先把版本查了" class="headerlink" title="今天先把版本查了"></a>今天先把版本查了</h2><p>清单不长，照着跑就行，建议直接存下来。</p>
+<p>先记住一条，它比查版本更要紧：升完要重启。跑着的进程会一直用旧解码器，只换个版本号不重启，等于没升。</p>
+<p>Node.js：22.x 升到 22.23.4 或以上，24.x 升到 24.22.1 或以上，26.x 升到 26.12.1 或以上。20 及更早、23、25 没有补丁，只能迁移。查法是每个环境各跑一次 node -v。</p>
+<ul>
+<li>本机：node -v</li>
+<li>容器镜像：docker run –rm 你的镜像 node -v</li>
+<li>CI：看 workflow 里 setup-node 读的是 .nvmrc 还是写死的版本号，再按那个版本对一遍</li>
+<li>Lambda 这类 serverless：看运行时配置里钉的版本，不是你本地那个</li>
+</ul>
+<p>别只看 process.versions.brotli。Node 是 cherry-pick 修复，修复版也可能还报 1.2.0，以 Node 自己的版本号为准。</p>
+<p>Python 那边：pip show Brotli brotlicffi。用不上就卸掉，requests、urllib3、aiohttp 会自动退回 gzip。要用就升到 Brotli 1.2.1、brotlicffi 1.2.1.0。注意不 import 也会中招，装了包，客户端库就会自动替你解。</p>
+<p>其他运行时：Bun 1.4.4；Envoy 1.40.0、1.39.3、1.38.6、1.37.8；Istio 1.29.9、1.30.6、1.31.2。用 curl –compressed 的，还要看系统的 libbrotli，dpkg -l | grep -i brotli，或者 rpm -qa、apk info -v 那套。</p>
+<p>上游 Brotli 库本身：1.0.3 到 1.2.0 受影响，修在 1.0.10、1.1.1、1.2.1。</p>
+<p>清单之外还有一条容易忘的。你的服务有没有 fetch 用户给的 URL？有的话，入站 WAF 救不了它，这条只能靠升级。</p>
+<p>我今晚先把 node 从 22.23.2 换到 24.22.1 以上，再把没查的那几个环境列出来，一个一个跑 node -v。这次我尽量不只在博客上查完就发文章。</p>
+<p>开头我写，该先问的不是「我有多危险」，是「我站在哪一边」。现在有答案了：线上那台不用管，真正要换的是这台装着所有钥匙的 Mac。</p>
+<p>你查完 node -v 是多少，打在评论区。要是也停在 22.x，说一声；要是数到第三份就不想数了，更该说一声。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/tags/Brotli/" rel="tag"># Brotli</a>
+              <a href="/tags/Node-js/" rel="tag"># Node.js</a>
+              <a href="/tags/CVE/" rel="tag"># CVE</a>
+              <a href="/tags/%E4%BE%9B%E5%BA%94%E9%93%BE/" rel="tag"># 供应链</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/10/24/202610240922/" rel="prev" title="三天前我立的 9 分之问，月之暗面交卷了">
+                  <i class="fa fa-angle-left"></i> 三天前我立的 9 分之问，月之暗面交卷了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.8m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">27:56</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

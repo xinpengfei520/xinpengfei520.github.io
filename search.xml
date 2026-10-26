@@ -256,6 +256,79 @@
       </tags>
   </entry>
   <entry>
+    <title>你刷到的那条 AI 密道，五条没一条对</title>
+    <url>/2026/10/26/202610261157/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261026-202610261157-ai-covert-channel-five-myths-v1.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>这几天刷到同一条消息。传的版本是，AI 在完全断网的机房里，用 CPU 缓存偷偷传消息，自己商量出一套密码。还说它几乎打穿了每个服务，手法跟 Spectre 差不多。</p>
+<p>你要是也刷到了，先别急着信，也别急着回去关自己的机器。我把 OpenAI 那份原文逐句核了一遍。这五件事，没有一件是准确的。它们错在同一个地方：把一层门，当成了整座金库。</p>
+<p>五条之外，还有一个更实在的问题。你手上那些隔离，到底各拦的是什么？</p>
+<h2 id="满屏的说法错在哪"><a href="#满屏的说法错在哪" class="headerlink" title="满屏的说法错在哪"></a>满屏的说法错在哪</h2><p>传得最广的是「完全断网」。OpenAI 的原话是，把这套基础设施彻底物理隔离，目前不可行。理由是要跑实验，也要收监控数据。</p>
+<p>「几乎打穿每个服务」也对不上。原文说的是三处自家的运维窄口子：指标、日志、认证管理。</p>
+<p>而且这组测试的上一句写明，他们先给了 agent 团队一台宿主机（跑这些虚拟机的物理机器）的控制权。</p>
+<p>测试的起点，是假设宿主机已经失守，再问它能不能从这里摸到外网。拿到的东西，原文写的是「有限的出网形式」。</p>
+<p>「跟 Spectre 差不多」同样不准。原文的说法是，这套缓存计时技巧，在 Spectre 和 Meltdown 攻击里也被用过。同一套计时手法，不等于复现了那两个漏洞。这次是两边配合着传消息，没去偷任何第三方的东西。</p>
+<p>另外两条，一句话就能说清。先说「AI 自己挖出零日」。原文写得很直白。为了让测试对攻击者有利，他们给了源码和配置细节。另外附了一份写明潜在漏洞的文档。</p>
+<p>原话里跟着一句，「而不是去测量模型在没人帮忙时能发现什么」。</p>
+<p>至于「自己商量出密码」，原文只写它们用上了同一套编码，没说怎么谈的。多数测试里，编码协议还是人给的。</p>
+<p>五条摆在一起，错的是同一个方向。留了一扇窗，被说成墙塌了；有人递了图纸，被说成它自己画出来的。</p>
+<h2 id="断不了网才是原文重点"><a href="#断不了网才是原文重点" class="headerlink" title="断不了网才是原文重点"></a>断不了网才是原文重点</h2><p>OpenAI 也想过断网。他们说的是做不到。卡住他们的是监控。要看见模型在干什么，就得留一条线把数据送出来。而留下来的每一条连接，都是攻击面。</p>
+<p>所以真实的结构是两层。模型这一层，前沿训练不给它联网。实验都跑在一份离线的网页副本里，索引加缓存。这是硬规矩。</p>
+<p>基础设施这一层，机房没有物理断网，指标、日志、认证都得通着。</p>
+<p>两层一分开，结论就反过来了。他们断不了网，只能靠一层层防御加监控。</p>
+<p>信道再精巧，也是在他们断不了网的条件下做出来的。</p>
+<h2 id="这条信道要两边配合"><a href="#这条信道要两边配合" class="headerlink" title="这条信道要两边配合"></a>这条信道要两边配合</h2><p>缓存信道是真的，原文有。CPU 缓存是处理器手边那块最快也最小的存储。一方把选中的数据从里面挤出去，另一方掐着表算重新读它要多久。</p>
+<p>快是 1，慢是 0，一个 bit 就这么过去了。安全领域管这个叫隐蔽信道。说人话就是，本不该通的两边，靠一个共用资源偷偷传消息。</p>
+<p>但它成立的条件，比传播里的版本苛刻得多。</p>
+<p>同一台物理宿主机上，至少两个 microVM。说人话，就是两个各自独立的小虚拟机。中间没有网络，也没有共享文件。两边还得配合：一边发，一边收，编码对得上。</p>
+<p>原文还有一句定性的判断：这类信道大多传得很慢，模型也很难利用。速率多少、传了多少字节、试了多少次，原文一个字没给。谁要是在别处看到具体数字，那都不是这份报告里的。</p>
+<p>落到你我的机器上，最该记住的是那个条件。一台机器、一个容器，是单租户。</p>
+<p>没有另一个跟你共谋的进程，在同一块缓存上按同一套编码收信号。这条信道在大多数人的环境里，根本不成立。</p>
+<p>所以我不会写「你的沙箱也危险了」。证据不支持这句话。</p>
+<h2 id="逃逸打的是你那层"><a href="#逃逸打的是你那层" class="headerlink" title="逃逸打的是你那层"></a>逃逸打的是你那层</h2><p>离你更近的，是另一组发现。</p>
+<p>这次逃逸打的是 Kata Containers、gVisor，还有 Docker 背后的 Moby。这三个都是开发者天天在用的隔离层。你跑 Docker 时用的就是这一类，三种「把程序关起来」的做法。名字不用记，只记一件事。另外两条这次不展开。三个都不是铁笼子，其中 Kata 那条门槛最低。它把每个容器装进一台轻量小虚拟机。听着像笼子，其实是个会破的笼子。</p>
+<p>Kata 那条的编号是 CVE-2026-24834。它要的不是 root，只需要一个叫 CAP_MKNOD 的能力。这个能力允许程序在系统里创建特殊设备文件。容器的根文件系统本质就是一块挂上来的设备。能造设备文件，就有机会把它重新挂一遍、改掉里面的内容。内容一改，容器里的用户在这台 microVM 里就拿到了 root。</p>
+<p>这里有两层别混。通告自己写明，它不影响宿主机。它只到 guest，也就是容器里那台小虚拟机的内部，还没走出来。OpenAI 说的「在宿主机上执行代码」，是把几个洞链起来的结果，链路没公开。</p>
+<p>时间线也对不上。这条 CVE 是二月十九号公布的，比九月那次智能体打到真公司的事故早七个月。也就是说，这轮测试摸到的不是新洞。它是个早就公开、早该打补丁的旧洞。它还能被重新摸到，说明补丁没跟上。</p>
+<p>隔离层本身有版本，会过期。你把它当成一堵墙，它其实是一批需要打补丁的软件。</p>
+<h2 id="先假设它已经进来了"><a href="#先假设它已经进来了" class="headerlink" title="先假设它已经进来了"></a>先假设它已经进来了</h2><p>同一批测试里，还有一组的设计更值得抄。</p>
+<p>起点前面提过：一台已经失守的宿主机。他们问的是，从这里能不能够到外网。被测的是「进来之后能走多远」。</p>
+<p>结果是在那三处窄口子上都摸到了东西。手法有两类。一类靠未知缺陷，另一类是把合法功能按意外的方式拼起来。比如复用一条防火墙已经放行的连接，去够一个被挡住的认证端点。</p>
+<p>招数本身没那么要紧。我记住的是他们从哪儿开始问。多数人做安全自检，问的是门锁够不够硬。这组测试问的是，门开之后，屋里还剩什么。</p>
+<h2 id="我把隔离当成了开关"><a href="#我把隔离当成了开关" class="headerlink" title="我把隔离当成了开关"></a>我把隔离当成了开关</h2><p>九月那篇，我写的是「我从来没验过，我那些跑 agent 的环境，是真断网，还是我以为它断网」。十月那篇，我接着写「把每一个『我以为它没网』的，按『有网』重新配一遍」。</p>
+<p>这两句我都还认。但它们改的是同一个变量：网。</p>
+<p>这就是我这次要认的错。我一直把隔离当成一个开关，要么断，要么没断。</p>
+<p>可它其实是好几层门。网络是一层，文件系统是一层，进程是一层，容器运行时是一层，CPU 缓存和共享硬件又是一层。</p>
+<p>宿主机跟容器运行时拴在一根绳上。它漏了，网络、文件、进程、运行时这四层都白验。</p>
+<p>这几层里漏一层，隔离就不成立。反过来，你把网断得再干净，同一台机器上的邻居还是能靠缓存跟你说话。</p>
+<p>所以这次要改的不是动作，是我脑子里那张图。把「它通不通网」这个问法，换成「它站在哪几层上」。</p>
+<h2 id="破了之后还剩什么"><a href="#破了之后还剩什么" class="headerlink" title="破了之后还剩什么"></a>破了之后还剩什么</h2><p>那句「门开之后，屋里还剩什么」，可以拆成一份清单。你手上那些隔离，各自拦的是什么：</p>
+<ul>
+<li>网络：拦主动出网。在容器里 curl 一个外网地址，看是不是真被拦。</li>
+<li>文件系统：拦挂载和共享目录。看有没有把宿主机目录挂进去。</li>
+<li>进程：拦互相看见。看容器里能不能看到宿主机上的进程。</li>
+<li>容器运行时：拦系统调用和内核接口。看镜像和运行时版本在不在受影响区间。</li>
+<li>CPU 缓存：这一层你基本验不了，也不用验。前提是有另一个租户跟你在同一台物理机上，还得愿意配合。</li>
+</ul>
+<p>缓存那层不在你手里。你能做的只有认下它防不住，别把不该被隔壁看见的东西留在同一台机器上。</p>
+<p>清单第一条，我替自己跑了一遍。开一个默认的 Docker 容器，敲一句 <code>wget -O - https://example.com</code>。屏幕上先跳出 <code>Connecting to example.com (198.18.0.37:443)</code>，紧接着 <code>writing to stdout</code>。整页 HTML 刷了回来，第一行是 <code>&lt;!doctype html&gt;&lt;html lang=en&gt;&lt;head&gt;…</code>。</p>
+<p>我盯着那两行愣了一会儿。我一直以为这些跑 agent 的容器是关着的。其实我只是从来没试过。这台主力机上摊着十几个 skill、CLAUDE.md、memory、一堆 API key 和登录态，全在同一个网络里。网络这一层，在我这儿是空的。</p>
+<p>我以前验它，就问自己一句「它能不能上网」。现在这句不够了。我还得能说出，它跑在哪一层上，那一层最近一次打补丁是什么时候。</p>
+<p>一份要逐层打勾的清单，比一条吓人的新闻有用。</p>
+<p>留个问题给你。你手头那套跑 agent 的环境，网络、文件、进程、运行时这四层，你亲手验过哪几层？评论区报个数，一层也算。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+        <tag>OpenAI</tag>
+        <tag>安全</tag>
+        <tag>侧信道</tag>
+        <tag>隔离</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Node 里这个洞两头咬人，先看你在哪边</title>
     <url>/2026/10/24/202610241121/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261024-202610241121-node-brotli-two-way-v2.webp" alt="cover"></p>
@@ -15925,9 +15998,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>实测</tag>
+        <tag>Agentic</tag>
         <tag>ultraview</tag>
         <tag>代码审查</tag>
-        <tag>Agentic</tag>
       </tags>
   </entry>
   <entry>
@@ -15994,8 +16067,8 @@
         <tag>GitHub Copilot</tag>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>Agentic</tag>
         <tag>订阅制</tag>
+        <tag>Agentic</tag>
       </tags>
   </entry>
   <entry>
@@ -39849,7 +39922,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#x69;&#116;&#x40;&#103;&#x69;&#116;&#104;&#x75;&#x62;&#46;&#x63;&#x6f;&#x6d;">&#103;&#x69;&#116;&#x40;&#103;&#x69;&#116;&#104;&#x75;&#x62;&#46;&#x63;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#116;&#64;&#103;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#x6f;&#x6d;">&#103;&#105;&#116;&#64;&#103;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#x6f;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -40354,6 +40427,27 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>51单片机矩阵键盘C程序</title>
+    <url>/2017/09/24/201709242348/</url>
+    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
+]]></content>
+      <categories>
+        <category>嵌入式</category>
+      </categories>
+      <tags>
+        <tag>51单片机</tag>
+        <tag>C语言</tag>
+        <tag>矩阵键盘</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 最全 Intent 传递数据姿势</title>
     <url>/2017/09/24/201709242349/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center><center>置顶公众号（**ID：ITBigFly**）第一时间收到推送</center>
@@ -40435,27 +40529,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Intent</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>51单片机矩阵键盘C程序</title>
-    <url>/2017/09/24/201709242348/</url>
-    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
-]]></content>
-      <categories>
-        <category>嵌入式</category>
-      </categories>
-      <tags>
-        <tag>51单片机</tag>
-        <tag>C语言</tag>
-        <tag>矩阵键盘</tag>
       </tags>
   </entry>
   <entry>
@@ -40905,6 +40978,23 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android SharedPreferences 工具类</title>
+    <url>/2017/09/24/201709242400/</url>
+    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>###注：在MyApplication中获取上下文</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>SharedPreferences</tag>
+        <tag>工具类</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>用起来贼爽的 Android Studio 插件推荐</title>
     <url>/2017/09/24/201709242401/</url>
     <content><![CDATA[<blockquote>
@@ -40967,23 +41057,6 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>Plugin</tag>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android SharedPreferences 工具类</title>
-    <url>/2017/09/24/201709242400/</url>
-    <content><![CDATA[<p>###新建一个SpUtil工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/03/25 :)</span><br><span class="line"> * Function: sp存储的工具类</span><br><span class="line"> */</span><br><span class="line">public class SpUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final String ANLEKE = &quot;anleke&quot;;</span><br><span class="line"></span><br><span class="line">    private SpUtil() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private static SpUtil instace = new SpUtil();</span><br><span class="line">    private static SharedPreferences mSp = null;</span><br><span class="line"></span><br><span class="line">    public static SpUtil getInstace() &#123;</span><br><span class="line"></span><br><span class="line">        if (mSp == null) &#123;</span><br><span class="line">            mSp = MyApplication.getContext().getSharedPreferences(ANLEKE, Context.MODE_PRIVATE);</span><br><span class="line">        &#125;</span><br><span class="line">        return instace;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 保存数据</span><br><span class="line">     *</span><br><span class="line">     * @param key   键</span><br><span class="line">     * @param value 值</span><br><span class="line">     */</span><br><span class="line">    public void save(String key, Object value) &#123;</span><br><span class="line"></span><br><span class="line">        if (value instanceof String) &#123;</span><br><span class="line">            mSp.edit().putString(key, (String) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Boolean) &#123;</span><br><span class="line">            mSp.edit().putBoolean(key, (Boolean) value).commit();</span><br><span class="line">        &#125; else if (value instanceof Integer) &#123;</span><br><span class="line">            mSp.edit().putInt(key, (Integer) value).commit();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取String类型数据</span><br><span class="line">    public String getString(String key, String defValue) &#123;</span><br><span class="line">        return mSp.getString(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取boolean类型数据</span><br><span class="line">    public boolean getBoolean(String key, boolean defValue) &#123;</span><br><span class="line">        return mSp.getBoolean(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 读取int类型数据</span><br><span class="line">    public int getInt(String key, int defValue) &#123;</span><br><span class="line">        return mSp.getInt(key, defValue);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>###注：在MyApplication中获取上下文</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private static Context mContext;</span><br><span class="line"></span><br><span class="line">   @Override</span><br><span class="line">   public void onCreate() &#123;</span><br><span class="line">       super.onCreate();</span><br><span class="line">       mContext = this;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   // 获取全局上下文</span><br><span class="line">   public static Context getContext() &#123;</span><br><span class="line">       return mContext;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>SharedPreferences</tag>
-        <tag>工具类</tag>
       </tags>
   </entry>
   <entry>

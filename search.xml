@@ -256,6 +256,85 @@
       </tags>
   </entry>
   <entry>
+    <title>你装的扩展，不一定是作者发的那份</title>
+    <url>/2026/11/02/202611021831/</url>
+    <content><![CDATA[<p><img src="/images/202611021831/cover.png" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>10 月 29 日，Cursor 的扩展市场里出了一个假版本。那个插件叫 Anthropic.claude-code，假版本挂了 11 个小时。</p>
+<p>你如果在那天更新过这个扩展，装上的可能不是 Anthropic 发的那份。</p>
+<p>我用 Claude Code，也在 Cursor 里装过它。看到公告，我没先想“谁这么大胆”。我想的是另一句。我凭什么认定，编辑器里那份就是 Anthropic 发的？</p>
+<p>结论先放这儿：模型没被投毒。被改写的是送到你机器上的那条分发链路。扩展更新，就是一次代码执行。</p>
+<h2 id="11-小时里发生了什么"><a href="#11-小时里发生了什么" class="headerlink" title="11 小时里发生了什么"></a>11 小时里发生了什么</h2><p>Cursor 的公告写得很具体。10 月 29 日，太平洋时间凌晨 2 点 27 分到下午 1 点 35 分。两个版本 2.1.312 和 2.1.313 出现在它的扩展市场。覆盖 macOS 的 ARM 包和 Windows 的 x64 包。Cursor 明确说，这两个版本不是 Anthropic 开发的。</p>
+<p>那 11 个小时里，装的人看到的发布者是 Anthropic。下载到的，却是被别人改过的包。</p>
+<p>11 个小时不算长。可扩展更新通常是静默的。不弹窗，也不问你同不同意。这期间编辑器只要重启过一次。更新就可能装上了。</p>
+<p>恶意代码干的事，公告列了三件：</p>
+<ul>
+<li>收集主机和用户信息：主机名、用户名、系统、架构、家目录、环境变量名、工作目录、Git 邮箱、公网 IP。</li>
+<li>往 SSH 授权文件里塞一把攻击者的公钥，注释叫 svc-telemetry。再试着打开本机 SSH 服务，拉一条反向隧道。说人话，就是从你机器连回攻击者服务器的一条通道。</li>
+<li>写持久化。macOS 上放一个叫 com.apple.sysmond 的开机自启项。Windows 上建一个叫 SysMon 的计划任务，每 60 秒重试。</li>
+</ul>
+<p>有个细节容易被略过。Cursor 说恶意代码自己有 bug。打开 SSH 服务也需要管理员权限。按 Cursor 的说法，多数机器上那一步会失败。反向隧道大概率没建起来。</p>
+<p>公告紧接着提醒了一句。公钥可能已经写进去了。持久化文件也可能已经落下。主机信息同样可能已经发出去了。只卸载扩展不够。恶意代码会留下独立运行的脚本。</p>
+<p>所以“没得手”和“没发生”是两件事。前者靠运气，后者才是你能核的。</p>
+<p>Cursor 的博客没写受影响人数。它在 X 上出现过两个数：4100 和 5000。两个都带“最多”的意思。两条 X 帖我没能核到原文，只能把这两个数都当上界。</p>
+<h2 id="代收点递错了包裹"><a href="#代收点递错了包裹" class="headerlink" title="代收点递错了包裹"></a>代收点递错了包裹</h2><p>小区门口的快递代收点，面单上写着寄件人。你扫一眼，觉得没问题，就拿回家了。你信的是面单。拿到手的，是代收点递过来的盒子。</p>
+<p>编辑器扩展市场就是这个代收点。扩展 ID 写着 Anthropic.claude-code，图标、名字、介绍都对。你点更新的时候，看到的是名字，哈希没人对。</p>
+<p>你信任的是发布者。实际运行的，是渠道递过来的那份代码。</p>
+<p>更麻烦的是，扩展不是普通文件。它跑在编辑器的扩展进程里。能读工作目录、环境变量、Git 配置，也能执行命令。</p>
+<p>装一个扩展，等于同意一段陌生代码。这段代码还会持续更新，在你的开发环境里运行。它拿不到管理员权限。但也能看到你开了哪些环境变量。</p>
+<p>Cursor 下架了恶意版本，整体关停了市场。轮换密钥、重建之后，它又把市场放回来。它还让托管商把攻击服务器下线。公告里说，访问记录也审计过。没有发现其他扩展被改。</p>
+<p>它没说恶意包是怎么进市场的。是账号被拿？是构建环节被动手？还是内部流程出了洞？公告里没有答案。</p>
+<p>这个空白值得记住。它决定了你的判断。是偶发事故，还是流程失守。</p>
+<h2 id="九起事故，同一种猎物"><a href="#九起事故，同一种猎物" class="headerlink" title="九起事故，同一种猎物"></a>九起事故，同一种猎物</h2><p>安全公司 Wiz 在 10 月 30 日发了一份报告。他们数了整个十月。至少九个 AI 开发者平台披露了安全事件。名单里有 Fireworks AI、Andromeda、Zeabur、Lightning AI、OpenCode、Railway、Warp、CommandCode、Northflank。</p>
+<p>这些事件的根因并不一样：</p>
+<ul>
+<li>有的指向凭据访问。</li>
+<li>有的指向构建基础设施里的提权。</li>
+<li>有的说是第三方依赖。</li>
+<li>还有的归到遗留系统。</li>
+</ul>
+<p>共同点藏在攻击目标里。Wiz 说，公开报告都在强调一件事。攻击者专门找存储的环境变量。尤其是能直接换来 AI 访问权限的密钥。</p>
+<p>下游有 LLMJacking。说人话，就是把偷来的密钥拿去转卖模型额度。还有蒸馏需求在推着人买这些额度。蒸馏就是拿大模型的输出，去喂自己的小模型。</p>
+<p>Wiz 说，没有哪一个漏洞或依赖能把这几起串起来。它们不是同一个团伙。但有一样很像。入口有扩展市场、构建系统、遗留服务。被盯上的，都是那串能换钱的密钥。</p>
+<p>他们举了两个下游案例。厂商披露泄露后，30 分钟内就有人测试密钥。随后 30 小时里，它跑了约 80 万次 Bedrock 调用。Bedrock 是亚马逊的模型服务。另一个在 13 小时里跑了约 170 万次，超过 100 万次成功。按标价算，两起加起来可能超过 10 万美元。名单里的 Zeabur 已经因为这次事件宣布关停公司。</p>
+<p>Cursor 这次坏的是一个包。和这九起放在一起看，丢的是同一类东西：能直接换模型额度的密钥。</p>
+<h2 id="我核了一遍自己的机器"><a href="#我核了一遍自己的机器" class="headerlink" title="我核了一遍自己的机器"></a>我核了一遍自己的机器</h2><p>公告出来后，我让脚本照着里面的命令跑了一遍检查。就在这台 Mac 上。</p>
+<p>Cursor 的扩展列表里，Claude Code 是 2.1.27。VS Code 的扩展目录里，有 2.1.201 和 2.1.27 两个版本。</p>
+<p>官方那条查后门的命令，终端回的是：No key found; machine not impacted。<del>&#x2F;.config&#x2F;.smt、</del>&#x2F;.config&#x2F;.smtk、~&#x2F;Library&#x2F;LaunchAgents&#x2F;com.apple.sysmond.plist 也都不存在。</p>
+<p>说实话，这不是我谨慎的结果。版本停在旧的地方，恰好没赶上那 11 个小时。要把这写成“我安全意识强”，是往自己脸上贴金。</p>
+<p>还有一层得说清楚。这次核查是让脚本照着公告命令跑的。我没有一条条手敲。动作主体是这轮检查，结果能核。但不能写成我坐在电脑前，一行行排查的故事。</p>
+<p>官方那条命令只查一把 key。文件有没有落下，还得自己看。</p>
+<p>真要说收获，是那句“版本号看起来差不多”。2.1.27 和 2.1.313 之间隔着几百个版本，可我平时根本不会去数。风险也不会自己跳出来提醒你。</p>
+<h2 id="该改的几件小事"><a href="#该改的几件小事" class="headerlink" title="该改的几件小事"></a>该改的几件小事</h2><p>先核版本。Cursor 里打开扩展面板，搜 Claude Code，看版本号。命令行也能查：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">cursor --list-extensions --show-versions | grep anthropic.claude-code</span><br></pre></td></tr></table></figure>
+
+<p>VS Code 用同样的命令，把 cursor 换成 code。前提是你装了它的命令行工具。</p>
+<p>Cursor 在 X 上建议升到 2.1.314，博客里没写这个号。不在 312 和 313 里，就先不用折腾。</p>
+<p>再查后门。macOS 上跑公告给的那条：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">grep -qs svc-telemetry ~/.ssh/authorized_keys &amp;&amp; <span class="built_in">echo</span> <span class="string">&quot;svc-telemetry key found&quot;</span> || <span class="built_in">echo</span> <span class="string">&quot;No key found; machine not impacted&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>顺手确认 <del>&#x2F;.config&#x2F;.smt、</del>&#x2F;.config&#x2F;.smtk 和 ~&#x2F;Library&#x2F;LaunchAgents&#x2F;com.apple.sysmond.plist 不存在。几样里中了一样，就按公告的处置走。</p>
+<p>别只卸载。公告写得很直白。恶意代码会留下独立脚本，卸载扩展可能不够。</p>
+<p>真命中了，先用官方脚本清持久化。再换一台可信的机器。把这台上能拿到的凭据，全部轮换一遍。GitHub token、云厂商密钥、模型 API key，一个都别漏。顺序别反。先换再清，等于把新凭据递进还开着的后门。</p>
+<p>还有个更慢的动作。把高价值密钥从全局环境变量里挪走。Wiz 那九起里，攻击者翻的就是这层东西。能放项目级 .env 的，别塞进 shell 配置。能短期有效的，别发长期不过期的。这个动作今天做不完，但值得排进这周。</p>
+<h2 id="我还会继续装扩展"><a href="#我还会继续装扩展" class="headerlink" title="我还会继续装扩展"></a>我还会继续装扩展</h2><p>我不会因为这一次就不用扩展，也不会每次更新都去读 diff。成本太高，做不到。</p>
+<p>我能改的，是看待更新的方式。扩展更新也会带来新代码。它更像一次部署，不像一次换皮肤。</p>
+<p>装之前看一眼发布者。更新之后偶尔核一眼版本。出事了，知道去哪儿查就行。这几件事花不了几分钟。</p>
+<p>代收点的盒子，你还是会拿。面单归面单，包裹归包裹，拆之前心里有数就行。</p>
+<p>你上一次看扩展的版本号和发布者，是什么时候？今晚打开扩展面板，看一眼 Claude Code 那行，十秒。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>Cursor</tag>
+        <tag>Claude Code</tag>
+        <tag>供应链安全</tag>
+        <tag>安全</tag>
+        <tag>扩展市场</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>他有一张表，正好补上我空着的那格</title>
     <url>/2026/11/02/202611021410/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261102-20261102-202611021410-two-paths-one-gate.webp" alt="cover"></p>
@@ -507,10 +586,10 @@
       </categories>
       <tags>
         <tag>Apple</tag>
+        <tag>Siri</tag>
+        <tag>AppleIntelligence</tag>
         <tag>AI行业</tag>
         <tag>千问</tag>
-        <tag>AppleIntelligence</tag>
-        <tag>Siri</tag>
       </tags>
   </entry>
   <entry>
@@ -590,10 +669,10 @@
       </categories>
       <tags>
         <tag>GEO</tag>
+        <tag>SEO</tag>
         <tag>AI搜索</tag>
         <tag>Reddit</tag>
         <tag>爬虫</tag>
-        <tag>SEO</tag>
       </tags>
   </entry>
   <entry>
@@ -1265,8 +1344,8 @@
       </categories>
       <tags>
         <tag>OpenAI</tag>
-        <tag>模型选型</tag>
         <tag>AI工作流</tag>
+        <tag>模型选型</tag>
         <tag>GPT-6.1 Terra</tag>
       </tags>
   </entry>
@@ -1534,9 +1613,9 @@
       <tags>
         <tag>AI</tag>
         <tag>开源模型</tag>
+        <tag>Kimi</tag>
         <tag>国产模型</tag>
         <tag>benchmark</tag>
-        <tag>Kimi</tag>
       </tags>
   </entry>
   <entry>
@@ -1638,8 +1717,8 @@
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
         <tag>自动化</tag>
-        <tag>安全</tag>
         <tag>权限</tag>
+        <tag>安全</tag>
       </tags>
   </entry>
   <entry>
@@ -2347,9 +2426,9 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>Anthropic</tag>
+        <tag>git</tag>
         <tag>版本控制</tag>
         <tag>基础设施</tag>
-        <tag>git</tag>
       </tags>
   </entry>
   <entry>
@@ -3729,9 +3808,9 @@
       <tags>
         <tag>GitHub</tag>
         <tag>Rust</tag>
-        <tag>代码迁移</tag>
-        <tag>Copilot</tag>
         <tag>AIAgent</tag>
+        <tag>Copilot</tag>
+        <tag>代码迁移</tag>
       </tags>
   </entry>
   <entry>
@@ -3769,8 +3848,8 @@
       <tags>
         <tag>OpenAI</tag>
         <tag>ChatGPT</tag>
-        <tag>隐私</tag>
         <tag>AI味</tag>
+        <tag>隐私</tag>
         <tag>数据标注</tag>
       </tags>
   </entry>
@@ -3840,8 +3919,8 @@
         <tag>AI编程</tag>
         <tag>Anthropic</tag>
         <tag>成本</tag>
-        <tag>CI</tag>
         <tag>开发者</tag>
+        <tag>CI</tag>
       </tags>
   </entry>
   <entry>
@@ -5054,8 +5133,8 @@
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
         <tag>成本</tag>
-        <tag>Uber</tag>
         <tag>开发者</tag>
+        <tag>Uber</tag>
       </tags>
   </entry>
   <entry>
@@ -5205,8 +5284,8 @@
       <tags>
         <tag>Claude</tag>
         <tag>Agent</tag>
-        <tag>浏览器</tag>
         <tag>放权</tag>
+        <tag>浏览器</tag>
         <tag>Claude in Chrome</tag>
       </tags>
   </entry>
@@ -5882,8 +5961,8 @@
         <tag>AI</tag>
         <tag>工作流</tag>
         <tag>Agent</tag>
-        <tag>浏览器</tag>
         <tag>Cloudflare</tag>
+        <tag>浏览器</tag>
       </tags>
   </entry>
   <entry>
@@ -5947,8 +6026,8 @@
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
         <tag>工作流</tag>
-        <tag>多会话</tag>
         <tag>权限</tag>
+        <tag>多会话</tag>
       </tags>
   </entry>
   <entry>
@@ -6516,8 +6595,8 @@
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
         <tag>RAG</tag>
-        <tag>检索</tag>
         <tag>知识库</tag>
+        <tag>检索</tag>
       </tags>
   </entry>
   <entry>
@@ -7274,10 +7353,10 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>模型选型</tag>
-        <tag>国产模型</tag>
-        <tag>图像模型</tag>
         <tag>AI配图</tag>
+        <tag>国产模型</tag>
+        <tag>模型选型</tag>
+        <tag>图像模型</tag>
         <tag>Qwen-Image</tag>
       </tags>
   </entry>
@@ -8069,10 +8148,10 @@
       </categories>
       <tags>
         <tag>Codex</tag>
-        <tag>模型选型</tag>
-        <tag>GPT-5.6</tag>
         <tag>Fable5</tag>
+        <tag>GPT-5.6</tag>
         <tag>AI工作流</tag>
+        <tag>模型选型</tag>
       </tags>
   </entry>
   <entry>
@@ -8323,8 +8402,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>Claude</tag>
-        <tag>tokenizer</tag>
         <tag>token成本</tag>
+        <tag>tokenizer</tag>
         <tag>模型定价</tag>
       </tags>
   </entry>
@@ -9142,8 +9221,8 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>Claude</tag>
-        <tag>Fable 5</tag>
         <tag>GEO</tag>
+        <tag>Fable 5</tag>
         <tag>运维</tag>
       </tags>
   </entry>
@@ -9352,8 +9431,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>隐私</tag>
         <tag>提示词</tag>
+        <tag>隐私</tag>
         <tag>逆向分析</tag>
       </tags>
   </entry>
@@ -9545,8 +9624,8 @@
         <tag>Google</tag>
         <tag>工作流</tag>
         <tag>Nano Banana</tag>
-        <tag>图像模型</tag>
         <tag>AI配图</tag>
+        <tag>图像模型</tag>
       </tags>
   </entry>
   <entry>
@@ -9596,8 +9675,8 @@
         <tag>Claude Code</tag>
         <tag>Agentic Coding</tag>
         <tag>开源</tag>
-        <tag>LongCat</tag>
         <tag>国产模型</tag>
+        <tag>LongCat</tag>
       </tags>
   </entry>
   <entry>
@@ -9885,8 +9964,8 @@
       </categories>
       <tags>
         <tag>一人公司</tag>
-        <tag>GEO</tag>
         <tag>内容工厂</tag>
+        <tag>GEO</tag>
         <tag>AI变现</tag>
         <tag>超级个体</tag>
         <tag>商业飞轮</tag>
@@ -10100,8 +10179,8 @@
       </categories>
       <tags>
         <tag>GEO</tag>
-        <tag>AI搜索</tag>
         <tag>SEO</tag>
+        <tag>AI搜索</tag>
         <tag>内容运营</tag>
         <tag>流量</tag>
       </tags>
@@ -10765,11 +10844,11 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>自动化</tag>
-        <tag>AI工作流</tag>
         <tag>内容工厂</tag>
         <tag>超级个体</tag>
         <tag>第二大脑</tag>
         <tag>个人AI操作系统</tag>
+        <tag>AI工作流</tag>
       </tags>
   </entry>
   <entry>
@@ -11300,8 +11379,8 @@
       <tags>
         <tag>自动化</tag>
         <tag>工作流</tag>
-        <tag>AI写作</tag>
         <tag>内容工厂</tag>
+        <tag>AI写作</tag>
         <tag>RSS</tag>
       </tags>
   </entry>
@@ -11500,8 +11579,8 @@
       <tags>
         <tag>AI</tag>
         <tag>内容创作</tag>
-        <tag>GEO</tag>
         <tag>AI写作</tag>
+        <tag>GEO</tag>
       </tags>
   </entry>
   <entry>
@@ -11637,8 +11716,8 @@
       <tags>
         <tag>Prompt</tag>
         <tag>ChatGPT</tag>
-        <tag>提示词</tag>
         <tag>AI写作</tag>
+        <tag>提示词</tag>
         <tag>AI超级个体</tag>
       </tags>
   </entry>
@@ -11669,8 +11748,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>Copilot</tag>
         <tag>数字员工</tag>
+        <tag>Copilot</tag>
         <tag>Digital Worker</tag>
       </tags>
   </entry>
@@ -11713,8 +11792,8 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>成本</tag>
-        <tag>权限</tag>
         <tag>幻觉</tag>
+        <tag>权限</tag>
         <tag>长上下文</tag>
       </tags>
   </entry>
@@ -12341,8 +12420,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>MiniMax</tag>
-        <tag>Cloudflare</tag>
         <tag>TTS</tag>
+        <tag>Cloudflare</tag>
         <tag>有声书</tag>
       </tags>
   </entry>
@@ -12431,8 +12510,8 @@
         <tag>AI</tag>
         <tag>独立开发</tag>
         <tag>DeepSeek</tag>
-        <tag>提示词</tag>
         <tag>Next.js</tag>
+        <tag>提示词</tag>
       </tags>
   </entry>
   <entry>
@@ -12562,10 +12641,10 @@
       </categories>
       <tags>
         <tag>ClaudeCode</tag>
-        <tag>AIAgent</tag>
-        <tag>版本控制</tag>
-        <tag>git</tag>
         <tag>Oak</tag>
+        <tag>git</tag>
+        <tag>版本控制</tag>
+        <tag>AIAgent</tag>
       </tags>
   </entry>
   <entry>
@@ -12628,8 +12707,8 @@
       </categories>
       <tags>
         <tag>GEO</tag>
-        <tag>AI搜索</tag>
         <tag>SEO</tag>
+        <tag>AI搜索</tag>
         <tag>博客</tag>
         <tag>内容运营</tag>
       </tags>
@@ -12670,9 +12749,9 @@
       </categories>
       <tags>
         <tag>自动化</tag>
-        <tag>HuggingFace</tag>
         <tag>GitHubActions</tag>
         <tag>CICD</tag>
+        <tag>HuggingFace</tag>
         <tag>发布流水线</tag>
       </tags>
   </entry>
@@ -12978,8 +13057,8 @@
         <tag>AI编程</tag>
         <tag>Claude Code</tag>
         <tag>大模型</tag>
-        <tag>国产模型</tag>
         <tag>Kimi</tag>
+        <tag>国产模型</tag>
       </tags>
   </entry>
   <entry>
@@ -13515,8 +13594,8 @@
         <tag>独立开发</tag>
         <tag>移动端</tag>
         <tag>公众号</tag>
-        <tag>AI写作</tag>
         <tag>内容工厂</tag>
+        <tag>AI写作</tag>
       </tags>
   </entry>
   <entry>
@@ -13624,10 +13703,10 @@
       </categories>
       <tags>
         <tag>Gemini</tag>
-        <tag>AppleIntelligence</tag>
-        <tag>Siri</tag>
         <tag>苹果</tag>
         <tag>WWDC</tag>
+        <tag>Siri</tag>
+        <tag>AppleIntelligence</tag>
       </tags>
   </entry>
   <entry>
@@ -13864,8 +13943,8 @@
       <tags>
         <tag>独立开发</tag>
         <tag>公众号</tag>
-        <tag>AI写作</tag>
         <tag>内容工厂</tag>
+        <tag>AI写作</tag>
         <tag>一键发布</tag>
       </tags>
   </entry>
@@ -13917,9 +13996,9 @@
       <tags>
         <tag>Codex</tag>
         <tag>skill</tag>
-        <tag>macOS</tag>
         <tag>磁盘清理</tag>
         <tag>CleanMyMac</tag>
+        <tag>macOS</tag>
       </tags>
   </entry>
   <entry>
@@ -13966,9 +14045,9 @@
       <tags>
         <tag>独立开发</tag>
         <tag>公众号</tag>
-        <tag>AI写作</tag>
         <tag>内容工厂</tag>
         <tag>AIGC</tag>
+        <tag>AI写作</tag>
       </tags>
   </entry>
   <entry>
@@ -18268,9 +18347,9 @@
       </categories>
       <tags>
         <tag>大模型</tag>
-        <tag>AI 商业</tag>
         <tag>Token</tag>
         <tag>Agent</tag>
+        <tag>AI 商业</tag>
         <tag>词元</tag>
       </tags>
   </entry>
@@ -33999,9 +34078,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
+        <tag>Agentic Coding</tag>
         <tag>npm</tag>
         <tag>终端调试</tag>
-        <tag>Agentic Coding</tag>
       </tags>
   </entry>
   <entry>
@@ -34122,9 +34201,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>Agentic Coding</tag>
         <tag>Debug</tag>
         <tag>新手开发</tag>
+        <tag>Agentic Coding</tag>
       </tags>
   </entry>
   <entry>
@@ -41010,7 +41089,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#116;&#64;&#x67;&#105;&#x74;&#104;&#117;&#x62;&#x2e;&#99;&#x6f;&#109;">&#x67;&#x69;&#116;&#64;&#x67;&#105;&#x74;&#104;&#117;&#x62;&#x2e;&#99;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#116;&#64;&#103;&#x69;&#116;&#104;&#x75;&#x62;&#46;&#99;&#x6f;&#109;">&#x67;&#105;&#116;&#64;&#103;&#x69;&#116;&#104;&#x75;&#x62;&#46;&#99;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -42244,6 +42323,25 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android Studio 添加 arr 依赖</title>
+    <url>/2017/09/24/201709242404/</url>
+    <content><![CDATA[<p>##1.将arr库放到libs下面</p>
+<p>##2.在app的buildgradle的android节点中添加如下代码</p>
+<figure class="highlight plaintext"><figcaption><span>&#123;</span></figcaption><table><tr><td class="code"><pre><span class="line">    flatDir &#123;</span><br><span class="line">        dirs &#x27;libs&#x27; //this way we can find the .aar file in libs folder</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##3.在dependencies中添加如下依赖</p>
+<p><code>compile(name: &#39;com.datescroller.lib-release&#39;, ext: &#39;aar&#39;)</code></p>
+<p>name后面就是arr的库名，不带后缀。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android Studio</tag>
+        <tag>arr</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android Studio 打 JAR 包</title>
     <url>/2017/09/24/201709242405/</url>
     <content><![CDATA[<p>Android Studio 新增了依赖<strong>library</strong>的方式，有时候我们需要将一个 library 打成 jar 包供其他人使用下面就是具体打成的方法：</p>
@@ -42299,25 +42397,6 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>TextView</tag>
         <tag>跑马灯</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Studio 添加 arr 依赖</title>
-    <url>/2017/09/24/201709242404/</url>
-    <content><![CDATA[<p>##1.将arr库放到libs下面</p>
-<p>##2.在app的buildgradle的android节点中添加如下代码</p>
-<figure class="highlight plaintext"><figcaption><span>&#123;</span></figcaption><table><tr><td class="code"><pre><span class="line">    flatDir &#123;</span><br><span class="line">        dirs &#x27;libs&#x27; //this way we can find the .aar file in libs folder</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##3.在dependencies中添加如下依赖</p>
-<p><code>compile(name: &#39;com.datescroller.lib-release&#39;, ext: &#39;aar&#39;)</code></p>
-<p>name后面就是arr的库名，不带后缀。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android Studio</tag>
-        <tag>arr</tag>
       </tags>
   </entry>
   <entry>
@@ -43467,6 +43546,35 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>error please select android sdk</title>
+    <url>/2017/09/24/201709242434/</url>
+    <content><![CDATA[<p>点app运行时报如下错：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Error:please select android sdk</span><br></pre></td></tr></table></figure>
+
+<p>且app module上打了个红叉，无法点击运行</p>
+<p>提示找不到SDK</p>
+<p>打开app.iml文件修改如下：<br>删除旧的，添加新的一行：</p>
+<p><img src="https://img-blog.csdn.net/2018060919280432?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p>为方便大家直接复制下面的：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;orderEntry type=&quot;jdk&quot; jdkName=&quot;Android API 27 Platform&quot; jdkType=&quot;Android SDK&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<p>修改完成后rebuild</p>
+<p>app 上的红叉消失，显示正常，点击运行，ok</p>
+<p><img src="https://img-blog.csdn.net/20180609192822879?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p>更多参考文章：</p>
+<p><a href="https://blog.csdn.net/CHITTY1993/article/details/78779125">https://blog.csdn.net/CHITTY1993/article/details/78779125</a></p>
+<p><a href="https://blog.csdn.net/BruceHurrican/article/details/51755512">https://blog.csdn.net/BruceHurrican/article/details/51755512</a></p>
+<p><a href="https://blog.csdn.net/aqi00/article/details/78858336/">https://blog.csdn.net/aqi00/article/details/78858336/</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>SDK</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Failed to resolve com.android.support</title>
     <url>/2017/09/24/201709242435/</url>
     <content><![CDATA[<p>楼主在编译一个 module 时，遇到了如下错误一直编译不过去</p>
@@ -44541,35 +44649,6 @@ Thanks all.
       <tags>
         <tag>GitHub</tag>
         <tag>Retrofit 2.x</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>error please select android sdk</title>
-    <url>/2017/09/24/201709242434/</url>
-    <content><![CDATA[<p>点app运行时报如下错：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Error:please select android sdk</span><br></pre></td></tr></table></figure>
-
-<p>且app module上打了个红叉，无法点击运行</p>
-<p>提示找不到SDK</p>
-<p>打开app.iml文件修改如下：<br>删除旧的，添加新的一行：</p>
-<p><img src="https://img-blog.csdn.net/2018060919280432?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p>为方便大家直接复制下面的：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;orderEntry type=&quot;jdk&quot; jdkName=&quot;Android API 27 Platform&quot; jdkType=&quot;Android SDK&quot; /&gt;</span><br></pre></td></tr></table></figure>
-
-<p>修改完成后rebuild</p>
-<p>app 上的红叉消失，显示正常，点击运行，ok</p>
-<p><img src="https://img-blog.csdn.net/20180609192822879?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p>更多参考文章：</p>
-<p><a href="https://blog.csdn.net/CHITTY1993/article/details/78779125">https://blog.csdn.net/CHITTY1993/article/details/78779125</a></p>
-<p><a href="https://blog.csdn.net/BruceHurrican/article/details/51755512">https://blog.csdn.net/BruceHurrican/article/details/51755512</a></p>
-<p><a href="https://blog.csdn.net/aqi00/article/details/78858336/">https://blog.csdn.net/aqi00/article/details/78858336/</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>SDK</tag>
       </tags>
   </entry>
   <entry>

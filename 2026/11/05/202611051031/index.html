@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="OpenAI 一条流水线产出 1169 套 Linux 本地提权利用，归并成 948 个漏洞，每个成本 1279 美元；截至发布只有 104 个已修或正在修。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="948 个洞挖出来了，先处理了 104 个">
+<meta property="og:url" content="https://www.vance.xin/2026/11/05/202611051031/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="OpenAI 一条流水线产出 1169 套 Linux 本地提权利用，归并成 948 个漏洞，每个成本 1279 美元；截至发布只有 104 个已修或正在修。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261105-202611051031-openai-linux-948-approval-gate.webp">
+<meta property="article:published_time" content="2026-11-05T10:31:00.000Z">
+<meta property="article:modified_time" content="2026-11-06T06:33:09.667Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="成本">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="漏洞">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261105-202611051031-openai-linux-948-approval-gate.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/05/202611051031/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/05/202611051031/","path":"2026/11/05/202611051031/","title":"948 个洞挖出来了，先处理了 104 个"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>948 个洞挖出来了，先处理了 104 个 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "948 个洞挖出来了，先处理了 104 个",
+  "url": "https://www.vance.xin/2026/11/05/202611051031/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/05/202611051031/",
+  "datePublished": "2026-11-05T10:31:00.000Z",
+  "dateModified": "2026-11-06T06:33:09.667Z",
+  "description": "OpenAI 一条流水线产出 1169 套 Linux 本地提权利用，归并成 948 个漏洞，每个成本 1279 美元；截至发布只有 104 个已修或正在修。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E8%BD%AE%E6%80%8E%E4%B9%88%E8%B7%91%E5%87%BA-948-%E4%B8%AA"><span class="nav-text">一轮怎么跑出 948 个</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E4%B8%AA%E6%9C%88%EF%BC%8C%E5%8D%95%E4%BB%B7%E9%99%8D%E4%BA%86%E5%85%AD%E6%88%90"><span class="nav-text">三个月，单价降了六成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%B4%9E%E6%AF%94%E4%B8%80%E4%BB%BD%E8%B5%8F%E9%87%91%E4%BE%BF%E5%AE%9C"><span class="nav-text">一个洞比一份赏金便宜</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%A1%E5%9C%A8%E8%B0%81%E6%9D%A5%E7%82%B9%E5%A4%B4"><span class="nav-text">卡在谁来点头</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E6%B5%81%E6%B0%B4%E7%BA%BF%E4%B9%9F%E5%8D%A1%E5%9C%A8%E8%BF%99"><span class="nav-text">我的流水线也卡在这</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E8%B7%9F%E4%BD%A0%E6%9C%89%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB"><span class="nav-text">这跟你有什么关系</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">591</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">974</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/05/202611051031/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="948 个洞挖出来了，先处理了 104 个 | 飞飞的AI实验室">
+      <meta itemprop="description" content="OpenAI 一条流水线产出 1169 套 Linux 本地提权利用，归并成 948 个漏洞，每个成本 1279 美元；截至发布只有 104 个已修或正在修。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          948 个洞挖出来了，先处理了 104 个
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-05 10:31:00" itemprop="dateCreated datePublished" datetime="2026-11-05T10:31:00+00:00">2026-11-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-11-06 06:33:09" itemprop="dateModified" datetime="2026-11-06T06:33:09+00:00">2026-11-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%A7%82%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">观点</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">OpenAI 一条流水线产出 1169 套 Linux 本地提权利用，归并成 948 个漏洞，每个成本 1279 美元；截至发布只有 104 个已修或正在修。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261105-202611051031-openai-linux-948-approval-gate.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>做一个能拿到 root 权限的漏洞，现在只要 1,279 美元。root 说人话，就是一台机器上最高的那把钥匙。OpenAI 在 11 月 4 号公布了一轮运行：一条流水线扫 Linux 内核，产出 1,169 套能用的本地提权利用，归并成 948 个独立漏洞，总账单 121.3 万美元。</p>
+<p>本地提权，说的是人已经在这台机器里了，再想办法爬到最高权限。</p>
+<p>你要是只看到这个数，很容易把它当成别人家的攻防游戏。可同一份结果里还有另一个数：到发布那天，已经修好或者正在修的，只有 104 个。</p>
+<p>把洞做便宜的那一侧，机器已经跑通了。卡住的是另一侧，那个要有人点头说「这条是真的、这个补丁能进」的位置。我更在意这一侧。</p>
+<h2 id="一轮怎么跑出-948-个"><a href="#一轮怎么跑出-948-个" class="headerlink" title="一轮怎么跑出 948 个"></a>一轮怎么跑出 948 个</h2><p>这条流水线先挑地方。你可以把内核想成一栋楼，它先走普通住户进得去的那些楼梯间和走廊：5,034 个审计目标，大约 280 万行代码，占整个内核的 7%。能被低权限碰到的代码先筛一遍，后面的数字才有意义。</p>
+<p>12 小时里，分析代理给出 2,308 条去重后的候选。</p>
+<p>候选不等于漏洞。验证代理在 30 小时内，把其中 1,724 个真的复现了出来。</p>
+<p>复现之后才轮到利用。换成画面，就是你手上只有一个普通账号，在终端里敲下几行，提示符从 $ 变成 #。</p>
+<p>这一步的靶机是标准桌面发行版，SMEP、SMAP、KASLR、HARDENED_USERCOPY 这些防护全开着。这一串名字你不用记，它们都是内核防提权的锁。锁全装着，这些利用照样跑通了。</p>
+<p>代理交出来的，是 291 个信息泄露的样本，和 1,169 个能用的本地提权利用。据报道，抽样的 166 个利用里，至少用到 10 种此前没有记录的 Linux 利用手法。</p>
+<p>1,169 和 948 对不上，是因为一个漏洞可能写出好几种利用。把变体归并，按「关掉它需要哪个补丁」去重，得到 948 个独立漏洞，同时生成 948 份候选补丁。</p>
+<p>交到人手上的东西很完整。每个漏洞配着根因分析、能稳定触发的最小崩溃样本、候选补丁，再加一整套利用，让评审的人不用从零判断这条报得对不对。</p>
+<p>这里要把话说死：948 是独立漏洞数，也是候选补丁数。它不等于已经合进内核的补丁数，合进上游的只有 61 个。</p>
+<h2 id="三个月，单价降了六成"><a href="#三个月，单价降了六成" class="headerlink" title="三个月，单价降了六成"></a>三个月，单价降了六成</h2><p>单看 948 这个数，容易麻木。把它和上一次比，才知道发生了什么。</p>
+<p>7 月底，同一套装置换 GPT-5.6 Sol 跑，拿到 166 个独立 LPE，账单 513,690 美元。摊下来，一个约 3,095 美元。</p>
+<p>10 月中旬这一轮，948 个，1,213,430 美元。一个 1,279 美元。</p>
+<p>数量是 5.7 倍。单价从 3,095 掉到 1,279，降了大约 59%。</p>
+<p>两次扫的都是当时最新的内核主线，中间隔了三个月，这三个月里内核还做了一轮加固。按常理，同一块代码被扫过一遍、又加固过，第二次应该更难出活。结果是反过来的。</p>
+<p>再往前看一步。6 月 Patch the Planet 刚起步的时候，同一类工作只跑出 24 个 LPE 概念验证。四个月，从 24 到 948。</p>
+<p>真正该盯的数在这儿：找出一个洞的成本，还在往下走。</p>
+<h2 id="一个洞比一份赏金便宜"><a href="#一个洞比一份赏金便宜" class="headerlink" title="一个洞比一份赏金便宜"></a>一个洞比一份赏金便宜</h2><p>这个成本意味着什么，拿赏金一比就清楚了。</p>
+<p>Pwn2Own 历史上给 Linux 内核本地提权的赏金是 2 万美元，TyphoonPWN 是 7 万美元。把这两个价套到 948 个利用上，OpenAI 自己算出 1,890 万到 6,630 万美元，是这次运行成本的 16 到 55 倍。</p>
+<p>这个比较要留个尾巴。赏金买的是「新的、没公开过的」利用，还带比赛和评审成本，不等于量产价。它更像一把尺子，量的是这个东西过去被估成多少钱。</p>
+<p>而那个估价，过去一直被解释成「太难」。现在难的那一头被机器抹平了，差价就露出来了。</p>
+<p>还有个尺度更直观。kernelCTF 是个缩减了攻击面的内核靶场，这条流水线在那儿拿到 21 个 LPE。而截至发文，kernelCTF 在 2026 年接受的确认 0-day LPE 是 26 个。</p>
+<p>一轮，接近这个靶场今年到目前为止的确认量。</p>
+<p>环境不一样，不能直接相减。但量级摆在这儿，产能到哪了，看得见。</p>
+<h2 id="卡在谁来点头"><a href="#卡在谁来点头" class="headerlink" title="卡在谁来点头"></a>卡在谁来点头</h2><p>回到那 104 个。</p>
+<p>据 Crypto Briefing 转述，61 个已经在上游修好，43 个在分阶段走补丁流程。剩下八百多个，还在等。</p>
+<p>OpenAI 自己的说法是，按内核社区的建议，先报严重的，剩下的跟合作方分批提交。这话听着负责，也等于承认了一件事：报得快，报不完。</p>
+<p>等谁？据 Startup Fortune 的报道，Trail of Bits 的工程师先签字，补丁才会进维护者的收件箱。这道人工程序写在流程里，省不掉。</p>
+<p>而收件的那一头，早就满了。</p>
+<p>据 Tom’s Hardware 报道，网络维护者 Jakub Kicinski 在 Linux 7.3 的网络补丁请求里估过一笔：那个周期处理的 648 个网络补丁，三分之一到一半是 AI 驱动的低优先级修复或清理。他写的是「我们完全被淹没了」。</p>
+<p>同一篇报道里，Linus Torvalds 在今年 5 月说，内核的私有安全邮件列表「几乎完全无法管理」，原因是不同的人用同一批工具找到同样的东西，各自提交一遍，而私有列表上谁也看不到别人报过什么。</p>
+<p>据 LWN 等转述，稳定版维护者 Willy Tarreau 给过一组对比：两年前这个列表每周收 2 到 3 份报告，今年是每天 5 到 10 份。</p>
+<p>CVE 的数量也跟着涨。据报道，每个内核版本的 CVE 从 6.x 时代的大约 500 个，涨到现在逼近 2,000 个；今年还出现过单个周末披露 432 个的情况。</p>
+<p>所以 948 个洞落到地上，不会变成 948 个补丁。它会变成别人收件箱里的一摞待办，而那个收件箱的主人，手上已经有一摞了。</p>
+<h2 id="我的流水线也卡在这"><a href="#我的流水线也卡在这" class="headerlink" title="我的流水线也卡在这"></a>我的流水线也卡在这</h2><p>写到这儿我想起自己那套东西。</p>
+<p>我有一条写文章、配图、分发的流水线，八个阶段全交给 agent。十篇一批跑过一回，64 次 agent 调用，270 万 token。</p>
+<p>十篇里有八篇停在评阅那一关，卡在轮次上限上，等我拍板。产出早就堆在门口了，门在我这边，人不在。</p>
+<p>后来我改了两处：评阅只跑一轮，而且分数不再拦发布。</p>
+<p>我把那扇门拆了。因为门后面是我自己的文章，写坏了删掉重发，代价我付得起。</p>
+<p>内核不能这么干。门后面是所有人的机器。拆了它，代价是有人被提权。</p>
+<p>同一个形状，两种处置。便宜的是产出，贵的从来是那个点头的人，而且这个人不在模型的预算里。</p>
+<h2 id="这跟你有什么关系"><a href="#这跟你有什么关系" class="headerlink" title="这跟你有什么关系"></a>这跟你有什么关系</h2><p>先说清楚，这 948 个洞不是远程打穿。</p>
+<p>本地提权要你先有一个立足点：一个登录进去的普通账号，一段能在机器上跑的代码，一个被拿下的服务。人已经在院子里了，这一步是往上爬。</p>
+<p>所以对大多数普通开发者，这次发布的直接威胁没有标题看起来那么大。没人会专门为了一台陌生人的博客服务器，去跑这么一轮。</p>
+<p>真要打你，这条流水线帮不上太多忙。最难的一步是先在机器里找个立足点，这一步的价钱这次没有降。</p>
+<p>会变的是另一件事。一件东西从「专家干几个月」变成「一条流水线跑一轮」，它就不再是定制品了。定制品只打值得打的目标，消耗品会进到批量工具里。这一步什么时候发生，OpenAI 没说，我也不猜。</p>
+<p>眼下能做的判断只有一个，而且很朴素：看到「披露了 N 个漏洞」，先去问这 N 个里有多少进了稳定版。</p>
+<p>「已报告」和「已修复」中间隔着一整个人的带宽。这个带宽不会因为模型变快而变宽。</p>
+<p>回到开头那个 1,279 美元。它买到的是一个能用的利用，也顺手把「太难了」这三个字从成本表上划掉了。难题没有消失，只是换了个位置，挪到一张桌子上。桌上坐着几个维护者。</p>
+<p>你手上那台服务器，上一次更新内核是什么时候？翻完回来留个日子，我想看看有多少人跟我一样，得先去翻记录。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E6%88%90%E6%9C%AC/" rel="tag"># 成本</a>
+              <a href="/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/%E6%BC%8F%E6%B4%9E/" rel="tag"># 漏洞</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/04/202611041620/" rel="prev" title="能点鼠标了，可它还不算开源">
+                  <i class="fa fa-angle-left"></i> 能点鼠标了，可它还不算开源
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/06/202611061027/" rel="next" title="Cursor 把上线包了，出事时谁认账">
+                  Cursor 把上线包了，出事时谁认账 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:59</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

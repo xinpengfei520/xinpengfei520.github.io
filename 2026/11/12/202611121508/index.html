@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="AI agent 卡进无限循环时成本越滚越高，每次重试都带全量上下文。OpenRouter 实测只加 doom-loop 检测，调用就从 314 次降到 64 次、费用降 83%；另三层防护补上换参数、换策略和代码出 bug 的盲区。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="你以为 agent 在干活，其实它在烧钱">
+<meta property="og:url" content="https://www.vance.xin/2026/11/12/202611121508/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="AI agent 卡进无限循环时成本越滚越高，每次重试都带全量上下文。OpenRouter 实测只加 doom-loop 检测，调用就从 314 次降到 64 次、费用降 83%；另三层防护补上换参数、换策略和代码出 bug 的盲区。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261112-202611121508.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20261112-202611121508-agent-four-layers-v2.webp">
+<meta property="article:published_time" content="2026-11-12T15:08:00.000Z">
+<meta property="article:modified_time" content="2026-11-12T08:49:28.995Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="成本控制">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261112-202611121508.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/12/202611121508/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/12/202611121508/","path":"2026/11/12/202611121508/","title":"你以为 agent 在干活，其实它在烧钱"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>你以为 agent 在干活，其实它在烧钱 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "你以为 agent 在干活，其实它在烧钱",
+  "url": "https://www.vance.xin/2026/11/12/202611121508/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/12/202611121508/",
+  "datePublished": "2026-11-12T15:08:00.000Z",
+  "dateModified": "2026-11-12T08:49:28.995Z",
+  "description": "AI agent 卡进无限循环时成本越滚越高，每次重试都带全量上下文。OpenRouter 实测只加 doom-loop 检测，调用就从 314 次降到 64 次、费用降 83%；另三层防护补上换参数、换策略和代码出 bug 的盲区。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%8D%A1%E8%BF%9B%E6%97%A0%E9%99%90%E5%BE%AA%E7%8E%AF"><span class="nav-text">为什么会卡进无限循环</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E6%AC%A1%E6%B5%8B%E8%AF%95%E8%AF%B4%E6%98%8E%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">一次测试说明了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E5%B1%82%E9%98%B2%E6%8A%A4%EF%BC%8C%E5%90%84%E7%AE%A1%E4%B8%80%E6%AE%B5"><span class="nav-text">四层防护，各管一段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8A%E5%A4%A9%E5%B0%B1%E8%83%BD%E8%A3%85%E4%B8%8A%E7%9A%84%E5%88%B9%E8%BD%A6"><span class="nav-text">今天就能装上的刹车</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">603</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">992</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/12/202611121508/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="你以为 agent 在干活，其实它在烧钱 | 飞飞的AI实验室">
+      <meta itemprop="description" content="AI agent 卡进无限循环时成本越滚越高，每次重试都带全量上下文。OpenRouter 实测只加 doom-loop 检测，调用就从 314 次降到 64 次、费用降 83%；另三层防护补上换参数、换策略和代码出 bug 的盲区。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          你以为 agent 在干活，其实它在烧钱
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-12 15:08:00 / 修改时间：08:49:28" itemprop="dateCreated datePublished" datetime="2026-11-12T15:08:00+00:00">2026-11-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">AI agent 卡进无限循环时成本越滚越高，每次重试都带全量上下文。OpenRouter 实测只加 doom-loop 检测，调用就从 314 次降到 64 次、费用降 83%；另三层防护补上换参数、换策略和代码出 bug 的盲区。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261112-202611121508.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>先问你一句：你手上那个跑在后台的 agent，万一卡住了，谁会知道？</p>
+<p>之前我设想过一件事，把编程 agent 的 SDK 接进写作流水线，让它夜里自己跑。入口想好了，工具也想好了，只有一样没算清楚，它要是卡在某个报错的步骤上，一晚上能烧掉多少额度。想到这儿，我没敢直接上。</p>
+<p>这不是我多虑。AWS 上有过一个文档处理 agent，收到一个畸形的接口返回，几小时里调了几千次，账单最后是一万美元。用户把浏览器关了，后台的 agent 还在跑。</p>
+<p>agent 卡住的时候，不会喊一声「我卡住了」。它只会一直重试同一个失败的步骤，每次重试都把前面的失败记录一起带进上下文，越跑越贵。</p>
+<p>所以问题不在它会不会出错，在出错之后，有没有东西替它踩一脚刹车。</p>
+<h2 id="为什么会卡进无限循环"><a href="#为什么会卡进无限循环" class="headerlink" title="为什么会卡进无限循环"></a>为什么会卡进无限循环</h2><p>agent 的运行逻辑是这样的，模型不断调工具，工具返回结果，模型根据结果决定下一步，直到它认为任务完成为止。</p>
+<p><strong>工具一失败，agent 不会停，它会把这次失败当成一道待解的谜题。</strong></p>
+<p>这和普通程序完全不一样。你写的代码，数据库查询失败就会抛异常、流程终止。但 agent 拿到失败结果，它的反应是，工具报错了，那我再想想，换个办法试试。</p>
+<p>所以它就一直试。</p>
+<p>每次重试都要把之前所有的对话历史一起打包发给模型。上下文不断膨胀。OpenRouter 做过一组测试，记录了一个 agent 在无限循环里的开销，第一轮进去 131 个 token（模型按 token 计费），到后面某一轮已经是 3,262 个 token。同一条对话，越往后越贵。</p>
+<p>加速烧钱，不是匀速。</p>
+<h2 id="一次测试说明了什么"><a href="#一次测试说明了什么" class="headerlink" title="一次测试说明了什么"></a>一次测试说明了什么</h2><p>OpenRouter 最近发了一篇文章，记录了他们的测试过程。</p>
+<p>他们造了一个场景，一个账单 agent，负责调接口查发票金额。接口设计成永远超时，模拟「服务挂了但没人修」的情况。</p>
+<p>他们拿了六个模型来跑，不加任何防护，只设了一个 40 步的硬上限。18 次测试里，有 4 次直接撞到上限。Mistral Large 4 三次分别发起了 11 次、41 次、41 次工具调用；Grok 4.7 是 41 次、12 次、41 次。同一个输入，同一个模型，这一轮 12 次就停了，下一轮能一头撞到 41 次。41 次而不是 40 次，是因为还有一次没返回的调用也被执行了。</p>
+<p>循环不是每次都发作，它像抽风。一次干净测试，说明不了生产里不会卡。</p>
+<p>他们统计了全部 18 次测试（六个模型各跑三次），一共产生了 314 次工具调用，花了 $0.29。</p>
+<p>只加一层 doom-loop 检测，同样的测试就变成 64 次工具调用，$0.05。</p>
+<p>调用次数降了 80%，花费降了 83%。</p>
+<h2 id="四层防护，各管一段"><a href="#四层防护，各管一段" class="headerlink" title="四层防护，各管一段"></a>四层防护，各管一段</h2><p>OpenRouter 的 @openrouter&#x2F;agent SDK 给出了四层方案。每一层针对不同的失控模式，缺任何一层都会有漏洞。</p>
+<p><img src="https://image.vance.xin/aigc/image/20261112-202611121508-agent-four-layers-v2.webp" alt="四层防护流程图"></p>
+<p><strong>第一层，doom-loop 检测</strong></p>
+<p>原理很简单，给每次工具调用做指纹（工具名 + 参数），发现连续几次指纹完全相同，就认定进入了无意义重复，主动介入。</p>
+<p>默认的行为是，第 2 次重复时记一个观察标记，第 3 次时阻断这次调用，告诉模型「你在重复，这样做不会有不同的结果，请换个思路」，到第 6 次时直接终止整个任务。</p>
+<p>这个「告诉模型」很关键。不只是报错，而是给它一个明确的信号，你陷入循环了，这条路走不通，停下来。大多数模型收到这个信息后会立刻切换策略，给出一个最终答案结束任务。</p>
+<p>没有这个信号，它会一直尝试下去，每次都把完整的失败历史重新发出去，越来越贵。</p>
+<p>OpenRouter 测下来，加了 doom-loop 检测之后，18 次测试里有 16 次在两次真实工具调用后就结束了。大多数情况这一层就能拦住。跑长任务，这一层应该最先加上。</p>
+<p><strong>第二层，参数归一化</strong></p>
+<p>有些模型收到阻断信息后，会换一个接近的参数继续试。发票号从 <code>INV-2291</code> 换成 <code>inv-2291</code>，或者去掉横杠变成 <code>INV2291</code>，换了大小写，指纹就是新的，doom-loop 检测就重置了。等于打一下换个马甲，绕过了检测。</p>
+<p>Mistral Large 在 9 次测试里有 5 次用了这个方法，GPT-6 Luna 也有类似行为。</p>
+<p>loopKey 解决这个问题。你告诉检测器，这个工具判断是否是同一个调用，只看发票号里的数字部分。这样 <code>INV-2291</code>、<code>inv-2291</code>、<code>INV2291</code> 全部映射到同一个指纹，模型变着花样试也逃不掉检测。</p>
+<p><strong>第三层，步数 + 成本双上限</strong></p>
+<p>前两层处理的都是「同一个工具反复调」的情况。但如果模型每次都换不同的策略、调不同的工具，这两层都没用，指纹永远是新的，它就一直跑下去。</p>
+<p>stopWhen 解决这个问题，设一个最多跑多少步，再设一个最多花多少钱，哪条先到就停哪条。</p>
+<p><strong>成本上限比步数上限更重要。</strong> 因为 agent 循环的开销不是均匀的，越到后面上下文越大，单次调用越贵。只设步数上限，后 15 步很可能比前 15 步还贵，步数没超，成本已经超出你的预期了。</p>
+<p>这两个数怎么定，放到最后一节一起说。</p>
+<p><strong>第四层，API key 信用额度</strong></p>
+<p>前三层都跑在你的代码里。如果代码有 bug 漏掉了这三层，或者你忘了部署最新版本，该失控还是会失控。</p>
+<p>最后一层是在路由侧（比如 OpenRouter）设一个 key 级别的信用额度上限。可以给每个 agent 或者每个用户单独配一个 key，单独设上限。这个限制在服务端执行，不经过你的代码，哪怕你的 agent 代码出了问题，也拦得住。</p>
+<p>超出上限会返回 402，错误响应里带一个 <code>limit_source</code> 字段，你可以据此决定是提额度还是当作停止信号处理。这一层替代不了前三层。它只负责兜底，万一前三层都失效了，这里还有一道闸。</p>
+<p>这四层叠在一起，才是完整的防护。某一层单独用都有盲区，合起来才能覆盖大多数失控的情况。</p>
+<h2 id="今天就能装上的刹车"><a href="#今天就能装上的刹车" class="headerlink" title="今天就能装上的刹车"></a>今天就能装上的刹车</h2><p>一个 agent 上线之前，值得先回答清楚三件事。</p>
+<p><strong>先问有没有人盯。</strong> 这道闸就是，有没有人会看着它跑。自动化任务最危险的，会出错还是小事，出错了没人知道才最要命。刚才那个 AWS 的案例，最阴的一层就是用户关了浏览器，后台还在跑。如果 agent 是在后台无人监督地跑，就要给失败配一个告警，哪怕只是发一条消息到手机，让你知道它停了、为什么停。这件事做起来不麻烦，但大多数人在自动化跑起来之前都觉得「应该没问题的」，过后就不做了。这一条最容易被跳过。</p>
+<p>我看到过一句话，说得很准：你的循环要是没有这个检查环节，那它就不是循环，是一台很自信的烧钱机器。</p>
+<p><strong>再算钱。</strong> 这个 agent 跑一次大概花多少。不要靠感觉，手动盯几轮，看清楚实际的调用次数和费用，再设上限。上限要比你测出来的正常值高一倍左右，留出余量，但不要设成一个无限大的数字。</p>
+<p><strong>接着想失败。</strong> 哪些工具可能会失败，失败了该怎么办。如果工具失败的概率不低，就不能指望 agent 自己处理好，需要在工具层面明确告诉它，这个接口挂了，请告诉用户，不要继续重试。这个提示要写进工具的错误返回里，不是系统提示，系统提示 agent 不一定会照做。</p>
+<p>agent 的价值，是把你从重复劳动里捞出来，让你去干更值钱的事。可它替你干活的前提，是它该停的时候能停。</p>
+<p>给 agent 设上限，其实是给自己画一条安全线。线画了，你才敢让它夜里跑。</p>
+<p>你现在跑着的 agent，给它设上限了吗？</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E7%BC%96%E7%A8%8B/" rel="tag"># 编程</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E6%88%90%E6%9C%AC%E6%8E%A7%E5%88%B6/" rel="tag"># 成本控制</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/12/202611121144/" rel="prev" title="切到 Opus 还差两步">
+                  <i class="fa fa-angle-left"></i> 切到 Opus 还差两步
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/12/202611121535/" rel="next" title="说真的，选便宜端点先看 provider">
+                  说真的，选便宜端点先看 provider <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:32</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

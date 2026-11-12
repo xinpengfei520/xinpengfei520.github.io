@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="OpenRouter 用 Qwen3.8 27B 锁 6 个端点实测，fp16、fp8、fp4 在 240 道题上得分 98.3% 到 99.2%，差异落在统计噪声内；同精度下最贵供应商中位是便宜的 1.72 倍。选端点先看供应商再看精度。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="说真的，选便宜端点先看 provider">
+<meta property="og:url" content="https://www.vance.xin/2026/11/12/202611121535/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="OpenRouter 用 Qwen3.8 27B 锁 6 个端点实测，fp16、fp8、fp4 在 240 道题上得分 98.3% 到 99.2%，差异落在统计噪声内；同精度下最贵供应商中位是便宜的 1.72 倍。选端点先看供应商再看精度。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261112-202611121535.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20261112-202611121535-diagram.webp">
+<meta property="article:published_time" content="2026-11-12T15:35:00.000Z">
+<meta property="article:modified_time" content="2026-11-12T08:49:28.995Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="量化">
+<meta property="article:tag" content="OpenRouter">
+<meta property="article:tag" content="模型推理">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261112-202611121535.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/12/202611121535/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/12/202611121535/","path":"2026/11/12/202611121535/","title":"说真的，选便宜端点先看 provider"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>说真的，选便宜端点先看 provider | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "说真的，选便宜端点先看 provider",
+  "url": "https://www.vance.xin/2026/11/12/202611121535/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/12/202611121535/",
+  "datePublished": "2026-11-12T15:35:00.000Z",
+  "dateModified": "2026-11-12T08:49:28.995Z",
+  "description": "OpenRouter 用 Qwen3.8 27B 锁 6 个端点实测，fp16、fp8、fp4 在 240 道题上得分 98.3% 到 99.2%，差异落在统计噪声内；同精度下最贵供应商中位是便宜的 1.72 倍。选端点先看供应商再看精度。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8F%E5%8C%96%E5%88%B0%E5%BA%95%E5%8A%A8%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">量化到底动了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BE%BF%E5%AE%9C%E6%98%AF%E7%9C%9F%E7%9A%84%EF%BC%8C%E4%BD%86%E4%B8%8D%E9%BD%90"><span class="nav-text">便宜是真的，但不齐</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3-98-%E7%9A%84%E9%99%90%E5%AE%9A%E6%9D%A1%E4%BB%B6"><span class="nav-text">那 98% 的限定条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%BB%E4%B8%8B%E6%9D%A5%E6%88%91%E4%BC%9A%E8%BF%99%E4%B9%88%E6%8E%92"><span class="nav-text">读下来我会这么排</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">603</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">992</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/12/202611121535/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="说真的，选便宜端点先看 provider | 飞飞的AI实验室">
+      <meta itemprop="description" content="OpenRouter 用 Qwen3.8 27B 锁 6 个端点实测，fp16、fp8、fp4 在 240 道题上得分 98.3% 到 99.2%，差异落在统计噪声内；同精度下最贵供应商中位是便宜的 1.72 倍。选端点先看供应商再看精度。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          说真的，选便宜端点先看 provider
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-12 15:35:00 / 修改时间：08:49:28" itemprop="dateCreated datePublished" datetime="2026-11-12T15:35:00+00:00">2026-11-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">OpenRouter 用 Qwen3.8 27B 锁 6 个端点实测，fp16、fp8、fp4 在 240 道题上得分 98.3% 到 99.2%，差异落在统计噪声内；同精度下最贵供应商中位是便宜的 1.72 倍。选端点先看供应商再看精度。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261112-202611121535.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你天天调 API，多半有过这个默认动作，同一批活，能选便宜端点就选便宜的。量化过的版本便宜那么多，不用白不用。我也这么想过，直到把 OpenRouter 那份量化实测从头看到尾，才发现便宜这件事，方向可能一直看偏了。</p>
+<p>同一个模型贵不贵，起决定作用的是背后谁在给你跑，精度得往后排。实测里，同一个精度档下最贵的供应商，中位价是最便宜的 1.72 倍；可从 16bit 换到 4bit，中位也就便宜了 27%。你为了省那 27% 专门去挑低精度，很可能省不过顺手换个便宜供应商这一步。更要紧的是，测试里那句没检测到精度差异，是有前提的，不能当 4bit 随便用的通行证。</p>
+<h2 id="量化到底动了什么"><a href="#量化到底动了什么" class="headerlink" title="量化到底动了什么"></a>量化到底动了什么</h2><p>量化这词听着玄，说人话就是，把模型里每个参数从记得很精细压成够用就行，换一个更小的数据类型来存，位数少了，精度自然粗一些，体积、显存和算力跟着降。</p>
+<p>拿 27B 这个量级的模型看。权重用 bf16 存要大概 54GB，换成 fp8 降到约 27GB，再到 fp4 只剩约 13.5GB。fp4 这一类压得最狠，靠块级缩放兜住范围，粗掉的地方用整体系数补回来，所以它不是简单粗暴地砍位数。</p>
+<p>得把两件事分开看。权重压成低精度是一件事，把 KV cache（模型边推理边存的那份中间状态）也压掉是另一件，两者可以分开做。权重压缩好理解，KV cache 压缩影响的往往是长上下文那种极端情况。量化省下来的体积、显存和算力是真实收益，可这些收益从哪来、代价落在谁头上，值得多琢磨一下。</p>
+<h2 id="便宜是真的，但不齐"><a href="#便宜是真的，但不齐" class="headerlink" title="便宜是真的，但不齐"></a>便宜是真的，但不齐</h2><p>低精度通常更便宜，这句话基本成立，只是没那么绝对。</p>
+<p>OpenRouter 盘了全站的数据。8bit 比 16bit 便宜的，24 个模型里有 14 个，更贵的有 7 个。4bit 比 8bit 便宜的，33 个里有 26 个。中位价比摆出来看，降一档只便宜一点点，从 16bit 一路压到 4bit，也才 0.73。</p>
+<p>具体到某个端点，Qwen3.8 27B 每百万混合 token，价格从 16bit 的 $0.581 一路降到 4bit 的 $0.140。反例也有。gpt-oss-120b 的 8bit 端点卖 $0.100，反而比它自己的 16bit 端点 $0.067 贵。MiniMax M3 没有 16bit 档，它的 4bit 端点 $0.412 又比 8bit 的 $0.388 贵。所以低精度更便宜这规律大体对，只是每几个端点里就会蹦出来一个反着走的。</p>
+<p>真正把价差拉开的，不在精度这一层，在背后那个供应商身上。同一个模型、同一个精度，光换供应商，最贵的那个端点中位价就是最便宜的 1.72 倍。Qwen3.8 27B 有十个 fp8 端点，价格从 $0.342 一直排到 $1.137，一头一尾差 3.3 倍。</p>
+<p>换个角度看更清楚。同一套 280 道题跑下来，整轮成本从 fp4 的 Darkbloom $0.58 到 fp16 的 Cerebras $1.24，可中间的顺序并不按精度走，fp8 的 AkashML 是 $0.72，比 fp4 的 ModelRun $0.77 还便宜。速度也不跟精度走，fp16 的 Cerebras 中位 1.3 秒，fp4 的 ModelRun 要 2.4 秒，其余四个点都落在 8 到 15 秒之间。</p>
+<p>精度档位之间的价差，最多也就两三成。真能把价格拉出几倍的，是供应商这一层。打个比方，调精度像在同一个货架上换个包装大小，怎么挑都只是零头上的出入；换供应商才像换一家店进货，货一模一样，价格却能差出一大截。指望靠降精度省钱的人，其实把杠杆用在了短的那一头。</p>
+<h2 id="那-98-的限定条件"><a href="#那-98-的限定条件" class="headerlink" title="那 98% 的限定条件"></a>那 98% 的限定条件</h2><p>说完价格，说回精度。这份测试里最容易被标题党拿去用的一句话，是不同精度分数几乎一样。</p>
+<p>关键在于他们怎么测的。六个端点锁死同一款模型 qwen3.8-27b，Cerebras 走 fp16，Parasail、CoreWeave、AkashML 走 fp8，Darkbloom、ModelRun 走 fp4。一共 280 道有确定答案的题，其中 240 道计分，另外 40 道是纯乘法。温度设 0，关掉推理，禁止回退到别的端点。</p>
+<p>240 道计分题，六个端点的总分落在 98.3% 到 99.2% 之间，置信区间互相重叠。唯一看出差距的地方，是那 40 道纯乘法，Darkbloom 这个 fp4 端点只对了 26 道，其余五个点都在 30 到 33 之间。有意思的是，同为 fp4 的 ModelRun 却对了 30 道。作者做了一次检验，说这个差距纯属偶然的概率大约 7.5%，不能算到精度头上。</p>
+<p>掉点也分场景。普通指令、多跳检索、代码追踪这些活几乎看不出差别，真正敏感的有两处，一处是纯算术这种没有中间过程可依的活，另一处是极长上下文再叠上注意力量化。要不要上 4bit，得先看你的活容不容错，抽取、摘要这类通常没事，精确算术和超长推理就得当心。顺带一提，他们重复跑过同一个端点两次，280 道题的输出文本完全一致，至少说明这套测试本身是稳的。</p>
+<p>重点在原文的措辞。官方写的是未检测到差异，并且自己补了一句，这个规模的测试测不出 1 到 2 个点的差距。没检测到，和不存在，是两码事。这份测试只覆盖一款模型、280 道题、一天、六个端点，它没法证明 4bit 在所有模型和负载上都安全。作者也直说了，要迁生产流量之前，先拿自家的 prompt 测一遍。</p>
+<h2 id="读下来我会这么排"><a href="#读下来我会这么排" class="headerlink" title="读下来我会这么排"></a>读下来我会这么排</h2><p>把这些串起来，落到选端点这件事上，读下来我会这么排。</p>
+<p><img src="https://image.vance.xin/aigc/image/20261112-202611121535-diagram.webp" alt="选端点顺序：先比供应商再定精度"></p>
+<p>先看供应商，再看精度。同一个精度档里，价格能差好几倍，优先在这一层把便宜的挑出来，再决定要不要为了省钱降到 4bit。想稳一点，就列全你能接受的精度，让路由有回退余地。OpenRouter 那边用 provider.quantizations 过滤精度，fp4 会带上 mxfp4、nvfp4 这两种 4bit 格式，fp8 会带上 mxfp8。要是只填一个精度，候选就只剩单端点，上游一限流你就没地方躲。测试里那个 fp16 单端点，280 条请求里前 93 条连着碰了三次限流。反过来，过滤条件写太死也一样，要一个没人支持的精度，或者把精度和供应商同时锁死，候选会直接空掉，当场返回 404，连回退的机会都没有。</p>
+<p>别只信标价。Teamday 的数据显示，335 个付费模型里，有 53 个能找出比标价更便宜的供应商。可便宜那家不一定合你的用，14 个模型的最便宜供应商不支持结构化输出，8 个不支持工具调用。默认路由下，这类供应商照样收你的请求，只是悄悄忽略它不认识的参数，你想要一段 JSON，回你一段自由文本。挑便宜之前，先确认它支不支持你要的参数。标价只是个入口，参数支持、限流风险、上下文长度，都得跟价格放在一起看。</p>
+<p>另一条独立风险线是注意力量化，这条要单独测。权重压精度在短任务上基本看不出来，翻车的地方出在把 KV cache 和注意力计算也压掉之后。vLLM 的官方博客记过一个很扎眼的数字，Hopper 显卡上那段跑 FP8 的注意力 kernel（显卡里真正干这块活的那段代码）在超长上下文会累积精度损失，128k 的大海捞针检索里，准确率从 bf16 基线的 91% 掉到 13%，后来做了两级累加修复，才回到接近基线。这些都是厂商自测，得留个心眼。要迁生产流量，先拿自己的 prompt 跑一批，尤其是塞长文档、跑长链路推理的那些活。</p>
+<p>还有一件事容易被忽略。OpenRouter 全站 1455 个端点里，59.5% 根本不标精度；在有精度标注的 163 个模型里，只有 54 个还能选到 16bit 的端点。你以为自己买的是一个清晰的档位，很多时候，你并不知道付的钱对应哪个精度。</p>
+<p>开头那个默认动作，如果让我来定，会拆成两步。先比供应商，再问要不要降精度。顺序反了，省下来的那点钱，很快就亏回去了。</p>
+<p>你平时调 API，是直接用默认路由，还是会自己挑端点？有没有遇到过换了供应商之后，输出风格突然不对劲的情况？评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/LLM/" rel="tag"># LLM</a>
+              <a href="/tags/%E9%87%8F%E5%8C%96/" rel="tag"># 量化</a>
+              <a href="/tags/OpenRouter/" rel="tag"># OpenRouter</a>
+              <a href="/tags/%E6%A8%A1%E5%9E%8B%E6%8E%A8%E7%90%86/" rel="tag"># 模型推理</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/12/202611121508/" rel="prev" title="你以为 agent 在干活，其实它在烧钱">
+                  <i class="fa fa-angle-left"></i> 你以为 agent 在干活，其实它在烧钱
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:32</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

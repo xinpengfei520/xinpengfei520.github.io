@@ -104,9 +104,9 @@
         <category>AI</category>
       </categories>
       <tags>
+        <tag>Google</tag>
         <tag>AI 编程</tag>
         <tag>Gemini</tag>
-        <tag>Google</tag>
         <tag>Antigravity</tag>
         <tag>agent</tag>
       </tags>
@@ -249,10 +249,116 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>团队协作</tag>
         <tag>team-onboarding</tag>
+        <tag>团队协作</tag>
         <tag>AI 工具</tag>
         <tag>工程实践</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>说真的，选便宜端点先看 provider</title>
+    <url>/2026/11/12/202611121535/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261112-202611121535.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你天天调 API，多半有过这个默认动作，同一批活，能选便宜端点就选便宜的。量化过的版本便宜那么多，不用白不用。我也这么想过，直到把 OpenRouter 那份量化实测从头看到尾，才发现便宜这件事，方向可能一直看偏了。</p>
+<p>同一个模型贵不贵，起决定作用的是背后谁在给你跑，精度得往后排。实测里，同一个精度档下最贵的供应商，中位价是最便宜的 1.72 倍；可从 16bit 换到 4bit，中位也就便宜了 27%。你为了省那 27% 专门去挑低精度，很可能省不过顺手换个便宜供应商这一步。更要紧的是，测试里那句没检测到精度差异，是有前提的，不能当 4bit 随便用的通行证。</p>
+<h2 id="量化到底动了什么"><a href="#量化到底动了什么" class="headerlink" title="量化到底动了什么"></a>量化到底动了什么</h2><p>量化这词听着玄，说人话就是，把模型里每个参数从记得很精细压成够用就行，换一个更小的数据类型来存，位数少了，精度自然粗一些，体积、显存和算力跟着降。</p>
+<p>拿 27B 这个量级的模型看。权重用 bf16 存要大概 54GB，换成 fp8 降到约 27GB，再到 fp4 只剩约 13.5GB。fp4 这一类压得最狠，靠块级缩放兜住范围，粗掉的地方用整体系数补回来，所以它不是简单粗暴地砍位数。</p>
+<p>得把两件事分开看。权重压成低精度是一件事，把 KV cache（模型边推理边存的那份中间状态）也压掉是另一件，两者可以分开做。权重压缩好理解，KV cache 压缩影响的往往是长上下文那种极端情况。量化省下来的体积、显存和算力是真实收益，可这些收益从哪来、代价落在谁头上，值得多琢磨一下。</p>
+<h2 id="便宜是真的，但不齐"><a href="#便宜是真的，但不齐" class="headerlink" title="便宜是真的，但不齐"></a>便宜是真的，但不齐</h2><p>低精度通常更便宜，这句话基本成立，只是没那么绝对。</p>
+<p>OpenRouter 盘了全站的数据。8bit 比 16bit 便宜的，24 个模型里有 14 个，更贵的有 7 个。4bit 比 8bit 便宜的，33 个里有 26 个。中位价比摆出来看，降一档只便宜一点点，从 16bit 一路压到 4bit，也才 0.73。</p>
+<p>具体到某个端点，Qwen3.8 27B 每百万混合 token，价格从 16bit 的 $0.581 一路降到 4bit 的 $0.140。反例也有。gpt-oss-120b 的 8bit 端点卖 $0.100，反而比它自己的 16bit 端点 $0.067 贵。MiniMax M3 没有 16bit 档，它的 4bit 端点 $0.412 又比 8bit 的 $0.388 贵。所以低精度更便宜这规律大体对，只是每几个端点里就会蹦出来一个反着走的。</p>
+<p>真正把价差拉开的，不在精度这一层，在背后那个供应商身上。同一个模型、同一个精度，光换供应商，最贵的那个端点中位价就是最便宜的 1.72 倍。Qwen3.8 27B 有十个 fp8 端点，价格从 $0.342 一直排到 $1.137，一头一尾差 3.3 倍。</p>
+<p>换个角度看更清楚。同一套 280 道题跑下来，整轮成本从 fp4 的 Darkbloom $0.58 到 fp16 的 Cerebras $1.24，可中间的顺序并不按精度走，fp8 的 AkashML 是 $0.72，比 fp4 的 ModelRun $0.77 还便宜。速度也不跟精度走，fp16 的 Cerebras 中位 1.3 秒，fp4 的 ModelRun 要 2.4 秒，其余四个点都落在 8 到 15 秒之间。</p>
+<p>精度档位之间的价差，最多也就两三成。真能把价格拉出几倍的，是供应商这一层。打个比方，调精度像在同一个货架上换个包装大小，怎么挑都只是零头上的出入；换供应商才像换一家店进货，货一模一样，价格却能差出一大截。指望靠降精度省钱的人，其实把杠杆用在了短的那一头。</p>
+<h2 id="那-98-的限定条件"><a href="#那-98-的限定条件" class="headerlink" title="那 98% 的限定条件"></a>那 98% 的限定条件</h2><p>说完价格，说回精度。这份测试里最容易被标题党拿去用的一句话，是不同精度分数几乎一样。</p>
+<p>关键在于他们怎么测的。六个端点锁死同一款模型 qwen3.8-27b，Cerebras 走 fp16，Parasail、CoreWeave、AkashML 走 fp8，Darkbloom、ModelRun 走 fp4。一共 280 道有确定答案的题，其中 240 道计分，另外 40 道是纯乘法。温度设 0，关掉推理，禁止回退到别的端点。</p>
+<p>240 道计分题，六个端点的总分落在 98.3% 到 99.2% 之间，置信区间互相重叠。唯一看出差距的地方，是那 40 道纯乘法，Darkbloom 这个 fp4 端点只对了 26 道，其余五个点都在 30 到 33 之间。有意思的是，同为 fp4 的 ModelRun 却对了 30 道。作者做了一次检验，说这个差距纯属偶然的概率大约 7.5%，不能算到精度头上。</p>
+<p>掉点也分场景。普通指令、多跳检索、代码追踪这些活几乎看不出差别，真正敏感的有两处，一处是纯算术这种没有中间过程可依的活，另一处是极长上下文再叠上注意力量化。要不要上 4bit，得先看你的活容不容错，抽取、摘要这类通常没事，精确算术和超长推理就得当心。顺带一提，他们重复跑过同一个端点两次，280 道题的输出文本完全一致，至少说明这套测试本身是稳的。</p>
+<p>重点在原文的措辞。官方写的是未检测到差异，并且自己补了一句，这个规模的测试测不出 1 到 2 个点的差距。没检测到，和不存在，是两码事。这份测试只覆盖一款模型、280 道题、一天、六个端点，它没法证明 4bit 在所有模型和负载上都安全。作者也直说了，要迁生产流量之前，先拿自家的 prompt 测一遍。</p>
+<h2 id="读下来我会这么排"><a href="#读下来我会这么排" class="headerlink" title="读下来我会这么排"></a>读下来我会这么排</h2><p>把这些串起来，落到选端点这件事上，读下来我会这么排。</p>
+<p><img src="https://image.vance.xin/aigc/image/20261112-202611121535-diagram.webp" alt="选端点顺序：先比供应商再定精度"></p>
+<p>先看供应商，再看精度。同一个精度档里，价格能差好几倍，优先在这一层把便宜的挑出来，再决定要不要为了省钱降到 4bit。想稳一点，就列全你能接受的精度，让路由有回退余地。OpenRouter 那边用 provider.quantizations 过滤精度，fp4 会带上 mxfp4、nvfp4 这两种 4bit 格式，fp8 会带上 mxfp8。要是只填一个精度，候选就只剩单端点，上游一限流你就没地方躲。测试里那个 fp16 单端点，280 条请求里前 93 条连着碰了三次限流。反过来，过滤条件写太死也一样，要一个没人支持的精度，或者把精度和供应商同时锁死，候选会直接空掉，当场返回 404，连回退的机会都没有。</p>
+<p>别只信标价。Teamday 的数据显示，335 个付费模型里，有 53 个能找出比标价更便宜的供应商。可便宜那家不一定合你的用，14 个模型的最便宜供应商不支持结构化输出，8 个不支持工具调用。默认路由下，这类供应商照样收你的请求，只是悄悄忽略它不认识的参数，你想要一段 JSON，回你一段自由文本。挑便宜之前，先确认它支不支持你要的参数。标价只是个入口，参数支持、限流风险、上下文长度，都得跟价格放在一起看。</p>
+<p>另一条独立风险线是注意力量化，这条要单独测。权重压精度在短任务上基本看不出来，翻车的地方出在把 KV cache 和注意力计算也压掉之后。vLLM 的官方博客记过一个很扎眼的数字，Hopper 显卡上那段跑 FP8 的注意力 kernel（显卡里真正干这块活的那段代码）在超长上下文会累积精度损失，128k 的大海捞针检索里，准确率从 bf16 基线的 91% 掉到 13%，后来做了两级累加修复，才回到接近基线。这些都是厂商自测，得留个心眼。要迁生产流量，先拿自己的 prompt 跑一批，尤其是塞长文档、跑长链路推理的那些活。</p>
+<p>还有一件事容易被忽略。OpenRouter 全站 1455 个端点里，59.5% 根本不标精度；在有精度标注的 163 个模型里，只有 54 个还能选到 16bit 的端点。你以为自己买的是一个清晰的档位，很多时候，你并不知道付的钱对应哪个精度。</p>
+<p>开头那个默认动作，如果让我来定，会拆成两步。先比供应商，再问要不要降精度。顺序反了，省下来的那点钱，很快就亏回去了。</p>
+<p>你平时调 API，是直接用默认路由，还是会自己挑端点？有没有遇到过换了供应商之后，输出风格突然不对劲的情况？评论区聊聊。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>LLM</tag>
+        <tag>量化</tag>
+        <tag>OpenRouter</tag>
+        <tag>模型推理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>你以为 agent 在干活，其实它在烧钱</title>
+    <url>/2026/11/12/202611121508/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261112-202611121508.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>先问你一句：你手上那个跑在后台的 agent，万一卡住了，谁会知道？</p>
+<p>之前我设想过一件事，把编程 agent 的 SDK 接进写作流水线，让它夜里自己跑。入口想好了，工具也想好了，只有一样没算清楚，它要是卡在某个报错的步骤上，一晚上能烧掉多少额度。想到这儿，我没敢直接上。</p>
+<p>这不是我多虑。AWS 上有过一个文档处理 agent，收到一个畸形的接口返回，几小时里调了几千次，账单最后是一万美元。用户把浏览器关了，后台的 agent 还在跑。</p>
+<p>agent 卡住的时候，不会喊一声「我卡住了」。它只会一直重试同一个失败的步骤，每次重试都把前面的失败记录一起带进上下文，越跑越贵。</p>
+<p>所以问题不在它会不会出错，在出错之后，有没有东西替它踩一脚刹车。</p>
+<h2 id="为什么会卡进无限循环"><a href="#为什么会卡进无限循环" class="headerlink" title="为什么会卡进无限循环"></a>为什么会卡进无限循环</h2><p>agent 的运行逻辑是这样的，模型不断调工具，工具返回结果，模型根据结果决定下一步，直到它认为任务完成为止。</p>
+<p><strong>工具一失败，agent 不会停，它会把这次失败当成一道待解的谜题。</strong></p>
+<p>这和普通程序完全不一样。你写的代码，数据库查询失败就会抛异常、流程终止。但 agent 拿到失败结果，它的反应是，工具报错了，那我再想想，换个办法试试。</p>
+<p>所以它就一直试。</p>
+<p>每次重试都要把之前所有的对话历史一起打包发给模型。上下文不断膨胀。OpenRouter 做过一组测试，记录了一个 agent 在无限循环里的开销，第一轮进去 131 个 token（模型按 token 计费），到后面某一轮已经是 3,262 个 token。同一条对话，越往后越贵。</p>
+<p>加速烧钱，不是匀速。</p>
+<h2 id="一次测试说明了什么"><a href="#一次测试说明了什么" class="headerlink" title="一次测试说明了什么"></a>一次测试说明了什么</h2><p>OpenRouter 最近发了一篇文章，记录了他们的测试过程。</p>
+<p>他们造了一个场景，一个账单 agent，负责调接口查发票金额。接口设计成永远超时，模拟「服务挂了但没人修」的情况。</p>
+<p>他们拿了六个模型来跑，不加任何防护，只设了一个 40 步的硬上限。18 次测试里，有 4 次直接撞到上限。Mistral Large 4 三次分别发起了 11 次、41 次、41 次工具调用；Grok 4.7 是 41 次、12 次、41 次。同一个输入，同一个模型，这一轮 12 次就停了，下一轮能一头撞到 41 次。41 次而不是 40 次，是因为还有一次没返回的调用也被执行了。</p>
+<p>循环不是每次都发作，它像抽风。一次干净测试，说明不了生产里不会卡。</p>
+<p>他们统计了全部 18 次测试（六个模型各跑三次），一共产生了 314 次工具调用，花了 $0.29。</p>
+<p>只加一层 doom-loop 检测，同样的测试就变成 64 次工具调用，$0.05。</p>
+<p>调用次数降了 80%，花费降了 83%。</p>
+<h2 id="四层防护，各管一段"><a href="#四层防护，各管一段" class="headerlink" title="四层防护，各管一段"></a>四层防护，各管一段</h2><p>OpenRouter 的 @openrouter&#x2F;agent SDK 给出了四层方案。每一层针对不同的失控模式，缺任何一层都会有漏洞。</p>
+<p><img src="https://image.vance.xin/aigc/image/20261112-202611121508-agent-four-layers-v2.webp" alt="四层防护流程图"></p>
+<p><strong>第一层，doom-loop 检测</strong></p>
+<p>原理很简单，给每次工具调用做指纹（工具名 + 参数），发现连续几次指纹完全相同，就认定进入了无意义重复，主动介入。</p>
+<p>默认的行为是，第 2 次重复时记一个观察标记，第 3 次时阻断这次调用，告诉模型「你在重复，这样做不会有不同的结果，请换个思路」，到第 6 次时直接终止整个任务。</p>
+<p>这个「告诉模型」很关键。不只是报错，而是给它一个明确的信号，你陷入循环了，这条路走不通，停下来。大多数模型收到这个信息后会立刻切换策略，给出一个最终答案结束任务。</p>
+<p>没有这个信号，它会一直尝试下去，每次都把完整的失败历史重新发出去，越来越贵。</p>
+<p>OpenRouter 测下来，加了 doom-loop 检测之后，18 次测试里有 16 次在两次真实工具调用后就结束了。大多数情况这一层就能拦住。跑长任务，这一层应该最先加上。</p>
+<p><strong>第二层，参数归一化</strong></p>
+<p>有些模型收到阻断信息后，会换一个接近的参数继续试。发票号从 <code>INV-2291</code> 换成 <code>inv-2291</code>，或者去掉横杠变成 <code>INV2291</code>，换了大小写，指纹就是新的，doom-loop 检测就重置了。等于打一下换个马甲，绕过了检测。</p>
+<p>Mistral Large 在 9 次测试里有 5 次用了这个方法，GPT-6 Luna 也有类似行为。</p>
+<p>loopKey 解决这个问题。你告诉检测器，这个工具判断是否是同一个调用，只看发票号里的数字部分。这样 <code>INV-2291</code>、<code>inv-2291</code>、<code>INV2291</code> 全部映射到同一个指纹，模型变着花样试也逃不掉检测。</p>
+<p><strong>第三层，步数 + 成本双上限</strong></p>
+<p>前两层处理的都是「同一个工具反复调」的情况。但如果模型每次都换不同的策略、调不同的工具，这两层都没用，指纹永远是新的，它就一直跑下去。</p>
+<p>stopWhen 解决这个问题，设一个最多跑多少步，再设一个最多花多少钱，哪条先到就停哪条。</p>
+<p><strong>成本上限比步数上限更重要。</strong> 因为 agent 循环的开销不是均匀的，越到后面上下文越大，单次调用越贵。只设步数上限，后 15 步很可能比前 15 步还贵，步数没超，成本已经超出你的预期了。</p>
+<p>这两个数怎么定，放到最后一节一起说。</p>
+<p><strong>第四层，API key 信用额度</strong></p>
+<p>前三层都跑在你的代码里。如果代码有 bug 漏掉了这三层，或者你忘了部署最新版本，该失控还是会失控。</p>
+<p>最后一层是在路由侧（比如 OpenRouter）设一个 key 级别的信用额度上限。可以给每个 agent 或者每个用户单独配一个 key，单独设上限。这个限制在服务端执行，不经过你的代码，哪怕你的 agent 代码出了问题，也拦得住。</p>
+<p>超出上限会返回 402，错误响应里带一个 <code>limit_source</code> 字段，你可以据此决定是提额度还是当作停止信号处理。这一层替代不了前三层。它只负责兜底，万一前三层都失效了，这里还有一道闸。</p>
+<p>这四层叠在一起，才是完整的防护。某一层单独用都有盲区，合起来才能覆盖大多数失控的情况。</p>
+<h2 id="今天就能装上的刹车"><a href="#今天就能装上的刹车" class="headerlink" title="今天就能装上的刹车"></a>今天就能装上的刹车</h2><p>一个 agent 上线之前，值得先回答清楚三件事。</p>
+<p><strong>先问有没有人盯。</strong> 这道闸就是，有没有人会看着它跑。自动化任务最危险的，会出错还是小事，出错了没人知道才最要命。刚才那个 AWS 的案例，最阴的一层就是用户关了浏览器，后台还在跑。如果 agent 是在后台无人监督地跑，就要给失败配一个告警，哪怕只是发一条消息到手机，让你知道它停了、为什么停。这件事做起来不麻烦，但大多数人在自动化跑起来之前都觉得「应该没问题的」，过后就不做了。这一条最容易被跳过。</p>
+<p>我看到过一句话，说得很准：你的循环要是没有这个检查环节，那它就不是循环，是一台很自信的烧钱机器。</p>
+<p><strong>再算钱。</strong> 这个 agent 跑一次大概花多少。不要靠感觉，手动盯几轮，看清楚实际的调用次数和费用，再设上限。上限要比你测出来的正常值高一倍左右，留出余量，但不要设成一个无限大的数字。</p>
+<p><strong>接着想失败。</strong> 哪些工具可能会失败，失败了该怎么办。如果工具失败的概率不低，就不能指望 agent 自己处理好，需要在工具层面明确告诉它，这个接口挂了，请告诉用户，不要继续重试。这个提示要写进工具的错误返回里，不是系统提示，系统提示 agent 不一定会照做。</p>
+<p>agent 的价值，是把你从重复劳动里捞出来，让你去干更值钱的事。可它替你干活的前提，是它该停的时候能停。</p>
+<p>给 agent 设上限，其实是给自己画一条安全线。线画了，你才敢让它夜里跑。</p>
+<p>你现在跑着的 agent，给它设上限了吗？</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>编程</tag>
+        <tag>Claude Code</tag>
+        <tag>AI</tag>
+        <tag>Agent</tag>
+        <tag>成本控制</tag>
       </tags>
   </entry>
   <entry>
@@ -310,15 +416,15 @@
 <p>上一篇聊完成本算账，这篇是操作层。两件事加在一起，才算把「怎么用 Claude Code 不乱烧钱」这道题答完整了。</p>
 <p>以上，既然看到这里了，如果觉得不错，随手点个赞、在看、转发三连吧，如果想第一时间收到推送，也可以给我个星标⭐～<br>谢谢你看我的文章，我们，下次再见。</p>
 <blockquote>
-<p>&#x2F; 作者：飞飞<br>&#x2F; 投稿或爆料，请联系邮箱：<a href="mailto:&#x78;&#105;&#110;&#112;&#101;&#x6e;&#x67;&#x66;&#x65;&#105;&#x35;&#x32;&#49;&#64;&#x67;&#x6d;&#97;&#x69;&#x6c;&#x2e;&#99;&#x6f;&#x6d;">&#x78;&#105;&#110;&#112;&#101;&#x6e;&#x67;&#x66;&#x65;&#105;&#x35;&#x32;&#49;&#64;&#x67;&#x6d;&#97;&#x69;&#x6c;&#x2e;&#99;&#x6f;&#x6d;</a></p>
+<p>&#x2F; 作者：飞飞<br>&#x2F; 投稿或爆料，请联系邮箱：<a href="mailto:&#120;&#x69;&#110;&#x70;&#101;&#x6e;&#x67;&#x66;&#x65;&#x69;&#53;&#x32;&#x31;&#x40;&#x67;&#x6d;&#x61;&#105;&#x6c;&#46;&#x63;&#111;&#109;">&#120;&#x69;&#110;&#x70;&#101;&#x6e;&#x67;&#x66;&#x65;&#x69;&#53;&#x32;&#x31;&#x40;&#x67;&#x6d;&#x61;&#105;&#x6c;&#46;&#x63;&#111;&#109;</a></p>
 </blockquote>
 ]]></content>
       <categories>
         <category>编程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Anthropic</tag>
         <tag>Opus 5.5</tag>
         <tag>Fable 5.2</tag>
@@ -394,10 +500,10 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
-        <tag>多智能体</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>Agent</tag>
+        <tag>多智能体</tag>
         <tag>协作成本</tag>
       </tags>
   </entry>
@@ -455,8 +561,8 @@
       <tags>
         <tag>AI编程</tag>
         <tag>Cursor</tag>
-        <tag>Gemini</tag>
         <tag>Google</tag>
+        <tag>Gemini</tag>
         <tag>模型评测</tag>
         <tag>Token成本</tag>
       </tags>
@@ -588,11 +694,11 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
-        <tag>MCP</tag>
+        <tag>AI</tag>
         <tag>Token</tag>
         <tag>Agent</tag>
+        <tag>MCP</tag>
       </tags>
   </entry>
   <entry>
@@ -644,8 +750,8 @@
       </categories>
       <tags>
         <tag>Git</tag>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>安全</tag>
         <tag>密钥泄露</tag>
       </tags>
@@ -799,8 +905,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>开源模型</tag>
         <tag>端侧AI</tag>
+        <tag>开源模型</tag>
         <tag>成本</tag>
         <tag>TTS</tag>
         <tag>有声书</tag>
@@ -906,9 +1012,9 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>模型评测</tag>
         <tag>科研</tag>
       </tags>
@@ -1035,8 +1141,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Cursor</tag>
         <tag>AI Agent</tag>
+        <tag>Cursor</tag>
         <tag>部署</tag>
         <tag>账号体系</tag>
         <tag>所有权</tag>
@@ -1306,8 +1412,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>Google AI Studio</tag>
         <tag>Gemini API</tag>
+        <tag>Google AI Studio</tag>
         <tag>模型迁移</tag>
         <tag>API 兼容性</tag>
       </tags>
@@ -1450,8 +1556,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Cursor</tag>
         <tag>Claude Code</tag>
+        <tag>Cursor</tag>
         <tag>供应链安全</tag>
         <tag>安全</tag>
         <tag>扩展市场</tag>
@@ -1515,10 +1621,10 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>工作流</tag>
+        <tag>AI编程</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
         <tag>GEO</tag>
       </tags>
   </entry>
@@ -1644,9 +1750,9 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>OpenAI</tag>
-        <tag>Codex</tag>
         <tag>Claude</tag>
+        <tag>Codex</tag>
+        <tag>OpenAI</tag>
         <tag>订阅制</tag>
         <tag>AI行业</tag>
       </tags>
@@ -1844,8 +1950,8 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>软件工程</tag>
         <tag>Claude</tag>
+        <tag>软件工程</tag>
         <tag>Proton</tag>
         <tag>管理</tag>
       </tags>
@@ -2921,8 +3027,8 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>Skills</tag>
-        <tag>工作流</tag>
         <tag>Claude</tag>
+        <tag>工作流</tag>
       </tags>
   </entry>
   <entry>
@@ -3002,8 +3108,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>自动化</tag>
         <tag>工作流</tag>
+        <tag>自动化</tag>
         <tag>Claude Duet</tag>
       </tags>
   </entry>
@@ -3131,8 +3237,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>开源</tag>
         <tag>DeepSeek</tag>
+        <tag>开源</tag>
         <tag>成本</tag>
         <tag>推理框架</tag>
         <tag>KV缓存</tag>
@@ -3345,10 +3451,10 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Anthropic</tag>
-        <tag>职业成长</tag>
+        <tag>AI</tag>
         <tag>Agent</tag>
+        <tag>职业成长</tag>
       </tags>
   </entry>
   <entry>
@@ -3487,8 +3593,8 @@
       </categories>
       <tags>
         <tag>随机数</tag>
-        <tag>AI</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>密码学</tag>
         <tag>验证</tag>
       </tags>
@@ -3548,8 +3654,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Anthropic</tag>
+        <tag>AI Agent</tag>
         <tag>git</tag>
         <tag>版本控制</tag>
         <tag>基础设施</tag>
@@ -3608,8 +3714,8 @@
       </categories>
       <tags>
         <tag>Chrome</tag>
-        <tag>ChatGPT</tag>
         <tag>Agent</tag>
+        <tag>ChatGPT</tag>
         <tag>浏览器</tag>
       </tags>
   </entry>
@@ -4100,8 +4206,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Anthropic</tag>
+        <tag>AI Agent</tag>
         <tag>AI安全</tag>
         <tag>权限边界</tag>
         <tag>评测环境</tag>
@@ -4225,8 +4331,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>Claude</tag>
         <tag>成本</tag>
         <tag>订阅</tag>
@@ -4364,8 +4470,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI 安全</tag>
         <tag>Agent</tag>
+        <tag>AI 安全</tag>
         <tag>对齐</tag>
         <tag>可观测性</tag>
         <tag>METR</tag>
@@ -4659,9 +4765,9 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>小米</tag>
-        <tag>MiMo</tag>
         <tag>开源模型</tag>
+        <tag>MiMo</tag>
+        <tag>小米</tag>
         <tag>成本</tag>
         <tag>Artificial Analysis</tag>
       </tags>
@@ -4796,8 +4902,8 @@
       </categories>
       <tags>
         <tag>Anthropic</tag>
-        <tag>Gemini</tag>
         <tag>Agent</tag>
+        <tag>Gemini</tag>
         <tag>AI安全</tag>
         <tag>权限边界</tag>
       </tags>
@@ -4842,8 +4948,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>OpenAI</tag>
         <tag>Claude</tag>
+        <tag>OpenAI</tag>
         <tag>Agent</tag>
         <tag>安全</tag>
       </tags>
@@ -4894,9 +5000,9 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI 安全</tag>
         <tag>OpenAI</tag>
         <tag>Agent</tag>
+        <tag>AI 安全</tag>
         <tag>对齐</tag>
         <tag>上下文</tag>
       </tags>
@@ -5085,10 +5191,10 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>AI编程</tag>
-        <tag>Claude</tag>
+        <tag>AI</tag>
         <tag>开源模型</tag>
+        <tag>Claude</tag>
         <tag>腾讯混元</tag>
       </tags>
   </entry>
@@ -5169,8 +5275,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>开源</tag>
         <tag>Google</tag>
+        <tag>开源</tag>
         <tag>Apache</tag>
         <tag>软件供应链</tag>
         <tag>开源治理</tag>
@@ -5725,8 +5831,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>OpenAI</tag>
         <tag>Codex</tag>
+        <tag>OpenAI</tag>
         <tag>Astra</tag>
         <tag>GPT6</tag>
         <tag>推理档位</tag>
@@ -6446,8 +6552,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Anthropic</tag>
+        <tag>AI Agent</tag>
         <tag>Claude</tag>
         <tag>隐私</tag>
         <tag>AI 记忆</tag>
@@ -6642,9 +6748,9 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>本地部署</tag>
         <tag>开源模型</tag>
         <tag>Qwen</tag>
+        <tag>本地部署</tag>
         <tag>benchmark</tag>
       </tags>
   </entry>
@@ -6750,8 +6856,8 @@
       <tags>
         <tag>AI编程</tag>
         <tag>Cursor</tag>
-        <tag>SpaceX</tag>
         <tag>ClaudeCode</tag>
+        <tag>SpaceX</tag>
         <tag>Grok</tag>
       </tags>
   </entry>
@@ -6824,9 +6930,9 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>工作流</tag>
         <tag>Agent</tag>
         <tag>成本</tag>
+        <tag>工作流</tag>
         <tag>搜索</tag>
       </tags>
   </entry>
@@ -6961,8 +7067,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>工作流</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
         <tag>本地模型</tag>
         <tag>Meta</tag>
       </tags>
@@ -7029,9 +7135,9 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>工作流</tag>
         <tag>Claude</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
         <tag>权限</tag>
       </tags>
   </entry>
@@ -7083,8 +7189,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>工作流</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
         <tag>Cloudflare</tag>
         <tag>浏览器</tag>
       </tags>
@@ -7433,9 +7539,9 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>工作流</tag>
         <tag>Codex</tag>
         <tag>成本</tag>
+        <tag>工作流</tag>
         <tag>子代理</tag>
       </tags>
   </entry>
@@ -7577,8 +7683,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Anthropic</tag>
+        <tag>AI Agent</tag>
         <tag>Claude</tag>
         <tag>提示词</tag>
         <tag>安全</tag>
@@ -7650,8 +7756,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>基准测试</tag>
         <tag>DeepSeek</tag>
+        <tag>基准测试</tag>
         <tag>国产模型</tag>
       </tags>
   </entry>
@@ -8001,9 +8107,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>多智能体</tag>
-        <tag>工作流</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
+        <tag>多智能体</tag>
         <tag>流程设计</tag>
       </tags>
   </entry>
@@ -8130,8 +8236,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>Gemini</tag>
         <tag>Agent</tag>
+        <tag>Gemini</tag>
         <tag>Hook</tag>
         <tag>放权边界</tag>
       </tags>
@@ -8191,9 +8297,9 @@
         <category>观点</category>
       </categories>
       <tags>
+        <tag>开源模型</tag>
         <tag>Ollama</tag>
         <tag>本地部署</tag>
-        <tag>开源模型</tag>
         <tag>模型选型</tag>
         <tag>Kimi-K3</tag>
       </tags>
@@ -8247,8 +8353,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>工作流</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
         <tag>AI安全</tag>
         <tag>凭证安全</tag>
         <tag>权限边界</tag>
@@ -8320,9 +8426,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>工作流</tag>
         <tag>Harness</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
         <tag>AI Engineering</tag>
       </tags>
   </entry>
@@ -8576,8 +8682,8 @@
       <tags>
         <tag>AI</tag>
         <tag>Cursor</tag>
-        <tag>多智能体</tag>
         <tag>Agent</tag>
+        <tag>多智能体</tag>
         <tag>编排</tag>
       </tags>
   </entry>
@@ -8621,8 +8727,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>独立开发</tag>
         <tag>大模型</tag>
+        <tag>独立开发</tag>
         <tag>API</tag>
         <tag>模型检测</tag>
       </tags>
@@ -8701,8 +8807,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>工作流</tag>
         <tag>Ollama</tag>
+        <tag>工作流</tag>
         <tag>本地模型</tag>
         <tag>模型选型</tag>
         <tag>隐私</tag>
@@ -8791,10 +8897,10 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>OpenAI</tag>
-        <tag>工作流</tag>
         <tag>Skill</tag>
+        <tag>OpenAI</tag>
         <tag>成本</tag>
+        <tag>工作流</tag>
       </tags>
   </entry>
   <entry>
@@ -8863,8 +8969,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>工作流</tag>
         <tag>Skill</tag>
+        <tag>工作流</tag>
         <tag>AI写作</tag>
         <tag>质量检测</tag>
       </tags>
@@ -8907,8 +9013,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Claude</tag>
+        <tag>AI 编程</tag>
         <tag>模型选型</tag>
         <tag>Fable 5</tag>
       </tags>
@@ -9013,8 +9119,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>工作流</tag>
         <tag>Skill</tag>
+        <tag>工作流</tag>
         <tag>供应商信任</tag>
         <tag>凭证安全</tag>
       </tags>
@@ -9058,8 +9164,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>xAI</tag>
         <tag>供应商信任</tag>
         <tag>Grok Build</tag>
@@ -9166,11 +9272,11 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
-        <tag>提示词工程</tag>
         <tag>Claude Code</tag>
-        <tag>工作流</tag>
+        <tag>AI编程</tag>
         <tag>Skill</tag>
+        <tag>工作流</tag>
+        <tag>提示词工程</tag>
       </tags>
   </entry>
   <entry>
@@ -9218,10 +9324,10 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
-        <tag>提示词工程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>工作流</tag>
+        <tag>提示词工程</tag>
         <tag>Hook</tag>
       </tags>
   </entry>
@@ -9386,8 +9492,8 @@
       </categories>
       <tags>
         <tag>Anthropic</tag>
-        <tag>OpenAI</tag>
         <tag>Codex</tag>
+        <tag>OpenAI</tag>
         <tag>GPT-5.6</tag>
         <tag>ChatGPT Work</tag>
       </tags>
@@ -9720,8 +9826,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>数据安全</tag>
         <tag>CLI</tag>
+        <tag>数据安全</tag>
         <tag>Grok</tag>
       </tags>
   </entry>
@@ -9800,10 +9906,10 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
-        <tag>工作流</tag>
+        <tag>AI</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
         <tag>浏览器</tag>
       </tags>
   </entry>
@@ -9850,9 +9956,9 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>提示词工程</tag>
-        <tag>工作流</tag>
         <tag>Skill</tag>
+        <tag>工作流</tag>
+        <tag>提示词工程</tag>
         <tag>Mistral</tag>
       </tags>
   </entry>
@@ -9898,8 +10004,8 @@
       <tags>
         <tag>复盘</tag>
         <tag>AI</tag>
-        <tag>工作流</tag>
         <tag>Claude</tag>
+        <tag>工作流</tag>
         <tag>元认知</tag>
       </tags>
   </entry>
@@ -9951,8 +10057,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>自媒体</tag>
         <tag>内容创作</tag>
+        <tag>自媒体</tag>
         <tag>AI写作</tag>
         <tag>AI味</tag>
       </tags>
@@ -10001,8 +10107,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>OpenAI</tag>
         <tag>Codex</tag>
+        <tag>OpenAI</tag>
         <tag>ChatGPT</tag>
         <tag>GPT-5.6</tag>
       </tags>
@@ -10088,8 +10194,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>自动化</tag>
         <tag>工作流</tag>
+        <tag>自动化</tag>
         <tag>循环</tag>
       </tags>
   </entry>
@@ -10131,9 +10237,9 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
+        <tag>AI</tag>
         <tag>代码质量</tag>
         <tag>生成式AI</tag>
       </tags>
@@ -10174,9 +10280,9 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>多智能体</tag>
         <tag>Claude</tag>
         <tag>Agent</tag>
+        <tag>多智能体</tag>
         <tag>模型选型</tag>
         <tag>成本优化</tag>
       </tags>
@@ -10212,10 +10318,10 @@
         <category>观点</category>
       </categories>
       <tags>
+        <tag>Claude</tag>
+        <tag>Skill</tag>
         <tag>提示词工程</tag>
         <tag>系统提示词</tag>
-        <tag>Skill</tag>
-        <tag>Claude</tag>
         <tag>逆向工程</tag>
       </tags>
   </entry>
@@ -10396,8 +10502,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>工作流</tag>
         <tag>Claude</tag>
+        <tag>工作流</tag>
         <tag>模型选型</tag>
         <tag>AI成本</tag>
         <tag>企业AI</tag>
@@ -10491,8 +10597,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>工作流</tag>
         <tag>成本</tag>
+        <tag>工作流</tag>
         <tag>模型选型</tag>
         <tag>路由</tag>
       </tags>
@@ -10601,8 +10707,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>效率工具</tag>
         <tag>Agent</tag>
+        <tag>效率工具</tag>
         <tag>后台agents</tag>
       </tags>
   </entry>
@@ -10651,8 +10757,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>MCP</tag>
         <tag>Agent</tag>
+        <tag>MCP</tag>
         <tag>X</tag>
         <tag>API</tag>
       </tags>
@@ -10698,8 +10804,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>工作流</tag>
         <tag>Agent</tag>
+        <tag>工作流</tag>
         <tag>AI Skill</tag>
         <tag>方法论</tag>
       </tags>
@@ -10797,8 +10903,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>Agentic Coding</tag>
         <tag>开源</tag>
+        <tag>Agentic Coding</tag>
         <tag>国产模型</tag>
         <tag>LongCat</tag>
       </tags>
@@ -10958,8 +11064,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>CLAUDE.md</tag>
         <tag>工作流</tag>
+        <tag>CLAUDE.md</tag>
         <tag>Compound Engineering</tag>
       </tags>
   </entry>
@@ -11042,8 +11148,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Anthropic</tag>
+        <tag>AI Agent</tag>
         <tag>Claude Tag</tag>
         <tag>Slack</tag>
         <tag>协作</tag>
@@ -11505,8 +11611,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>个人成长</tag>
         <tag>AI Agent</tag>
+        <tag>个人成长</tag>
         <tag>一人公司</tag>
         <tag>OPC</tag>
         <tag>AI创业</tag>
@@ -11684,10 +11790,10 @@
         <category>个人成长</category>
       </categories>
       <tags>
+        <tag>工作流</tag>
         <tag>个人成长</tag>
         <tag>一人公司</tag>
         <tag>OPC</tag>
-        <tag>工作流</tag>
         <tag>AI自动化</tag>
       </tags>
   </entry>
@@ -11728,9 +11834,9 @@
         <category>个人成长</category>
       </categories>
       <tags>
+        <tag>内容创作</tag>
         <tag>个人成长</tag>
         <tag>一人公司</tag>
-        <tag>内容创作</tag>
         <tag>Company of One</tag>
         <tag>内容飞轮</tag>
         <tag>持续输出</tag>
@@ -12014,8 +12120,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>多智能体</tag>
         <tag>工作流</tag>
+        <tag>多智能体</tag>
         <tag>超级个体</tag>
       </tags>
   </entry>
@@ -12190,8 +12296,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>自动化</tag>
         <tag>工作流</tag>
+        <tag>自动化</tag>
         <tag>超级个体</tag>
       </tags>
   </entry>
@@ -12324,9 +12430,9 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>OpenAI</tag>
         <tag>大模型</tag>
         <tag>Codex</tag>
+        <tag>OpenAI</tag>
         <tag>GPT-5.6</tag>
         <tag>AI监管</tag>
       </tags>
@@ -12372,8 +12478,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>Prompt</tag>
         <tag>工作流</tag>
+        <tag>Prompt</tag>
         <tag>AI 超级个体</tag>
         <tag>任务拆解</tag>
       </tags>
@@ -12421,8 +12527,8 @@
         <category>个人成长</category>
       </categories>
       <tags>
-        <tag>自动化</tag>
         <tag>工作流</tag>
+        <tag>自动化</tag>
         <tag>超级个体</tag>
         <tag>AI效率</tag>
         <tag>系统思维</tag>
@@ -12501,8 +12607,8 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>自动化</tag>
         <tag>工作流</tag>
+        <tag>自动化</tag>
         <tag>内容工厂</tag>
         <tag>AI写作</tag>
         <tag>RSS</tag>
@@ -12584,8 +12690,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Trae</tag>
         <tag>零基础</tag>
         <tag>个人主页</tag>
@@ -12667,8 +12773,8 @@
         <category>个人成长</category>
       </categories>
       <tags>
-        <tag>个人成长</tag>
         <tag>AI工具</tag>
+        <tag>个人成长</tag>
         <tag>AI副业</tag>
         <tag>AI变现</tag>
       </tags>
@@ -12781,9 +12887,9 @@
         <category>教程</category>
       </categories>
       <tags>
+        <tag>ChatGPT</tag>
         <tag>效率工具</tag>
         <tag>AI 助理</tag>
-        <tag>ChatGPT</tag>
         <tag>AI 入门</tag>
       </tags>
   </entry>
@@ -12838,8 +12944,8 @@
         <category>教程</category>
       </categories>
       <tags>
-        <tag>Prompt</tag>
         <tag>ChatGPT</tag>
+        <tag>Prompt</tag>
         <tag>AI写作</tag>
         <tag>提示词</tag>
         <tag>AI超级个体</tag>
@@ -13004,9 +13110,9 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>代码安全</tag>
-        <tag>OpenAI</tag>
         <tag>Codex</tag>
+        <tag>OpenAI</tag>
+        <tag>代码安全</tag>
         <tag>漏洞扫描</tag>
       </tags>
   </entry>
@@ -13092,8 +13198,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>自动化</tag>
         <tag>工作流</tag>
+        <tag>自动化</tag>
         <tag>内容工厂</tag>
       </tags>
   </entry>
@@ -13217,9 +13323,9 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>Cursor</tag>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Cursor</tag>
         <tag>Codex</tag>
       </tags>
   </entry>
@@ -13296,9 +13402,9 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Cursor</tag>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Cursor</tag>
         <tag>MCP</tag>
         <tag>Model Context Protocol</tag>
       </tags>
@@ -13339,8 +13445,8 @@
       </categories>
       <tags>
         <tag>编程</tag>
-        <tag>Cursor</tag>
         <tag>AI Agent</tag>
+        <tag>Cursor</tag>
         <tag>Notion</tag>
       </tags>
   </entry>
@@ -13375,8 +13481,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>阿里巴巴</tag>
         <tag>模型蒸馏</tag>
       </tags>
@@ -13413,8 +13519,8 @@
       </categories>
       <tags>
         <tag>程序员</tag>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>职业</tag>
       </tags>
   </entry>
@@ -13452,8 +13558,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>Gemini</tag>
         <tag>Google</tag>
+        <tag>Gemini</tag>
         <tag>computer use</tag>
       </tags>
   </entry>
@@ -13491,8 +13597,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>AI Agent</tag>
         <tag>字节跳动</tag>
         <tag>TRAE</tag>
@@ -13583,9 +13689,9 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
+        <tag>AI</tag>
         <tag>Agent</tag>
       </tags>
   </entry>
@@ -13632,8 +13738,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>独立开发</tag>
         <tag>DeepSeek</tag>
+        <tag>独立开发</tag>
         <tag>Next.js</tag>
         <tag>提示词</tag>
       </tags>
@@ -13672,8 +13778,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>大模型</tag>
         <tag>Seed2.1</tag>
       </tags>
@@ -13716,8 +13822,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>网络安全</tag>
         <tag>AI安全</tag>
       </tags>
@@ -13962,8 +14068,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>AI Agent</tag>
         <tag>Grok</tag>
         <tag>自主Agent</tag>
@@ -14048,8 +14154,8 @@
       </categories>
       <tags>
         <tag>程序员</tag>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Anthropic</tag>
         <tag>观点</tag>
       </tags>
@@ -14178,8 +14284,8 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>大模型</tag>
         <tag>Kimi</tag>
         <tag>国产模型</tag>
@@ -14270,8 +14376,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>裁员</tag>
         <tag>token成本</tag>
         <tag>开发者</tag>
@@ -14443,9 +14549,9 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>OpenAI</tag>
         <tag>Codex</tag>
         <tag>开发者工具</tag>
+        <tag>OpenAI</tag>
         <tag>CDP</tag>
       </tags>
   </entry>
@@ -14498,8 +14604,8 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>小米</tag>
         <tag>ClaudeCode</tag>
+        <tag>小米</tag>
         <tag>国产大模型</tag>
         <tag>MiMoCode</tag>
       </tags>
@@ -14601,8 +14707,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>Kotlin</tag>
         <tag>ClaudeCode</tag>
+        <tag>Kotlin</tag>
         <tag>SpringBoot</tag>
         <tag>迁移</tag>
         <tag>dynamicworkflow</tag>
@@ -14655,9 +14761,9 @@
       </categories>
       <tags>
         <tag>Anthropic</tag>
-        <tag>Opus</tag>
-        <tag>大模型</tag>
         <tag>Claude</tag>
+        <tag>大模型</tag>
+        <tag>Opus</tag>
         <tag>Fable5</tag>
       </tags>
   </entry>
@@ -14715,9 +14821,9 @@
         <category>产品</category>
       </categories>
       <tags>
-        <tag>独立开发</tag>
         <tag>移动端</tag>
         <tag>公众号</tag>
+        <tag>独立开发</tag>
         <tag>内容工厂</tag>
         <tag>AI写作</tag>
       </tags>
@@ -14776,8 +14882,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Skill</tag>
         <tag>ClaudeCode</tag>
+        <tag>Skill</tag>
         <tag>Agent</tag>
         <tag>Teach</tag>
         <tag>学习</tag>
@@ -14959,8 +15065,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Anthropic</tag>
         <tag>微软</tag>
         <tag>MAI</tag>
@@ -15013,8 +15119,8 @@
       </categories>
       <tags>
         <tag>SDK</tag>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>开发工具</tag>
         <tag>Codex</tag>
       </tags>
@@ -15065,8 +15171,8 @@
         <category>产品</category>
       </categories>
       <tags>
-        <tag>独立开发</tag>
         <tag>公众号</tag>
+        <tag>独立开发</tag>
         <tag>内容工厂</tag>
         <tag>AI写作</tag>
         <tag>一键发布</tag>
@@ -15167,8 +15273,8 @@
         <category>产品</category>
       </categories>
       <tags>
-        <tag>独立开发</tag>
         <tag>公众号</tag>
+        <tag>独立开发</tag>
         <tag>内容工厂</tag>
         <tag>AIGC</tag>
         <tag>AI写作</tag>
@@ -15218,8 +15324,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Anthropic</tag>
         <tag>智谱</tag>
         <tag>IPO</tag>
@@ -15278,11 +15384,11 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>开源</tag>
-        <tag>MiniMax</tag>
         <tag>国产大模型</tag>
+        <tag>MiniMax</tag>
       </tags>
   </entry>
   <entry>
@@ -15390,9 +15496,9 @@
         <category>观点</category>
       </categories>
       <tags>
+        <tag>Claude Code</tag>
         <tag>AI编程</tag>
         <tag>GitHub Copilot</tag>
-        <tag>Claude Code</tag>
         <tag>订阅制</tag>
         <tag>按量计费</tag>
       </tags>
@@ -15444,9 +15550,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>内容创作</tag>
         <tag>skill</tag>
         <tag>设计卡片</tag>
+        <tag>内容创作</tag>
         <tag>AI出图</tag>
       </tags>
   </entry>
@@ -15510,8 +15616,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Agent</tag>
         <tag>SKILL.md</tag>
         <tag>本地模型</tag>
@@ -15561,11 +15667,11 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>效率工具</tag>
+        <tag>AI编程</tag>
         <tag>配置</tag>
         <tag>frontmatter</tag>
+        <tag>效率工具</tag>
       </tags>
   </entry>
   <entry>
@@ -15609,8 +15715,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Claude</tag>
         <tag>Agent</tag>
         <tag>动态工作流</tag>
@@ -15661,11 +15767,11 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>Opus</tag>
-        <tag>大模型</tag>
+        <tag>AI编程</tag>
         <tag>Claude</tag>
+        <tag>大模型</tag>
+        <tag>Opus</tag>
       </tags>
   </entry>
   <entry>
@@ -15706,11 +15812,11 @@
         <category>编程</category>
       </categories>
       <tags>
+        <tag>Claude Code</tag>
         <tag>AI编程</tag>
         <tag>Cursor</tag>
-        <tag>Claude Code</tag>
-        <tag>Plan Mode</tag>
         <tag>Codex</tag>
+        <tag>Plan Mode</tag>
       </tags>
   </entry>
   <entry>
@@ -15756,8 +15862,8 @@
       <tags>
         <tag>Android Studio</tag>
         <tag>Android</tag>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>开发工作流</tag>
       </tags>
   </entry>
@@ -15813,8 +15919,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>MCP</tag>
         <tag>Agent</tag>
+        <tag>MCP</tag>
         <tag>国产大模型</tag>
         <tag>Qwen3-Max</tag>
         <tag>Alibaba</tag>
@@ -15887,9 +15993,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
+        <tag>Anthropic</tag>
         <tag>MCP</tag>
         <tag>Subagents</tag>
-        <tag>Anthropic</tag>
         <tag>学习路径</tag>
         <tag>证书</tag>
         <tag>AI 课程</tag>
@@ -16033,10 +16139,10 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>Gemini</tag>
-        <tag>Google</tag>
-        <tag>Antigravity</tag>
         <tag>Coding</tag>
+        <tag>Google</tag>
+        <tag>Gemini</tag>
+        <tag>Antigravity</tag>
         <tag>Quota</tag>
         <tag>Pricing</tag>
       </tags>
@@ -16154,13 +16260,13 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Gemini</tag>
         <tag>Google</tag>
-        <tag>Sora</tag>
+        <tag>Gemini</tag>
         <tag>Gemini Omni</tag>
         <tag>AI 视频生成</tag>
         <tag>多模态</tag>
         <tag>conversational editing</tag>
+        <tag>Sora</tag>
         <tag>Veo</tag>
       </tags>
   </entry>
@@ -16247,10 +16353,10 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI 编程</tag>
         <tag>Google</tag>
-        <tag>Antigravity</tag>
+        <tag>AI 编程</tag>
         <tag>Managed Agents</tag>
+        <tag>Antigravity</tag>
         <tag>AI Studio</tag>
         <tag>Gemini API</tag>
         <tag>WebMCP</tag>
@@ -16320,8 +16426,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>Karpathy</tag>
         <tag>LLM</tag>
         <tag>pre-training</tag>
@@ -16370,9 +16476,9 @@
         <category>AI</category>
       </categories>
       <tags>
+        <tag>Anthropic</tag>
         <tag>AI</tag>
         <tag>Skills</tag>
-        <tag>Anthropic</tag>
         <tag>Agent</tag>
         <tag>微信读书</tag>
       </tags>
@@ -16539,8 +16645,8 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>OpenAI</tag>
         <tag>Codex</tag>
+        <tag>OpenAI</tag>
         <tag>ChatGPT</tag>
         <tag>异步开发</tag>
       </tags>
@@ -16984,8 +17090,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Anthropic</tag>
+        <tag>AI 编程</tag>
         <tag>工作流</tag>
         <tag>认知偏差</tag>
       </tags>
@@ -17128,9 +17234,9 @@
         <category>教程</category>
       </categories>
       <tags>
+        <tag>Codex</tag>
         <tag>AI 编程</tag>
         <tag>OpenAI</tag>
-        <tag>Codex</tag>
         <tag>Chrome 插件</tag>
         <tag>踩坑</tag>
       </tags>
@@ -17293,9 +17399,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>上下文管理</tag>
         <tag>skill</tag>
         <tag>token</tag>
+        <tag>上下文管理</tag>
         <tag>doctor</tag>
       </tags>
   </entry>
@@ -17533,9 +17639,9 @@
         <category>产品</category>
       </categories>
       <tags>
+        <tag>Codex</tag>
         <tag>AI 编程</tag>
         <tag>OpenAI</tag>
-        <tag>Codex</tag>
         <tag>Codex Pets</tag>
         <tag>UX</tag>
       </tags>
@@ -17946,8 +18052,8 @@
       </categories>
       <tags>
         <tag>教程</tag>
-        <tag>MiMo</tag>
         <tag>DeepSeek</tag>
+        <tag>MiMo</tag>
         <tag>Claude Desktop</tag>
         <tag>国产大模型</tag>
         <tag>GLM</tag>
@@ -18024,10 +18130,10 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
-        <tag>小米</tag>
-        <tag>MiMo</tag>
         <tag>开源模型</tag>
+        <tag>AI 编程</tag>
+        <tag>MiMo</tag>
+        <tag>小米</tag>
       </tags>
   </entry>
   <entry>
@@ -18212,9 +18318,9 @@
         <category>产品</category>
       </categories>
       <tags>
+        <tag>Codex</tag>
         <tag>AI 编程</tag>
         <tag>OpenAI</tag>
-        <tag>Codex</tag>
         <tag>Agentic</tag>
         <tag>GPT-5.5</tag>
       </tags>
@@ -18355,9 +18461,9 @@
         <category>产品</category>
       </categories>
       <tags>
-        <tag>GitHub Copilot</tag>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
+        <tag>GitHub Copilot</tag>
         <tag>订阅制</tag>
         <tag>Agentic</tag>
       </tags>
@@ -18426,8 +18532,8 @@
       </categories>
       <tags>
         <tag>OpenAI</tag>
-        <tag>ChatGPT</tag>
         <tag>GPT Image 2</tag>
+        <tag>ChatGPT</tag>
         <tag>AI 绘图</tag>
         <tag>博客封面</tag>
       </tags>
@@ -18491,8 +18597,8 @@
         <tag>Cursor</tag>
         <tag>AI 编程</tag>
         <tag>SpaceX</tag>
-        <tag>xAI</tag>
         <tag>马斯克</tag>
+        <tag>xAI</tag>
       </tags>
   </entry>
   <entry>
@@ -18573,10 +18679,10 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>MCP</tag>
-        <tag>开源</tag>
         <tag>Hermes Agent</tag>
         <tag>Nous Research</tag>
+        <tag>开源</tag>
+        <tag>MCP</tag>
       </tags>
   </entry>
   <entry>
@@ -18658,10 +18764,10 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI</tag>
-        <tag>Figma</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>Google</tag>
+        <tag>Figma</tag>
         <tag>Claude Design</tag>
         <tag>Stitch</tag>
       </tags>
@@ -18715,8 +18821,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>Gemini</tag>
         <tag>Google</tag>
+        <tag>Gemini</tag>
         <tag>Mac</tag>
         <tag>Apple Silicon</tag>
       </tags>
@@ -18802,10 +18908,10 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
-        <tag>Figma</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>Opus 4.7</tag>
+        <tag>Figma</tag>
         <tag>Claude Design</tag>
       </tags>
   </entry>
@@ -19095,11 +19201,11 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
-        <tag>gstack</tag>
+        <tag>AI</tag>
         <tag>Skill</tag>
         <tag>Token</tag>
+        <tag>gstack</tag>
       </tags>
   </entry>
   <entry>
@@ -19158,11 +19264,11 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
-        <tag>Anthropic</tag>
-        <tag>Claude</tag>
         <tag>Buddy</tag>
+        <tag>Anthropic</tag>
+        <tag>AI</tag>
+        <tag>Claude</tag>
       </tags>
   </entry>
   <entry>
@@ -19220,8 +19326,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
         <tag>Claude</tag>
         <tag>身份验证</tag>
         <tag>KYC</tag>
@@ -19278,11 +19384,11 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Figma</tag>
         <tag>Anthropic</tag>
         <tag>Claude</tag>
         <tag>Opus 4.7</tag>
         <tag>Routines</tag>
+        <tag>Figma</tag>
       </tags>
   </entry>
   <entry>
@@ -19353,10 +19459,10 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>OpenClaw</tag>
         <tag>Anthropic</tag>
         <tag>Claude</tag>
         <tag>Agent</tag>
+        <tag>OpenClaw</tag>
         <tag>Managed Agents</tag>
       </tags>
   </entry>
@@ -19592,10 +19698,10 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>教程</tag>
         <tag>AI 编程</tag>
-        <tag>开发者工具</tag>
         <tag>powerup</tag>
+        <tag>教程</tag>
+        <tag>开发者工具</tag>
       </tags>
   </entry>
   <entry>
@@ -19662,11 +19768,11 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>开发效率</tag>
-        <tag>AI工具</tag>
         <tag>Graphify</tag>
         <tag>知识图谱</tag>
+        <tag>AI工具</tag>
         <tag>代码理解</tag>
+        <tag>开发效率</tag>
       </tags>
   </entry>
   <entry>
@@ -20069,8 +20175,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Ollama</tag>
         <tag>ClaudeCode</tag>
+        <tag>Ollama</tag>
         <tag>gemma4</tag>
         <tag>本地AI</tag>
         <tag>开发实战</tag>
@@ -20354,10 +20460,10 @@
       <tags>
         <tag>编程</tag>
         <tag>AI</tag>
-        <tag>Skill</tag>
-        <tag>Claude</tag>
         <tag>效率</tag>
+        <tag>Claude</tag>
         <tag>ClaudeCode</tag>
+        <tag>Skill</tag>
       </tags>
   </entry>
   <entry>
@@ -20430,9 +20536,9 @@
       <tags>
         <tag>AI</tag>
         <tag>开发工具</tag>
-        <tag>AI 编程</tag>
         <tag>Codex</tag>
         <tag>Agent Skills</tag>
+        <tag>AI 编程</tag>
       </tags>
   </entry>
   <entry>
@@ -20526,11 +20632,11 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Anthropic</tag>
+        <tag>AI</tag>
+        <tag>Claude</tag>
         <tag>网络安全</tag>
         <tag>大模型</tag>
-        <tag>Claude</tag>
       </tags>
   </entry>
   <entry>
@@ -20576,10 +20682,10 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Google</tag>
-        <tag>开源模型</tag>
         <tag>Gemma</tag>
+        <tag>Google</tag>
         <tag>端侧AI</tag>
+        <tag>开源模型</tag>
         <tag>移动端</tag>
       </tags>
   </entry>
@@ -20632,10 +20738,10 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>Cursor</tag>
-        <tag>开发工具</tag>
         <tag>AI Agent</tag>
+        <tag>Cursor</tag>
         <tag>IDE</tag>
+        <tag>开发工具</tag>
       </tags>
   </entry>
   <entry>
@@ -20740,10 +20846,10 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
-        <tag>Skills</tag>
+        <tag>AI</tag>
         <tag>编程工具</tag>
+        <tag>Skills</tag>
         <tag>效率</tag>
       </tags>
   </entry>
@@ -20922,10 +21028,10 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>智谱AI</tag>
         <tag>GLM-5V-Turbo</tag>
         <tag>多模态模型</tag>
         <tag>Coding</tag>
+        <tag>智谱AI</tag>
       </tags>
   </entry>
   <entry>
@@ -21121,10 +21227,10 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
-        <tag>AI Agent</tag>
+        <tag>AI</tag>
         <tag>Harness</tag>
+        <tag>AI Agent</tag>
         <tag>编程工具</tag>
       </tags>
   </entry>
@@ -21227,11 +21333,11 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>Anthropic</tag>
+        <tag>AI编程</tag>
         <tag>Buddy</tag>
         <tag>电子宠物</tag>
+        <tag>Anthropic</tag>
       </tags>
   </entry>
   <entry>
@@ -21403,9 +21509,9 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>上下文窗口</tag>
-        <tag>ChatGPT</tag>
         <tag>Claude</tag>
+        <tag>ChatGPT</tag>
+        <tag>上下文窗口</tag>
         <tag>Context Window</tag>
       </tags>
   </entry>
@@ -21548,8 +21654,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>ChatGPT</tag>
         <tag>Claude</tag>
+        <tag>ChatGPT</tag>
         <tag>Tokens</tag>
         <tag>省钱技巧</tag>
       </tags>
@@ -21604,9 +21710,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
-        <tag>效率工具</tag>
         <tag>Skill</tag>
         <tag>AI工具</tag>
+        <tag>效率工具</tag>
       </tags>
   </entry>
   <entry>
@@ -21825,9 +21931,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>教程</tag>
+        <tag>终端</tag>
         <tag>效率工具</tag>
         <tag>快捷键</tag>
-        <tag>终端</tag>
       </tags>
   </entry>
   <entry>
@@ -21872,8 +21978,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>OpenAI</tag>
         <tag>大模型</tag>
+        <tag>OpenAI</tag>
         <tag>Sora</tag>
         <tag>AI视频</tag>
         <tag>AI战略</tag>
@@ -22020,8 +22126,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>Prompt Engineering</tag>
         <tag>效率工具</tag>
+        <tag>Prompt Engineering</tag>
         <tag>AI 工作流</tag>
         <tag>AI Skills</tag>
       </tags>
@@ -22071,11 +22177,11 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>Vibe Coding</tag>
         <tag>Gemini</tag>
+        <tag>Antigravity</tag>
+        <tag>Vibe Coding</tag>
         <tag>Google AI Studio</tag>
         <tag>Firebase</tag>
-        <tag>Antigravity</tag>
       </tags>
   </entry>
   <entry>
@@ -22341,9 +22447,9 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>特斯拉</tag>
         <tag>SpaceX</tag>
         <tag>xAI</tag>
+        <tag>特斯拉</tag>
         <tag>芯片制造</tag>
         <tag>TERAFAB</tag>
       </tags>
@@ -22431,9 +22537,9 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>OpenClaw</tag>
-        <tag>大模型</tag>
         <tag>智谱AI</tag>
+        <tag>大模型</tag>
+        <tag>OpenClaw</tag>
         <tag>GLM-5-Turbo</tag>
       </tags>
   </entry>
@@ -22819,8 +22925,8 @@
       </categories>
       <tags>
         <tag>程序员</tag>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>职业发展</tag>
         <tag>软件工程</tag>
       </tags>
@@ -22903,9 +23009,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>开发工具</tag>
         <tag>AI Agent</tag>
         <tag>IDE</tag>
+        <tag>开发工具</tag>
         <tag>软件工程</tag>
       </tags>
   </entry>
@@ -23024,9 +23130,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
+        <tag>Anthropic</tag>
         <tag>AI Agent</tag>
         <tag>多智能体</tag>
-        <tag>Anthropic</tag>
         <tag>软件工程</tag>
       </tags>
   </entry>
@@ -23127,8 +23233,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>一人公司</tag>
         <tag>创业</tag>
         <tag>独立开发者</tag>
@@ -23251,8 +23357,8 @@
       <tags>
         <tag>AI</tag>
         <tag>Cursor</tag>
-        <tag>Kimi K2.5</tag>
         <tag>开源模型</tag>
+        <tag>Kimi K2.5</tag>
       </tags>
   </entry>
   <entry>
@@ -23449,8 +23555,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>AI编程</tag>
+        <tag>AI</tag>
         <tag>Cursor</tag>
         <tag>Vibe Coding</tag>
         <tag>赚钱</tag>
@@ -23587,9 +23693,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
+        <tag>Skills</tag>
         <tag>AI 编程</tag>
         <tag>开发效率</tag>
-        <tag>Skills</tag>
         <tag>自动化</tag>
       </tags>
   </entry>
@@ -24093,10 +24199,10 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>Vibe Coding</tag>
         <tag>AI 编程</tag>
-        <tag>代码质量</tag>
         <tag>开发者工具</tag>
+        <tag>Vibe Coding</tag>
+        <tag>代码质量</tag>
       </tags>
   </entry>
   <entry>
@@ -24209,8 +24315,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Anthropic</tag>
+        <tag>AI 编程</tag>
         <tag>软件工程</tag>
         <tag>开发者效率</tag>
       </tags>
@@ -24313,9 +24419,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
+        <tag>网络安全</tag>
         <tag>AI 编程</tag>
         <tag>MCP</tag>
-        <tag>网络安全</tag>
         <tag>供应链安全</tag>
       </tags>
   </entry>
@@ -24376,10 +24482,10 @@
         <category>AI</category>
       </categories>
       <tags>
+        <tag>Anthropic</tag>
         <tag>AI</tag>
         <tag>AI Agent</tag>
         <tag>效率工具</tag>
-        <tag>Anthropic</tag>
         <tag>Claude Cowork</tag>
       </tags>
   </entry>
@@ -24504,11 +24610,11 @@
         <category>教程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>效率提升</tag>
+        <tag>AI编程</tag>
         <tag>CLI</tag>
         <tag>开发者工具</tag>
+        <tag>效率提升</tag>
       </tags>
   </entry>
   <entry>
@@ -24609,8 +24715,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Spotify</tag>
         <tag>程序员职业</tag>
         <tag>开发者效率</tag>
@@ -24781,11 +24887,11 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
-        <tag>GitHub Copilot</tag>
-        <tag>Cursor</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
+        <tag>Cursor</tag>
         <tag>开发工具</tag>
+        <tag>GitHub Copilot</tag>
       </tags>
   </entry>
   <entry>
@@ -24882,8 +24988,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>开发者工具</tag>
         <tag>Agent框架</tag>
         <tag>LangChain</tag>
@@ -24960,11 +25066,11 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>AI编程</tag>
-        <tag>ChatGPT</tag>
+        <tag>AI</tag>
         <tag>Claude</tag>
         <tag>开发者工具</tag>
+        <tag>ChatGPT</tag>
       </tags>
   </entry>
   <entry>
@@ -25022,10 +25128,10 @@
       </categories>
       <tags>
         <tag>程序员</tag>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>OpenAI</tag>
+        <tag>AI编程</tag>
         <tag>Codex</tag>
+        <tag>OpenAI</tag>
       </tags>
   </entry>
   <entry>
@@ -25165,8 +25271,8 @@
         <category>教程</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Remote Control</tag>
         <tag>Channels</tag>
         <tag>远程开发</tag>
@@ -25260,8 +25366,8 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Anthropic</tag>
         <tag>Telegram</tag>
         <tag>Channels</tag>
@@ -25477,8 +25583,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>OpenClaw</tag>
         <tag>Skills</tag>
+        <tag>OpenClaw</tag>
         <tag>自动化</tag>
         <tag>Apple</tag>
       </tags>
@@ -25560,11 +25666,11 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Anthropic</tag>
-        <tag>OpenAI</tag>
         <tag>Codex</tag>
+        <tag>OpenAI</tag>
       </tags>
   </entry>
   <entry>
@@ -25934,11 +26040,11 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>Prompt Engineering</tag>
-        <tag>MCP</tag>
+        <tag>AI编程</tag>
         <tag>Skill</tag>
+        <tag>MCP</tag>
+        <tag>Prompt Engineering</tag>
       </tags>
   </entry>
   <entry>
@@ -26122,8 +26228,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Anthropic</tag>
         <tag>Remote Control</tag>
         <tag>移动开发</tag>
@@ -26278,10 +26384,10 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>开源工具</tag>
+        <tag>AI编程</tag>
         <tag>gstack</tag>
+        <tag>开源工具</tag>
         <tag>Garry Tan</tag>
       </tags>
   </entry>
@@ -26406,9 +26512,9 @@
         <category>阅读</category>
       </categories>
       <tags>
+        <tag>Claude Code</tag>
         <tag>AI编程</tag>
         <tag>GitHub Copilot</tag>
-        <tag>Claude Code</tag>
         <tag>职业发展</tag>
         <tag>程序员成长</tag>
       </tags>
@@ -26728,8 +26834,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>Gemini</tag>
         <tag>OpenAI Codex</tag>
         <tag>基准测试</tag>
@@ -28338,9 +28444,9 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
+        <tag>智谱AI</tag>
         <tag>开源</tag>
         <tag>AutoGLM</tag>
-        <tag>智谱AI</tag>
         <tag>手机Agent</tag>
       </tags>
   </entry>
@@ -28537,8 +28643,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>OpenClaw</tag>
         <tag>Skills</tag>
+        <tag>OpenClaw</tag>
         <tag>自动化</tag>
       </tags>
   </entry>
@@ -28919,9 +29025,9 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
+        <tag>MiMo</tag>
         <tag>小米</tag>
         <tag>Xiaomi miclaw</tag>
-        <tag>MiMo</tag>
         <tag>智能家居</tag>
       </tags>
   </entry>
@@ -29279,10 +29385,10 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
+        <tag>大模型</tag>
         <tag>OpenClaw</tag>
         <tag>MiniMax</tag>
         <tag>M2.7</tag>
-        <tag>大模型</tag>
       </tags>
   </entry>
   <entry>
@@ -29458,8 +29564,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>Prompt Engineering</tag>
         <tag>Gemini</tag>
+        <tag>Prompt Engineering</tag>
         <tag>Google Antigravity</tag>
         <tag>系统提示词</tag>
         <tag>AI IDE</tag>
@@ -29961,10 +30067,10 @@
         <category>阅读</category>
       </categories>
       <tags>
+        <tag>Ollama</tag>
         <tag>OpenClaw</tag>
         <tag>树莓派</tag>
         <tag>NAS</tag>
-        <tag>Ollama</tag>
         <tag>本地部署</tag>
       </tags>
   </entry>
@@ -30659,8 +30765,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI Agent</tag>
         <tag>Anthropic</tag>
+        <tag>AI Agent</tag>
         <tag>Claude Dispatch</tag>
         <tag>Cowork</tag>
         <tag>远程控制</tag>
@@ -31060,9 +31166,9 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>OpenClaw</tag>
-        <tag>自动化</tag>
-        <tag>内容创作</tag>
         <tag>工作流</tag>
+        <tag>内容创作</tag>
+        <tag>自动化</tag>
       </tags>
   </entry>
   <entry>
@@ -31457,8 +31563,8 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>OpenClaw</tag>
-        <tag>技术趋势</tag>
         <tag>开源</tag>
+        <tag>技术趋势</tag>
         <tag>个人开发者</tag>
       </tags>
   </entry>
@@ -31580,8 +31686,8 @@
       <tags>
         <tag>AI Agent</tag>
         <tag>OpenClaw</tag>
-        <tag>自动化</tag>
         <tag>开源</tag>
+        <tag>自动化</tag>
         <tag>个人助理</tag>
       </tags>
   </entry>
@@ -31749,10 +31855,10 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>开发工具</tag>
-        <tag>Gemini</tag>
         <tag>CLI</tag>
+        <tag>开发工具</tag>
         <tag>Google</tag>
+        <tag>Gemini</tag>
       </tags>
   </entry>
   <entry>
@@ -31886,11 +31992,11 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>开发工具</tag>
-        <tag>编程助手</tag>
         <tag>Opus</tag>
+        <tag>编程助手</tag>
       </tags>
   </entry>
   <entry>
@@ -31994,10 +32100,10 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
-        <tag>开发工具</tag>
+        <tag>AI</tag>
         <tag>AI Agent</tag>
+        <tag>开发工具</tag>
         <tag>Dify</tag>
       </tags>
   </entry>
@@ -32156,8 +32262,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>OpenClaw</tag>
         <tag>Skills</tag>
+        <tag>OpenClaw</tag>
         <tag>IMA</tag>
         <tag>ClawHub</tag>
       </tags>
@@ -32481,10 +32587,10 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>OpenClaw</tag>
         <tag>AI 编程</tag>
-        <tag>模型选择</tag>
+        <tag>OpenClaw</tag>
         <tag>Opus</tag>
+        <tag>模型选择</tag>
       </tags>
   </entry>
   <entry>
@@ -33051,8 +33157,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Anthropic</tag>
+        <tag>AI 编程</tag>
         <tag>报错排查</tag>
         <tag>新手指南</tag>
       </tags>
@@ -33154,8 +33260,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Anthropic</tag>
+        <tag>AI 编程</tag>
         <tag>Bug</tag>
         <tag>开发者体验</tag>
       </tags>
@@ -33270,9 +33376,9 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>GitHub Copilot</tag>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
+        <tag>GitHub Copilot</tag>
         <tag>职业发展</tag>
         <tag>初级开发者</tag>
       </tags>
@@ -33351,8 +33457,8 @@
       <tags>
         <tag>程序员</tag>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Anthropic</tag>
+        <tag>AI 编程</tag>
         <tag>职业危机</tag>
       </tags>
   </entry>
@@ -33488,8 +33594,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Anthropic</tag>
+        <tag>AI 编程</tag>
         <tag>错峰双倍</tag>
         <tag>副业项目</tag>
       </tags>
@@ -33736,8 +33842,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Anthropic</tag>
+        <tag>AI 编程</tag>
         <tag>Opus 4.6</tag>
         <tag>上下文窗口</tag>
       </tags>
@@ -33940,10 +34046,10 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>OpenClaw</tag>
         <tag>Skills</tag>
-        <tag>个人助手</tag>
+        <tag>OpenClaw</tag>
         <tag>开源</tag>
+        <tag>个人助手</tag>
       </tags>
   </entry>
   <entry>
@@ -34509,10 +34615,10 @@
       </categories>
       <tags>
         <tag>Anthropic</tag>
+        <tag>OpenAI</tag>
         <tag>GPT-5.4</tag>
         <tag>Claude Opus 4.6</tag>
         <tag>AI 模型对比</tag>
-        <tag>OpenAI</tag>
       </tags>
   </entry>
   <entry>
@@ -34594,8 +34700,8 @@
       </categories>
       <tags>
         <tag>AI Agent</tag>
-        <tag>OpenClaw</tag>
         <tag>AI 编程</tag>
+        <tag>OpenClaw</tag>
         <tag>自动化</tag>
         <tag>开源工具</tag>
       </tags>
@@ -35737,9 +35843,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
+        <tag>AI 编程</tag>
         <tag>Vibe Coding</tag>
         <tag>软件开发</tag>
-        <tag>AI 编程</tag>
         <tag>创业</tag>
       </tags>
   </entry>
@@ -35888,8 +35994,8 @@
       </categories>
       <tags>
         <tag>编程</tag>
-        <tag>AI</tag>
         <tag>Claude Code</tag>
+        <tag>AI</tag>
         <tag>职业发展</tag>
         <tag>软件工程</tag>
       </tags>
@@ -36058,8 +36164,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>效率提升</tag>
         <tag>上下文管理</tag>
+        <tag>效率提升</tag>
       </tags>
   </entry>
   <entry>
@@ -36743,8 +36849,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Skills</tag>
+        <tag>AI 编程</tag>
         <tag>自动化</tag>
         <tag>效率提升</tag>
       </tags>
@@ -37160,10 +37266,10 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
+        <tag>Anthropic</tag>
         <tag>AI 编程</tag>
         <tag>Code Review</tag>
         <tag>多智能体</tag>
-        <tag>Anthropic</tag>
       </tags>
   </entry>
   <entry>
@@ -37389,8 +37495,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>MCP</tag>
         <tag>Figma</tag>
+        <tag>MCP</tag>
         <tag>设计转代码</tag>
       </tags>
   </entry>
@@ -37688,10 +37794,10 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
+        <tag>团队协作</tag>
         <tag>AI 开发</tag>
         <tag>Agent Teams</tag>
         <tag>多智能体协作</tag>
-        <tag>团队协作</tag>
       </tags>
   </entry>
   <entry>
@@ -37985,9 +38091,9 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>Subagents</tag>
+        <tag>效率工具</tag>
         <tag>AI 开发</tag>
         <tag>自动化</tag>
-        <tag>效率工具</tag>
       </tags>
   </entry>
   <entry>
@@ -38637,8 +38743,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
-        <tag>进阶教程</tag>
         <tag>MCP</tag>
+        <tag>进阶教程</tag>
         <tag>Model Context Protocol</tag>
       </tags>
   </entry>
@@ -38770,10 +38876,10 @@ feat(auth): 添加 JWT Token 认证功能
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
-        <tag>开发工具</tag>
+        <tag>AI编程</tag>
         <tag>Skills</tag>
+        <tag>开发工具</tag>
         <tag>进阶教程</tag>
       </tags>
   </entry>
@@ -38926,8 +39032,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
         <tag>开发工具</tag>
         <tag>编程助手</tag>
         <tag>入门教程</tag>
@@ -39390,9 +39496,9 @@ feat(auth): 添加 JWT Token 认证功能
         <category>阅读</category>
       </categories>
       <tags>
+        <tag>Claude Code</tag>
         <tag>AI编程</tag>
         <tag>Cursor</tag>
-        <tag>Claude Code</tag>
         <tag>Prompt Engineering</tag>
         <tag>意图编程</tag>
       </tags>
@@ -39506,11 +39612,11 @@ feat(auth): 添加 JWT Token 认证功能
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>GitHub Copilot</tag>
-        <tag>Cursor</tag>
         <tag>Claude Code</tag>
+        <tag>Cursor</tag>
         <tag>AI 编程</tag>
         <tag>开发效率</tag>
+        <tag>GitHub Copilot</tag>
       </tags>
   </entry>
   <entry>
@@ -39836,9 +39942,9 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>AI编程</tag>
         <tag>Cursor</tag>
+        <tag>IDE</tag>
         <tag>开发工具</tag>
         <tag>生产力</tag>
-        <tag>IDE</tag>
       </tags>
   </entry>
   <entry>
@@ -40105,8 +40211,8 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>OpenClaw</tag>
         <tag>教程</tag>
+        <tag>OpenClaw</tag>
       </tags>
   </entry>
   <entry>
@@ -40403,8 +40509,8 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>Claude Code</tag>
         <tag>AI Agent</tag>
-        <tag>AI 编程助手</tag>
         <tag>OpenClaw</tag>
+        <tag>AI 编程助手</tag>
         <tag>技术架构</tag>
       </tags>
   </entry>
@@ -40481,8 +40587,8 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>SaaS</tag>
         <tag>AI Agent</tag>
+        <tag>SaaS</tag>
       </tags>
   </entry>
   <entry>
@@ -40677,11 +40783,11 @@ feat(auth): 添加 JWT Token 认证功能
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>AI编程</tag>
-        <tag>GitHub Copilot</tag>
-        <tag>Cursor</tag>
         <tag>Claude Code</tag>
+        <tag>AI编程</tag>
+        <tag>Cursor</tag>
         <tag>开发工具</tag>
+        <tag>GitHub Copilot</tag>
       </tags>
   </entry>
   <entry>
@@ -40742,9 +40848,9 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>技术提升</tag>
+        <tag>AI编程</tag>
         <tag>AI</tag>
         <tag>个人成长</tag>
-        <tag>AI编程</tag>
         <tag>提示词工程</tag>
       </tags>
   </entry>
@@ -42213,7 +42319,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#116;&#x40;&#103;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#99;&#111;&#109;">&#x67;&#105;&#116;&#x40;&#103;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#99;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#103;&#105;&#x74;&#x40;&#103;&#105;&#x74;&#104;&#x75;&#x62;&#46;&#x63;&#111;&#109;">&#103;&#105;&#x74;&#x40;&#103;&#105;&#x74;&#104;&#x75;&#x62;&#46;&#x63;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -44649,27 +44755,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
-    <url>/2017/09/24/201709242433/</url>
-    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
-<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
-<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
-<p>解决方法：</p>
-<p>参考：</p>
-<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
-<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
-<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
-<p>Thanks.</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>串口</tag>
-        <tag>NDK</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>error please select android sdk</title>
     <url>/2017/09/24/201709242434/</url>
     <content><![CDATA[<p>点app运行时报如下错：</p>
@@ -45447,6 +45532,27 @@ Thanks all.
       <tags>
         <tag>Java</tag>
         <tag>equals</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
+    <url>/2017/09/24/201709242433/</url>
+    <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
+<p><code>java.lang.UnsatisfiedLinkError: dlopen failed: /data/app/com.../lib/arm/libavcodec.so: has text relocations</code></p>
+<p>从字面的意思大概看出来是：.so库找不到了重定向了</p>
+<p>解决方法：</p>
+<p>参考：</p>
+<p><a href="https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations">https://stackoverflow.com/questions/32346402/libavcodec-so-has-text-relocations</a></p>
+<p><a href="https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is">https://stackoverflow.com/questions/22577315/warning-linker-app-process-has-text-relocations-this-is-wasting-memory-and-is</a></p>
+<p><a href="https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library">https://stackoverflow.com/questions/44870554/ndk-15-breaks-serial-port-library</a></p>
+<p>Thanks.</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>串口</tag>
+        <tag>NDK</tag>
       </tags>
   </entry>
   <entry>

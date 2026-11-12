@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="同一件查版本查问题单的活，命令行花 1,421 个输入 token，默认 46 个工具的 MCP 花 59,417 个，差 42 倍；我本机 4 个 MCP、100 个工具占 4.7 万 token，工具说明书是每轮都重付的租金。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="59,417 对 1,421：MCP 为什么多读 42 倍">
+<meta property="og:url" content="https://www.vance.xin/2026/11/11/202611111030/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="同一件查版本查问题单的活，命令行花 1,421 个输入 token，默认 46 个工具的 MCP 花 59,417 个，差 42 倍；我本机 4 个 MCP、100 个工具占 4.7 万 token，工具说明书是每轮都重付的租金。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261111-202611111030-v2.webp">
+<meta property="article:published_time" content="2026-11-11T10:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-12T06:38:02.787Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="Token">
+<meta property="article:tag" content="Agent">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261111-202611111030-v2.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/11/202611111030/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/11/202611111030/","path":"2026/11/11/202611111030/","title":"59,417 对 1,421：MCP 为什么多读 42 倍"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>59,417 对 1,421：MCP 为什么多读 42 倍 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "59,417 对 1,421：MCP 为什么多读 42 倍",
+  "url": "https://www.vance.xin/2026/11/11/202611111030/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/11/202611111030/",
+  "datePublished": "2026-11-11T10:30:00.000Z",
+  "dateModified": "2026-11-12T06:38:02.787Z",
+  "description": "同一件查版本查问题单的活，命令行花 1,421 个输入 token，默认 46 个工具的 MCP 花 59,417 个，差 42 倍；我本机 4 个 MCP、100 个工具占 4.7 万 token，工具说明书是每轮都重付的租金。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#42-%E5%80%8D%E5%B7%AE%E5%9C%A8%E5%93%AA"><span class="nav-text">42 倍差在哪</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%94%E5%9B%9E%E5%90%83%E6%8E%89%E4%BA%86%E4%B8%89%E6%88%90"><span class="nav-text">返回吃掉了三成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E6%95%91%E4%B8%8D%E4%BA%86%E5%93%AA%E4%B8%80%E5%8D%8A"><span class="nav-text">缓存救不了哪一半</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E8%AE%A9%E5%B7%A5%E5%85%B7%E6%9F%A5%E4%BA%86%E8%87%AA%E5%B7%B1"><span class="nav-text">我让工具查了自己</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%91%E6%8C%82%E5%B7%A5%E5%85%B7%E5%B0%B1%E5%A4%9F%E4%BA%86%E5%90%97"><span class="nav-text">少挂工具就够了吗</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E4%BC%9A%E6%8C%89%E4%BB%80%E4%B9%88%E9%A1%BA%E5%BA%8F%E5%8A%A8%E5%88%80"><span class="nav-text">我会按什么顺序动刀</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">601</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">988</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/11/202611111030/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="59,417 对 1,421：MCP 为什么多读 42 倍 | 飞飞的AI实验室">
+      <meta itemprop="description" content="同一件查版本查问题单的活，命令行花 1,421 个输入 token，默认 46 个工具的 MCP 花 59,417 个，差 42 倍；我本机 4 个 MCP、100 个工具占 4.7 万 token，工具说明书是每轮都重付的租金。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          59,417 对 1,421：MCP 为什么多读 42 倍
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-11 10:30:00" itemprop="dateCreated datePublished" datetime="2026-11-11T10:30:00+00:00">2026-11-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-11-12 06:38:02" itemprop="dateModified" datetime="2026-11-12T06:38:02+00:00">2026-11-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">同一件查版本查问题单的活，命令行花 1,421 个输入 token，默认 46 个工具的 MCP 花 59,417 个，差 42 倍；我本机 4 个 MCP、100 个工具占 4.7 万 token，工具说明书是每轮都重付的租金。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261111-202611111030-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>先说个我刚看到的数。同一个任务，查 cli&#x2F;cli 的最新版本，再翻三条最新的 bug。用命令行做，Claude Sonnet 5.5 一共读了 1,421 个输入 token，花 0.0075 美元。挂一个默认配置的 GitHub MCP 做，读 59,417 个，花 0.1274 美元。两个都答对了。</p>
+<p>MCP 是让 AI 能调外部工具的插头标准，Claude Code、Cursor 里都能挂。挂上一个，对方服务器上的一整套工具就进了你的上下文。说明书也跟着。token 是模型读写和计费的最小单位，账单按它算。</p>
+<p>MCP 本身是好东西。它把各家服务接进模型这件事标准化了。省掉了一大堆自己写适配的活。问题出在计费方式上。</p>
+<p>输入 token 差 42 倍，成本差 17 倍。贵出来的部分跟模型聪明不聪明没关系。每一个请求里，46 个工具的说明书都会被重新发一遍。工具返回的整页结果，也会被重新放回上下文。</p>
+<p>这笔钱不出现在任何一张单独的发票上，所以你很难注意到。但只要你挂过 MCP，你每开一次对话就在付一次。</p>
+<h2 id="42-倍差在哪"><a href="#42-倍差在哪" class="headerlink" title="42 倍差在哪"></a>42 倍差在哪</h2><p>这是 OpenRouter 在 10 月 20 日自己跑的对照。同一个任务、同一套模型，只换接入方式。每种配置跑三次，取中位数。Sonnet 5.5 上的结果是这样：</p>
+<table>
+<thead>
+<tr>
+<th>接入方式</th>
+<th align="right">输入 token</th>
+<th align="right">每任务成本</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>命令行</td>
+<td align="right">1,421</td>
+<td align="right">0.0075 美元</td>
+</tr>
+<tr>
+<td>一个 skill</td>
+<td align="right">3,315</td>
+<td align="right">0.0118 美元</td>
+</tr>
+<tr>
+<td>MCP，只开 2 个工具</td>
+<td align="right">23,228</td>
+<td align="right">0.0552 美元</td>
+</tr>
+<tr>
+<td>MCP，默认 46 个工具</td>
+<td align="right">59,417</td>
+<td align="right">0.1274 美元</td>
+</tr>
+<tr>
+<td>MCP，91 个工具全开</td>
+<td align="right">101,351</td>
+<td align="right">0.2113 美元</td>
+</tr>
+</tbody></table>
+<p>换个算法更直观。默认 MCP 每跑一千次任务 127 美元，命令行 7.5 美元。</p>
+<p>同一套配置换模型也会变。同一个 46 工具的 MCP，GPT-6 Luna 要 116,282 个 token，命令行只要 627 个；Gemini 3.8 Flash 是 35,409 对 5,292。倍数差得很远，方向一致。</p>
+<p>任务本身很小，查一个版本号加三条问题单。连一次完整的活都算不上。任务越小，固定开销占比越大。这解释了 42 倍为什么看着吓人。也提醒你，别把它直接套到一整天的开发上。</p>
+<p>反过来说，任务越大，真正读代码写代码的时间越长。这份说明书的占比就越小。它是一笔固定成本，越小的活越显得贵。</p>
+<p>多出来的第一块，是那 46 个工具的定义。原文算过，它们每请求加 19,436 个 prompt token，也就是提示词里多占的这部分上下文。换谁来跑，都得先把这份说明书吃进去。这还只是说明书，真正的结果还没回来。</p>
+<p>为什么每轮都要重发？模型调工具，每次请求都是独立的一次。没有一个长会话，让它一直握着那套工具。它要在第二次调用时还认得这 46 个工具。你就得把说明书再递一遍。这跟我们装软件不一样，装一次就一直在。</p>
+<p>46 个已经这样，91 个全开更夸张。光加载就比 46 个多花约 42,000 个 token。延迟加载时，91 个只比 46 个多 1,281。真正贵的是把说明书摆出来这件事本身。</p>
+<h2 id="返回吃掉了三成"><a href="#返回吃掉了三成" class="headerlink" title="返回吃掉了三成"></a>返回吃掉了三成</h2><p>查一次版本发布的返回有多大？42,182 个字符。其中 87% 在描述 22 个下载文件。折合约 20,400 token，比 46 个工具定义加起来还多。</p>
+<p>20,400 放在 59,417 的总输入里，占三分之一。一次返回就是这么多。</p>
+<p>还有个更夸张的例子。不让模型指定字段，GPT-6 Luna 就会乱要。六次运行，四次一口气要了 100 条问题单全文。返回 281,963 个字符。它读完了。但每一轮，都要带着这坨东西继续。</p>
+<p>工具调用不是一次就结束。模型看完结果要再说一句。这一句的上下文里，又带着刚才那一整页。来回三轮，同一份返回就被算三次。</p>
+<p>你在 Claude Code 里让它查个问题单、跑个命令。背后可能已经来回三四轮。每一轮都在为同一份工具清单付费。</p>
+<p>所以只砍工具数量，效果有限。只开 2 个工具时，首个请求从 19,487 降到 1,406。可整任务还是 23,228 个 token，因为结果还在。</p>
+<p>把结果截到 4,000 字符，才降到 5,357，而且所有运行仍然答对。原文提醒了一句，这次能成是因为需要的字段恰好排在前面。换个返回结构，未必。</p>
+<p>还有一招几乎不要成本：要字段。查问题单的那个工具，只要编号、标题和创建时间，返回从 8,336 个字符降到 714。</p>
+<h2 id="缓存救不了哪一半"><a href="#缓存救不了哪一半" class="headerlink" title="缓存救不了哪一半"></a>缓存救不了哪一半</h2><p>这组对照算的是输入 token 总量。真实账单里，工具定义每轮都一模一样，有机会命中 prompt 缓存。单价会低一截。</p>
+<p>我自己的缓存命中率从三成调到七成三。一条 API 流水线的月账单，从 106 美元压到 33 美元。缓存是真金白银。</p>
+<p>缓存只认一模一样的前缀。工具的顺序调一下、描述改一个字，命中就断了。</p>
+<p>但它救不了每次都在变的结果。那些 token 依然占着的上下文位置，它也救不了。窗口就那么大，说明书和结果先把位置占了。留给你的代码和问题，就少一块。</p>
+<h2 id="我让工具查了自己"><a href="#我让工具查了自己" class="headerlink" title="我让工具查了自己"></a>我让工具查了自己</h2><p>我让 Claude Code 在我这台机器上跑了一次 <code>/context</code>。它把开口前的家底摊开。MCP 工具那行是 47.1k，比系统工具、记忆文件和 Skills 加起来还多。</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th align="right">占用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>系统提示</td>
+<td align="right">1.9k</td>
+</tr>
+<tr>
+<td>系统工具</td>
+<td align="right">20.3k</td>
+</tr>
+<tr>
+<td>MCP 工具</td>
+<td align="right">47.1k</td>
+</tr>
+<tr>
+<td>MCP 服务器说明</td>
+<td align="right">406</td>
+</tr>
+<tr>
+<td>记忆文件</td>
+<td align="right">4.4k</td>
+</tr>
+<tr>
+<td>Skills</td>
+<td align="right">9.9k</td>
+</tr>
+<tr>
+<td>合计</td>
+<td align="right">84.1k</td>
+</tr>
+</tbody></table>
+<p>说实话，84.1k，我还没打一个字。</p>
+<p>MCP 那 47.1k 来自报告里列出的 4 个服务器、100 个工具。其中一个是社区服务，69 个工具，一个服务就占了 34,256 个。我配置里一共 11 个 MCP，当时连上了 9 个。报告只摊开了先加载完的 4 个，所以这 47.1k 只能算下限。</p>
+<p>一个 MCP 装进来，往往是因为某个下午要它干一件事。事干完了，工具留在配置里，下次启动照样加载。</p>
+<p>84.1k 放在 786k 的窗口里是 11%，看着不疼。可要是 20 万窗口，开口前四成多就没了。工具还是那些工具，占比跟着窗口变。</p>
+<p>CLAUDE.md 我砍过，从 12KB 压到 4KB。skill 我也删过，从 50 多个减到 28 个，Skills 那栏从 4.2k 回到 1.2k。MCP 这一栏，是今天这张表里最大的一块。</p>
+<p>今天再看，Skills 那栏又回到 9.9k。我全局 skill 目录里躺着 128 个。</p>
+<p>还有件事。我那个无人值守入口的启动脚本里有一行 <code>ENABLE_TOOL_SEARCH=false</code>。白纸黑字写着。什么时候加的、为什么关，脚本里没留一个字的注释。</p>
+<h2 id="少挂工具就够了吗"><a href="#少挂工具就够了吗" class="headerlink" title="少挂工具就够了吗"></a>少挂工具就够了吗</h2><p>不够，但省下来的部分是真的。</p>
+<p>只开 2 个工具时，整任务 23,228，还是 CLI 的 16 倍。再砍返回，5,357，差不多是 CLI 的 3.8 倍。</p>
+<p>延迟加载不是白捡的，它挑模型。Sonnet 从 59,417 降到 30,334。Haiku 5.5 反过来从 99,319 涨到 154,623。参数格式不对，重试把省的全吃回去。GPT-6 Luna 搜了三到六次，有一次干脆没调工具就放弃。</p>
+<p>所以顺序不能反。先把返回砍到够用，再砍工具数量。再往后，才是延迟加载。</p>
+<h2 id="我会按什么顺序动刀"><a href="#我会按什么顺序动刀" class="headerlink" title="我会按什么顺序动刀"></a>我会按什么顺序动刀</h2><p>先看手上有没有命令行。有，而且 agent 能跑命令，就让 agent 跑命令行。1,421 个 token，是这套对照里最便宜的。</p>
+<p>命令行不熟、或者用法每次都不一样，配一个 skill。3,315 个 token，换来的是一套稳定的步骤。</p>
+<p>没有命令行，或者要服务端鉴权，才上 MCP。上之前只开当下要用的工具，别把 69 个全挂上。</p>
+<p>返回一律按需取字段。这条最便宜，也最容易被忘。</p>
+<p>工具定义超过一万 token 或者十个工具，再考虑延迟加载。留三到五个最常用的常驻。</p>
+<p>MCP 没必要全卸。没有命令行的地方，它仍是正解。要服务端鉴权、要统一管权限，也是。原文的建议同样分场景，没有一刀切。</p>
+<p>想自己查，在 Claude Code 里敲 <code>/context</code>，看 MCP tools 那一行。再敲 <code>claude mcp list</code>，看哪些服务器真的连着。不用的先在 <code>/mcp</code> 里关掉，比改配置文件快。</p>
+<p>这一套我还没在自己的机器上做完。如果你也想动，先挑工具最多的那个服务收窄。再跑一次 <code>/context</code>，对着看降了多少。</p>
+<p>绕回开头那 42 倍。它不是模型的价钱，是每次请求都替你重读一遍说明书的租金。模型换得再便宜，这笔租金照收。</p>
+<p>你打开 <code>/context</code> 看一眼，MCP 那栏是多少？如果比我这个 47.1k 还高，先把工具数报给我。我想知道，是不是只有我把工具箱背在身上出门。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/MCP/" rel="tag"># MCP</a>
+              <a href="/tags/Token/" rel="tag"># Token</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/10/202611102055/" rel="prev" title="少点一次回车，代价是 2539 个生产密钥裸奔">
+                  <i class="fa fa-angle-left"></i> 少点一次回车，代价是 2539 个生产密钥裸奔
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/11/202611111125/" rel="next" title="60.4% 登顶 CursorBench，跑一次 9 美元意味着什么">
+                  60.4% 登顶 CursorBench，跑一次 9 美元意味着什么 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:27</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

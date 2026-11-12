@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Claude Code 切模型不只是 &#x2F;model opus 一行命令，官方新出的 opusplan 混合模式、Opus 5.5 默认 medium 档、子 Agent 模型继承三件事加在一起，才是真正的配置手册。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="切到 Opus 还差两步">
+<meta property="og:url" content="https://www.vance.xin/2026/11/12/202611121144/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Claude Code 切模型不只是 &#x2F;model opus 一行命令，官方新出的 opusplan 混合模式、Opus 5.5 默认 medium 档、子 Agent 模型继承三件事加在一起，才是真正的配置手册。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261112-202611121144-v2.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/image/20261112-202611121144-diagram-v2.webp">
+<meta property="article:published_time" content="2026-11-12T11:44:00.000Z">
+<meta property="article:modified_time" content="2026-11-12T06:38:02.787Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="Opus 5.5">
+<meta property="article:tag" content="Fable 5.2">
+<meta property="article:tag" content="模型配置">
+<meta property="article:tag" content="Effort档位">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261112-202611121144-v2.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/12/202611121144/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/12/202611121144/","path":"2026/11/12/202611121144/","title":"切到 Opus 还差两步"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>切到 Opus 还差两步 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "切到 Opus 还差两步",
+  "url": "https://www.vance.xin/2026/11/12/202611121144/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/12/202611121144/",
+  "datePublished": "2026-11-12T11:44:00.000Z",
+  "dateModified": "2026-11-12T06:38:02.787Z",
+  "description": "Claude Code 切模型不只是 /model opus 一行命令，官方新出的 opusplan 混合模式、Opus 5.5 默认 medium 档、子 Agent 模型继承三件事加在一起，才是真正的配置手册。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%87%E8%BF%87%E5%8E%BB%E4%BA%86%EF%BC%8C%E4%BD%A0%E5%9C%A8%E5%93%AA%E4%B8%AA%E6%A1%A3"><span class="nav-text">切过去了，你在哪个档</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#opusplan-%E5%B8%AE%E4%BD%A0%E5%88%87"><span class="nav-text">opusplan 帮你切</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%90-Agent-%E5%9C%A8%E8%B7%91%E4%BB%80%E4%B9%88%E6%A8%A1%E5%9E%8B"><span class="nav-text">子 Agent 在跑什么模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%8D%87-Fable"><span class="nav-text">什么时候升 Fable</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E6%80%8E%E4%B9%88%E9%85%8D"><span class="nav-text">实际怎么配</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">601</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">988</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/12/202611121144/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="切到 Opus 还差两步 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Claude Code 切模型不只是 &#x2F;model opus 一行命令，官方新出的 opusplan 混合模式、Opus 5.5 默认 medium 档、子 Agent 模型继承三件事加在一起，才是真正的配置手册。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          切到 Opus 还差两步
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-12 11:44:00 / 修改时间：06:38:02" itemprop="dateCreated datePublished" datetime="2026-11-12T11:44:00+00:00">2026-11-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Claude Code 切模型不只是 /model opus 一行命令，官方新出的 opusplan 混合模式、Opus 5.5 默认 medium 档、子 Agent 模型继承三件事加在一起，才是真正的配置手册。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261112-202611121144-v2.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>上次聊完「Opus 5.5 才是日常主力，Fable 5.2 留着打硬仗」，有朋友来问：那我怎么切？是不是 <code>/model opus</code> 完事？</p>
+<p>我当时回了一句「差不多」，但事后想想，这个「差不多」差的那些，其实才是真正值得聊的东西。</p>
+<p>这两天 Anthropic 把模型配置的文档搬到了新地址，我跟着翻了一遍，翻出了三个上次没讲到的细节。</p>
+<h2 id="切过去了，你在哪个档"><a href="#切过去了，你在哪个档" class="headerlink" title="切过去了，你在哪个档"></a>切过去了，你在哪个档</h2><p>先说一个容易被漏的事。</p>
+<p>你敲了 <code>/model opus</code>，Claude Code 确实切到 Opus 5.5 了。但 Opus 5.5 默认跑在 <code>medium</code> 档，不是高档，不是最高档，就是 medium。</p>
+<p>这跟你可能想象的不一样。很多人以为换了更贵的模型，它自然就更卖力。事实是，Opus 5.5、Fable 5.2、Sonnet 5.5、Haiku 5.5，四个新模型默认全是 medium。旧的 Opus 4.7 默认 xhigh，这种反差我第一次看到也有点奇怪，但想通了之后觉得设计挺合理。新模型 medium 跑出来的效果本身就已经接近旧模型的 high，拿 medium 当起点让用户按需往上调，比一开始就顶格要省钱。</p>
+<p>官方博客对 effort 的解释让我重新理解了这件事。它不只是「思考时间」，更准确的说法是「Claude 在每一轮愿意做多少事情」：读多少个文件、跑不跑测试、做完一步之后要不要再多走几步才回来找你汇报。</p>
+<p>medium 的意思是，这些事情做到「大部分人愿意付的程度」就停。</p>
+<p>如果你切到 Opus 然后发现它读了几个文件就回来问你，可能不是模型不行，是档位给低了。</p>
+<p>调 effort 的命令是 <code>/effort</code>。调完会弹一个滑块，<code>s</code> 键是只改这次会话、不保存为默认，<code>Enter</code> 是保存。这里有个小细节：设定会按模型分开存，Opus 5.5 存一份，Fable 5.2 存一份，你给 Opus 调高了 effort，下次切回 Sonnet 它还是用 Sonnet 自己那份默认值。互相不干扰。</p>
+<p>有一个叫 Ultracode 的开关也在这个滑块里。它打开之后 Claude 会主动编排「动态工作流」，自动分派子任务、验证中间结果，算是比高 effort 更激进的一档。同一套代码库下如果你发现 Claude 把一件事拆成了很多步、每步都跑测试，很可能是这个开关被打开了。用 <code>/effort ultracode off</code> 可以关掉。</p>
+<h2 id="opusplan-帮你切"><a href="#opusplan-帮你切" class="headerlink" title="opusplan 帮你切"></a>opusplan 帮你切</h2><p>好，说完 effort，讲一个我觉得更好用的东西。</p>
+<p>官方新出了一个叫 <code>opusplan</code> 的模型选项。</p>
+<p>它干的事是这样的：你开始一个任务的时候，先用 Opus 5.5 跑 plan mode，把任务拆解、定路线、确定要动哪些文件。规划完了之后，自动切换到 Sonnet 5.5 来执行。</p>
+<p>规划 Opus，执行 Sonnet。</p>
+<p>这个设计对应了一个直觉上很容易想到但不一定真的去做的道理：规划需要判断力，执行需要速度和稳定性。贵的模型有判断力，便宜的模型够快。</p>
+<p>有人说上次那篇讲的「Opus 比 Fable 便宜一半」已经省了，opusplan 是不是再省一半？大概是这个方向，但省多少要看你的任务结构。任务越是「规划复杂、执行机械」，这个模式越划算。如果你在跑的是完全探索性的东西，计划一边做一边变，那 opusplan 的切换时机可能不那么好卡。</p>
+<p>用法是 <code>/model opusplan</code>，或者启动时 <code>claude --model opusplan</code>。</p>
+<p>如果你们公司开了 Enterprise 账号有模型限制，<code>opusplan</code> 会自动找你可用的最高版本 Opus，所以不需要担心「设了之后结果走不到」的问题。</p>
+<p>还有一个衍生用法。用 <code>/model</code> 切换会话里的模型，同时也会同步到当前会话里的子 Agent。因为子 Agent 是在你按下发送那一刻，Claude 拿你当前用的模型来启动的。所以你在开始一个大任务之前切到 opusplan，子 Agent 也都继承这套规划&#x2F;执行分开的配置。</p>
+<h2 id="子-Agent-在跑什么模型"><a href="#子-Agent-在跑什么模型" class="headerlink" title="子 Agent 在跑什么模型"></a>子 Agent 在跑什么模型</h2><p>这一块不改，前面两件事可能都是白做的。</p>
+<p>Claude Code 现在会开子 Agent。搜索大型仓库、批量跑测试、拿去做一堆并行的读取，这些活经常会被主任务下发给子 Agent 跑。</p>
+<p>问题是，子 Agent 默认继承你主会话的模型。</p>
+<p>你在主会话里跑 Opus 5.5，子 Agent 也是 Opus 5.5。你切到 opusplan，<code>/model</code> 切换的时候子 Agent 也同步走。</p>
+<p>这意味着什么？搜索一堆文件、捞日志、做格式对齐这类机械活，全部在用 Opus 5.5 的 token。</p>
+<p>官方文档里有一句话我觉得很直接：「想让某个子 Agent 跑便宜的模型，在它的 frontmatter 里写 <code>model: haiku</code>，不写就跟主会话走。」</p>
+<p>如果你在搭自己的 Skill 或者 Agent 编排，这一行写进去能省不少。搜文件、捞日志、格式化输出，全部走 Haiku 5.5，主任务的判断让 Opus 拿，机械活丢给最便宜的那个。</p>
+<p>如果你只是日常用 Claude Code 跑任务，子 Agent 是 Claude 自己决定开的，你没有 frontmatter 可以改，只能靠主会话模型来控制。</p>
+<p>这种场景下，opusplan 的作用就更明显了：规划阶段用 Opus 做判断，执行阶段自动切 Sonnet，子 Agent 也跟着在 Sonnet 下跑，不会出现一堆便宜活全压在贵模型上的情况。</p>
+<p>有一个环境变量 <code>CLAUDE_CODE_SUBAGENT_MODEL</code> 可以给所有子 Agent 设一个统一的模型覆盖，优先级比 frontmatter 低，也比 <code>/model</code> 低，算是最后一道默认值，自己调试 Skill 的时候可以拿来全局兜底。</p>
+<h2 id="什么时候升-Fable"><a href="#什么时候升-Fable" class="headerlink" title="什么时候升 Fable"></a>什么时候升 Fable</h2><p>连着两篇都在讲「Opus 比 Fable 更划算」，我怕有人误解成「Fable 完全用不着」，说一下边界。</p>
+<p>官方博客里有个比喻我觉得说得挺好的：Fable 是专家，Opus 是资深工程师，Sonnet 是全能工程师。effort 决定他们在你这个任务上花多少时间。这三个人放在同一个问题前面，Opus 和 Fable 的差距在「见识」上，不完全在「用功程度」上。给 Opus 更高的 effort，它可以做得更仔细，但它没见过的东西，再努力也找不到线索。</p>
+<p>Fable 值它的钱的场景，是那种任务本身就超出普通资深工程师见过的范围。跑很长的 agent session、处理整个仓库级别的重构、去排查一个边界条件复杂到需要系统性推理才能找到根因的 bug，这些是 Fable 拉开距离的地方。</p>
+<p>官方还有一句话我觉得说得很准：「如果 Claude 把所有相关信息都给了、明显也很努力、但还是答错了，这个时候才是换模型的信号。如果它答错是因为跳了个文件没读、没跑测试、做到一半放弃了，那是 effort 不够，不是模型不够。」</p>
+<p>把这两句话并在一起，判断流程就出来了：</p>
+<p><img src="https://image.vance.xin/aigc/image/20261112-202611121144-diagram-v2.webp" alt="选择抬高 effort 还是换模型"></p>
+<p>错在「不用心」，先拔高 effort 档位，别急着换模型。</p>
+<p>错在「不够用」，先从 Opus 换 Fable，别直接拔最高 effort，因为更高 effort 下 Opus 烧的 token 可能比直接换 Fable 中等 effort 更贵，而且效果还不一定更好。</p>
+<p>我自己的记法是这样的：Claude 读文件、跑测试、走多步之前就回来找我，大概率是 effort 的问题，给它更多时间就行。Claude 认认真真读完了、也跑了，给出的答案就是对不上，这才是模型的问题。前者是工具没用对，后者是工具本身到了极限。</p>
+<p>大多数日常开发任务，连第一步都不需要动。medium 的 Opus 能覆盖到的场景比你想象的多。</p>
+<h2 id="实际怎么配"><a href="#实际怎么配" class="headerlink" title="实际怎么配"></a>实际怎么配</h2><p>说了这么多，落到操作上，我的建议是这样。</p>
+<p>日常开发默认 <code>opusplan</code>。规划 Opus 执行 Sonnet，不用每次手动切，对大多数任务来说是个合理的默认值。要改默认的话，<code>/model opusplan</code> 然后按 <code>Enter</code>，下次启动就用这套。</p>
+<p>如果发现 Claude 在执行阶段做得太粗糙，不是先升 Fable，是先用 <code>/effort</code> 把 Sonnet 那一段的档位拔高。很多时候问题出在「任务太复杂但模型只做到 medium 就收工」，跟模型本身关系不大。</p>
+<p>如果你在写自己的 Skill 或者编排自己的 Agent，子 Agent 的模型要显式配。那些只是去搜索、读文件、捞日志的活，在 frontmatter 里写 <code>model: haiku</code>，主任务让 Opus 拿判断，机械活丢给 Haiku。这一行不写，你每次跑都在用 Opus 的价格做 Haiku 的活，省不省自己算。</p>
+<p>真的遇到「给全了上下文还是不行」，再升 Fable。</p>
+<p>大多数时候，你会在第二步就解决了。最不值的操作是每次遇到问题第一反应就切 Fable，每任务两块多美金，日积月累差别挺大的。</p>
+<hr>
+<p>上一篇聊完成本算账，这篇是操作层。两件事加在一起，才算把「怎么用 Claude Code 不乱烧钱」这道题答完整了。</p>
+<p>以上，既然看到这里了，如果觉得不错，随手点个赞、在看、转发三连吧，如果想第一时间收到推送，也可以给我个星标⭐～<br>谢谢你看我的文章，我们，下次再见。</p>
+<blockquote>
+<p>&#x2F; 作者：飞飞<br>&#x2F; 投稿或爆料，请联系邮箱：<a href="mailto:&#x78;&#105;&#110;&#112;&#101;&#x6e;&#x67;&#x66;&#x65;&#105;&#x35;&#x32;&#49;&#64;&#x67;&#x6d;&#97;&#x69;&#x6c;&#x2e;&#99;&#x6f;&#x6d;">&#x78;&#105;&#110;&#112;&#101;&#x6e;&#x67;&#x66;&#x65;&#105;&#x35;&#x32;&#49;&#64;&#x67;&#x6d;&#97;&#x69;&#x6c;&#x2e;&#99;&#x6f;&#x6d;</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/Opus-5-5/" rel="tag"># Opus 5.5</a>
+              <a href="/tags/Fable-5-2/" rel="tag"># Fable 5.2</a>
+              <a href="/tags/%E6%A8%A1%E5%9E%8B%E9%85%8D%E7%BD%AE/" rel="tag"># 模型配置</a>
+              <a href="/tags/Effort%E6%A1%A3%E4%BD%8D/" rel="tag"># Effort档位</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/12/202611120913/" rel="prev" title="每个人都配一个 agent，团队反而更差">
+                  <i class="fa fa-angle-left"></i> 每个人都配一个 agent，团队反而更差
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:27</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

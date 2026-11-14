@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="llama.cpp 与 ggml 历时三年半正式发布 1.0.0。告别 12000 次提交的盲盒构建号，承诺语义化版本并加入 MoE 主机内存缓存与 FP8 KV 缓存，本文为开发者算清本地大模型的真实工程账本。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="llama.cpp 熬了四年发 1.0：本地大模型底座终于有了契约">
+<meta property="og:url" content="https://www.vance.xin/2026/11/14/202611141504/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="llama.cpp 与 ggml 历时三年半正式发布 1.0.0。告别 12000 次提交的盲盒构建号，承诺语义化版本并加入 MoE 主机内存缓存与 FP8 KV 缓存，本文为开发者算清本地大模型的真实工程账本。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261114-202611141504.webp">
+<meta property="article:published_time" content="2026-11-14T15:04:00.000Z">
+<meta property="article:modified_time" content="2026-11-14T08:44:19.210Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="本地模型">
+<meta property="article:tag" content="端侧推理">
+<meta property="article:tag" content="llama.cpp">
+<meta property="article:tag" content="ggml">
+<meta property="article:tag" content="开源架构">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261114-202611141504.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/14/202611141504/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/14/202611141504/","path":"2026/11/14/202611141504/","title":"llama.cpp 熬了四年发 1.0：本地大模型底座终于有了契约"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>llama.cpp 熬了四年发 1.0：本地大模型底座终于有了契约 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "llama.cpp 熬了四年发 1.0：本地大模型底座终于有了契约",
+  "url": "https://www.vance.xin/2026/11/14/202611141504/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/14/202611141504/",
+  "datePublished": "2026-11-14T15:04:00.000Z",
+  "dateModified": "2026-11-14T08:44:19.210Z",
+  "description": "llama.cpp 与 ggml 历时三年半正式发布 1.0.0。告别 12000 次提交的盲盒构建号，承诺语义化版本并加入 MoE 主机内存缓存与 FP8 KV 缓存，本文为开发者算清本地大模型的真实工程账本。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E5%B9%B4%E4%B8%80%E4%B8%87%E6%AC%A1%E6%8F%90%E4%BA%A4"><span class="nav-text">四年一万次提交</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%91%8A%E5%88%AB%E7%9B%B2%E7%9B%92%E6%9E%84%E5%BB%BA%E5%8F%B7"><span class="nav-text">告别盲盒构建号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A%E4%B8%93%E5%AE%B6%E6%89%94%E8%BF%9B%E5%86%85%E5%AD%98"><span class="nav-text">把专家扔进内存</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%9C%9F%E8%B4%A6%E6%9C%AC"><span class="nav-text">本地模型的真账本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B6%88%E9%99%A4%E5%BF%83%E7%AE%97%E8%80%8C%E4%B8%8D%E6%98%AF%E6%9B%BF%E4%BB%A3"><span class="nav-text">消除心算而不是替代</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">609</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">999</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/14/202611141504/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="llama.cpp 熬了四年发 1.0：本地大模型底座终于有了契约 | 飞飞的AI实验室">
+      <meta itemprop="description" content="llama.cpp 与 ggml 历时三年半正式发布 1.0.0。告别 12000 次提交的盲盒构建号，承诺语义化版本并加入 MoE 主机内存缓存与 FP8 KV 缓存，本文为开发者算清本地大模型的真实工程账本。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          llama.cpp 熬了四年发 1.0：本地大模型底座终于有了契约
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-14 15:04:00 / 修改时间：08:44:19" itemprop="dateCreated datePublished" datetime="2026-11-14T15:04:00+00:00">2026-11-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI%E6%8E%A2%E7%B4%A2/" itemprop="url" rel="index"><span itemprop="name">AI探索</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">llama.cpp 与 ggml 历时三年半正式发布 1.0.0。告别 12000 次提交的盲盒构建号，承诺语义化版本并加入 MoE 主机内存缓存与 FP8 KV 缓存，本文为开发者算清本地大模型的真实工程账本。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261114-202611141504.webp" alt="cover"></p>
+<p>很多人在电脑上跑本地模型，第一反应是拉一个 Ollama 或者点开 LM Studio。</p>
+<p>这两个工具确实省心，界面干净，一行命令就能把权重跑起来。但在这些花哨的封装器下面，真正替你跟 CPU、显卡、Metal 和 CUDA 较劲的齿轮，几乎清一色叫同一个名字：llama.cpp。</p>
+<p>它就像是整个本地 AI 时代的底层 C 标准库。过去三年半，哪怕你一行 C++ 都没写过，只要你在 Mac 或者 PC 上加载过开源模型，你的电脑大概率已经在跑它的指令了。</p>
+<p>就是这么一个被无数桌面客户端、云厂商和个人开发者当成空气一样依赖的项目，在经历了将近四年、超过一万两千次代码提交之后，在这个周末悄悄推出了 1.0.0 版本。底层张量库 ggml 也同步跨进了 1.0.0。</p>
+<p>这个 1.0.0 并不是说软件已经写完了，或者以后不会有性能提升了。</p>
+<p>它的核心信号只有一个：下游那些搭在它上面的几百个工具链，终于拿到了一份不会在明天早上就突然失效的契约。</p>
+<h2 id="四年一万次提交"><a href="#四年一万次提交" class="headerlink" title="四年一万次提交"></a>四年一万次提交</h2><p>回顾 llama.cpp 的起点，其实极具黑客色彩。</p>
+<p>2023 年春天，Meta LLaMA 权重刚开源，原作者 Georgi Gerganov 在 MacBook 上写下了第一批 C&#x2F;C++ 代码。初衷很纯粹：不依赖任何 Python 环境，单靠 CPU 把模型转起来。</p>
+<p>结果它凭借极轻的体积、跨平台移植能力和手打的矩阵乘法优化，迅速成了整个开源大模型推理的通用底座。从 CUDA 到 Metal，从 Vulkan 到高通 Hexagon，它把市面上能跑计算的芯片都适配了一遍。</p>
+<p>但野蛮生长的代价就是接口剧烈晃动。</p>
+<p>过去这几年，llama.cpp 根本不遵循语义化版本规范。它每天都在合并代码，发出来的版本号就是一串冰冷的提交号，比如 b12359 这种构建标签。</p>
+<p>这意味着依赖它的应用作者，拉取最新代码时都要心惊肉跳。你很难确信昨天的函数签名今天是否依然可用，也不知道内存分配接口是否在昨晚被重构了。</p>
+<p>很多手搓本地 Agent 工具链的朋友都踩过坑：上周还能工作的封装，重新编译后直接飘红，不得不停下手里的活去翻 Commit 历史找替代方法。</p>
+<p>在黑客玩具阶段这是活力的体现，但当全球本地 AI 产业都要靠它作为基础底座时，它就成了一颗随时可能炸开的不定时炸弹。</p>
+<h2 id="告别盲盒构建号"><a href="#告别盲盒构建号" class="headerlink" title="告别盲盒构建号"></a>告别盲盒构建号</h2><p>这次 1.0.0 的第一大刀，就是给下游开发者立下明确的契约规则。</p>
+<p>项目组在发布公告里承诺，从 1.0.0 开始全面切换到语义化版本（SemVer）。未来只要涉及不兼容的公共 C API 或二进制 ABI 破坏，必须严格升级大版本号；小版本只能做向后兼容的新增，补丁版本只修 bug。</p>
+<p>为了迈出这一步，团队在这次里程碑里完成了一次极其彻底的大扫除。</p>
+<p>他们通过第 30565 号合并请求，一口气拔掉了 35 个常年废弃但始终没敢硬删的历史接口。顺带连老旧的预热设置项 <code>llama_set_warmup</code>，以及早就跟现代内存分配器脱节的内存碎片整理阈值 <code>--defrag-thold</code>，全部从代码库里清理干净。</p>
+<p>与此相对应的是，投机采样（Speculative Decoding）和 NextN 这一套高阶加速 API，终于结束了长期的实验状态，被正式收编进核心头文件 <code>llama.h</code>。</p>
+<p>系统打包痛点也被堵上了。Debian、Homebrew 等包管理器，以往常因内置 ggml 版本不一致而崩溃。1.0.0 明确规定：官方 release 内部携带的 ggml 必须与独立版本完全等价。</p>
+<p>对于写应用层的开发者来说，这相当于底层的地基终于打下了钢筋混凝土。写好的调用代码，再也不需要每周跟着 Git 提交去做人肉适配了。</p>
+<h2 id="把专家扔进内存"><a href="#把专家扔进内存" class="headerlink" title="把专家扔进内存"></a>把专家扔进内存</h2><p>除了接口契约的稳定，这次版本在架构层面还有两项硬核改动。</p>
+<p>其一是主机内存 MoE 专家缓存。</p>
+<p>主流大模型为了兼顾效果与算力，普遍走向了混合专家路线。但这在本地有个致命伤：总参数量往往很大，哪怕每个 token 只激活几个专家，整套权重也得常驻。在显存受限的消费级设备上，把一个完整的大号 MoE 塞进显存几乎不可能。</p>
+<p>llama.cpp 1.0.0 在上下文参数里直接引入了 <code>moe_cache_size</code> 和 <code>moe_cache_cpu_share</code> 两个配置。</p>
+<p>它的逻辑极其务实：把显存当成最热的一级缓存，把相对便宜的系统主存当成二级专家池。当模型需要某个冷门专家时，由系统按混合置换算法动态换入换出，甚至允许精确指定 CPU 内存分担的专家比例。</p>
+<p>这意味着在普通的 MacBook 或者大内存 PC 上，跑原本只有服务器才能承载的超大 MoE 架构，终于有了可行的工程路径。</p>
+<p>另一项改动是 OCP FP8 KV 缓存的正式落地。</p>
+<p>长上下文是做本地代码分析和文档助手的刚需。但上下文拉长到 32K 甚至 64K 时，KV 缓存吃掉的显存往往比权重本身还要吓人。很多时候显卡明明装得下权重，却在对话进行到第二十轮时因为显存耗尽直接报错退出。</p>
+<p>FP8 格式的 KV 缓存把这部分动态显存直接压缩了一半，配合现代芯片对 8 位浮点数的硬件加速，让长对话和投机采样的吞吐直接上了一个台阶。</p>
+<p>此外，内置的服务端 <code>llama-server</code> 也完成了生产环境安全加固，修补了局域网内易被利用的 SSRF 和 DNS 重新绑定隐患，并顺带补全了兼容 OpenAI 规范的语音接口。</p>
+<h2 id="本地模型的真账本"><a href="#本地模型的真账本" class="headerlink" title="本地模型的真账本"></a>本地模型的真账本</h2><p>看完了这些工程参数，我们还是得把目光拉回现实，算一算本地模型这本账。</p>
+<p>我自己今年在本地跑模型没少折腾。4 月份的时候，我用 Ollama 跑过 gemma4 的小尺寸版本，接上本地 coding agent 写小工具，当场踩了几个结实的坑。</p>
+<p>第一道坑是上下文窗口，默认太小，得手写参数调大。第二道坑是逻辑兜圈子，推理到一半停顿，又把前面的代码原样吐一遍。第三道坑是速度，在普通设备上每秒只有几十个 token，体感确实不丝滑。</p>
+<p>到了 8 月份，开源社区的 27B 模型跑分不断刷新纪录，我又认真复盘过一次。</p>
+<p>当时我就得出一个判断：本地大模型真正的门槛，早就不是手头有没有一张顶级显卡，而是愿不愿意花大量时间去调参、去折腾工具链、去忍受量化之后的精度损失。</p>
+<p>很多人总喜欢问：本地模型发展这么快，是不是马上就能彻底替代云端那几家前沿旗舰了？</p>
+<p>我的回答从来都很干脆：替代不了。在需要极高逻辑严密性的复杂任务上，差距依然是客观存在的。</p>
+<p>云端前沿模型消耗的千亿级算力集群、海量人类反馈强化学习以及动态架构迭代，不是靠一台几十瓦功耗的个人电脑就能轻易抹平的。</p>
+<p>本地模型真正的用处，在于给开发者提供一条握在自己手里的退路。</p>
+<p>当你买了一台高配电脑，电费几乎可以忽略不计，边际调用成本就变成了零。你不需要在心里反复打小算盘，纠结这行代码值不值得花几美分调用一次 Opus；也不用担心敏感业务数据或核心私有仓库因为接口调用流向外部服务器。</p>
+<p>对于敏感行业、内部合规审查以及大量的日常结构化小任务，本地模型带来的安全感是任何云端 API 无法给你的。</p>
+<h2 id="消除心算而不是替代"><a href="#消除心算而不是替代" class="headerlink" title="消除心算而不是替代"></a>消除心算而不是替代</h2><p>llama.cpp 跨进 1.0.0，给整个社区带来的最大改变，就是把这条退路修成了柏油路。</p>
+<p>在过去，走这条退路的人像是在泥地里拓荒。不仅要忍受较慢的生成速度和有限的模型能力，还要时刻准备着处理底层推理库的接口崩溃。</p>
+<p>现在，底层的 C 库接口稳住了，语义化版本规则确立了，内存与显存的异构调度能力也封装妥当了。搭建在它上面的工具开发者，终于可以放心地把精力从修复编译报错转移到打磨业务体验上来。</p>
+<p>我们不需要神化端侧推理，也不必逢人便宣称本地模型已经超越了一切。</p>
+<p>一个成熟的开发者，应该学会把不同的工具放到它们最合适的位置上。需要深度推理、复杂架构设计和前沿探索的任务，大方地交给云端旗舰模型；而那些日常的高频总结、本地文件检索、自动化小脚本以及对隐私要求极高的数据处理，放心地交给本地运行的小模型。</p>
+<p>当底层的齿轮不再无故散架，本地模型带给我们的真正价值，就是彻底消除调用 API 时的那种心算焦虑。</p>
+<p>在算力日渐被大厂垄断的当下，至少在你的这台电脑上，依然有一块完全属于你自己的计算领地。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%9C%AC%E5%9C%B0%E6%A8%A1%E5%9E%8B/" rel="tag"># 本地模型</a>
+              <a href="/tags/%E7%AB%AF%E4%BE%A7%E6%8E%A8%E7%90%86/" rel="tag"># 端侧推理</a>
+              <a href="/tags/llama-cpp/" rel="tag"># llama.cpp</a>
+              <a href="/tags/ggml/" rel="tag"># ggml</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90%E6%9E%B6%E6%9E%84/" rel="tag"># 开源架构</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/14/202611140934/" rel="prev" title="一行参数省掉一套爬虫：DeepSeek 全家桶 API 你敢全押吗">
+                  <i class="fa fa-angle-left"></i> 一行参数省掉一套爬虫：DeepSeek 全家桶 API 你敢全押吗
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/14/202611141600/" rel="next" title="别急着换更聪明的模型，先给活造个裁判">
+                  别急着换更聪明的模型，先给活造个裁判 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:48</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

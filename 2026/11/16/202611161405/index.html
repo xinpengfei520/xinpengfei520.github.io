@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="近期在社群疯传的 1.4M 纯 HTML 3D 游戏，剥离了所有外部图片与模型，全凭 Three.js 和算法实时程序化生成。本文拆解其底层机理与 AI 极简交付的启示。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="1.4M 纯 HTML 跑出 3D 游戏：零图片零模型的极简主义反击">
+<meta property="og:url" content="https://www.vance.xin/2026/11/16/202611161405/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="近期在社群疯传的 1.4M 纯 HTML 3D 游戏，剥离了所有外部图片与模型，全凭 Three.js 和算法实时程序化生成。本文拆解其底层机理与 AI 极简交付的启示。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261116-202611161405.webp">
+<meta property="article:published_time" content="2026-11-16T14:05:00.000Z">
+<meta property="article:modified_time" content="2026-11-16T08:30:21.499Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Three.js">
+<meta property="article:tag" content="3D">
+<meta property="article:tag" content="WebGL">
+<meta property="article:tag" content="程序化生成">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261116-202611161405.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/16/202611161405/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/16/202611161405/","path":"2026/11/16/202611161405/","title":"1.4M 纯 HTML 跑出 3D 游戏：零图片零模型的极简主义反击"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>1.4M 纯 HTML 跑出 3D 游戏：零图片零模型的极简主义反击 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "1.4M 纯 HTML 跑出 3D 游戏：零图片零模型的极简主义反击",
+  "url": "https://www.vance.xin/2026/11/16/202611161405/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/16/202611161405/",
+  "datePublished": "2026-11-16T14:05:00.000Z",
+  "dateModified": "2026-11-16T08:30:21.499Z",
+  "description": "近期在社群疯传的 1.4M 纯 HTML 3D 游戏，剥离了所有外部图片与模型，全凭 Three.js 和算法实时程序化生成。本文拆解其底层机理与 AI 极简交付的启示。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AE%E4%BF%A1%E7%BE%A4%E9%87%8C%E7%9A%84%E5%8D%95%E6%96%87%E4%BB%B6%E5%A5%87%E8%BF%B9"><span class="nav-text">微信群里的单文件奇迹</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A%E5%A4%96%E9%83%A8%E8%B5%84%E4%BA%A7%E6%8A%98%E5%8F%A0%E8%BF%9B%E7%AE%97%E6%B3%95"><span class="nav-text">把外部资产折叠进算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-AI-%E5%81%8F%E7%88%B1%E7%A8%8B%E5%BA%8F%E5%8C%96"><span class="nav-text">为什么 AI 偏爱程序化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E4%BB%A3%E5%89%8D%E7%AB%AF%E7%9A%84%E8%82%A5%E8%83%96%E7%97%87%E5%9B%B0%E5%B1%80"><span class="nav-text">现代前端的肥胖症困局</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%81%E7%AE%80%E4%BA%A4%E4%BB%98%E7%9A%84%E6%B5%AA%E6%BC%AB%E4%B8%8E%E4%BB%A3%E4%BB%B7"><span class="nav-text">极简交付的浪漫与代价</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">614</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1008</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/16/202611161405/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="1.4M 纯 HTML 跑出 3D 游戏：零图片零模型的极简主义反击 | 飞飞的AI实验室">
+      <meta itemprop="description" content="近期在社群疯传的 1.4M 纯 HTML 3D 游戏，剥离了所有外部图片与模型，全凭 Three.js 和算法实时程序化生成。本文拆解其底层机理与 AI 极简交付的启示。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          1.4M 纯 HTML 跑出 3D 游戏：零图片零模型的极简主义反击
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-16 14:05:00 / 修改时间：08:30:21" itemprop="dateCreated datePublished" datetime="2026-11-16T14:05:00+00:00">2026-11-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">近期在社群疯传的 1.4M 纯 HTML 3D 游戏，剥离了所有外部图片与模型，全凭 Three.js 和算法实时程序化生成。本文拆解其底层机理与 AI 极简交付的启示。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261116-202611161405.webp" alt="cover"></p>
+<p>最近几天，不少技术群和独立开发者的小圈子里，都在悄悄传一个极其奇特的文件。</p>
+<p>它只有一个极其普通的后缀：一个大小仅有 1.4MB 的单文件 HTML。</p>
+<p>如果你把它随手拖进浏览器里双击打开，屏幕上瞬间跳出一个完整的 3D 交互世界：有纵深开阔的平原与山体，有漫天流转的动态光影，有手感丝滑的角色物理碰撞，甚至当你按下跳跃和射击键时，耳机里还会传来清脆逼真的撞击音效。</p>
+<p>现场点开这个链接的程序员，第一反应大多是打开浏览器的开发者工具，下意识去翻看网络请求面板。</p>
+<p>按照过去十几年大家对 3D 项目的固有常识，哪怕是一个粗糙的演示 Demo，背后也至少得拉取几十张高分辨率贴图、加载几个三维软件导出的模型文件、外加几首切片出来的背景音乐。</p>
+<p>但令人不可思议的一幕发生了：整个网络请求面板干干净净，没有一张额外的图片，没有一个外部的模型文件，更没有一段预先录制好的音频切片。</p>
+<p>这整整一座在浏览器里流畅跑满六十帧的虚拟微型宇宙，居然完完全全被压缩在了一行行冰冷的纯文本代码里。</p>
+<h2 id="微信群里的单文件奇迹"><a href="#微信群里的单文件奇迹" class="headerlink" title="微信群里的单文件奇迹"></a>微信群里的单文件奇迹</h2><p>在很多人的刻板印象里，Web 端的 3D 内容通常约等于卡顿和漫长的加载等待条。</p>
+<p>你要么得忍受长达几十秒的模型解压过程，要么得面对动辄几十兆的资源预加载。而这个只有 1.4MB 的单文件之所以能在各大社群里引起病毒式的疯传，关键就在于它彻底打破了这种体验断层。</p>
+<p>微信群里随手甩一个文件，对面不需要搭建任何本地服务器环境，不需要配跨域代理，甚至断开网络处于离线状态，双击一下就能在几百毫秒内原地跑起来。</p>
+<p>知名博主数字生命卡兹克随后在文章里对这个文件进行了手术刀式的技术拆解。</p>
+<p>如果把这个 1.4MB 的小玩意切开看横截面，它的物理构成其实非常分明：</p>
+<p>其中大约 700KB，是混淆压缩后直接以内联脚本形态塞进去的开源三维图形库 Three.js；而剩下的 700KB 左右，则是大模型用纯 JavaScript 一笔一划写出来的算法逻辑。</p>
+<p>除去三维引擎必需的渲染底层，真正构建场景、角色、贴图和音响的业务代码，仅仅占用了区区七百多 KB。</p>
+<p>七百多 KB 是什么概念？在如今的现代网络环境里，它甚至不如一张高清壁纸的体积大，却硬生生撑起了一个自洽运转的交互系统。</p>
+<h2 id="把外部资产折叠进算法"><a href="#把外部资产折叠进算法" class="headerlink" title="把外部资产折叠进算法"></a>把外部资产折叠进算法</h2><p>没有任何外部素材辅助，这个小文件到底是怎么把山川、纹理和声音凭空变出来的？</p>
+<p>答案藏在计算机图形学里一个被现代工程遗忘已久的概念里：程序化生成。</p>
+<p>那些看起来颇有质感的材质贴图，在传统的开发流水线里，通常由美术画出精细的文件打包导入。但在这段代码里，它根本不碰外部图片。代码在页面初始化的瞬间，调用原生的 Canvas 画布，利用柏林噪声和三角函数在内存里计算像素阵列，用纯数学公式现场画出了地面上的斑驳石块与金属的反光渐变。</p>
+<p>庞大繁杂的 3D 几何模型也是相同的逻辑。</p>
+<p>这里没有建模工具导出的复杂网格体。代码把 Three.js 自带的基础几何图元当成了乐高积木：立方体、球体、圆柱体和拉伸平面，通过精密的矩阵变换、旋转组合和顶点偏移，像搭积木一样层层堆叠出了具有空间层次的房屋、道路和载具。</p>
+<p>最绝妙的当属它的音效系统。</p>
+<p>没有引用任何外部音频文件，代码直接启用了现代浏览器标配的 Web Audio API。当玩家在游戏里奔跑、碰撞或开火时，底层的音频振荡器根据预设的频率波形和增益曲线，在毫秒级内用数学正弦波和白噪声实时合成音效。</p>
+<p>它把原本需要离散存储在硬盘里的多媒体资产，彻底折叠成了一串串纯粹的数学算法。</p>
+<h2 id="为什么-AI-偏爱程序化"><a href="#为什么-AI-偏爱程序化" class="headerlink" title="为什么 AI 偏爱程序化"></a>为什么 AI 偏爱程序化</h2><p>如果回溯计算机历史，程序化生成算不上什么全新发明。早在几十年前的极客圈子里，就流行过极小体积的演示竞赛。</p>
+<p>但在人类程序员亲自写代码的时代，手写程序化资产的脑力消耗实在太反人性了。</p>
+<p>没有人愿意为了画一块泥土的纹理，在代码里手算三个小时的噪声分布公式；也没有人有足够的耐心为了调一个爆炸声，去手写二十行复杂的振荡器参数。对于人类而言，打开绘图软件画一张图、打开音频软件剪一段音，效率要高出千百倍。</p>
+<p>真正改变游戏规则的变量，是大语言模型的爆发。</p>
+<p>大模型的底层逻辑，本质上是一个极其恐怖的高维符号生成器。它天生擅长连续吐出几千行紧凑无误的数学公式、坐标变换矩阵和逻辑调用。</p>
+<p>更关键的秘密在于：在智能体编程场景里，让 AI 跨网络去协调几十个分散的静态资产，是一场彻头彻尾的灾难。</p>
+<p>AI 会经常搞错相对文件路径，会漏掉格式转换步骤，更会在跨域请求上屡屡碰壁。但如果让它把所有的美术和音效都折叠成单文件的纯代码，问题就瞬间从多文件资源编排，降维成了它最擅长的纯文本续写。</p>
+<p>AI 真正的破坏力，在于它能跨过寻找素材的传统工序，直接把原本非代码的物理资产，强行编译成可执行的纯逻辑。</p>
+<h2 id="现代前端的肥胖症困局"><a href="#现代前端的肥胖症困局" class="headerlink" title="现代前端的肥胖症困局"></a>现代前端的肥胖症困局</h2><p>当这个 1.4MB 的单文件在各种终端里轻盈穿梭时，它在无形中给每一个现代 Web 开发者甩了一记响亮的耳光。</p>
+<p>我们不妨回头看一眼今天主流的前端工程生态。</p>
+<p>现在的 Web 开发陷入了一种近乎荒诞的肥胖症。哪怕只是打算开发一个最简单的企业官网或者内部工具，脚手架一拉，依赖文件夹瞬间膨胀到几百兆，里面塞满了数以万计甚至没人说得清作用的小文件。</p>
+<p>构建一次项目，打包工具要把代码切成几十个碎片产物，配合着对象存储、CDN 缓存加速、证书配置和跨域策略在生产环境里小心翼翼地走钢丝。</p>
+<p>任何一个环节的静态资源拉取超时，或者哪一处云存储路径配置错误，整个页面立刻陷入毫无反应的死寂白屏。</p>
+<p>开发工具确实越来越智能，框架生态确实越来越繁荣，但交付给终端用户的最终产物，却变得越来越沉重、越来越脆弱。</p>
+<p>不知不觉中，大量工程精力被白白耗费在对抗自己亲手搭起的复杂工具链上。</p>
+<p>而这个 1.4MB 的 HTML 就像一个赤脚奔跑的少年，用最纯粹的单文件架构，把现代软件工程堆积起来的厚重脂肪剥得一干二净。</p>
+<h2 id="极简交付的浪漫与代价"><a href="#极简交付的浪漫与代价" class="headerlink" title="极简交付的浪漫与代价"></a>极简交付的浪漫与代价</h2><p>作为理性的工程师，我们大可不必为了追求极致的轻量，就盲目地退回到把所有业务逻辑硬塞进一个文件的蛮荒时代。</p>
+<p>单文件程序化生成固然惊艳，但它的工程代价也同样刺眼。</p>
+<p>把所有的材质运算、几何拼接和音频合成都堆给客户端，意味着你的 CPU 和 GPU 必须在运行时承受沉重的即时计算压力。对于复杂的拟真写实光影，数学算法现场推算出来的画质上限，在现阶段依然无法抗衡专业美术精心烘焙的贴图材质。</p>
+<p>更严峻的挑战在于维护性。把成千上万行逻辑融为一体，对于后续的协作迭代、模块解耦以及版本管理而言，无异于一场噩梦。</p>
+<p>但这次 1.4MB 游戏的爆火，留给所有从事 AI 编程和智能体开发的从业者的启示是极其深远的。</p>
+<p>在过去的大半年里，很多人用 Agent 写代码，只是在机械地模仿人类以往的坏习惯：让模型生成一堆琐碎的目录树，让它去安装庞杂的第三方包，结果导致生成的代码臃肿而难以交付。</p>
+<p>这个小游戏狠狠撕开了另一条截然不同的技术岔路。</p>
+<p>它告诉我们，最高级的工程优雅，往往不是学会堆砌多么繁复的脚手架，而是敢于在合适的场景下，把那些沉重的外部包袱彻底卸掉。</p>
+<p>当代码本身重新成为交付的唯一容器，极简主义的力量，才算在屏幕上得到了最炽热的印证。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/Three-js/" rel="tag"># Three.js</a>
+              <a href="/tags/3D/" rel="tag"># 3D</a>
+              <a href="/tags/WebGL/" rel="tag"># WebGL</a>
+              <a href="/tags/%E7%A8%8B%E5%BA%8F%E5%8C%96%E7%94%9F%E6%88%90/" rel="tag"># 程序化生成</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/16/202611161336/" rel="prev" title="Qwen4-Max 登顶背后：比 2.4T 更狠的是任务成本砍掉三分之二">
+                  <i class="fa fa-angle-left"></i> Qwen4-Max 登顶背后：比 2.4T 更狠的是任务成本砍掉三分之二
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">30:01</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

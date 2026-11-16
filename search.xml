@@ -256,6 +256,191 @@
       </tags>
   </entry>
   <entry>
+    <title>给 Agent 装上质检闹钟：Claude Code 那个没人注意的 exit 2</title>
+    <url>/2026/11/16/202611161129/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261116-202611161129.webp" alt="cover"></p>
+<p>很多天天在命令行里用 Claude Code 的开发者，大概都遇到过这种抓狂场面。</p>
+<p>你给它派了一个复杂的重构任务，转身去泡了杯咖啡。十分钟后走回屏幕前，看到它输出了长长一串总结，若无其事地宣布任务搞定。</p>
+<p>结果你顺手跑了一遍测试，终端里瞬间爆出一大片红色的报错。</p>
+<p>很多工程素养不错的朋友，其实早就意识到了这个问题。他们特意去查了文档，在项目配置里写好自动化钩子，心想着每次任务结束时让机器自动跑单测，不通过就不准交差。</p>
+<p>但诡异的事情发生了：哪怕单测明明失败了，终端里甚至打印出了未通过的日志，Claude 依然大摇大摆停下脚步，该下班就下班。</p>
+<p>你的测试代码写得没毛病，大模型也没有在故意装傻。</p>
+<p>真正的问题藏在 Unix 程序员三十年的肌肉记忆深处：我们所有人都以为出错就该返回状态码 1，而在 Claude Code 的底层世界里，只有状态码 2 才是那张能把它叫醒的真正红牌。</p>
+<h2 id="门虚掩着的假守护"><a href="#门虚掩着的假守护" class="headerlink" title="门虚掩着的假守护"></a>门虚掩着的假守护</h2><p>在标准的操作系统规范里，0 意味着成功，1 意味着通用错误。市面上的测试工具和代码检查器，检测到问题时默认抛出的退出码清一色都是 1。</p>
+<p>于是大家顺理成章地写下了最直觉的守护逻辑。</p>
+<p>比如在项目的停止钩子配置里挂上一行测试命令，或者写一个壳脚本，一旦测试失败就直接退出。写完之后放心地把活扔给模型跑通宵。</p>
+<p>但你不知道的是，这扇门其实一直是虚掩着的。</p>
+<p>在 Claude Code 设计的 33 个生命周期事件里，状态码 1 的含义根本不是阻断。系统把它定义为非阻断性的异常警告。</p>
+<p>当你的单测挂了、抛出了状态码 1，终端界面上确实会轻描淡写飘过一行钩子执行失败的提示。但事件分发总线看了一眼状态码，没看到约定的阻断信号，转头就把这个报错当成了无关紧要的杂音。</p>
+<p>模型完全没有接收到必须重做的强制约束。它看到流程走到了终点，自然就堂而皇之地打卡收工。</p>
+<p>无数开发者自以为在后方立了一根坚固的安全桩，但在机器眼里，那根桩子只是路边的一块减速慢行告示牌。车子想开过去，依然畅通无阻。</p>
+<h2 id="只有-2-才是红牌"><a href="#只有-2-才是红牌" class="headerlink" title="只有 2 才是红牌"></a>只有 2 才是红牌</h2><p>Anthropic 的开发者关系团队最近在社交平台上公开拆解了这个细节。</p>
+<p>要想真正让 Claude 在检查不通过时停下脚步，你的脚本必须极其显式地抛出退出码 2。</p>
+<p>在它的内部契约里，只有 0 和 2 拥有决定性的调度权。0 代表检查通过放行，而 2 代表硬性拦截。一旦系统捕获到了状态码 2，当前准备结束的轮次会被瞬间冻结，模型收到的是一声必须立刻回到工位上的强制哨响。</p>
+<p>更巧妙的设计在于它对标准错误流的处理。</p>
+<p>很多刚接触 Agent 自动化的朋友常苦恼于怎么给模型喂反馈。在外层写一套循环调度，捕获报错后再拼接提示词发给它，不仅链路拖得很长，还要额外折腾自己的中台服务。</p>
+<p>但 Claude Code 的这套机制把闭环做成了一体化。</p>
+<p>当你的钩子以状态码 2 退出时，脚本打印在标准错误输出里的所有文字，会被系统自动捕获，并作为下一轮对话的系统级反馈直接注入给模型。</p>
+<p>你不需要专门去教模型发生了什么。</p>
+<p>你只要在脚本里让编译器、测试框架或者语法检查器正常吐出报错堆栈。无论是哪一行类型不匹配，还是哪个断言不符，这几行原生报错信息就会原汁原味变成模型的下一步修补指令。</p>
+<p>它看到的是机器给出的客观裁判结果，而不是人类在聊天框里敲出的模糊催促。</p>
+<h2 id="把报错变成新指令"><a href="#把报错变成新指令" class="headerlink" title="把报错变成新指令"></a>把报错变成新指令</h2><p>我自己维护的长程流水线能稳妥跑上百篇不翻车，核心就是靠这种质检机制。</p>
+<p>在我的发稿工程里有几个严苛的物理约束：正文汉字必须卡在两千到两千五百字之间，副标题长度不能超过十二个字符，微信分发稿的行内标记绝对不能被句号切碎。</p>
+<p>早期我也吃过亏。没有机器在终点站岗时，所有验证压力全压在人的懒眼睛上。有时候模型少写了两百字，或者标题里多塞了一个词，我肉眼扫过去觉得通顺随手推了出去，到平台排版时才发现格式乱成一团。</p>
+<p>后来我立了条规矩：所有的交付标准必须沉淀为可执行的代码契约。</p>
+<p>我写了独立的质检脚本。改完文章后，脚本自动剥掉元数据，统计汉字数量，扫描禁用句式，检查平台字段。一旦哪一项不符合预期，脚本直接把具体的超标原因打印出来。</p>
+<p>有了状态码 2 的通道，这套契约瞬间就有了牙齿。</p>
+<p>模型写完稿子打算交付的瞬间，质检脚本在后台冷酷地跑一遍。字数少了五十个，脚本带着字数不达标的错误直接给出红牌，把模型一脚踹回去补齐论据；标题超了三个字，脚本就把那一行具体的标题行和字数差距甩给它，逼它自己重新精简。</p>
+<p>人和模型的关系，在这一个瞬间彻底完成了控制权的反转。</p>
+<p>你不再是一个天天跟在它屁股后面挑刺、催进度的监工保姆。你退到了裁判席后面，让客观的编译规则和测试套件在台前替你执法。</p>
+<h2 id="别让闭环烧穿账单"><a href="#别让闭环烧穿账单" class="headerlink" title="别让闭环烧穿账单"></a>别让闭环烧穿账单</h2><p>但如果你打算在工程里把这个机制跑起来，这里藏着一个极度危险的暗坑。</p>
+<p>硬性的重试拦截是一把双刃剑。敢于把刹车片踩死的前提，是你必须给整辆车装上一根随时可以拉断的保险丝。</p>
+<p>如果测试用例本身有逻辑死锁，或者外部服务突然断网，测试命令注定怎么跑都是红。如果钩子只知道机械地抛出状态码 2，整个终端就会陷入疯狂的自旋死循环。</p>
+<p>模型尝试修改、保存、触发钩子、被拦截、拿到报错、继续修改。几十分钟之内，几百万的上下文 Token 就会像流水一样被白白烧光。</p>
+<p>因此在工业级实践里，没有保护的死循环重试等于是在自杀。</p>
+<p>成熟的自动化钩子，第一步永远是读取环境里的上下文状态。你必须在会话级的临时空间里挂一个计数器，或者检查系统自带的递归标记。</p>
+<p>给它规定一个明确的重试上限。比如同一道工序最多允许自动修复三次，如果三轮后单测依然报错，说明问题大概率已经超出了当前代码的范畴。</p>
+<p>这时候脚本就应该体面地降级为普通错误，停下自动化的车轮，在屏幕上把最真实的卡点交还给人类。</p>
+<p>自治不是放任不管，真正的工程智慧在于知道什么时候让机器自主试错，什么时候把控制权交还给现场的驾驶员。</p>
+<h2 id="验证门硬野心才大"><a href="#验证门硬野心才大" class="headerlink" title="验证门硬野心才大"></a>验证门硬野心才大</h2><p>聊到这里，我们其实触碰到了自动化编程最底层的一个心法。</p>
+<p>很多人看 Agent 的能力，习惯盯着模型又聪明了多少。但在生产环境里真正拉开差距的，核心看你给它搭建的验证环境有多硬。</p>
+<p>就像我在之前的复盘里写过的那句话：蹦过极的人都懂这个道理，敢往下跳靠的从来不是胆子有多大，而是坚信脚踝上拴着的那根绳足够结实。</p>
+<p>如果你的验证门是软的，全靠人工扫一眼、肉眼猜对错，布置任务时心里永远悬着一块石头。你只敢让它写两行简单的函数，稍微长一点的重构根本不敢放手。</p>
+<p>因为你知道一旦它改偏了，擦屁股的成本比自己手写还要高。</p>
+<p>但如果你的验证门是硬的，有一整套严丝合缝的类型系统、单测套件和格式规范把守，并且用正确的退出状态码把这套规则嵌入到运行生命周期里，你的胆子就会完全不同。</p>
+<p>你敢让它去改几十个文件，敢让它通宵跑自动化流水线。因为你心里极其笃定：只要那行字数、那份报告、那个编译结果没有通过，它是绝对走不出那个沙盒的。</p>
+<p>弄明白状态码 2 的这一小步，技术上只有一行代码。</p>
+<p>但它带给你的，是一个真正能让你安心合上电脑、放手让 Agent 自主打磨现实的坚固底座。</p>
+]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>自动化</tag>
+        <tag>Hooks</tag>
+        <tag>ClaudeCode</tag>
+        <tag>Agent</tag>
+        <tag>工程实践</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>你下的权重有指纹：芯片查得到，违法查不到</title>
+    <url>/2026/11/16/202611161030/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261116-20261116-blackwell-fingerprint-weights-v4.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>你从 Hugging Face 拖下来的那个权重文件，除了能拿去跑模型，可能还记着它当初是在什么芯片上被摆出来的。这周就有一份报告靠这个，点名了六款国产模型。</p>
+<p>先把判断摆出来。这条证据的硬度超出我的预期，能覆盖的范围却比标题暗示的窄。它证明得了这批权重是在什么机器上开的头，证明不了那台机器摆在谁家、合不合法。</p>
+<p>这事值得你看，理由很实在。以后谁再拍胸脯说「我们全程国产算力」，你不用急着信，也不用急着不信，可以问他一句：种子和线程数是多少。多数时候对方不会答。会问这一句，跟能自己验，还是两回事。</p>
+<h2 id="权重里为什么会留痕迹"><a href="#权重里为什么会留痕迹" class="headerlink" title="权重里为什么会留痕迹"></a>权重里为什么会留痕迹</h2><p>模型开始训练之前，得先有几十亿个初始参数。它们其实是一串伪随机序列，种子数定了，序列就定了。PyTorch 底下走的是 Philox 算法。</p>
+<p>变量在另一个地方。这些数落到哪个参数位置上，由线程数决定。大张量初始化时，PyTorch 会给每个计算单元开满 2048 个线程，总线程数就是核心数乘 2048。英伟达 Hopper 的 H100 是 132 个核心，算下来 27 万个线程；Blackwell 的 B200 和 B300 是 148 个，30 万个出头；GB200 和 GB300 是 152 个，31 万个。</p>
+<p>训练开始后，大部分初始值会被更新掉。可总有一批参数从头到尾没被动过，比如某些没赶上梯度的位置、被保留的副本行。这些没动过的值，只要知道种子和线程数，就能原样重算一遍。</p>
+<p>打个比方。发牌的人按固定顺序发，坐在桌上的人数是固定的，那每张牌落到谁手里就是确定的。牌局打完，打出去的那些牌是什么已经说不清，可没打出去的牌还躺在手里，点数一个没错。你现在能翻的，就是这几张没打出去的牌。</p>
+<h2 id="这条证据硬在哪"><a href="#这条证据硬在哪" class="headerlink" title="这条证据硬在哪"></a>这条证据硬在哪</h2><p>这跟「统计上相关」不沾边，它把数字摆出来逐比特对。研究者在租来的 B300 上用种子 953049583 跑了一遍未改动的 PyTorch。DeepSeek-V4-Flash 有 469 行保留权重，461 行相关系数超过 0.99，其中 445 行一个比特都不差。种子改一位，全部对不上。</p>
+<p>Kimi K3 那边，租来的 GB200 上种子 20256586，13 行保留权重全部复现。DeepSeek-V3 更早，H100 上 57344 个值逐比特一致。</p>
+<p>这份报告搜了六万亿种「种子乘布局」的组合。因为搜索空间太大，作者把「碰巧撞上」的门槛定到 8 个标准差。最后报出来的六个模型，从 49 个标准差到 1385 个标准差，最弱的一项单独检验也有 20 个。</p>
+<p>还有一处很关键的排除。AMD 的 MI300X 只要把核心数限到 152 或 148，布局也能对上，理论上算个替代解释。作者挑了 377 个英伟达和 AMD 算术结果会分歧的值，拿去验 DeepSeek-V4-Flash。363 个站英伟达，0 个站 AMD。这一条把「也许是 AMD」按住了。</p>
+<h2 id="痕迹能证明违法吗"><a href="#痕迹能证明违法吗" class="headerlink" title="痕迹能证明违法吗"></a>痕迹能证明违法吗</h2><p>不能。作者自己把边界划得很清楚，划得比结论更狠。</p>
+<p>四条大意如下。指纹只能说明权重是被什么硬件初始化的，不能说明训练全程都在这套硬件上。权重看不出芯片归谁、放在哪，境外有机房，芯片可以租。所以报告不认定走私，也不认定违法。另外，Hopper 那一档读不出 H800、H100 和 H200 的区别。</p>
+<p>这四条串起来，就是一句话：抓到痕迹，和抓到违法，中间隔着一整套举证。</p>
+<p>要说这份报告有立场，最直接的质疑是它出自美国的研究机构，结论正好合了美国出口管制的叙事。这个怀疑我认为合理，先记在这儿。但这套方法可以复现，种子和布局都写在报告里，谁都能租张卡跑一遍。信不过结论，至少可以先信这个能验的过程。</p>
+<p>有一个最容易漏的点，我单独说。一家实验室完全可以在合规集群上初始化，拿到种子和初始值，再把训练挪到别处接着跑。指纹留在第一步，后面的账它不管。反过来，报告里读到 Hopper 的模型，也不能排除它后来用过 Blackwell 做继续训练。</p>
+<p>这道题因此留了个现成的口子。真想洗白，把第一步放在合规的机器上就行。读取指纹的人，只能看见门口那块牌子。</p>
+<p>规模估算那一块也一样。作者自己写「我们对自己这些估算没有信心」，因为吞吐率、token 数、跑多少天全靠假设，跑一半天数，估出来的卡数就翻一倍。这类数字看一眼就行，别当结论转。</p>
+<h2 id="查不出来的那几家"><a href="#查不出来的那几家" class="headerlink" title="查不出来的那几家"></a>查不出来的那几家</h2><p>报告最有说服力的地方，反而是它什么都没查出来的那些。</p>
+<p>同一套方法去扫 Qwen3、美团的 LongCat-2.0，还有改用另一套架构的 DeepSeek-V4.1-Flash。三家的权重里，都没读出英伟达的指纹。LongCat 那边，公司自己说用的是 AI ASIC 超节点。这套方法不是见谁都说有，这一点比命中更要紧。</p>
+<p>这里我得翻一下自己的旧账。七月我写过 LongCat-2.0，当时最打动我的，是它从训练到推理整个跑在五万张国产卡的集群上，全程没碰一张英伟达。可我在同一篇里也写了另一面：之前不少「国产芯片训模型」的说法，都被质疑偷偷掺了走私的 N 卡，成色要打折。</p>
+<p>这次这套方法在 LongCat 上读不出指纹，算是给那句质疑补了一个独立佐证。但话得说全：读不出指纹，只能说明没留下初始化痕迹，不能反过来证明它一定没用过英伟达。这个区别，跟前面那条边界是同一回事。</p>
+<h2 id="这些芯片打哪来的"><a href="#这些芯片打哪来的" class="headerlink" title="这些芯片打哪来的"></a>这些芯片打哪来的</h2><p>TechCrunch 的报道补了背景，数字都是转述，我没核到一手，所以不拿它当证据。它只解释一件事：为什么这份报告值得有人独立复现一遍。</p>
+<p>Epoch AI 估 2024 到 2025 年有约两百万张先进芯片经隐匿渠道进了中国，马来西亚是常走的中转。白宫科技顾问 Michael Kratsios 今年早些时候就点过月之暗面的名，当时拿不出技术证据。这次算是把「没证据的指控」往「有证据的推断」推了一步。</p>
+<p>截至我写这篇，DeepSeek、月之暗面、MiniMax、蚂蚁和英伟达，都没有给出正式回应。报告里能翻到的唯一一句公司口径，是 DeepSeek 一位工程师 2025 年 6 月在 GitHub 上的留言：「我们没有 SM100 的 GPU。」</p>
+<h2 id="谁有资格查这件事"><a href="#谁有资格查这件事" class="headerlink" title="谁有资格查这件事"></a>谁有资格查这件事</h2><p>先说你最关心的那件事：几乎没有影响。你调 Kimi 的 API，跑 DeepSeek 的开源版，速度、价格、回答质量，一件都不会因为这份报告改变。它动的是采购和地缘那一层，跟你今晚要写的代码没什么关系。</p>
+<p>真正变了的是「开源」这两个字多出来的一层意思。以前说开源，意思是你能把模型拿到本地，改两行代码再跑。现在还多了一条：有人能顺着权重查它的来路。</p>
+<p>问题在于，这条新能力分布得极不均匀。一套分析要搜几万亿种组合、租卡复现、还要有统计底子，能干这活的机构一只手数得过来。被查的倒有六家，背后全是公开权重。</p>
+<p>我七月看 K3 的权重，打开文件列表看了一眼 594GB，就把页面关了。对我来说，这堆数字只意味着硬盘装不下。</p>
+<p>所以它真正改的是「纯国产算力」这五个字的性质：从一句宣传语，变成一条可以被证伪的命题。这跟它这次点名了谁没关系。它顺带还把判断权从大多数人手里，挪到了少数几家能跑这套分析的机构手里。</p>
+<p>要等的东西很明确：厂商的正式回应，或者有人把整套方法独立复现一遍。DeepSeek 要是肯公布自己的初始化和种子方案，V4.1 那个悬着的问号也能落地。在这之前，结论就停在「证据很强、范围很窄」。</p>
+<p>如果以后判断一个模型有没有违规，只能听少数几家机构说了算，你放心吗？我不太放心，可也想不到比这更靠谱的第三方。</p>
+]]></content>
+      <categories>
+        <category>观点</category>
+      </categories>
+      <tags>
+        <tag>NVIDIA</tag>
+        <tag>开源模型</tag>
+        <tag>DeepSeek</tag>
+        <tag>Kimi</tag>
+        <tag>出口管制</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ChatGPT 上线 Wallet：当 Agent 拿到信用卡钥匙，我们真敢放手吗？</title>
+    <url>/2026/11/14/202611142213/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261114-202611142213.webp" alt="cover"></p>
+<p>就在这个周末，OpenAI 悄悄给聊天框里的智能体挂上了一只钱包。</p>
+<p>他们正式推出了 ChatGPT Wallet。首批面向美国 Pro 用户开放，拉来了 Visa、万事达和运通三大卡网，以及底层支付巨头 Stripe 一起站台。</p>
+<p>按官方设想，以后不需要再跳去电商收银台。你在聊天框里让 Agent 去挑商品，它选好后直接帮你把单买了。</p>
+<p>很多人看到新闻第一反应是惊艳。科技圈已经在畅想结账、比价和填地址都能省去，只要吩咐一句，AI 就能把东西送到家门口。</p>
+<p>但我看完 OpenAI 发布的整套安全白皮书和技术架构后，后背却微微泛起凉意。</p>
+<p>因为这是一条完全不同以往的分水岭。</p>
+<p>过去两年，我们让 Agent 写代码、看文档、跑自动化脚本，本质上依然是在一个受保护的数字沙盒里折腾。但当一张可以透支上万美元的信用卡被装进 Agent 口袋，它就正式迈出沙盒，踏进了一个完全没有撤销键的真实世界。</p>
+<h2 id="第一次失去后视镜"><a href="#第一次失去后视镜" class="headerlink" title="第一次失去后视镜"></a>第一次失去后视镜</h2><p>我自己算是一个天天给 Agent 大量放权的重度用户。</p>
+<p>平时写博客、管项目，我常挂着好几个 Agent 跑活。它们手里握着我不少关键权限：GitHub 写入权限、云服务器部署凭据、图床上传密钥，甚至发公众号的接口。</p>
+<p>这一串钥匙平时用着确实省心，但出事时你才知道它们有多沉。</p>
+<p>我被咬过不止一次。有一回我给 Agent 的 token 权限开得太宽，它帮我重构代码时，顺手把我没打算动的一个仓库公共设置给改了。它没有恶意，只是在自己的逻辑里觉得顺手优化更高效。</p>
+<p>但那一次让我真正心安的，是代码世界自带的后视镜。</p>
+<p>在代码仓库里，Agent 哪怕一口气改错一万行，终端里依然有一道清晰的 diff。我可以逐行看清它动了哪一个字符，实在不行，敲一行回滚命令，整个项目瞬间回到原点。代码域有编译器、类型检查和 Git 历史，这些硬规则就是拴在脚踝上的安全绳。</p>
+<p>可现实世界的金融支付完全没有这个后视镜。</p>
+<p>真实网页上的点击结算，只要确认发出，银行账目立刻扣减，仓库物流订单直接生成。它没有撤销命令，更没有时光机退回五分钟前。</p>
+<p>给 Agent 装上钱包，意味着它第一次脱离保护垫，把手指直接搭在了真实经济世界的扳机上。</p>
+<h2 id="假放权与真防线"><a href="#假放权与真防线" class="headerlink" title="假放权与真防线"></a>假放权与真防线</h2><p>OpenAI 显然比任何人都清楚这道扳机的危险性。</p>
+<p>仔细拆解 ChatGPT Wallet 的架构，你会发现他们把防守姿态做到了极致。这套系统在设计上处处透露着对大模型不确定性的戒备。</p>
+<p>核心防线是动态令牌隔离。</p>
+<p>很多人担心把信用卡绑进 ChatGPT 会被模型偷看。OpenAI 的做法是让智能体根本接触不到真实卡号、有效期限和安全码。银行卡信息在金融网络底层被换成了一串临时 Token，无论是对话模型自身还是外部电商，全程只能看到一串一次性虚拟凭证。</p>
+<p>更关键的一道闸门落在付款确认上。</p>
+<p>在当前版本中，所谓的 Agent 代付并不是真正意义上的完全自主。每次结账前，Agent 必须停下来把明细、总金额和扣款卡片列给你看，强制要求你掏出手机刷脸或按指纹。</p>
+<p>现在的 ChatGPT Wallet 算不上拥有自主决策权的管家，本质上依然偏向高级表单自动代填工具。</p>
+<p>它替你完成了比价、搜寻商品、输入地址这些脏活，但在临门一脚扣款时，依然老老实实退回到了人肉审批模式。</p>
+<p>这印证了我的一个判断：越是不可逆的操作，人类对机器的信任度就越脆弱。蹦过极的人都懂，敢往下跳靠的从来不是胆子有多大，而是坚信脚踝上拴着的那根绳足够硬。</p>
+<p>只要那根绳还在，哪怕是 OpenAI 自己，也不敢在现阶段把手从刹车片上拿开。</p>
+<h2 id="从单笔确认到自主买"><a href="#从单笔确认到自主买" class="headerlink" title="从单笔确认到自主买"></a>从单笔确认到自主买</h2><p>但 OpenAI 的野心显然不止于做一个代填表单的浏览器插件。</p>
+<p>在官方公告末尾，他们写下了未来的演化蓝图：随着安全机制完善，系统将允许用户完全把购买任务委托给 Agent。用户可以给它设定预算上限，比如每月 500 美元，限定品类和时间段，允许 Agent 在没有单笔确认的情况下自主完成付款。</p>
+<p>这才是真正让人产生心理防线动摇的地方。</p>
+<p>从每笔刷脸的半自动化，跳跃到划定额度后的全自主代付，中间隔着的绝不仅是一套技术参数。</p>
+<p>设想一个场景：你给 Agent 设定了每月 200 美元的耗材额度。某个深夜它基于网上抓取的一篇营销文章，认定某款小众品牌的机油是当前最优解，于是自动替你下了单。第二天早上收到扣款短信，你觉得它是买对了还是买错了？</p>
+<p>更复杂的在于意图理解的漂移。</p>
+<p>大模型最常见的毛病就是过度自信和联想发散。处理代码时理解错了意图会写出跑不通的逻辑，测试用例当场拦截；但如果购物时理解错了意图，比如把两件不同规格的同款商品当成互补品全部买下，没有任何编译器能告诉你它买得合不合心意。</p>
+<p>代码对错有客观标准，但消费合理性却建立在极其主观的情绪和偏好之上。把这个维度的裁量权完全交出去，哪怕只是一笔几十美元的小开支，带给用户的失控感也会成倍放大。</p>
+<h2 id="巨头为何率先封杀"><a href="#巨头为何率先封杀" class="headerlink" title="巨头为何率先封杀"></a>巨头为何率先封杀</h2><p>有意思的是，在普通消费者还在犹豫敢不敢绑卡时，大洋彼岸的几家商业巨头已经率先拉响了警报。</p>
+<p>在 ChatGPT Wallet 官宣的同一天，美联航公开表态，将全面封杀任何外部 AI 智能体进入其系统代订机票；亚马逊也早已部署严密技术手段，明令禁止 Agent 在其平台上代替用户完成购买流程。</p>
+<p>很多技术人员会困惑：各大平台天天喊数字化转型，现在有人主动带着真金白银帮用户来消费，为什么还要把它拒之门外？</p>
+<p>答案很残酷：因为 Agent 的介入，直接动摇了传统电商最根本的立足之本。</p>
+<p>传统商业帝国的利润，从来不单靠把一件明码标价的商品卖给你赚来的。它们巨大的商业价值，长在每个用户在网页和 App 里人肉停留的时长上。</p>
+<p>你需要打开首页看推荐瀑布流，在两个品牌之间来回对比，顺带被塞进好几条竞价广告；你原本只想买一瓶洗发水，顺带因为满减凑单不知不觉往购物车里塞了半箱零食。</p>
+<p>这些由人性的犹豫、冲动和视觉刺激构成的消费路径，是整个现代互联网广告和电商平台赖以生存的空气。</p>
+<p>一旦 Agent 拿到了钱包钥匙，这一切规则瞬间被格式化了。</p>
+<p>智能体不会浏览花哨的 Banner，看都不会看一眼那些重金投放的开屏广告。它以每秒几十次的速度比对参数、价格与交期，精准调用结算接口，拿了东西转身就走。</p>
+<p>在 Agent 眼里没有品牌溢价，没有冲动消费，更没有凑单满减。所有巨头引以为傲的私域流量和广告体系，在一行直达底层的 API 调用面前，瞬间被剥夺得干干净净。</p>
+<p>亚马逊和美联航恐惧的核心，在于自己有一天会沦为彻底失去话语权的纯物流管道。</p>
+<h2 id="留在手里的一道闸"><a href="#留在手里的一道闸" class="headerlink" title="留在手里的一道闸"></a>留在手里的一道闸</h2><p>看清了这一层商业博弈与安全边界，我们大概就能明白 ChatGPT Wallet 到底把我们带到了哪里。</p>
+<p>它确实代表了一种不可逆转的技术趋势。商业世界的齿轮只要转动起来，自动化的边界就一定会从纯粹的智力劳动不断向下渗透，直到触碰实体经济的现金流末端。</p>
+<p>作为开发者，我赞叹它在底层卡网协议与安全令牌上所做的极客工程。它证明了跨机构的金融清算网络完全有可能适配新一代的人工智能生态。</p>
+<p>但作为一个普通个体，在真正的自主代付浪潮扑面而来之前，我们必须清醒地守住自己的底线。</p>
+<p>机器可以替我们阅读冗长合同，比对复杂参数，把一切繁重表单填写妥当。但只要涉及到不可回滚的资产转移与现实契约，那道必须由人类亲手按下的确认闸门，就不应该被轻易拆除。</p>
+<p>在完全理性的算法世界里，每一次授权都只是一行布尔值。</p>
+<p>但只有把最底层的开关牢牢攥在自己手心里，我们才不至于在科技狂奔的列车上，被自己亲手递出去的钥匙反锁在门外。</p>
+]]></content>
+      <categories>
+        <category>AI探索</category>
+      </categories>
+      <tags>
+        <tag>ChatGPT</tag>
+        <tag>Agent</tag>
+        <tag>Wallet</tag>
+        <tag>金融风控</tag>
+        <tag>权限放权</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>别急着换更聪明的模型，先给活造个裁判</title>
     <url>/2026/11/14/202611141600/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261114-202611141600.webp" alt="cover"></p>
@@ -783,7 +968,7 @@
 <p>上一篇聊完成本算账，这篇是操作层。两件事加在一起，才算把「怎么用 Claude Code 不乱烧钱」这道题答完整了。</p>
 <p>以上，既然看到这里了，如果觉得不错，随手点个赞、在看、转发三连吧，如果想第一时间收到推送，也可以给我个星标⭐～<br>谢谢你看我的文章，我们，下次再见。</p>
 <blockquote>
-<p>&#x2F; 作者：飞飞<br>&#x2F; 投稿或爆料，请联系邮箱：<a href="mailto:&#x78;&#105;&#x6e;&#x70;&#101;&#110;&#x67;&#x66;&#x65;&#x69;&#x35;&#50;&#x31;&#x40;&#103;&#x6d;&#97;&#105;&#108;&#x2e;&#99;&#x6f;&#109;">&#x78;&#105;&#x6e;&#x70;&#101;&#110;&#x67;&#x66;&#x65;&#x69;&#x35;&#50;&#x31;&#x40;&#103;&#x6d;&#97;&#105;&#108;&#x2e;&#99;&#x6f;&#109;</a></p>
+<p>&#x2F; 作者：飞飞<br>&#x2F; 投稿或爆料，请联系邮箱：<a href="mailto:&#120;&#105;&#x6e;&#x70;&#101;&#110;&#103;&#x66;&#101;&#105;&#x35;&#x32;&#49;&#x40;&#103;&#109;&#x61;&#105;&#x6c;&#x2e;&#99;&#x6f;&#109;">&#120;&#105;&#x6e;&#x70;&#101;&#110;&#103;&#x66;&#101;&#105;&#x35;&#x32;&#49;&#x40;&#103;&#109;&#x61;&#105;&#x6c;&#x2e;&#99;&#x6f;&#109;</a></p>
 </blockquote>
 ]]></content>
       <categories>
@@ -38161,9 +38346,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 开发</tag>
         <tag>Agent Teams</tag>
         <tag>多智能体协作</tag>
+        <tag>AI 开发</tag>
         <tag>团队协作</tag>
       </tags>
   </entry>
@@ -38457,8 +38642,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>Subagents</tag>
         <tag>AI 开发</tag>
+        <tag>Subagents</tag>
         <tag>自动化</tag>
         <tag>效率工具</tag>
       </tags>
@@ -41808,10 +41993,10 @@ feat(auth): 添加 JWT Token 认证功能
         <category>程序员</category>
       </categories>
       <tags>
-        <tag>编程</tag>
-        <tag>经验分享</tag>
         <tag>程序员</tag>
         <tag>个人提升</tag>
+        <tag>编程</tag>
+        <tag>经验分享</tag>
       </tags>
   </entry>
   <entry>
@@ -41930,11 +42115,11 @@ feat(auth): 添加 JWT Token 认证功能
         <category>程序员</category>
       </categories>
       <tags>
-        <tag>程序员</tag>
-        <tag>个人提升</tag>
         <tag>写作</tag>
         <tag>个人总结</tag>
         <tag>年终总结</tag>
+        <tag>程序员</tag>
+        <tag>个人提升</tag>
       </tags>
   </entry>
   <entry>
@@ -42686,7 +42871,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#x74;&#64;&#103;&#105;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#x6d;">&#x67;&#105;&#x74;&#64;&#103;&#105;&#x74;&#x68;&#117;&#98;&#x2e;&#x63;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#x69;&#116;&#x40;&#103;&#105;&#x74;&#x68;&#x75;&#98;&#46;&#99;&#111;&#x6d;">&#x67;&#x69;&#116;&#x40;&#103;&#105;&#x74;&#x68;&#x75;&#98;&#46;&#99;&#111;&#x6d;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -43612,35 +43797,6 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android Picasso 实现圆形图片和圆角图片</title>
-    <url>/2017/09/24/201709242356/</url>
-    <content><![CDATA[<p>##1.实现圆形图片</p>
-<p>###1.1代码调用如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new CircleTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
-
-<p>###1.2自定义圆形图片处理工具类(可以修改圆形图片的半径)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆形图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class CircleTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line">    private int radius; // 圆形图片半径</span><br><span class="line"></span><br><span class="line">    public CircleTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">        radius = DensityUtil.dp2px(mContext, 10);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int size = Math.min(source.getWidth(), source.getHeight());</span><br><span class="line"></span><br><span class="line">        int x = (source.getWidth() - size) / 2;</span><br><span class="line">        int y = (source.getHeight() - size) / 2;</span><br><span class="line"></span><br><span class="line">        Bitmap squaredBitmap = Bitmap.createBitmap(source, x, y, size, size);</span><br><span class="line">        if (squaredBitmap != source) &#123;</span><br><span class="line">            source.recycle();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Bitmap bitmap = Bitmap.createBitmap(size, size, source.getConfig());</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(bitmap);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        BitmapShader shader = new BitmapShader(squaredBitmap,</span><br><span class="line">                BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);</span><br><span class="line">        paint.setShader(shader);</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line"></span><br><span class="line">        float r = size / 2f;</span><br><span class="line">//        float r = radius;</span><br><span class="line">        canvas.drawCircle(r, r, r, paint);</span><br><span class="line"></span><br><span class="line">        squaredBitmap.recycle();</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;circle&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##2.实现圆角图片</p>
-<p>###2.1代码调用如下</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new RoundTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
-
-<p>###2.2自定义圆角图片处理工具类(可以修改图片圆角的半径)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line">import android.graphics.PorterDuff;</span><br><span class="line">import android.graphics.PorterDuffXfermode;</span><br><span class="line">import android.graphics.Rect;</span><br><span class="line">import android.graphics.RectF;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆角图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class RoundTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public RoundTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int widthLight = source.getWidth();</span><br><span class="line">        int heightLight = source.getHeight();</span><br><span class="line">        int radius = DensityUtil.dp2px(mContext, 8); // 圆角半径</span><br><span class="line"></span><br><span class="line">        Bitmap output = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(output);</span><br><span class="line">        Paint paintColor = new Paint();</span><br><span class="line">        paintColor.setFlags(Paint.ANTI_ALIAS_FLAG);</span><br><span class="line"></span><br><span class="line">        RectF rectF = new RectF(new Rect(0, 0, widthLight, heightLight));</span><br><span class="line"></span><br><span class="line">        canvas.drawRoundRect(rectF, radius, radius, paintColor);</span><br><span class="line">//        canvas.drawRoundRect(rectF, widthLight / 5, heightLight / 5, paintColor);</span><br><span class="line"></span><br><span class="line">        Paint paintImage = new Paint();</span><br><span class="line">        paintImage.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));</span><br><span class="line">        canvas.drawBitmap(source, 0, 0, paintImage);</span><br><span class="line">        source.recycle();</span><br><span class="line">        return output;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;roundcorner&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>今天就到这里吧…</p>
-<p>下篇预告：Android Glide实现圆形图片和圆角图片</p>
-<p>敬请期待…</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Picasso</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android OTG 之 USB 转串口模块通讯</title>
     <url>/2017/09/24/201709242355/</url>
     <content><![CDATA[<h2 id="1-背景简介"><a href="#1-背景简介" class="headerlink" title="1.背景简介"></a>1.背景简介</h2><p>我们公司开发了一款室内机平板APP应用，要求平板能去控制智能门锁、等其他智能设备，智能门锁不是我们公司开发的，与我们公司属于合作关系。</p>
@@ -43677,18 +43833,32 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android Runtime(ART) 介绍</title>
-    <url>/2017/09/24/201709242358/</url>
-    <content><![CDATA[<h2 id="1-English原版"><a href="#1-English原版" class="headerlink" title="1.English原版"></a>1.English原版</h2><p><a href="https://www.anandtech.com/print/8231/a-closer-look-at-android-runtime-art-in-android-l">https://www.anandtech.com/print/8231/a-closer-look-at-android-runtime-art-in-android-l</a></p>
-<h2 id="2-翻译版本"><a href="#2-翻译版本" class="headerlink" title="2.翻译版本"></a>2.翻译版本</h2><p><a href="http://tieba.baidu.com/p/3149769993">http://tieba.baidu.com/p/3149769993</a></p>
-<p>感谢贴吧的楼主翻译，很详细、很标准，大赞！！!</p>
+    <title>Android Picasso 实现圆形图片和圆角图片</title>
+    <url>/2017/09/24/201709242356/</url>
+    <content><![CDATA[<p>##1.实现圆形图片</p>
+<p>###1.1代码调用如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new CircleTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
+
+<p>###1.2自定义圆形图片处理工具类(可以修改圆形图片的半径)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapShader;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆形图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class CircleTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line">    private int radius; // 圆形图片半径</span><br><span class="line"></span><br><span class="line">    public CircleTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">        radius = DensityUtil.dp2px(mContext, 10);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int size = Math.min(source.getWidth(), source.getHeight());</span><br><span class="line"></span><br><span class="line">        int x = (source.getWidth() - size) / 2;</span><br><span class="line">        int y = (source.getHeight() - size) / 2;</span><br><span class="line"></span><br><span class="line">        Bitmap squaredBitmap = Bitmap.createBitmap(source, x, y, size, size);</span><br><span class="line">        if (squaredBitmap != source) &#123;</span><br><span class="line">            source.recycle();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Bitmap bitmap = Bitmap.createBitmap(size, size, source.getConfig());</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(bitmap);</span><br><span class="line">        Paint paint = new Paint();</span><br><span class="line">        BitmapShader shader = new BitmapShader(squaredBitmap,</span><br><span class="line">                BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);</span><br><span class="line">        paint.setShader(shader);</span><br><span class="line">        paint.setAntiAlias(true);</span><br><span class="line"></span><br><span class="line">        float r = size / 2f;</span><br><span class="line">//        float r = radius;</span><br><span class="line">        canvas.drawCircle(r, r, r, paint);</span><br><span class="line"></span><br><span class="line">        squaredBitmap.recycle();</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;circle&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##2.实现圆角图片</p>
+<p>###2.1代码调用如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Picasso.with(mContext).load(headpic).memoryPolicy(MemoryPolicy.NO_CACHE)</span><br><span class="line">                           .transform(new RoundTransform(mContext)).into(ivIcon);</span><br></pre></td></tr></table></figure>
+
+<p>###2.2自定义圆角图片处理工具类(可以修改图片圆角的半径)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import android.content.Context;</span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.Canvas;</span><br><span class="line">import android.graphics.Paint;</span><br><span class="line">import android.graphics.PorterDuff;</span><br><span class="line">import android.graphics.PorterDuffXfermode;</span><br><span class="line">import android.graphics.Rect;</span><br><span class="line">import android.graphics.RectF;</span><br><span class="line"></span><br><span class="line">import com.squareup.picasso.Transformation;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/4/8 :)</span><br><span class="line"> * Function:Picasso Transformation 实现圆角图片</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class RoundTransform implements Transformation &#123;</span><br><span class="line"></span><br><span class="line">    private Context mContext;</span><br><span class="line"></span><br><span class="line">    public RoundTransform(Context context) &#123;</span><br><span class="line">        mContext = context;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap transform(Bitmap source) &#123;</span><br><span class="line"></span><br><span class="line">        int widthLight = source.getWidth();</span><br><span class="line">        int heightLight = source.getHeight();</span><br><span class="line">        int radius = DensityUtil.dp2px(mContext, 8); // 圆角半径</span><br><span class="line"></span><br><span class="line">        Bitmap output = Bitmap.createBitmap(source.getWidth(), source.getHeight(), Bitmap.Config.ARGB_8888);</span><br><span class="line"></span><br><span class="line">        Canvas canvas = new Canvas(output);</span><br><span class="line">        Paint paintColor = new Paint();</span><br><span class="line">        paintColor.setFlags(Paint.ANTI_ALIAS_FLAG);</span><br><span class="line"></span><br><span class="line">        RectF rectF = new RectF(new Rect(0, 0, widthLight, heightLight));</span><br><span class="line"></span><br><span class="line">        canvas.drawRoundRect(rectF, radius, radius, paintColor);</span><br><span class="line">//        canvas.drawRoundRect(rectF, widthLight / 5, heightLight / 5, paintColor);</span><br><span class="line"></span><br><span class="line">        Paint paintImage = new Paint();</span><br><span class="line">        paintImage.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP));</span><br><span class="line">        canvas.drawBitmap(source, 0, 0, paintImage);</span><br><span class="line">        source.recycle();</span><br><span class="line">        return output;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String key() &#123;</span><br><span class="line">        return &quot;roundcorner&quot;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>今天就到这里吧…</p>
+<p>下篇预告：Android Glide实现圆形图片和圆角图片</p>
+<p>敬请期待…</p>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
         <tag>GitHub</tag>
-        <tag>Runtime</tag>
+        <tag>Picasso</tag>
       </tags>
   </entry>
   <entry>
@@ -43710,6 +43880,21 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Picasso</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android Runtime(ART) 介绍</title>
+    <url>/2017/09/24/201709242358/</url>
+    <content><![CDATA[<h2 id="1-English原版"><a href="#1-English原版" class="headerlink" title="1.English原版"></a>1.English原版</h2><p><a href="https://www.anandtech.com/print/8231/a-closer-look-at-android-runtime-art-in-android-l">https://www.anandtech.com/print/8231/a-closer-look-at-android-runtime-art-in-android-l</a></p>
+<h2 id="2-翻译版本"><a href="#2-翻译版本" class="headerlink" title="2.翻译版本"></a>2.翻译版本</h2><p><a href="http://tieba.baidu.com/p/3149769993">http://tieba.baidu.com/p/3149769993</a></p>
+<p>感谢贴吧的楼主翻译，很详细、很标准，大赞！！!</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Runtime</tag>
       </tags>
   </entry>
   <entry>
@@ -43756,42 +43941,6 @@ feat(auth): 添加 JWT Token 认证功能
         <tag>GitHub</tag>
         <tag>SharedPreferences</tag>
         <tag>工具类</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Studio 曲折更新之路</title>
-    <url>/2017/09/24/201709242402/</url>
-    <content><![CDATA[<blockquote>
-<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
-</blockquote>
-<p>##1.开始更新</p>
-<p>打开AS 点击Help –&gt; Check for Updates…</p>
-<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
-<p>###1.1找到最新的版本号对应的串号</p>
-<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
-<p>如下图所示：</p>
-<p>###1.2下载你对应版本的到最新版本的补丁包</p>
-<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
-<p>然后拼接出一个下载补丁包的url:如下</p>
-<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
-<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
-<p>###1.3手动安装AS补丁包</p>
-<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
-<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
-<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
-<p>稍等一会更新包就安装完成了</p>
-<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
-<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
-<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
-<p>另外，感谢下面博主的博客：</p>
-<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android Studio</tag>
       </tags>
   </entry>
   <entry>
@@ -43854,28 +44003,45 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>GitHub</tag>
         <tag>Plugin</tag>
+        <tag>GitHub</tag>
         <tag>Android Studio</tag>
       </tags>
   </entry>
   <entry>
-    <title>Android Studio 添加 arr 依赖</title>
-    <url>/2017/09/24/201709242404/</url>
-    <content><![CDATA[<p>##1.将arr库放到libs下面</p>
-<p>##2.在app的buildgradle的android节点中添加如下代码</p>
-<figure class="highlight plaintext"><figcaption><span>&#123;</span></figcaption><table><tr><td class="code"><pre><span class="line">    flatDir &#123;</span><br><span class="line">        dirs &#x27;libs&#x27; //this way we can find the .aar file in libs folder</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>##3.在dependencies中添加如下依赖</p>
-<p><code>compile(name: &#39;com.datescroller.lib-release&#39;, ext: &#39;aar&#39;)</code></p>
-<p>name后面就是arr的库名，不带后缀。</p>
+    <title>Android Studio 曲折更新之路</title>
+    <url>/2017/09/24/201709242402/</url>
+    <content><![CDATA[<blockquote>
+<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
+</blockquote>
+<p>##1.开始更新</p>
+<p>打开AS 点击Help –&gt; Check for Updates…</p>
+<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
+<p>###1.1找到最新的版本号对应的串号</p>
+<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
+<p>如下图所示：</p>
+<p>###1.2下载你对应版本的到最新版本的补丁包</p>
+<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
+<p>然后拼接出一个下载补丁包的url:如下</p>
+<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
+<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
+<p>###1.3手动安装AS补丁包</p>
+<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
+<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
+<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
+<p>稍等一会更新包就安装完成了</p>
+<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
+<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
+<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
+<p>另外，感谢下面博主的博客：</p>
+<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
+        <tag>GitHub</tag>
         <tag>Android Studio</tag>
-        <tag>arr</tag>
       </tags>
   </entry>
   <entry>
@@ -43936,6 +44102,25 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android Studio 添加 arr 依赖</title>
+    <url>/2017/09/24/201709242404/</url>
+    <content><![CDATA[<p>##1.将arr库放到libs下面</p>
+<p>##2.在app的buildgradle的android节点中添加如下代码</p>
+<figure class="highlight plaintext"><figcaption><span>&#123;</span></figcaption><table><tr><td class="code"><pre><span class="line">    flatDir &#123;</span><br><span class="line">        dirs &#x27;libs&#x27; //this way we can find the .aar file in libs folder</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>##3.在dependencies中添加如下依赖</p>
+<p><code>compile(name: &#39;com.datescroller.lib-release&#39;, ext: &#39;aar&#39;)</code></p>
+<p>name后面就是arr的库名，不带后缀。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android Studio</tag>
+        <tag>arr</tag>
       </tags>
   </entry>
   <entry>
@@ -44174,27 +44359,6 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
-    <title>Expected resource of type id [ResourceType]</title>
-    <url>/2017/09/24/201709242414/</url>
-    <content><![CDATA[<p>今天刚升级完 Android Studio 到3.0.1版本，装完之后，遇到一堆问题，改了一大堆问题，终于改完了，就想打包apk试试，没想到打包时报了如下错误：</p>
-<p><code>Error Expected resource of type id [ResourceType]</code></p>
-<p>点击到报错的地方，原来是依赖的一个开源库一个<strong>if</strong>判断处报错了，如下图：</p>
-<p>但是点击进去之后看了一下也是返回的<strong>Int</strong>类型的值，我就郁闷了，为什么不能比较了？有哪位大神可以解释一下是为什么吗？</p>
-<p>解决办法：</p>
-<p>后来在网上搜了一下，只要在这个报错代码所在方法的头上加入如下代码即可：</p>
-<p><code>@SuppressWarnings(&quot;ResourceType&quot;)</code></p>
-<p>试了试，果然好使，但还是不知道为什么？</p>
-<p>大神求解释！！！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android Studio</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 实现密码隐藏显示</title>
     <url>/2017/09/24/201709242413/</url>
     <content><![CDATA[<blockquote>
@@ -44216,6 +44380,27 @@ public static boolean isChinaPhoneLegal(String str)
         <tag>GitHub</tag>
         <tag>Android</tag>
         <tag>popupwindow</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Expected resource of type id [ResourceType]</title>
+    <url>/2017/09/24/201709242414/</url>
+    <content><![CDATA[<p>今天刚升级完 Android Studio 到3.0.1版本，装完之后，遇到一堆问题，改了一大堆问题，终于改完了，就想打包apk试试，没想到打包时报了如下错误：</p>
+<p><code>Error Expected resource of type id [ResourceType]</code></p>
+<p>点击到报错的地方，原来是依赖的一个开源库一个<strong>if</strong>判断处报错了，如下图：</p>
+<p>但是点击进去之后看了一下也是返回的<strong>Int</strong>类型的值，我就郁闷了，为什么不能比较了？有哪位大神可以解释一下是为什么吗？</p>
+<p>解决办法：</p>
+<p>后来在网上搜了一下，只要在这个报错代码所在方法的头上加入如下代码即可：</p>
+<p><code>@SuppressWarnings(&quot;ResourceType&quot;)</code></p>
+<p>试了试，果然好使，但还是不知道为什么？</p>
+<p>大神求解释！！！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android Studio</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -44428,24 +44613,6 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
-    <title>android.view.ViewRootImpl$CalledFromWrongThreadException</title>
-    <url>/2017/09/24/201709242420/</url>
-    <content><![CDATA[<p>在使用EventBus时报如下异常：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">E/EventBus: Could not dispatch event: class com.model.EventBusMsg to subscribing class class com.anloq.activity.SettingActivity</span><br><span class="line">                                                           android.view.ViewRootImpl$CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views.</span><br><span class="line">                                                               at android.view.ViewRootImpl.checkThread(ViewRootImpl.java:6096)</span><br><span class="line">                                                               at android.view.ViewRootImpl.requestLayout(ViewRootImpl.java:824)</span><br></pre></td></tr></table></figure>
-
-<p>上面大致说的意思是EventBus再设置处理UI时只能在UI线程中，我使用的是 <strong>BACKGROUND</strong></p>
-<p>解决办法：1.改为 <strong>MAIN</strong>；<br>         2.处理UI时加上runOnUiThread即可；</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Exception</tag>
-        <tag>EventBus</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 实现帧动画</title>
     <url>/2017/09/24/201709242419/</url>
     <content><![CDATA[<h2 id="1-在res的drawable下新建一个布局animation-xml-文件"><a href="#1-在res的drawable下新建一个布局animation-xml-文件" class="headerlink" title="1.在res的drawable下新建一个布局animation.xml*文件"></a>1.在res的drawable下新建一个布局<strong>animation.xml</strong>*文件</h2><figure class="highlight plaintext"><figcaption><span>version</span></figcaption><table><tr><td class="code"><pre><span class="line">&lt;animation-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;</span><br><span class="line">    android:oneshot=&quot;true&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image1&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image2&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image3&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image4&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image5&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image6&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image7&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image8&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image9&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image10&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image11&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image12&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image13&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image14&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image15&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image16&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image17&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image18&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image19&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image20&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image21&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image22&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image23&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image24&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image25&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image26&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image27&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image28&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image29&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image30&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image31&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image32&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image33&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image34&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image35&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image36&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image37&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image38&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image39&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image40&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image41&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image42&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image43&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image44&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image45&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image46&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image47&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image48&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image49&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image50&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image51&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image52&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image53&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image54&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image55&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image56&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image57&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image58&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image59&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line">    &lt;item</span><br><span class="line">        android:drawable=&quot;@drawable/image60&quot;</span><br><span class="line">        android:duration=&quot;32&quot; /&gt;</span><br><span class="line"></span><br><span class="line">&lt;/animation-list&gt;</span><br></pre></td></tr></table></figure>
@@ -44473,18 +44640,21 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
-    <title>Android 设置屏幕亮度及 Alpha 值</title>
-    <url>/2017/09/24/201709242422/</url>
-    <content><![CDATA[<p>直接看代码：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.someexamples;</span><br><span class="line"></span><br><span class="line">import android.app.Activity;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.view.Window;</span><br><span class="line">import android.view.WindowManager;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/5/14 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:设置屏幕亮度及Alpha值</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class BrightnessManager &#123;</span><br><span class="line">    /**</span><br><span class="line">     * 设置当前activity的屏幕亮度</span><br><span class="line">     *</span><br><span class="line">     * @param paramFloat 0-1.0f</span><br><span class="line">     * @param context    需要调整亮度的activity context</span><br><span class="line">     */</span><br><span class="line">    public static void setBrightness(float paramFloat, Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window localWindow = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams params = localWindow.getAttributes();</span><br><span class="line">        params.screenBrightness = paramFloat;</span><br><span class="line">        localWindow.setAttributes(params);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取当前activity的屏幕亮度</span><br><span class="line">     *</span><br><span class="line">     * @param context 当前activity context对象</span><br><span class="line">     * @return 亮度值范围为0-0.1f，如果为-1.0，则亮度与全局同步</span><br><span class="line">     */</span><br><span class="line">    public static float getBrightness(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window localWindow = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams params = localWindow.getAttributes();</span><br><span class="line">        return params.screenBrightness;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度0-1.0f</span><br><span class="line">     */</span><br><span class="line">    public static void setAlpha(float light, Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = light;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度变暗</span><br><span class="line">     */</span><br><span class="line">    public static void lightoff(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = 0.3f;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度显示正常</span><br><span class="line">     */</span><br><span class="line">    public static void lighton(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = 1.0f;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    <title>android.view.ViewRootImpl$CalledFromWrongThreadException</title>
+    <url>/2017/09/24/201709242420/</url>
+    <content><![CDATA[<p>在使用EventBus时报如下异常：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">E/EventBus: Could not dispatch event: class com.model.EventBusMsg to subscribing class class com.anloq.activity.SettingActivity</span><br><span class="line">                                                           android.view.ViewRootImpl$CalledFromWrongThreadException: Only the original thread that created a view hierarchy can touch its views.</span><br><span class="line">                                                               at android.view.ViewRootImpl.checkThread(ViewRootImpl.java:6096)</span><br><span class="line">                                                               at android.view.ViewRootImpl.requestLayout(ViewRootImpl.java:824)</span><br></pre></td></tr></table></figure>
+
+<p>上面大致说的意思是EventBus再设置处理UI时只能在UI线程中，我使用的是 <strong>BACKGROUND</strong></p>
+<p>解决办法：1.改为 <strong>MAIN</strong>；<br>         2.处理UI时加上runOnUiThread即可；</p>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
         <tag>GitHub</tag>
-        <tag>Android</tag>
-        <tag>Alpha</tag>
+        <tag>Exception</tag>
+        <tag>EventBus</tag>
       </tags>
   </entry>
   <entry>
@@ -44520,6 +44690,21 @@ public static boolean isChinaPhoneLegal(String str)
         <tag>GitHub</tag>
         <tag>Activity</tag>
         <tag>Service</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Android 设置屏幕亮度及 Alpha 值</title>
+    <url>/2017/09/24/201709242422/</url>
+    <content><![CDATA[<p>直接看代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.someexamples;</span><br><span class="line"></span><br><span class="line">import android.app.Activity;</span><br><span class="line">import android.content.Context;</span><br><span class="line">import android.view.Window;</span><br><span class="line">import android.view.WindowManager;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/5/14 :)</span><br><span class="line"> * GitHub:xinpengfei520</span><br><span class="line"> * Function:设置屏幕亮度及Alpha值</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class BrightnessManager &#123;</span><br><span class="line">    /**</span><br><span class="line">     * 设置当前activity的屏幕亮度</span><br><span class="line">     *</span><br><span class="line">     * @param paramFloat 0-1.0f</span><br><span class="line">     * @param context    需要调整亮度的activity context</span><br><span class="line">     */</span><br><span class="line">    public static void setBrightness(float paramFloat, Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window localWindow = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams params = localWindow.getAttributes();</span><br><span class="line">        params.screenBrightness = paramFloat;</span><br><span class="line">        localWindow.setAttributes(params);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取当前activity的屏幕亮度</span><br><span class="line">     *</span><br><span class="line">     * @param context 当前activity context对象</span><br><span class="line">     * @return 亮度值范围为0-0.1f，如果为-1.0，则亮度与全局同步</span><br><span class="line">     */</span><br><span class="line">    public static float getBrightness(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window localWindow = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams params = localWindow.getAttributes();</span><br><span class="line">        return params.screenBrightness;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度0-1.0f</span><br><span class="line">     */</span><br><span class="line">    public static void setAlpha(float light, Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = light;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度变暗</span><br><span class="line">     */</span><br><span class="line">    public static void lightoff(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = 0.3f;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置手机屏幕透明度显示正常</span><br><span class="line">     */</span><br><span class="line">    public static void lighton(Context context) &#123;</span><br><span class="line">        Activity activity = (Activity) context;</span><br><span class="line">        Window window = activity.getWindow();</span><br><span class="line">        WindowManager.LayoutParams lp = window.getAttributes();</span><br><span class="line">        lp.alpha = 1.0f;</span><br><span class="line">        window.setAttributes(lp);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+        <tag>Alpha</tag>
       </tags>
   </entry>
   <entry>
@@ -44638,6 +44823,55 @@ Thanks all.
         <tag>GitHub</tag>
         <tag>Android</tag>
         <tag>GIF</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>《Android源码设计模式》学习笔记之 ImageLoader</title>
+    <url>/2017/09/24/201709242428/</url>
+    <content><![CDATA[<blockquote>
+<p>需求：设计一个图片加载工具类。<br>要求：职责单一、可扩展性强、实现三级缓存，遵循开闭原则。</p>
+</blockquote>
+<h2 id="1-改造前原始代码"><a href="#1-改造前原始代码" class="headerlink" title="1.改造前原始代码"></a>1.改造前原始代码</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.util.LruCache;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    // 图片缓存</span><br><span class="line">    LruCache&lt;String, Bitmap&gt; mImageCache;</span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    public ImageLoader() &#123;</span><br><span class="line">        initImageCache();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 初始化图片缓存大小</span><br><span class="line">     */</span><br><span class="line">    private void initImageCache() &#123;</span><br><span class="line">        // 计算可使用的最大内存</span><br><span class="line">        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);</span><br><span class="line">        // 取1/4的可用内存作为缓存</span><br><span class="line">        final int cacheSize = maxMemory / 4;</span><br><span class="line">        mImageCache = new LruCache&lt;String, Bitmap&gt;(cacheSize) &#123;</span><br><span class="line">            @Override</span><br><span class="line">            protected int sizeOf(String key, Bitmap value) &#123;</span><br><span class="line">                return value.getRowBytes() * value.getHeight() / 1024;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-遵循单一原则将原始类分为加载和缓存两个类（功能）"><a href="#2-遵循单一原则将原始类分为加载和缓存两个类（功能）" class="headerlink" title="2.遵循单一原则将原始类分为加载和缓存两个类（功能）"></a>2.遵循单一原则将原始类分为加载和缓存两个类（功能）</h2><h3 id="2-1-图片加载类为："><a href="#2-1-图片加载类为：" class="headerlink" title="2.1.图片加载类为："></a>2.1.图片加载类为：</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    // 图片缓存</span><br><span class="line">    ImageCache mImageCache = new ImageCache();</span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        // 优先从缓存中加载</span><br><span class="line">        Bitmap bitmap = mImageCache.get(url);</span><br><span class="line">        if (bitmap != null) &#123;</span><br><span class="line">            imageView.setImageBitmap(bitmap);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-缓存类为"><a href="#2-2-缓存类为" class="headerlink" title="2.2.缓存类为"></a>2.2.缓存类为</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.util.LruCache;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:图片缓存类</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageCache &#123;</span><br><span class="line">    // 图片LRU缓存</span><br><span class="line">    LruCache&lt;String, Bitmap&gt; mImageCache;</span><br><span class="line"></span><br><span class="line">    public ImageCache() &#123;</span><br><span class="line">        initImageCache();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 初始化图片缓存大小</span><br><span class="line">     */</span><br><span class="line">    private void initImageCache() &#123;</span><br><span class="line">        // 计算可使用的最大内存</span><br><span class="line">        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);</span><br><span class="line">        // 取1/4的可用内存作为缓存</span><br><span class="line">        final int cacheSize = maxMemory / 4;</span><br><span class="line">        mImageCache = new LruCache&lt;String, Bitmap&gt;(cacheSize) &#123;</span><br><span class="line">            @Override</span><br><span class="line">            protected int sizeOf(String key, Bitmap value) &#123;</span><br><span class="line">                return value.getRowBytes() * value.getHeight() / 1024;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void put(String url, Bitmap bitmap) &#123;</span><br><span class="line">        mImageCache.put(url, bitmap);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public Bitmap get(String url) &#123;</span><br><span class="line">        return mImageCache.get(url);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-提高扩展性，增加SD卡缓存"><a href="#3-提高扩展性，增加SD卡缓存" class="headerlink" title="3.提高扩展性，增加SD卡缓存"></a>3.提高扩展性，增加SD卡缓存</h2><p>以上将代码的功能分开了，逻辑更清晰了，职责也单一了，但是可扩展性还是比较差，接下来进行增加SD卡缓存。</p>
+<h3 id="3-1增加SD卡缓存类"><a href="#3-1增加SD卡缓存类" class="headerlink" title="3.1增加SD卡缓存类"></a>3.1增加SD卡缓存类</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line"></span><br><span class="line">import java.io.FileNotFoundException;</span><br><span class="line">import java.io.FileOutputStream;</span><br><span class="line">import java.io.IOException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DiskCache &#123;</span><br><span class="line">    static String cacheDir = &quot;/sdcard/cache/image/&quot;;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 从SD卡中读取</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public Bitmap get(String url) &#123;</span><br><span class="line">        return BitmapFactory.decodeFile(cacheDir + url);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 缓存到SD卡中</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param bmp</span><br><span class="line">     */</span><br><span class="line">    public void put(String url, Bitmap bmp) &#123;</span><br><span class="line">        FileOutputStream fos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            fos = new FileOutputStream(cacheDir + url);</span><br><span class="line">            bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);</span><br><span class="line">        &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (fos != null) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    fos.close();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2ImageLoader中增加一个boolean值来设置使用哪种缓存方式"><a href="#3-2ImageLoader中增加一个boolean值来设置使用哪种缓存方式" class="headerlink" title="3.2ImageLoader中增加一个boolean值来设置使用哪种缓存方式"></a>3.2ImageLoader中增加一个boolean值来设置使用哪种缓存方式</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    // 内存缓存</span><br><span class="line">    ImageCache mImageCache = new ImageCache();</span><br><span class="line">    // SD卡缓存</span><br><span class="line">    DiskCache mDiskCache = new DiskCache();</span><br><span class="line">    // 是否使用SD卡缓存</span><br><span class="line">    boolean isUseDiskCache = false;</span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        // 优先从缓存中加载</span><br><span class="line">        Bitmap bitmap = isUseDiskCache ? mImageCache.get(url) : mDiskCache.get(url);</span><br><span class="line">        if (bitmap != null) &#123;</span><br><span class="line">            imageView.setImageBitmap(bitmap);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置是否使用SD卡缓存</span><br><span class="line">     *</span><br><span class="line">     * @param useDiskCache</span><br><span class="line">     */</span><br><span class="line">    public void setUseDiskCache(boolean useDiskCache) &#123;</span><br><span class="line">        isUseDiskCache = useDiskCache;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-进一步改造，使用双缓存，优先使用内存加载，如果无再使用SD卡缓存"><a href="#4-进一步改造，使用双缓存，优先使用内存加载，如果无再使用SD卡缓存" class="headerlink" title="4.进一步改造，使用双缓存，优先使用内存加载，如果无再使用SD卡缓存"></a>4.进一步改造，使用双缓存，优先使用内存加载，如果无再使用SD卡缓存</h2><p>以上代码修改虽然增加了SD卡缓存，但是为了节省用户的流量及加载速度我们应该设计成优先使用内存加载，如果无再使用SD卡缓存。</p>
+<h3 id="4-1增加双缓存类"><a href="#4-1增加双缓存类" class="headerlink" title="4.1增加双缓存类"></a>4.1增加双缓存类</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DoubleCache &#123;</span><br><span class="line"></span><br><span class="line">    ImageCache mMemoryCache = new ImageCache();</span><br><span class="line">    DiskCache mDiskCache = new DiskCache();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 优先使用内存加载，如果无再使用SD卡缓存</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public Bitmap get(String url) &#123;</span><br><span class="line">        Bitmap bitmap = mMemoryCache.get(url);</span><br><span class="line">        if (bitmap == null) &#123;</span><br><span class="line">            bitmap = mDiskCache.get(url);</span><br><span class="line">        &#125;</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 将图片缓存到内存和SD卡中</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param bitmap</span><br><span class="line">     */</span><br><span class="line">    public void put(String url, Bitmap bitmap) &#123;</span><br><span class="line">        mMemoryCache.put(url, bitmap);</span><br><span class="line">        mDiskCache.put(url, bitmap);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2ImageLoader增加双缓存配置"><a href="#4-2ImageLoader增加双缓存配置" class="headerlink" title="4.2ImageLoader增加双缓存配置"></a>4.2ImageLoader增加双缓存配置</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    // 内存缓存</span><br><span class="line">    ImageCache mImageCache = new ImageCache();</span><br><span class="line">    // SD卡缓存</span><br><span class="line">    DiskCache mDiskCache = new DiskCache();</span><br><span class="line">    // 双缓存</span><br><span class="line">    DoubleCache mDoubleCache = new DoubleCache();</span><br><span class="line">    // 是否使用SD卡缓存</span><br><span class="line">    boolean isUseDiskCache = false;</span><br><span class="line">    // 是否使用双缓存</span><br><span class="line">    boolean isUseDoubleCache = false;</span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        // 优先从缓存中加载</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        if (isUseDoubleCache) &#123;</span><br><span class="line">            bitmap = mDoubleCache.get(url);</span><br><span class="line">        &#125; else if (isUseDiskCache) &#123;</span><br><span class="line">            bitmap = mDiskCache.get(url);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            bitmap = mImageCache.get(url);</span><br><span class="line">        &#125;</span><br><span class="line">        if (bitmap != null) &#123;</span><br><span class="line">            imageView.setImageBitmap(bitmap);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置是否使用SD卡缓存</span><br><span class="line">     *</span><br><span class="line">     * @param useDiskCache</span><br><span class="line">     */</span><br><span class="line">    public void setUseDiskCache(boolean useDiskCache) &#123;</span><br><span class="line">        isUseDiskCache = useDiskCache;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置是否使用双缓存</span><br><span class="line">     *</span><br><span class="line">     * @param useDoubleCache</span><br><span class="line">     */</span><br><span class="line">    public void setUseDoubleCache(boolean useDoubleCache) &#123;</span><br><span class="line">        isUseDoubleCache = useDoubleCache;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上改造总算可以了，但是这样每次增加缓存策略都要修改源代码，这样很有可能引入bug,所以我们的原则是要对修改关闭，对扩展开放，这样以后有新需求的时候我们就可以使用扩展的方法来实现。</p>
+<h2 id="5-抽象公共方法的接口"><a href="#5-抽象公共方法的接口" class="headerlink" title="5.抽象公共方法的接口"></a>5.抽象公共方法的接口</h2><h3 id="5-1接口抽取"><a href="#5-1接口抽取" class="headerlink" title="5.1接口抽取"></a>5.1接口抽取</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public interface ImageCache &#123;</span><br><span class="line">    Bitmap get(String url);</span><br><span class="line"></span><br><span class="line">    void put(String url, Bitmap bitmap);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-2ImageLoader注入接口的实现类"><a href="#5-2ImageLoader注入接口的实现类" class="headerlink" title="5.2ImageLoader注入接口的实现类"></a>5.2ImageLoader注入接口的实现类</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    ImageCache mImageCache = new MemoryCache();</span><br><span class="line"></span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 注入缓存实现</span><br><span class="line">     *</span><br><span class="line">     * @param mImageCache</span><br><span class="line">     */</span><br><span class="line">    public void setmImageCache(ImageCache mImageCache) &#123;</span><br><span class="line">        this.mImageCache = mImageCache;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        Bitmap bitmap = mImageCache.get(url);</span><br><span class="line">        if (bitmap != null) &#123;</span><br><span class="line">            imageView.setImageBitmap(bitmap);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        // 图片没有缓存提交到线程池中下载</span><br><span class="line">        submitLoadRequest(url, imageView);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void submitLoadRequest(final String url, final ImageView imageView) &#123;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-3内存缓存、SD卡缓存和双缓存分别实现接口"><a href="#5-3内存缓存、SD卡缓存和双缓存分别实现接口" class="headerlink" title="5.3内存缓存、SD卡缓存和双缓存分别实现接口"></a>5.3内存缓存、SD卡缓存和双缓存分别实现接口</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DoubleCache implements ImageCache &#123;</span><br><span class="line"></span><br><span class="line">    ImageCache mMemoryCache = new MemoryCache();</span><br><span class="line">    ImageCache mDiskCache = new DiskCache();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 优先使用内存加载，如果无再使用SD卡缓存</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap get(String url) &#123;</span><br><span class="line">        Bitmap bitmap = mMemoryCache.get(url);</span><br><span class="line">        if (bitmap == null) &#123;</span><br><span class="line">            bitmap = mDiskCache.get(url);</span><br><span class="line">        &#125;</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 将图片缓存到内存和SD卡中</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param bitmap</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public void put(String url, Bitmap bitmap) &#123;</span><br><span class="line">        mMemoryCache.put(url, bitmap);</span><br><span class="line">        mDiskCache.put(url, bitmap);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>内存缓存、SD卡缓存实现同上。</p>
+<h2 id="6-外部调用及设置缓存策略"><a href="#6-外部调用及设置缓存策略" class="headerlink" title="6.外部调用及设置缓存策略"></a>6.外部调用及设置缓存策略</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private void loadImage() &#123;</span><br><span class="line">        ImageLoader imageLoader = new ImageLoader();</span><br><span class="line">        // 使用内存缓存</span><br><span class="line">        imageLoader.setmImageCache(new MemoryCache());</span><br><span class="line">        // 使用SD卡缓存</span><br><span class="line">        imageLoader.setmImageCache(new DiskCache());</span><br><span class="line">        // 使用双缓存</span><br><span class="line">        imageLoader.setmImageCache(new DoubleCache());</span><br><span class="line">        // 使用自定义的图片缓存</span><br><span class="line">        imageLoader.setmImageCache(new ImageCache() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public Bitmap get(String url) &#123;</span><br><span class="line">                return null;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public void put(String url, Bitmap bitmap) &#123;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        String imageUrl = &quot;http://p1.meituan.net/160.0.80/xianfu/5e369ac9d6aa54125ad1b6562282b2ca36024.jpeg&quot;;</span><br><span class="line">        imageLoader.displayImage(imageUrl, imageView);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>经过上述代码的重构，我们可以通过**setImageCache(ImageCache cache)**方法注入不同的缓存实现，来使得ImageLoader更简单、健壮、扩展性好灵活性也更高。以上三种缓存图片的具体实现完全不一样，但是它们都有一个共同的特点是都实现了ImageCache接口。当用户需要增加一种新的缓存策略时，我们只需新建一个实现ImageCache接口等待类就可以了，这样就实现了千变万化的缓存策略，并且新扩展的策略不会影响导致ImageLoader类的修改，这正是体现了“对修改关闭，对扩展开放的”原则，所以，我们在设计写代码的时候应该认真地进行思考，希望大家一起思考，一起学习，有所成长！</p>
+<p>源码下载链接：</p>
+<p><a href="https://github.com/xinpengfei520/MyImageLoader">https://github.com/xinpengfei520/MyImageLoader
+</a></p>
+<p>如果本文对你有帮助，欢迎大家点赞、评论，码字不易，再小的支持也是对博主的莫大鼓励！</p>
+<p>今天的分享就到这里，如需转载，请注明出处，谢谢！</p>
+<p>声明：文中部分代码摘录自《Android源码设计模式》一书。</p>
+<p>注：本文由博主原创，转载请注明出处，谢谢！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>ImageLoader</tag>
       </tags>
   </entry>
   <entry>
@@ -44926,55 +45160,6 @@ Thanks all.
       </tags>
   </entry>
   <entry>
-    <title>《Android源码设计模式》学习笔记之 ImageLoader</title>
-    <url>/2017/09/24/201709242428/</url>
-    <content><![CDATA[<blockquote>
-<p>需求：设计一个图片加载工具类。<br>要求：职责单一、可扩展性强、实现三级缓存，遵循开闭原则。</p>
-</blockquote>
-<h2 id="1-改造前原始代码"><a href="#1-改造前原始代码" class="headerlink" title="1.改造前原始代码"></a>1.改造前原始代码</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.util.LruCache;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    // 图片缓存</span><br><span class="line">    LruCache&lt;String, Bitmap&gt; mImageCache;</span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    public ImageLoader() &#123;</span><br><span class="line">        initImageCache();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 初始化图片缓存大小</span><br><span class="line">     */</span><br><span class="line">    private void initImageCache() &#123;</span><br><span class="line">        // 计算可使用的最大内存</span><br><span class="line">        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);</span><br><span class="line">        // 取1/4的可用内存作为缓存</span><br><span class="line">        final int cacheSize = maxMemory / 4;</span><br><span class="line">        mImageCache = new LruCache&lt;String, Bitmap&gt;(cacheSize) &#123;</span><br><span class="line">            @Override</span><br><span class="line">            protected int sizeOf(String key, Bitmap value) &#123;</span><br><span class="line">                return value.getRowBytes() * value.getHeight() / 1024;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-遵循单一原则将原始类分为加载和缓存两个类（功能）"><a href="#2-遵循单一原则将原始类分为加载和缓存两个类（功能）" class="headerlink" title="2.遵循单一原则将原始类分为加载和缓存两个类（功能）"></a>2.遵循单一原则将原始类分为加载和缓存两个类（功能）</h2><h3 id="2-1-图片加载类为："><a href="#2-1-图片加载类为：" class="headerlink" title="2.1.图片加载类为："></a>2.1.图片加载类为：</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    // 图片缓存</span><br><span class="line">    ImageCache mImageCache = new ImageCache();</span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        // 优先从缓存中加载</span><br><span class="line">        Bitmap bitmap = mImageCache.get(url);</span><br><span class="line">        if (bitmap != null) &#123;</span><br><span class="line">            imageView.setImageBitmap(bitmap);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="2-2-缓存类为"><a href="#2-2-缓存类为" class="headerlink" title="2.2.缓存类为"></a>2.2.缓存类为</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.util.LruCache;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:图片缓存类</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageCache &#123;</span><br><span class="line">    // 图片LRU缓存</span><br><span class="line">    LruCache&lt;String, Bitmap&gt; mImageCache;</span><br><span class="line"></span><br><span class="line">    public ImageCache() &#123;</span><br><span class="line">        initImageCache();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 初始化图片缓存大小</span><br><span class="line">     */</span><br><span class="line">    private void initImageCache() &#123;</span><br><span class="line">        // 计算可使用的最大内存</span><br><span class="line">        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);</span><br><span class="line">        // 取1/4的可用内存作为缓存</span><br><span class="line">        final int cacheSize = maxMemory / 4;</span><br><span class="line">        mImageCache = new LruCache&lt;String, Bitmap&gt;(cacheSize) &#123;</span><br><span class="line">            @Override</span><br><span class="line">            protected int sizeOf(String key, Bitmap value) &#123;</span><br><span class="line">                return value.getRowBytes() * value.getHeight() / 1024;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void put(String url, Bitmap bitmap) &#123;</span><br><span class="line">        mImageCache.put(url, bitmap);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public Bitmap get(String url) &#123;</span><br><span class="line">        return mImageCache.get(url);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="3-提高扩展性，增加SD卡缓存"><a href="#3-提高扩展性，增加SD卡缓存" class="headerlink" title="3.提高扩展性，增加SD卡缓存"></a>3.提高扩展性，增加SD卡缓存</h2><p>以上将代码的功能分开了，逻辑更清晰了，职责也单一了，但是可扩展性还是比较差，接下来进行增加SD卡缓存。</p>
-<h3 id="3-1增加SD卡缓存类"><a href="#3-1增加SD卡缓存类" class="headerlink" title="3.1增加SD卡缓存类"></a>3.1增加SD卡缓存类</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line"></span><br><span class="line">import java.io.FileNotFoundException;</span><br><span class="line">import java.io.FileOutputStream;</span><br><span class="line">import java.io.IOException;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DiskCache &#123;</span><br><span class="line">    static String cacheDir = &quot;/sdcard/cache/image/&quot;;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 从SD卡中读取</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public Bitmap get(String url) &#123;</span><br><span class="line">        return BitmapFactory.decodeFile(cacheDir + url);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 缓存到SD卡中</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param bmp</span><br><span class="line">     */</span><br><span class="line">    public void put(String url, Bitmap bmp) &#123;</span><br><span class="line">        FileOutputStream fos = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            fos = new FileOutputStream(cacheDir + url);</span><br><span class="line">            bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);</span><br><span class="line">        &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (fos != null) &#123;</span><br><span class="line">                try &#123;</span><br><span class="line">                    fos.close();</span><br><span class="line">                &#125; catch (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="3-2ImageLoader中增加一个boolean值来设置使用哪种缓存方式"><a href="#3-2ImageLoader中增加一个boolean值来设置使用哪种缓存方式" class="headerlink" title="3.2ImageLoader中增加一个boolean值来设置使用哪种缓存方式"></a>3.2ImageLoader中增加一个boolean值来设置使用哪种缓存方式</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    // 内存缓存</span><br><span class="line">    ImageCache mImageCache = new ImageCache();</span><br><span class="line">    // SD卡缓存</span><br><span class="line">    DiskCache mDiskCache = new DiskCache();</span><br><span class="line">    // 是否使用SD卡缓存</span><br><span class="line">    boolean isUseDiskCache = false;</span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        // 优先从缓存中加载</span><br><span class="line">        Bitmap bitmap = isUseDiskCache ? mImageCache.get(url) : mDiskCache.get(url);</span><br><span class="line">        if (bitmap != null) &#123;</span><br><span class="line">            imageView.setImageBitmap(bitmap);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置是否使用SD卡缓存</span><br><span class="line">     *</span><br><span class="line">     * @param useDiskCache</span><br><span class="line">     */</span><br><span class="line">    public void setUseDiskCache(boolean useDiskCache) &#123;</span><br><span class="line">        isUseDiskCache = useDiskCache;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="4-进一步改造，使用双缓存，优先使用内存加载，如果无再使用SD卡缓存"><a href="#4-进一步改造，使用双缓存，优先使用内存加载，如果无再使用SD卡缓存" class="headerlink" title="4.进一步改造，使用双缓存，优先使用内存加载，如果无再使用SD卡缓存"></a>4.进一步改造，使用双缓存，优先使用内存加载，如果无再使用SD卡缓存</h2><p>以上代码修改虽然增加了SD卡缓存，但是为了节省用户的流量及加载速度我们应该设计成优先使用内存加载，如果无再使用SD卡缓存。</p>
-<h3 id="4-1增加双缓存类"><a href="#4-1增加双缓存类" class="headerlink" title="4.1增加双缓存类"></a>4.1增加双缓存类</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DoubleCache &#123;</span><br><span class="line"></span><br><span class="line">    ImageCache mMemoryCache = new ImageCache();</span><br><span class="line">    DiskCache mDiskCache = new DiskCache();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 优先使用内存加载，如果无再使用SD卡缓存</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public Bitmap get(String url) &#123;</span><br><span class="line">        Bitmap bitmap = mMemoryCache.get(url);</span><br><span class="line">        if (bitmap == null) &#123;</span><br><span class="line">            bitmap = mDiskCache.get(url);</span><br><span class="line">        &#125;</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 将图片缓存到内存和SD卡中</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param bitmap</span><br><span class="line">     */</span><br><span class="line">    public void put(String url, Bitmap bitmap) &#123;</span><br><span class="line">        mMemoryCache.put(url, bitmap);</span><br><span class="line">        mDiskCache.put(url, bitmap);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="4-2ImageLoader增加双缓存配置"><a href="#4-2ImageLoader增加双缓存配置" class="headerlink" title="4.2ImageLoader增加双缓存配置"></a>4.2ImageLoader增加双缓存配置</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    // 内存缓存</span><br><span class="line">    ImageCache mImageCache = new ImageCache();</span><br><span class="line">    // SD卡缓存</span><br><span class="line">    DiskCache mDiskCache = new DiskCache();</span><br><span class="line">    // 双缓存</span><br><span class="line">    DoubleCache mDoubleCache = new DoubleCache();</span><br><span class="line">    // 是否使用SD卡缓存</span><br><span class="line">    boolean isUseDiskCache = false;</span><br><span class="line">    // 是否使用双缓存</span><br><span class="line">    boolean isUseDoubleCache = false;</span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        // 优先从缓存中加载</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        if (isUseDoubleCache) &#123;</span><br><span class="line">            bitmap = mDoubleCache.get(url);</span><br><span class="line">        &#125; else if (isUseDiskCache) &#123;</span><br><span class="line">            bitmap = mDiskCache.get(url);</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            bitmap = mImageCache.get(url);</span><br><span class="line">        &#125;</span><br><span class="line">        if (bitmap != null) &#123;</span><br><span class="line">            imageView.setImageBitmap(bitmap);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置是否使用SD卡缓存</span><br><span class="line">     *</span><br><span class="line">     * @param useDiskCache</span><br><span class="line">     */</span><br><span class="line">    public void setUseDiskCache(boolean useDiskCache) &#123;</span><br><span class="line">        isUseDiskCache = useDiskCache;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 设置是否使用双缓存</span><br><span class="line">     *</span><br><span class="line">     * @param useDoubleCache</span><br><span class="line">     */</span><br><span class="line">    public void setUseDoubleCache(boolean useDoubleCache) &#123;</span><br><span class="line">        isUseDoubleCache = useDoubleCache;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>以上改造总算可以了，但是这样每次增加缓存策略都要修改源代码，这样很有可能引入bug,所以我们的原则是要对修改关闭，对扩展开放，这样以后有新需求的时候我们就可以使用扩展的方法来实现。</p>
-<h2 id="5-抽象公共方法的接口"><a href="#5-抽象公共方法的接口" class="headerlink" title="5.抽象公共方法的接口"></a>5.抽象公共方法的接口</h2><h3 id="5-1接口抽取"><a href="#5-1接口抽取" class="headerlink" title="5.1接口抽取"></a>5.1接口抽取</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public interface ImageCache &#123;</span><br><span class="line">    Bitmap get(String url);</span><br><span class="line"></span><br><span class="line">    void put(String url, Bitmap bitmap);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="5-2ImageLoader注入接口的实现类"><a href="#5-2ImageLoader注入接口的实现类" class="headerlink" title="5.2ImageLoader注入接口的实现类"></a>5.2ImageLoader注入接口的实现类</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line">import android.graphics.BitmapFactory;</span><br><span class="line">import android.widget.ImageView;</span><br><span class="line"></span><br><span class="line">import java.net.HttpURLConnection;</span><br><span class="line">import java.net.URL;</span><br><span class="line">import java.util.concurrent.ExecutorService;</span><br><span class="line">import java.util.concurrent.Executors;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class ImageLoader &#123;</span><br><span class="line"></span><br><span class="line">    ImageCache mImageCache = new MemoryCache();</span><br><span class="line"></span><br><span class="line">    // 线程池，线程池数量为CPU的数量</span><br><span class="line">    ExecutorService mExecutorService = Executors.newFixedThreadPool(</span><br><span class="line">            Runtime.getRuntime().availableProcessors());</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 注入缓存实现</span><br><span class="line">     *</span><br><span class="line">     * @param mImageCache</span><br><span class="line">     */</span><br><span class="line">    public void setmImageCache(ImageCache mImageCache) &#123;</span><br><span class="line">        this.mImageCache = mImageCache;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 加载显示图片</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param imageView</span><br><span class="line">     */</span><br><span class="line">    public void displayImage(final String url, final ImageView imageView) &#123;</span><br><span class="line">        Bitmap bitmap = mImageCache.get(url);</span><br><span class="line">        if (bitmap != null) &#123;</span><br><span class="line">            imageView.setImageBitmap(bitmap);</span><br><span class="line">            return;</span><br><span class="line">        &#125;</span><br><span class="line">        // 图片没有缓存提交到线程池中下载</span><br><span class="line">        submitLoadRequest(url, imageView);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    private void submitLoadRequest(final String url, final ImageView imageView) &#123;</span><br><span class="line">        imageView.setTag(url);</span><br><span class="line">        mExecutorService.submit(new Runnable() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void run() &#123;</span><br><span class="line">                Bitmap bitmap = downloadImage(url);</span><br><span class="line">                if (bitmap == null) return;</span><br><span class="line">                if (imageView.getTag().equals(url)) &#123;</span><br><span class="line">                    imageView.setImageBitmap(bitmap);</span><br><span class="line">                &#125;</span><br><span class="line">                mImageCache.put(url, bitmap);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 下载图片</span><br><span class="line">     *</span><br><span class="line">     * @param imageUrl</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    private Bitmap downloadImage(String imageUrl) &#123;</span><br><span class="line">        Bitmap bitmap = null;</span><br><span class="line">        try &#123;</span><br><span class="line">            URL url = new URL(imageUrl);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            bitmap = BitmapFactory.decodeStream(conn.getInputStream());</span><br><span class="line">            conn.disconnect();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="5-3内存缓存、SD卡缓存和双缓存分别实现接口"><a href="#5-3内存缓存、SD卡缓存和双缓存分别实现接口" class="headerlink" title="5.3内存缓存、SD卡缓存和双缓存分别实现接口"></a>5.3内存缓存、SD卡缓存和双缓存分别实现接口</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.anloq.sdk.imageloader;</span><br><span class="line"></span><br><span class="line">import android.graphics.Bitmap;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/10/22 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DoubleCache implements ImageCache &#123;</span><br><span class="line"></span><br><span class="line">    ImageCache mMemoryCache = new MemoryCache();</span><br><span class="line">    ImageCache mDiskCache = new DiskCache();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 优先使用内存加载，如果无再使用SD卡缓存</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public Bitmap get(String url) &#123;</span><br><span class="line">        Bitmap bitmap = mMemoryCache.get(url);</span><br><span class="line">        if (bitmap == null) &#123;</span><br><span class="line">            bitmap = mDiskCache.get(url);</span><br><span class="line">        &#125;</span><br><span class="line">        return bitmap;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 将图片缓存到内存和SD卡中</span><br><span class="line">     *</span><br><span class="line">     * @param url</span><br><span class="line">     * @param bitmap</span><br><span class="line">     */</span><br><span class="line">    @Override</span><br><span class="line">    public void put(String url, Bitmap bitmap) &#123;</span><br><span class="line">        mMemoryCache.put(url, bitmap);</span><br><span class="line">        mDiskCache.put(url, bitmap);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>内存缓存、SD卡缓存实现同上。</p>
-<h2 id="6-外部调用及设置缓存策略"><a href="#6-外部调用及设置缓存策略" class="headerlink" title="6.外部调用及设置缓存策略"></a>6.外部调用及设置缓存策略</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private void loadImage() &#123;</span><br><span class="line">        ImageLoader imageLoader = new ImageLoader();</span><br><span class="line">        // 使用内存缓存</span><br><span class="line">        imageLoader.setmImageCache(new MemoryCache());</span><br><span class="line">        // 使用SD卡缓存</span><br><span class="line">        imageLoader.setmImageCache(new DiskCache());</span><br><span class="line">        // 使用双缓存</span><br><span class="line">        imageLoader.setmImageCache(new DoubleCache());</span><br><span class="line">        // 使用自定义的图片缓存</span><br><span class="line">        imageLoader.setmImageCache(new ImageCache() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public Bitmap get(String url) &#123;</span><br><span class="line">                return null;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public void put(String url, Bitmap bitmap) &#123;</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        String imageUrl = &quot;http://p1.meituan.net/160.0.80/xianfu/5e369ac9d6aa54125ad1b6562282b2ca36024.jpeg&quot;;</span><br><span class="line">        imageLoader.displayImage(imageUrl, imageView);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<p>经过上述代码的重构，我们可以通过**setImageCache(ImageCache cache)**方法注入不同的缓存实现，来使得ImageLoader更简单、健壮、扩展性好灵活性也更高。以上三种缓存图片的具体实现完全不一样，但是它们都有一个共同的特点是都实现了ImageCache接口。当用户需要增加一种新的缓存策略时，我们只需新建一个实现ImageCache接口等待类就可以了，这样就实现了千变万化的缓存策略，并且新扩展的策略不会影响导致ImageLoader类的修改，这正是体现了“对修改关闭，对扩展开放的”原则，所以，我们在设计写代码的时候应该认真地进行思考，希望大家一起思考，一起学习，有所成长！</p>
-<p>源码下载链接：</p>
-<p><a href="https://github.com/xinpengfei520/MyImageLoader">https://github.com/xinpengfei520/MyImageLoader
-</a></p>
-<p>如果本文对你有帮助，欢迎大家点赞、评论，码字不易，再小的支持也是对博主的莫大鼓励！</p>
-<p>今天的分享就到这里，如需转载，请注明出处，谢谢！</p>
-<p>声明：文中部分代码摘录自《Android源码设计模式》一书。</p>
-<p>注：本文由博主原创，转载请注明出处，谢谢！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>ImageLoader</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android 追加换行写入内容到 txt 文件中</title>
     <url>/2017/09/24/201709242430/</url>
     <content><![CDATA[<p>实现思路为：使用 Context.MODE_APPEND 属性将每次内容的写入到上次内容的尾部，然后在每次写入内容完成之后写入一个回车换行符**fos.write(“\r\n”.getBytes());**即可。</p>
@@ -45197,226 +45382,6 @@ Thanks all.
       <tags>
         <tag>Android</tag>
         <tag>Failed</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>不可错过的几款GitHub开源项目</title>
-    <url>/2017/09/24/201709242437/</url>
-    <content><![CDATA[<p>工作之余或者周末感觉无聊？不知道干什么？想继续提高技术，但是不知道做什么的同学，看过来，不妨利用闲暇时间来撸几个 GitHub 上还不错的开源项目，本文推荐的开源项目比较适合新手、及对MVP设计模式不太熟练的同学练习之用，下面逐一进行简单介绍。</p>
-<h2 id="1-ZhiHuMVP"><a href="#1-ZhiHuMVP" class="headerlink" title="1.ZhiHuMVP"></a>1.ZhiHuMVP</h2><p>一款采用 MVP 模式的仿知乎客户端。</p>
-<p>本项目包含以下知识点：</p>
-<ul>
-<li>MVP架构思想</li>
-<li>Retrofit RESTful API 框架的配合</li>
-<li>RxJava 响应式编程</li>
-<li>Butter Knife：通过注解绑定 View</li>
-<li>夜间模式切换</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415212934402?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/fangx/ZhiHuMVP">https://github.com/fangx/ZhiHuMVP</a></p>
-<h2 id="2-ColorfulNews"><a href="#2-ColorfulNews" class="headerlink" title="2.ColorfulNews"></a>2.ColorfulNews</h2><p>一个 Material Design 风格的新闻阅读 App，采用 MVP 模式，基于 Dagger2+RxJava+Retrofit2进行开发。</p>
-<p>主要用到的开源库：</p>
-<ul>
-<li>Dagger2</li>
-<li>RxJava</li>
-<li>Retrofit2</li>
-<li>Butterknife</li>
-<li>Greendao</li>
-<li>PhotoView</li>
-<li>Glide</li>
-<li>Picasso</li>
-<li>…</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213012428?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/kaku2015/ColorfulNews">https://github.com/kaku2015/ColorfulNews</a></p>
-<h2 id="3-boxing"><a href="#3-boxing" class="headerlink" title="3.boxing"></a>3.boxing</h2><p>Bilibili 开源的基于MVP模式的 Android 多媒体选择器。</p>
-<p>特性：</p>
-<ul>
-<li>支持自定义UI</li>
-<li>支持多&#x2F;单图片选择和预览，单图裁剪功能</li>
-<li>支持gif</li>
-<li>支持视频选择功能</li>
-<li>提供图片压缩</li>
-<li>多图生成gif（checkout feature&#x2F;gif-encode)</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213215868?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/Bilibili/boxing">https://github.com/Bilibili/boxing</a></p>
-<h2 id="4-MinimalistWeather"><a href="#4-MinimalistWeather" class="headerlink" title="4.MinimalistWeather"></a>4.MinimalistWeather</h2><p>MinimalistWeather 是 Android 平台上一款开源天气 App ，目前还在开发中。项目基于 MVP 架构，采用各主流开源库实现。开发此项目主要是为展示各种开源库的使用方式以及 Android 项目的设计方案，并作为团队项目开发规范的一部分。</p>
-<p>采用的开源库包括：</p>
-<ul>
-<li>RxJava</li>
-<li>Retrofit2</li>
-<li>OKHttp3</li>
-<li>ORMLite</li>
-<li>Dagger2</li>
-<li>ButterKnife</li>
-<li>RetroLambda</li>
-<li>Stetho</li>
-</ul>
-<p>本项目还展示了：</p>
-<ul>
-<li>MVP+RxJava在实际项目中的应用，MVP中RxJava生命周期的管理…；</li>
-<li>上述罗列的各种开源框架的使用方法；</li>
-<li>Java8 Lambda表达式和Stream API的用法；</li>
-<li>怎样适配Material Design；</li>
-<li>ToolBar、RecycleView、CardView、CoordinatorLayout等新控件的用法；</li>
-<li>Gradle的基本配置（包括签名打包、项目依赖等等）；</li>
-<li>如何更好的管理Gradle依赖库的版本；</li>
-<li>代码混淆配置；</li>
-<li>如何快速开发一款结构清晰、可扩展性强的Android Application。</li>
-</ul>
-<p><a href="https://github.com/BaronZ88/MinimalistWeather">https://github.com/BaronZ88/MinimalistWeather</a></p>
-<h2 id="5-TranslateApp"><a href="#5-TranslateApp" class="headerlink" title="5.TranslateApp"></a>5.TranslateApp</h2><p>一个实现 『划词翻译』 功能的 Android 应用 ，可能是目前 Android 市场上翻译效率最高的一款应用。</p>
-<p>技术点:</p>
-<ul>
-<li>全程使用 Dagger2 对项目进行类依赖管理</li>
-<li>项目使用标准的 MVP 架构，关于 MVP 的一篇博客</li>
-<li>实现对粘贴板的监听以及访问</li>
-<li>无需权限显示悬浮窗（6.0悬浮窗权限适配）</li>
-<li>使用 RxJava 探索函数式编程</li>
-<li>使用 Retrofit2 进行网络请求</li>
-<li>开机自启动</li>
-<li>Android 6.0 自定义文本操作栏</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213307416?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/maoruibin/TranslateApp">https://github.com/maoruibin/TranslateApp</a></p>
-<h2 id="6-Ghost"><a href="#6-Ghost" class="headerlink" title="6.Ghost"></a>6.Ghost</h2><p>微影，一款纯粹的在线视频App，基于Material Design + MVP + Dagger2 + RxJava + Retrofit + Realm + Glide。</p>
-<p>技术点：</p>
-<ul>
-<li>使用RxJava配合Retrofit2做网络请求</li>
-<li>使用RxUtil对线程操作和网络请求结果处理做了封装</li>
-<li>使用RxPresenter对订阅的生命周期做管理</li>
-<li>使用AndroidEventBus来方便组件间的通信</li>
-<li>使用Material Design控件和动画</li>
-<li>使用MVP架构整个项目，对应于model、ui、presenter三个包</li>
-<li>使用Realm做阅读记录和收藏记录的增、删、查、改</li>
-<li>使用Glide做图片的处理和加载</li>
-<li>使用RecyclerView实现下拉刷新、上拉加载、侧滑删除、长按拖曳</li>
-<li>支持主题设置</li>
-<li>包含搜索、收藏、历史等功能</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213325438?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/GeekGhost/Ghost">https://github.com/GeekGhost/Ghost</a></p>
-<h2 id="7-GeekNews"><a href="#7-GeekNews" class="headerlink" title="7.GeekNews"></a>7.GeekNews</h2><p>极客日报，一款纯粹的阅读App，基于Material Design + MVP + RxJava2 + Retrofit + Dagger2 + Realm + Glide。</p>
-<p>技术点：</p>
-<ul>
-<li>使用RxJava配合Retrofit2做网络请求</li>
-<li>使用RxUtil对线程操作和网络请求结果处理做了封装</li>
-<li>使用RxPresenter对订阅的生命周期做管理</li>
-<li>使用RxBus来方便组件间的通信</li>
-<li>使用RxJava其他操作符来做延时、轮询、转化、筛选等操作</li>
-<li>使用okhttp3对网络返回内容做缓存，还有日志、超时重连、头部消息的配置</li>
-<li>使用Material Design控件和动画</li>
-<li>使用MVP架构整个项目，对应于model、ui、presenter三个包</li>
-<li>使用Dagger2将M层注入P层，将P层注入V层，无需new，直接调用对象</li>
-<li>使用Realm做阅读记录和收藏记录的增、删、查、改</li>
-<li>使用Glide做图片的处理和加载</li>
-<li>使用Fragmentation简化Fragment的操作和懒加载</li>
-<li>使用RecyclerView实现下拉刷新、上拉加载、侧滑删除、长按拖曳</li>
-<li>使用x5WebView做阅览页，比原生WebView体验更佳</li>
-<li>使用SVG及其动画实现progressbar的效果</li>
-<li>使用RxPermissions做6.0+动态权限适配</li>
-<li>使用Jsoup解析V2EX站点DOM</li>
-<li>使用原生的夜间模式、分享、反馈</li>
-<li>包含搜索、收藏、检测更新等功能</li>
-<li>所有踩到的坑都在项目里做了注释</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213349333?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/codeestX/GeekNews">https://github.com/codeestX/GeekNews</a></p>
-<h2 id="8-MovieGuide"><a href="#8-MovieGuide" class="headerlink" title="8.MovieGuide"></a>8.MovieGuide</h2><p>MovieGuide是一款受欢迎、高级别的电影Android应用，展示了预告片和评论等功能。采用了MVP模式、RxJava、Dagger 2 和 Bob Martin 的 Clean 架构方法，并针对平板电脑进行了优化。</p>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213413595?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/esoxjem/MovieGuide">https://github.com/esoxjem/MovieGuide</a></p>
-<h2 id="9-SimpleNews"><a href="#9-SimpleNews" class="headerlink" title="9.SimpleNews"></a>9.SimpleNews</h2><p>基于Material Design和MVP的新闻客户端。</p>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213429841?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/liuling07/SimpleNews">https://github.com/liuling07/SimpleNews</a></p>
-<h2 id="10-Toutiao"><a href="#10-Toutiao" class="headerlink" title="10.Toutiao"></a>10.Toutiao</h2><p>一款第三方今日头条客户端，遵循材料设计(Material Design), 聚合了新闻&#x2F;段子&#x2F;图片&#x2F;视频&#x2F;头条号内容, 没有广告, 仅仅只有存粹的阅读, 不断完善中, 采用 MVP + RxJava + Retrofit 架构的项目。</p>
-<p>主要功能特性：</p>
-<ul>
-<li>首页五大模块: 新闻 &#x2F; 图片 &#x2F; 视频 &#x2F; 头条号 &#x2F; 问答</li>
-<li>实现首页的布局和数据的显示</li>
-<li>实现自定义新闻栏目顺序</li>
-<li>新闻详情页面支持日夜两种主题</li>
-<li>显示新闻评论</li>
-<li>头条号订阅 查看头条号历史文章 &#x2F; 视频</li>
-<li>搜索功能 热门搜索推荐 搜索历史记录</li>
-<li>自定义主题颜色 无缝切换日夜皮肤</li>
-<li>视频播放</li>
-<li>内置3款 logo 随意互换</li>
-<li>动态切换字体大小</li>
-</ul>
-<p>主要技术点：</p>
-<ul>
-<li>基本遵循 Material Design 设计风格</li>
-<li>抓包获取今日头条API</li>
-<li>使用 Google 官方 MVP 架构</li>
-<li>DrawerLayout + NavigationView + BottomNavigationView 搭配使用</li>
-<li>RxBus 代替 EventBus 进行组件之间通讯</li>
-<li>ViewPager 搭配 Fragment 懒加载</li>
-<li>SwipeRefreshLayout 搭配 RecyclerView 下拉刷新上拉加载</li>
-<li>自定义 BottomNavigationBehavior 实现上滑隐藏下滑显示</li>
-<li>RxJava + Retrofit2 + OkHttp3 做网络请求</li>
-<li>OkHttp3 对网络返回内容做缓存, 还有日志、超时重连、头部消息的配置</li>
-<li>V层基类的构建, 包括 BaseActivity 和 BaseFragment , 对外提供了相同的接口</li>
-<li>使用原生的夜间模式</li>
-<li>解决侧滑返回与 View 冲突问题</li>
-<li>内置 3 款 Logo, 随意切换</li>
-<li>使用 CoordinatorLayout 、 AppBarLayout 、 CollapsingToolbarLayout 、    BottomSheetDialog 等新控件</li>
-<li>使用 7.0 新工具 DiffUtil , 不再无脑 notifyDataSetChanged</li>
-<li>使用 ItemTouchHelper 实现今日头条的频道排序、频道移动, 参考 ItemTouchHelperDemo</li>
-<li>使用 RxBinding 优雅实现搜索请求</li>
-<li>使用 AutoDispose 绑定 RxJava 生命周期</li>
-<li>使用 Travis Cl 持续集成</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213453688?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/iMeiji/Toutiao">https://github.com/iMeiji/Toutiao</a></p>
-<h2 id="11-PhotoNoter"><a href="#11-PhotoNoter" class="headerlink" title="11.PhotoNoter"></a>11.PhotoNoter</h2><p>Material Design风格的开源照片笔记。</p>
-<p>主要技术点：</p>
-<ul>
-<li>整体项目MVP结构</li>
-<li>Dagger2</li>
-<li>相机部分，API &gt;&#x3D; 21使用 Camera2 ，API &lt; 21使用 Camera</li>
-<li>相机的状态机，聚焦状态机</li>
-<li>照片缓存分为两种，一个是大图，一个是小图，小图是相册界面缩略图的时候加载的，大图是查看图片的时候加载的</li>
-<li>图片处理</li>
-<li>沙盒</li>
-<li>Activity 退出和进入的动画</li>
-<li>一些 UI 的动画，比如 “ 意见反馈”、 “ 语音输入” 这里面的动画</li>
-<li>主题设置，沉浸式状态栏（Android 5.0）</li>
-<li>切换主题</li>
-<li>可以滑动 item 和可以拖放 item 的 ListView（SlideAndDragListView）</li>
-<li>Android 原生平台的 Markdown，支持 EditText 编辑实时预览 （RxMarkdown）</li>
-<li>RxJava + RxAndroid（RxCategory&#x2F; RxPhotoNote&#x2F; RxSandBox&#x2F; RxFeedBack&#x2F; RxUser）</li>
-<li>dex分包处理</li>
-<li>Dex自动分包脚本</li>
-<li>使用 AOP 进行 Android 6.0 权限适配</li>
-<li>NDK &amp;&amp; AIDL</li>
-</ul>
-<p>效果图：</p>
-<p><img src="https://img-blog.csdn.net/20180415213523640?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
-<p><a href="https://github.com/yydcdut/PhotoNoter">https://github.com/yydcdut/PhotoNoter</a></p>
-<p>好了，终于介绍完了，由于本文篇幅比较长，建议 「收藏」，欢迎大家评论点赞或者转发，如有更多想法欢迎在下方留言。</p>
-<p>重要声明：本文中介绍的所有开源项目所有权仍归原开源作者所有，本文仅对原作者的开源项目进行介绍、整理说明，供参考、学习交流之用。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>开源项目</tag>
-        <tag>Glide</tag>
-        <tag>MVP</tag>
-        <tag>Retrofit 2.x</tag>
-        <tag>RxJava 2.x</tag>
-        <tag>GreenDao</tag>
       </tags>
   </entry>
   <entry>
@@ -45832,6 +45797,226 @@ Thanks all.
       <tags>
         <tag>GitHub</tag>
         <tag>Git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>不可错过的几款GitHub开源项目</title>
+    <url>/2017/09/24/201709242437/</url>
+    <content><![CDATA[<p>工作之余或者周末感觉无聊？不知道干什么？想继续提高技术，但是不知道做什么的同学，看过来，不妨利用闲暇时间来撸几个 GitHub 上还不错的开源项目，本文推荐的开源项目比较适合新手、及对MVP设计模式不太熟练的同学练习之用，下面逐一进行简单介绍。</p>
+<h2 id="1-ZhiHuMVP"><a href="#1-ZhiHuMVP" class="headerlink" title="1.ZhiHuMVP"></a>1.ZhiHuMVP</h2><p>一款采用 MVP 模式的仿知乎客户端。</p>
+<p>本项目包含以下知识点：</p>
+<ul>
+<li>MVP架构思想</li>
+<li>Retrofit RESTful API 框架的配合</li>
+<li>RxJava 响应式编程</li>
+<li>Butter Knife：通过注解绑定 View</li>
+<li>夜间模式切换</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415212934402?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/fangx/ZhiHuMVP">https://github.com/fangx/ZhiHuMVP</a></p>
+<h2 id="2-ColorfulNews"><a href="#2-ColorfulNews" class="headerlink" title="2.ColorfulNews"></a>2.ColorfulNews</h2><p>一个 Material Design 风格的新闻阅读 App，采用 MVP 模式，基于 Dagger2+RxJava+Retrofit2进行开发。</p>
+<p>主要用到的开源库：</p>
+<ul>
+<li>Dagger2</li>
+<li>RxJava</li>
+<li>Retrofit2</li>
+<li>Butterknife</li>
+<li>Greendao</li>
+<li>PhotoView</li>
+<li>Glide</li>
+<li>Picasso</li>
+<li>…</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213012428?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/kaku2015/ColorfulNews">https://github.com/kaku2015/ColorfulNews</a></p>
+<h2 id="3-boxing"><a href="#3-boxing" class="headerlink" title="3.boxing"></a>3.boxing</h2><p>Bilibili 开源的基于MVP模式的 Android 多媒体选择器。</p>
+<p>特性：</p>
+<ul>
+<li>支持自定义UI</li>
+<li>支持多&#x2F;单图片选择和预览，单图裁剪功能</li>
+<li>支持gif</li>
+<li>支持视频选择功能</li>
+<li>提供图片压缩</li>
+<li>多图生成gif（checkout feature&#x2F;gif-encode)</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213215868?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/Bilibili/boxing">https://github.com/Bilibili/boxing</a></p>
+<h2 id="4-MinimalistWeather"><a href="#4-MinimalistWeather" class="headerlink" title="4.MinimalistWeather"></a>4.MinimalistWeather</h2><p>MinimalistWeather 是 Android 平台上一款开源天气 App ，目前还在开发中。项目基于 MVP 架构，采用各主流开源库实现。开发此项目主要是为展示各种开源库的使用方式以及 Android 项目的设计方案，并作为团队项目开发规范的一部分。</p>
+<p>采用的开源库包括：</p>
+<ul>
+<li>RxJava</li>
+<li>Retrofit2</li>
+<li>OKHttp3</li>
+<li>ORMLite</li>
+<li>Dagger2</li>
+<li>ButterKnife</li>
+<li>RetroLambda</li>
+<li>Stetho</li>
+</ul>
+<p>本项目还展示了：</p>
+<ul>
+<li>MVP+RxJava在实际项目中的应用，MVP中RxJava生命周期的管理…；</li>
+<li>上述罗列的各种开源框架的使用方法；</li>
+<li>Java8 Lambda表达式和Stream API的用法；</li>
+<li>怎样适配Material Design；</li>
+<li>ToolBar、RecycleView、CardView、CoordinatorLayout等新控件的用法；</li>
+<li>Gradle的基本配置（包括签名打包、项目依赖等等）；</li>
+<li>如何更好的管理Gradle依赖库的版本；</li>
+<li>代码混淆配置；</li>
+<li>如何快速开发一款结构清晰、可扩展性强的Android Application。</li>
+</ul>
+<p><a href="https://github.com/BaronZ88/MinimalistWeather">https://github.com/BaronZ88/MinimalistWeather</a></p>
+<h2 id="5-TranslateApp"><a href="#5-TranslateApp" class="headerlink" title="5.TranslateApp"></a>5.TranslateApp</h2><p>一个实现 『划词翻译』 功能的 Android 应用 ，可能是目前 Android 市场上翻译效率最高的一款应用。</p>
+<p>技术点:</p>
+<ul>
+<li>全程使用 Dagger2 对项目进行类依赖管理</li>
+<li>项目使用标准的 MVP 架构，关于 MVP 的一篇博客</li>
+<li>实现对粘贴板的监听以及访问</li>
+<li>无需权限显示悬浮窗（6.0悬浮窗权限适配）</li>
+<li>使用 RxJava 探索函数式编程</li>
+<li>使用 Retrofit2 进行网络请求</li>
+<li>开机自启动</li>
+<li>Android 6.0 自定义文本操作栏</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213307416?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/maoruibin/TranslateApp">https://github.com/maoruibin/TranslateApp</a></p>
+<h2 id="6-Ghost"><a href="#6-Ghost" class="headerlink" title="6.Ghost"></a>6.Ghost</h2><p>微影，一款纯粹的在线视频App，基于Material Design + MVP + Dagger2 + RxJava + Retrofit + Realm + Glide。</p>
+<p>技术点：</p>
+<ul>
+<li>使用RxJava配合Retrofit2做网络请求</li>
+<li>使用RxUtil对线程操作和网络请求结果处理做了封装</li>
+<li>使用RxPresenter对订阅的生命周期做管理</li>
+<li>使用AndroidEventBus来方便组件间的通信</li>
+<li>使用Material Design控件和动画</li>
+<li>使用MVP架构整个项目，对应于model、ui、presenter三个包</li>
+<li>使用Realm做阅读记录和收藏记录的增、删、查、改</li>
+<li>使用Glide做图片的处理和加载</li>
+<li>使用RecyclerView实现下拉刷新、上拉加载、侧滑删除、长按拖曳</li>
+<li>支持主题设置</li>
+<li>包含搜索、收藏、历史等功能</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213325438?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/GeekGhost/Ghost">https://github.com/GeekGhost/Ghost</a></p>
+<h2 id="7-GeekNews"><a href="#7-GeekNews" class="headerlink" title="7.GeekNews"></a>7.GeekNews</h2><p>极客日报，一款纯粹的阅读App，基于Material Design + MVP + RxJava2 + Retrofit + Dagger2 + Realm + Glide。</p>
+<p>技术点：</p>
+<ul>
+<li>使用RxJava配合Retrofit2做网络请求</li>
+<li>使用RxUtil对线程操作和网络请求结果处理做了封装</li>
+<li>使用RxPresenter对订阅的生命周期做管理</li>
+<li>使用RxBus来方便组件间的通信</li>
+<li>使用RxJava其他操作符来做延时、轮询、转化、筛选等操作</li>
+<li>使用okhttp3对网络返回内容做缓存，还有日志、超时重连、头部消息的配置</li>
+<li>使用Material Design控件和动画</li>
+<li>使用MVP架构整个项目，对应于model、ui、presenter三个包</li>
+<li>使用Dagger2将M层注入P层，将P层注入V层，无需new，直接调用对象</li>
+<li>使用Realm做阅读记录和收藏记录的增、删、查、改</li>
+<li>使用Glide做图片的处理和加载</li>
+<li>使用Fragmentation简化Fragment的操作和懒加载</li>
+<li>使用RecyclerView实现下拉刷新、上拉加载、侧滑删除、长按拖曳</li>
+<li>使用x5WebView做阅览页，比原生WebView体验更佳</li>
+<li>使用SVG及其动画实现progressbar的效果</li>
+<li>使用RxPermissions做6.0+动态权限适配</li>
+<li>使用Jsoup解析V2EX站点DOM</li>
+<li>使用原生的夜间模式、分享、反馈</li>
+<li>包含搜索、收藏、检测更新等功能</li>
+<li>所有踩到的坑都在项目里做了注释</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213349333?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/codeestX/GeekNews">https://github.com/codeestX/GeekNews</a></p>
+<h2 id="8-MovieGuide"><a href="#8-MovieGuide" class="headerlink" title="8.MovieGuide"></a>8.MovieGuide</h2><p>MovieGuide是一款受欢迎、高级别的电影Android应用，展示了预告片和评论等功能。采用了MVP模式、RxJava、Dagger 2 和 Bob Martin 的 Clean 架构方法，并针对平板电脑进行了优化。</p>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213413595?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/esoxjem/MovieGuide">https://github.com/esoxjem/MovieGuide</a></p>
+<h2 id="9-SimpleNews"><a href="#9-SimpleNews" class="headerlink" title="9.SimpleNews"></a>9.SimpleNews</h2><p>基于Material Design和MVP的新闻客户端。</p>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213429841?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/liuling07/SimpleNews">https://github.com/liuling07/SimpleNews</a></p>
+<h2 id="10-Toutiao"><a href="#10-Toutiao" class="headerlink" title="10.Toutiao"></a>10.Toutiao</h2><p>一款第三方今日头条客户端，遵循材料设计(Material Design), 聚合了新闻&#x2F;段子&#x2F;图片&#x2F;视频&#x2F;头条号内容, 没有广告, 仅仅只有存粹的阅读, 不断完善中, 采用 MVP + RxJava + Retrofit 架构的项目。</p>
+<p>主要功能特性：</p>
+<ul>
+<li>首页五大模块: 新闻 &#x2F; 图片 &#x2F; 视频 &#x2F; 头条号 &#x2F; 问答</li>
+<li>实现首页的布局和数据的显示</li>
+<li>实现自定义新闻栏目顺序</li>
+<li>新闻详情页面支持日夜两种主题</li>
+<li>显示新闻评论</li>
+<li>头条号订阅 查看头条号历史文章 &#x2F; 视频</li>
+<li>搜索功能 热门搜索推荐 搜索历史记录</li>
+<li>自定义主题颜色 无缝切换日夜皮肤</li>
+<li>视频播放</li>
+<li>内置3款 logo 随意互换</li>
+<li>动态切换字体大小</li>
+</ul>
+<p>主要技术点：</p>
+<ul>
+<li>基本遵循 Material Design 设计风格</li>
+<li>抓包获取今日头条API</li>
+<li>使用 Google 官方 MVP 架构</li>
+<li>DrawerLayout + NavigationView + BottomNavigationView 搭配使用</li>
+<li>RxBus 代替 EventBus 进行组件之间通讯</li>
+<li>ViewPager 搭配 Fragment 懒加载</li>
+<li>SwipeRefreshLayout 搭配 RecyclerView 下拉刷新上拉加载</li>
+<li>自定义 BottomNavigationBehavior 实现上滑隐藏下滑显示</li>
+<li>RxJava + Retrofit2 + OkHttp3 做网络请求</li>
+<li>OkHttp3 对网络返回内容做缓存, 还有日志、超时重连、头部消息的配置</li>
+<li>V层基类的构建, 包括 BaseActivity 和 BaseFragment , 对外提供了相同的接口</li>
+<li>使用原生的夜间模式</li>
+<li>解决侧滑返回与 View 冲突问题</li>
+<li>内置 3 款 Logo, 随意切换</li>
+<li>使用 CoordinatorLayout 、 AppBarLayout 、 CollapsingToolbarLayout 、    BottomSheetDialog 等新控件</li>
+<li>使用 7.0 新工具 DiffUtil , 不再无脑 notifyDataSetChanged</li>
+<li>使用 ItemTouchHelper 实现今日头条的频道排序、频道移动, 参考 ItemTouchHelperDemo</li>
+<li>使用 RxBinding 优雅实现搜索请求</li>
+<li>使用 AutoDispose 绑定 RxJava 生命周期</li>
+<li>使用 Travis Cl 持续集成</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213453688?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/iMeiji/Toutiao">https://github.com/iMeiji/Toutiao</a></p>
+<h2 id="11-PhotoNoter"><a href="#11-PhotoNoter" class="headerlink" title="11.PhotoNoter"></a>11.PhotoNoter</h2><p>Material Design风格的开源照片笔记。</p>
+<p>主要技术点：</p>
+<ul>
+<li>整体项目MVP结构</li>
+<li>Dagger2</li>
+<li>相机部分，API &gt;&#x3D; 21使用 Camera2 ，API &lt; 21使用 Camera</li>
+<li>相机的状态机，聚焦状态机</li>
+<li>照片缓存分为两种，一个是大图，一个是小图，小图是相册界面缩略图的时候加载的，大图是查看图片的时候加载的</li>
+<li>图片处理</li>
+<li>沙盒</li>
+<li>Activity 退出和进入的动画</li>
+<li>一些 UI 的动画，比如 “ 意见反馈”、 “ 语音输入” 这里面的动画</li>
+<li>主题设置，沉浸式状态栏（Android 5.0）</li>
+<li>切换主题</li>
+<li>可以滑动 item 和可以拖放 item 的 ListView（SlideAndDragListView）</li>
+<li>Android 原生平台的 Markdown，支持 EditText 编辑实时预览 （RxMarkdown）</li>
+<li>RxJava + RxAndroid（RxCategory&#x2F; RxPhotoNote&#x2F; RxSandBox&#x2F; RxFeedBack&#x2F; RxUser）</li>
+<li>dex分包处理</li>
+<li>Dex自动分包脚本</li>
+<li>使用 AOP 进行 Android 6.0 权限适配</li>
+<li>NDK &amp;&amp; AIDL</li>
+</ul>
+<p>效果图：</p>
+<p><img src="https://img-blog.csdn.net/20180415213523640?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3hpbnBlbmdmZWk1MjE=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<p><a href="https://github.com/yydcdut/PhotoNoter">https://github.com/yydcdut/PhotoNoter</a></p>
+<p>好了，终于介绍完了，由于本文篇幅比较长，建议 「收藏」，欢迎大家评论点赞或者转发，如有更多想法欢迎在下方留言。</p>
+<p>重要声明：本文中介绍的所有开源项目所有权仍归原开源作者所有，本文仅对原作者的开源项目进行介绍、整理说明，供参考、学习交流之用。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>开源项目</tag>
+        <tag>Glide</tag>
+        <tag>MVP</tag>
+        <tag>Retrofit 2.x</tag>
+        <tag>RxJava 2.x</tag>
+        <tag>GreenDao</tag>
       </tags>
   </entry>
   <entry>

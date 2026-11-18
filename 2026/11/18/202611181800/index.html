@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="腾讯混元正式开源 Hy4 flash 权重，224B 参数包含 64B 记忆模块，激活参数仅 12B，支持 1M 上下文。对比两周前计划开源的质疑，这篇算清 224GB 显存容量与极低推理成本的选型账本。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了">
+<meta property="og:url" content="https://www.vance.xin/2026/11/18/202611181800/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="腾讯混元正式开源 Hy4 flash 权重，224B 参数包含 64B 记忆模块，激活参数仅 12B，支持 1M 上下文。对比两周前计划开源的质疑，这篇算清 224GB 显存容量与极低推理成本的选型账本。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261118-202611181800-tencent-hy4-flash.webp">
+<meta property="article:published_time" content="2026-11-18T18:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-18T10:53:17.486Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="开源模型">
+<meta property="article:tag" content="MoE">
+<meta property="article:tag" content="腾讯混元">
+<meta property="article:tag" content="算力成本">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261118-202611181800-tencent-hy4-flash.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/18/202611181800/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/18/202611181800/","path":"2026/11/18/202611181800/","title":"半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了",
+  "url": "https://www.vance.xin/2026/11/18/202611181800/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/18/202611181800/",
+  "datePublished": "2026-11-18T18:00:00.000Z",
+  "dateModified": "2026-11-18T10:53:17.486Z",
+  "description": "腾讯混元正式开源 Hy4 flash 权重，224B 参数包含 64B 记忆模块，激活参数仅 12B，支持 1M 上下文。对比两周前计划开源的质疑，这篇算清 224GB 显存容量与极低推理成本的选型账本。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E6%AC%A1%E4%BA%A4%E5%87%BA%E6%9D%A5%E7%9A%84%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-text">这次交出来的到底是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#224B-%E8%83%8C%E5%90%8E%E7%9A%84%E9%82%A3%E9%81%93%E6%98%BE%E5%AD%98%E5%A2%99"><span class="nav-text">224B 背后的那道显存墙</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E5%9D%97%E8%82%89%E5%88%B0%E5%BA%95%E8%AF%A5%E5%88%87%E7%BB%99%E5%93%AA%E7%B1%BB%E6%B4%BB"><span class="nav-text">这块肉到底该切给哪类活</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">623</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1017</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/18/202611181800/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="腾讯混元正式开源 Hy4 flash 权重，224B 参数包含 64B 记忆模块，激活参数仅 12B，支持 1M 上下文。对比两周前计划开源的质疑，这篇算清 224GB 显存容量与极低推理成本的选型账本。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-18 18:00:00 / 修改时间：10:53:17" itemprop="dateCreated datePublished" datetime="2026-11-18T18:00:00+00:00">2026-11-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">腾讯混元正式开源 Hy4 flash 权重，224B 参数包含 64B 记忆模块，激活参数仅 12B，支持 1M 上下文。对比两周前计划开源的质疑，这篇算清 224GB 显存容量与极低推理成本的选型账本。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261118-202611181800-tencent-hy4-flash.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>两周前，腾讯混元发布 Hy4 正式版的时候，我在文章里留了一段挺不客气的话。当时官方新闻稿里写着计划开源模型权重，我跟读者说，计划这两个字得打折，权重没放出来之前它只是个云端服务。能不能拿走，要等权重放出来才算数。</p>
+<p>话音刚落十四天，腾讯没拖延，今天真把权重推上了 Hugging Face 和 GitHub。</p>
+<p>如果你这段时间也在盯开源模型的动态，大概会注意到社区里的一阵骚动。这次腾讯没拿缩水演示版糊弄人，直接把完整的 Hy4 flash 权重端了上来，包含 Base 基座、指令微调版和 FP8 量化版本。很多两周前还在观望的开发者，今天一早都在问同一件事：这块两千多亿参数的开源大模型，到底能不能搬回自己的本地机器上跑？</p>
+<p>先别急着去终端里敲下载命令，咱们先算算这笔真实的物理账。</p>
+<h2 id="这次交出来的到底是什么"><a href="#这次交出来的到底是什么" class="headerlink" title="这次交出来的到底是什么"></a>这次交出来的到底是什么</h2><p>把 Hugging Face 上的模型卡片翻开，这次混元交出来的底牌有几个很扎实的数字。</p>
+<p>总参数量大约 224B，也就是 2240 亿参数。里面包含了一个叫 Engram 的条件记忆模块，占了 64B 参数。但最核心的设计在于它的计算激活：单 token 实际激活的参数量，只有 12B。</p>
+<p>架构上它走的是混合专家网络，加上混合注意力和潜变量 MoE。用大白话讲，它在平时待机的时候，脑子里装着两千多亿参数的知识体系；可一旦真正开始算某一个字，它只调动其中不到二十分之一的神经元去干活。这种设计把单步计算的开销压到了极低的水平。</p>
+<p>更关键的是两条生产力指标。一个是 1M 的原生上下文，相当于一次能吃下上百万字的中文材料或者数十张高清图表；另一个是原生多模态，输入端直接接受文字和图像混合排版。</p>
+<p>生态适配这次也没让人猜谜。开源当天，官方在仓库里直接给出了 vLLM 的一键拉起命令。只要环境配好，打一行命令就能把一个兼容 OpenAI 格式的本地推理服务跑起来。</p>
+<p>但有一处细节跟之前很不一样。早先的 preview 版本用的是极其宽松的 Apache 2.0 协议，而这次正式版权重换成了腾讯专属的 Tencent Hy License。这意味着你可以免费下载、学习和部署，但在涉及大规模商业应用或者对外提供商用服务时，得遵守具体的授权条款。这跟 Meta 的 Llama 协议类似，是属于大厂特有的开放权重规则，而不是毫无约束的纯粹开源。</p>
+<h2 id="224B-背后的那道显存墙"><a href="#224B-背后的那道显存墙" class="headerlink" title="224B 背后的那道显存墙"></a>224B 背后的那道显存墙</h2><p>很多朋友看到 12B 激活这几个字，第一反应是：这不跟我手里的轻量模型差不多大吗？我电脑里的显卡是不是终于能跑 2000 亿大模型了？</p>
+<p>这恰恰是 MoE 架构最容易让人产生幻觉的地方。</p>
+<p>咱们把账拆开来看。模型的参数有两种存在形式：一种是静止躺在硬盘和显存里的容量，另一种是跑起来参与浮点运算的计算量。</p>
+<p>12B 指的是计算量。因为每次只有 120 亿参数参与计算，所以它跑起来的速度极快，延迟很低，每秒吐字数能逼近小型模型。</p>
+<p>但那 224B 的总参数，在推理服务启动的那一瞬间，必须完整常驻在显存里。即便是官方做好的 FP8 量化版本，每个参数只占一个字节，2240 亿参数也需要实打实吃掉大约 224GB 的显存容量。</p>
+<p>224GB 显存是什么概念？</p>
+<p>你手里要是有一张 24GB 显存的消费级旗舰显卡，比如 RTX 4090，你连它的零头都塞不下。哪怕你在主板上插满 4 张 4090，显存加起来也只有 96GB，依然连半个模型都装不进去。要想把这个 FP8 版本的权重完整拉起来，你起步就得准备 4 张 80GB 的专业计算卡，或者 8 张 4090 做更高强度的量化切分。</p>
+<p>这道显存墙把想要在个人电脑上尝鲜的个人开发者挡在了门外。</p>
+<p>它用 224B 的体量保证了长文本检索的稳定性和多模态理解的上限，却也天然注定了它的归宿：它不是给个人 MacBook 准备的玩具，它是一把专门为企业私有集群和算力中心打造的重型工具。</p>
+<h2 id="这块肉到底该切给哪类活"><a href="#这块肉到底该切给哪类活" class="headerlink" title="这块肉到底该切给哪类活"></a>这块肉到底该切给哪类活</h2><p>算清了物理成本，接下来的问题就很实在了：既然个人本地跑不起，腾讯把这个权重放出来，对我们这些一线开发者到底有什么用？</p>
+<p>我自己的秤从来没变过：看错一次的代价有多大，一天要跑多少次，乘上实际的单价。</p>
+<p>按这个标准，Hy4 flash 这次开放权重，真正能啃下的是两块过去极其尴尬的硬骨头。</p>
+<p>先说企业内网的私有化落地。</p>
+<p>在很多中大型企业里，客户数据、内部财务日志、未公开的核心代码库，哪怕云端 API 降到不要钱，安全合规部门也绝对不许向外网发一个请求。过去企业要想自建，要么选几十 B 的开源模型，知识储备和推理深度经常不够用；要么咬牙去布上千亿的密集模型，硬件采购成本直接上千万。</p>
+<p>Hy4 flash 给出了一个很折中的解法：硬件上你只需要堆出容纳 224GB 权重的显存池，而日常并发运行时的算力消耗却只有 12B 的级别。这意味着一台多卡服务器可以支撑起比以往高得多的并发吞吐，同时把 1M 长文本和图表解析能力稳稳锁在企业内网里。</p>
+<p>另一块是长上下文的高并发 Agent 流水线。</p>
+<p>天天用大模型跑自动化流程的人都清楚，流水线里最贵、最拖慢速度的不是写那几句最终结论，而是前期的海量上下文搬运。系统 Prompt 塞上几千字，长文档和错误日志倒进去几万字，多轮交互下来，上下文窗口迅速膨胀。</p>
+<p>如果用传统的密集模型，哪怕上下文再长，几十轮对话下来延迟就会直线上升。而 Hy4 flash 引入的 Engram 条件记忆技术和 LatentMoE 架构，本质上是在做一件极其克制的事：在长上下文里动态压缩记忆开销，只唤醒跟当前问题相关的局部专家。</p>
+<p>它适合接的是那种高频、量大、吞吐密集、但规则边界清楚的活。比如把一个大型历史仓库的所有代码全量吃进去理清依赖，或者对数万条客户工单做多模态图文分类。</p>
+<p>至于复杂的架构设计、深度的逻辑推导，我依然会把钥匙交给最前沿的闭源旗舰。国产开源模型在这个阶段最迷人的地方，恰恰是它把原本高不可攀的技术做成了廉价好用的零件。</p>
+<p>两周前腾讯说计划开源，我泼过冷水；今天它把 224B 的权重真金白银推到众人面前，这份兑现承诺的执行力值得一句肯定。门槛虽然挪到了显存容量上，但能拿走的东西，决定权终于交回了开发者自己的手里。</p>
+<p>要是你手头也有需要私有化部署或长文本处理的业务，不妨算一算：如果把现有的高并发接口切到这种大容量、低激活的 MoE 架构上，你的显存账面和响应速度到底能拉开多大差距？欢迎在评论区聊聊你的测算结果。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%BC%80%E6%BA%90%E6%A8%A1%E5%9E%8B/" rel="tag"># 开源模型</a>
+              <a href="/tags/MoE/" rel="tag"># MoE</a>
+              <a href="/tags/%E8%85%BE%E8%AE%AF%E6%B7%B7%E5%85%83/" rel="tag"># 腾讯混元</a>
+              <a href="/tags/%E7%AE%97%E5%8A%9B%E6%88%90%E6%9C%AC/" rel="tag"># 算力成本</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/18/202611181425/" rel="prev" title="一句 Prompt 直出 Android 应用：Google 这次越过 IDE 把刀架了过来">
+                  <i class="fa fa-angle-left"></i> 一句 Prompt 直出 Android 应用：Google 这次越过 IDE 把刀架了过来
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">30:24</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

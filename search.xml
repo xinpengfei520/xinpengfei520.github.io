@@ -256,6 +256,56 @@
       </tags>
   </entry>
   <entry>
+    <title>别再把整份 Excel 裸喂给大模型了：Gemini API 原生切片直接省下大半账单</title>
+    <url>/2026/11/18/202611182045/</url>
+    <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261118-202611182045-gemini-api-office-slicing.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>你平时让大模型分析数据或者提炼文档，是不是也干过这种事：手里有一份五十页的技术方案，或者一张包含几十个标签页、几万行数据的财务汇总表，为了图省事，直接打包全量丢进对话框或者 API 请求里？</p>
+<p>大部分人觉得，现在的模型动不动就标配上百万的上下文窗口，几万字倒进去不过是九牛一毛。但只要你在月底点开云平台的账单，或者看看终端里的调用耗时，你大概率会倒吸一口凉气。</p>
+<p>就在今天，Google 对 Gemini API 的文档处理模块做了一次非常低调但刀刀见肉的更新：正式支持直接传入 Microsoft Office 格式的文件，包括 Word、Excel 和 PowerPoint，并掏出了一个叫多模态内容切片的全新能力。</p>
+<p>如果你认真算过大模型调用的真实开销，就会明白这件事的分量：它针对的正是大模型落地中最隐蔽、也最费钱的那笔糊涂账。</p>
+<h2 id="过去那两道让人头疼的窄门"><a href="#过去那两道让人头疼的窄门" class="headerlink" title="过去那两道让人头疼的窄门"></a>过去那两道让人头疼的窄门</h2><p>在大模型里处理这些常见的办公文件，开发者过去通常只有两条路可以走，而且两条路都挺折磨人。</p>
+<p>一条路叫整包硬塞。</p>
+<p>拿一张几十兆的复杂 Excel 来说，大模型底座本身是不认二进制表格文件的。以往你要么在上传前先把它转成巨型的 CSV 字符串，要么用工具强行转成成千上万行的 Markdown 表格。</p>
+<p>我见过不少团队踩过这个闷坑：一份包含 12 个 Sheet、体积约 8MB 的年度销售流水表，转成纯文本后直接膨胀出 18 万行字符。只要点一次执行，单次请求就吃掉整整 6 万个输入 Token，不仅当场冲破平台的每分钟 Token 速率限制（TPM 报错），光是给模型预热一次就得烧掉近 0.15 美元。</p>
+<p>这一塞不仅费钱，更要命的是注意力衰减。在业内的大海捞针基准测试里，当输入上下文超过 10 万 Token 时，夹在文档中段 40% 到 60% 深度位置的细小数字，模型的检索命中率往往会出现 15% 到 30% 的断崖式下跌。真正关键的那两行净利润被淹没在海量空单元格和重复表头里，模型张冠李戴的概率直线上升。</p>
+<p>另一条路叫自己写清洗脚本。</p>
+<p>不想花冤枉钱的人，只能在本地或自己的服务器上搭一套复杂的解析中间件。写上一大堆 Python 脚本，用第三方库把表格或者文稿拆开，先提取文本，再按段落切块，最后用向量检索做 RAG 召回。</p>
+<p>这条路看着精细，踩过的坑却一个都不少。遇到带合并单元格的复杂财务报表，或者图文交错的排版，本地脚本经常解析错位；稍有一页格式不对，整个自动化流水线当场抛异常退出。为了把数据整整齐齐喂进大模型，工程师在外部线束上花的时间，往往比核心业务逻辑还要多。</p>
+<p>说白了，开发者被逼着在这两头做妥协：要么忍受高昂的账单和糟糕的召回率，要么自己去背沉重的中间层维护成本。</p>
+<h2 id="原生切片到底是怎么切的"><a href="#原生切片到底是怎么切的" class="headerlink" title="原生切片到底是怎么切的"></a>原生切片到底是怎么切的</h2><p>这次 Gemini API 的做法，本质上是把原本需要开发者在外部折腾的脏活，直接收编进了底层协议。</p>
+<p>首先是格式上的直通。</p>
+<p>它原生支持 Word、Excel、PowerPoint 以及开放文档格式。你不需要再把表格另存为文本，也不需要先把演示文稿转成单页图片，直接把原始文件往 API 里送就行。</p>
+<p>但真正值钱的是后面的内容切片机制。</p>
+<p>以往我们调接口，文件上传之后是一个整体，模型必须从头读到尾。而在新的切片规则下，你可以在提示词或者函数调用的参数里，像切蛋糕一样精准圈出你想要的那一块。</p>
+<p>对于表格文件，你可以直接指定只读取具体的工作表，甚至精准到单元格区域，比如直接声明只截取财务明细表里的第二行到第五十行；对于文稿和演示文档，你可以明确告诉它只处理第十页到第十五页，或者特定几页的幻灯片；就连音视频文件，也能按时间戳区间进行裁剪。</p>
+<p>在调用代码里，这种控制非常直观。以往你得先在本地启动庞大的文档解析器，把切出来的文本拼进字符串；现在只需要在请求里挂上文件对象，并在切片参数中写明标签页名和区域。整个解析、定位、过滤的苦力活，全被下沉到了云端推理的前置网关里。</p>
+<p>更狠的一点在内容层。如果一份文档里既有密密麻麻的文字，又有复杂的背景渲染图，你可以按需选择：只要纯文本就只提文字，要看整体版面就切出页面渲染图。</p>
+<p>这一切设计的落脚点，全在计费规则上的那句关键声明：开发者只需要为切片后真正提取出来的那部分内容支付 Token 费用。</p>
+<p>这意味着即便你上传了一份两百页、包含海量历史废话的合同样本，只要你在调用时指定只看最后五页的违约金条款，你的账单里就只有那五页纸的 Token 消耗。剩下的九成无关内容，在计费层面上直接被归零。</p>
+<h2 id="这笔账给工程留下了什么"><a href="#这笔账给工程留下了什么" class="headerlink" title="这笔账给工程留下了什么"></a>这笔账给工程留下了什么</h2><p>这笔账到底能省多少？我拿自己日常跑自动化流水线的经验给你做个对照。</p>
+<p>前阵子我复盘过一次工具调用的账本：同样是查一个版本的缺陷列表，走命令行只需要一千多个 Token，而挂一个默认工具协议，由于整页结果和完整说明书被反复强灌进上下文，消耗暴涨了四十多倍。</p>
+<p>很多时候我们付给云平台的钱，并不是因为模型有多聪明，而是我们在把大量无用的外围材料当成贡品反复供奉给显存。</p>
+<p>把切片能力做进 API 协议层之后，很多原本沉重的工程架构瞬间变轻了。</p>
+<p>在很多需要长文档分析的轻量级场景里，你其实不再需要单独搭建一套包含向量数据库、文本拆块器和重排序模型的完整 RAG 架构。过去为了从几十页财报里捞出特定数据，必须大费周章做文本向量化；现在你只需要让上游的智能体先做一次轻量定位，随后直接通过切片参数精准调取那一页或者那几个单元格。</p>
+<p>调用链路少了一层，中间可能出 bug 的环节少了一半，每次推理的响应延迟也从几十秒直接缩短到了两三秒以内。</p>
+<p>模型的上下文窗口越做越大，从早期的三万到现在的两百万，很多团队因此养成了大手大脚的习惯，觉得反正装得下，一股脑塞进去最省事。</p>
+<p>但这恰恰是最大的误区。上下文是你的工作台，不是你的垃圾桶。把桌面堆得越满，模型找起剪刀来就越费劲，你付出的时钟周期和真金白银也越多。</p>
+<p>这次 API 的改动给所有开发者提了个醒：大模型的工程化竞争，已经从单纯比拼谁的胃口更大，转向了谁能用更克制、更精准的方式去切分问题。</p>
+<p>要是你手头也有在跑文档问答或者报表分析的任务，不妨去翻一翻自己的调用日志：看看那些动辄几万 Token 的长请求里，到底有多少是在为根本没人看的数据买单？欢迎在评论区聊聊你打算怎么给自己的请求瘦身。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>RAG</tag>
+        <tag>Gemini API</tag>
+        <tag>Token成本</tag>
+        <tag>Office</tag>
+        <tag>多模态切片</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了</title>
     <url>/2026/11/18/202611181800/</url>
     <content><![CDATA[<p><img src="https://image.vance.xin/blog-cover/20261118-202611181800-tencent-hy4-flash.webp" alt="cover"></p>
@@ -626,8 +676,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>AI 编程</tag>
         <tag>工具调用</tag>
         <tag>Code Mode</tag>
@@ -1647,7 +1697,7 @@
 <p>上一篇聊完成本算账，这篇是操作层。两件事加在一起，才算把「怎么用 Claude Code 不乱烧钱」这道题答完整了。</p>
 <p>以上，既然看到这里了，如果觉得不错，随手点个赞、在看、转发三连吧，如果想第一时间收到推送，也可以给我个星标⭐～<br>谢谢你看我的文章，我们，下次再见。</p>
 <blockquote>
-<p>&#x2F; 作者：飞飞<br>&#x2F; 投稿或爆料，请联系邮箱：<a href="mailto:&#120;&#105;&#110;&#x70;&#x65;&#110;&#103;&#x66;&#x65;&#105;&#53;&#x32;&#49;&#x40;&#103;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#109;">&#120;&#105;&#110;&#x70;&#x65;&#110;&#103;&#x66;&#x65;&#105;&#53;&#x32;&#49;&#x40;&#103;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#109;</a></p>
+<p>&#x2F; 作者：飞飞<br>&#x2F; 投稿或爆料，请联系邮箱：<a href="mailto:&#120;&#105;&#110;&#112;&#x65;&#110;&#103;&#102;&#101;&#105;&#x35;&#50;&#49;&#64;&#x67;&#x6d;&#x61;&#x69;&#108;&#x2e;&#99;&#111;&#109;">&#120;&#105;&#110;&#112;&#x65;&#110;&#103;&#102;&#101;&#105;&#x35;&#50;&#49;&#64;&#x67;&#x6d;&#x61;&#x69;&#108;&#x2e;&#99;&#111;&#109;</a></p>
 </blockquote>
 ]]></content>
       <categories>
@@ -1928,8 +1978,8 @@
         <tag>AI</tag>
         <tag>Claude Code</tag>
         <tag>MCP</tag>
-        <tag>Token</tag>
         <tag>Agent</tag>
+        <tag>Token</tag>
       </tags>
   </entry>
   <entry>
@@ -2372,8 +2422,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Cursor</tag>
         <tag>AI Agent</tag>
+        <tag>Cursor</tag>
         <tag>部署</tag>
         <tag>账号体系</tag>
         <tag>所有权</tag>
@@ -4175,8 +4225,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>自动化</tag>
         <tag>权限</tag>
         <tag>安全</tag>
@@ -7104,8 +7154,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>开源</tag>
         <tag>macOS</tag>
         <tag>交互设计</tag>
@@ -7591,8 +7641,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>成本</tag>
         <tag>开发者</tag>
         <tag>Uber</tag>
@@ -8484,8 +8534,8 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>工作流</tag>
         <tag>权限</tag>
         <tag>多会话</tag>
@@ -8985,8 +9035,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>基准测试</tag>
         <tag>DeepSeek</tag>
         <tag>国产模型</tag>
@@ -9053,8 +9103,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>RAG</tag>
         <tag>知识库</tag>
         <tag>检索</tag>
@@ -9126,8 +9176,8 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>迁移成本</tag>
         <tag>OpenWorker</tag>
         <tag>Andrew Ng</tag>
@@ -9204,8 +9254,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>工作流</tag>
         <tag>能力边界</tag>
         <tag>论文解读</tag>
@@ -11055,8 +11105,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>数据安全</tag>
         <tag>CLI</tag>
         <tag>Grok</tag>
@@ -11095,8 +11145,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>工作流</tag>
         <tag>AI安全</tag>
         <tag>放权</tag>
@@ -11233,11 +11283,11 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>复盘</tag>
         <tag>AI</tag>
         <tag>工作流</tag>
         <tag>Claude</tag>
         <tag>元认知</tag>
+        <tag>复盘</tag>
       </tags>
   </entry>
   <entry>
@@ -11423,8 +11473,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>自动化</tag>
         <tag>工作流</tag>
         <tag>循环</tag>
@@ -12293,8 +12343,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>CLAUDE.md</tag>
         <tag>工作流</tag>
         <tag>Compound Engineering</tag>
@@ -12338,8 +12388,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>安全</tag>
         <tag>提示注入</tag>
         <tag>供应链攻击</tag>
@@ -12763,8 +12813,8 @@
         <category>产品</category>
       </categories>
       <tags>
-        <tag>AI客服</tag>
         <tag>个人开发者</tag>
+        <tag>AI客服</tag>
         <tag>GEO</tag>
         <tag>AI创业</tag>
         <tag>创业机会</tag>
@@ -13349,8 +13399,8 @@
         <category>个人成长</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>多智能体</tag>
         <tag>工作流</tag>
         <tag>超级个体</tag>
@@ -13436,8 +13486,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>大模型</tag>
         <tag>AI工具</tag>
         <tag>超级个体</tag>
@@ -13478,8 +13528,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>MCP</tag>
         <tag>Function Calling</tag>
         <tag>Tool Calling</tag>
@@ -13525,8 +13575,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>自动化</tag>
         <tag>工作流</tag>
         <tag>超级个体</tag>
@@ -13799,8 +13849,8 @@
         <category>个人成长</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>工作流</tag>
         <tag>数字员工</tag>
         <tag>超级个体</tag>
@@ -13960,8 +14010,8 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>ChatGPT</tag>
         <tag>AI超级个体</tag>
         <tag>AI入门</tag>
@@ -14427,8 +14477,8 @@
         <category>产品</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>自动化</tag>
         <tag>工作流</tag>
         <tag>内容工厂</tag>
@@ -14554,9 +14604,9 @@
         <category>编程</category>
       </categories>
       <tags>
+        <tag>AI Agent</tag>
         <tag>Cursor</tag>
         <tag>Claude Code</tag>
-        <tag>AI Agent</tag>
         <tag>Codex</tag>
       </tags>
   </entry>
@@ -14633,9 +14683,9 @@
         <category>AI</category>
       </categories>
       <tags>
+        <tag>AI Agent</tag>
         <tag>Cursor</tag>
         <tag>Claude Code</tag>
-        <tag>AI Agent</tag>
         <tag>MCP</tag>
         <tag>Model Context Protocol</tag>
       </tags>
@@ -14676,8 +14726,8 @@
       </categories>
       <tags>
         <tag>编程</tag>
-        <tag>Cursor</tag>
         <tag>AI Agent</tag>
+        <tag>Cursor</tag>
         <tag>Notion</tag>
       </tags>
   </entry>
@@ -14829,8 +14879,8 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>字节跳动</tag>
         <tag>TRAE</tag>
       </tags>
@@ -15254,8 +15304,8 @@
         <category>编程</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>架构设计</tag>
         <tag>运行时</tag>
         <tag>工具协议</tag>
@@ -15300,8 +15350,8 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>Grok</tag>
         <tag>自主Agent</tag>
       </tags>
@@ -15343,8 +15393,8 @@
         <category>观点</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>腾讯</tag>
         <tag>微信小微</tag>
         <tag>隐私边界</tag>
@@ -15565,8 +15615,8 @@
         <category>AI探索</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>Loop Engineer</tag>
         <tag>自主编码</tag>
       </tags>
@@ -17968,12 +18018,12 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>iOS</tag>
         <tag>Google</tag>
         <tag>Agent Skills</tag>
-        <tag>本地大模型</tag>
         <tag>Gemma 4</tag>
         <tag>Edge Gallery</tag>
+        <tag>本地大模型</tag>
+        <tag>iOS</tag>
       </tags>
   </entry>
   <entry>
@@ -18185,10 +18235,10 @@
       </categories>
       <tags>
         <tag>Android</tag>
+        <tag>本地大模型</tag>
         <tag>iOS</tag>
         <tag>PocketPal</tag>
         <tag>Qwen</tag>
-        <tag>本地大模型</tag>
         <tag>离线 AI</tag>
       </tags>
   </entry>
@@ -20808,9 +20858,9 @@
       </categories>
       <tags>
         <tag>大模型</tag>
-        <tag>Token</tag>
-        <tag>Agent</tag>
         <tag>AI 商业</tag>
+        <tag>Agent</tag>
+        <tag>Token</tag>
         <tag>词元</tag>
       </tags>
   </entry>
@@ -21186,8 +21236,8 @@
         <category>工具</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>Agent 工作流</tag>
         <tag>agency-agents</tag>
         <tag>subagent</tag>
@@ -21864,8 +21914,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>Anthropic</tag>
         <tag>网络安全</tag>
+        <tag>Anthropic</tag>
         <tag>大模型</tag>
         <tag>Claude</tag>
       </tags>
@@ -21969,9 +22019,9 @@
       </categories>
       <tags>
         <tag>AI编程</tag>
+        <tag>AI Agent</tag>
         <tag>Cursor</tag>
         <tag>开发工具</tag>
-        <tag>AI Agent</tag>
         <tag>IDE</tag>
       </tags>
   </entry>
@@ -22459,8 +22509,8 @@
       </categories>
       <tags>
         <tag>AI</tag>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>Harness</tag>
         <tag>编程工具</tag>
       </tags>
@@ -24239,9 +24289,9 @@
         <category>观点</category>
       </categories>
       <tags>
+        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
-        <tag>AI Agent</tag>
         <tag>IDE</tag>
         <tag>软件工程</tag>
       </tags>
@@ -24360,11 +24410,11 @@
         <category>AI</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>多智能体</tag>
-        <tag>Anthropic</tag>
         <tag>软件工程</tag>
+        <tag>Anthropic</tag>
       </tags>
   </entry>
   <entry>
@@ -25214,8 +25264,8 @@
         <category>教程</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>Skills</tag>
         <tag>MCP</tag>
         <tag>多代理协作</tag>
@@ -25430,8 +25480,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Vibe Coding</tag>
+        <tag>AI 编程</tag>
         <tag>代码质量</tag>
         <tag>开发者工具</tag>
       </tags>
@@ -25547,8 +25597,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>Anthropic</tag>
         <tag>软件工程</tag>
+        <tag>Anthropic</tag>
         <tag>开发者效率</tag>
       </tags>
   </entry>
@@ -28388,8 +28438,8 @@
       <tags>
         <tag>AI编程</tag>
         <tag>OpenAI Codex</tag>
-        <tag>程序员成长</tag>
         <tag>代码责任</tag>
+        <tag>程序员成长</tag>
         <tag>软件质量</tag>
       </tags>
   </entry>
@@ -29872,8 +29922,8 @@
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>OpenClaw</tag>
         <tag>Skills</tag>
         <tag>自动化</tag>
@@ -33332,9 +33382,9 @@
       </categories>
       <tags>
         <tag>AI</tag>
+        <tag>AI Agent</tag>
         <tag>Claude Code</tag>
         <tag>开发工具</tag>
-        <tag>AI Agent</tag>
         <tag>Dify</tag>
       </tags>
   </entry>
@@ -34955,8 +35005,8 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>Anthropic</tag>
         <tag>AI 安全</tag>
+        <tag>Anthropic</tag>
         <tag>五角大楼</tag>
         <tag>额度翻倍</tag>
       </tags>
@@ -35074,8 +35124,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>Anthropic</tag>
         <tag>Opus 4.6</tag>
+        <tag>Anthropic</tag>
         <tag>上下文窗口</tag>
       </tags>
   </entry>
@@ -37074,9 +37124,9 @@
       </categories>
       <tags>
         <tag>Claude Code</tag>
-        <tag>AI 编程</tag>
         <tag>Vibe Coding</tag>
         <tag>软件开发</tag>
+        <tag>AI 编程</tag>
         <tag>创业</tag>
       </tags>
   </entry>
@@ -38225,8 +38275,8 @@
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
         <tag>Agent Teams</tag>
-        <tag>多智能体</tag>
         <tag>Opus 4.6</tag>
+        <tag>多智能体</tag>
       </tags>
   </entry>
   <entry>
@@ -38498,8 +38548,8 @@
       <tags>
         <tag>Claude Code</tag>
         <tag>AI 编程</tag>
-        <tag>Code Review</tag>
         <tag>多智能体</tag>
+        <tag>Code Review</tag>
         <tag>Anthropic</tag>
       </tags>
   </entry>
@@ -41738,8 +41788,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>阅读</category>
       </categories>
       <tags>
-        <tag>Claude Code</tag>
         <tag>AI Agent</tag>
+        <tag>Claude Code</tag>
         <tag>AI 编程助手</tag>
         <tag>OpenClaw</tag>
         <tag>技术架构</tag>
@@ -42362,8 +42412,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>个人生活</category>
       </categories>
       <tags>
-        <tag>Plan</tag>
         <tag>复盘</tag>
+        <tag>Plan</tag>
       </tags>
   </entry>
   <entry>
@@ -42517,8 +42567,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>JavaEE</category>
       </categories>
       <tags>
-        <tag>CentOS7</tag>
         <tag>vm</tag>
+        <tag>CentOS7</tag>
         <tag>Vagrant</tag>
       </tags>
   </entry>
@@ -42560,8 +42610,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>JavaEE</category>
       </categories>
       <tags>
-        <tag>Docker</tag>
         <tag>CentOS7</tag>
+        <tag>Docker</tag>
       </tags>
   </entry>
   <entry>
@@ -43454,8 +43504,8 @@ feat(auth): 添加 JWT Token 认证功能
         <category>Android</category>
       </categories>
       <tags>
-        <tag>View</tag>
         <tag>技术提升</tag>
+        <tag>View</tag>
         <tag>ArcView</tag>
       </tags>
   </entry>
@@ -43550,7 +43600,7 @@ feat(auth): 添加 JWT Token 认证功能
 <h2 id="4-Hexo-的使用"><a href="#4-Hexo-的使用" class="headerlink" title="4.Hexo 的使用"></a>4.Hexo 的使用</h2><h3 id="4-1-Hexo-的目录结构"><a href="#4-1-Hexo-的目录结构" class="headerlink" title="4.1 Hexo 的目录结构"></a>4.1 Hexo 的目录结构</h3><p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061559503.png"></p>
 <h3 id="4-2-全局配置文件-config-yml"><a href="#4-2-全局配置文件-config-yml" class="headerlink" title="4.2 全局配置文件_config.yml"></a>4.2 全局配置文件_config.yml</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Hexo Configuration</span><br><span class="line"># Docs: http://hexo.io/docs/configuration.html</span><br><span class="line"># Source: https://github.com/hexojs/hexo/</span><br><span class="line"># Site #站点信息</span><br><span class="line">title:  #标题</span><br><span class="line">subtitle:  #副标题</span><br><span class="line">description:  #站点描述，给搜索引擎看的</span><br><span class="line">author:  #作者</span><br><span class="line">email:  #电子邮箱</span><br><span class="line">language: zh-CN #语言</span><br><span class="line"># URL #链接格式</span><br><span class="line">url:  #网址</span><br><span class="line">root: / #根目录</span><br><span class="line">permalink: :year/:month/:day/:title/ #文章的链接格式</span><br><span class="line">tag_dir: tags #标签目录</span><br><span class="line">archive_dir: archives #存档目录</span><br><span class="line">category_dir: categories #分类目录</span><br><span class="line">code_dir: downloads/code</span><br><span class="line">permalink_defaults:</span><br><span class="line"># Directory #目录</span><br><span class="line">source_dir: source #源文件目录</span><br><span class="line">public_dir: public #生成的网页文件目录</span><br><span class="line"># Writing #写作</span><br><span class="line">new_post_name: :title.md #新文章标题</span><br><span class="line">default_layout: post #默认的模板，包括 post、page、photo、draft（文章、页面、照片、草稿）</span><br><span class="line">titlecase: false #标题转换成大写</span><br><span class="line">external_link: true #在新选项卡中打开连接</span><br><span class="line">filename_case: 0</span><br><span class="line">render_drafts: false</span><br><span class="line">post_asset_folder: false</span><br><span class="line">relative_link: false</span><br><span class="line">highlight: #语法高亮</span><br><span class="line">  enable: true #是否启用</span><br><span class="line">  line_number: true #显示行号</span><br><span class="line">  tab_replace:</span><br><span class="line"># Category &amp; Tag #分类和标签</span><br><span class="line">default_category: uncategorized #默认分类</span><br><span class="line">category_map:</span><br><span class="line">tag_map:</span><br><span class="line"># Archives</span><br><span class="line">2: 开启分页</span><br><span class="line">1: 禁用分页</span><br><span class="line">0: 全部禁用</span><br><span class="line">archive: 2</span><br><span class="line">category: 2</span><br><span class="line">tag: 2</span><br><span class="line"># Server #本地服务器</span><br><span class="line">port: 4000 #端口号</span><br><span class="line">server_ip: localhost #IP 地址</span><br><span class="line">logger: false</span><br><span class="line">logger_format: dev</span><br><span class="line"># Date / Time format #日期时间格式</span><br><span class="line">date_format: YYYY-MM-DD #参考http://momentjs.com/docs/#/displaying/format/</span><br><span class="line">time_format: H:mm:ss</span><br><span class="line"># Pagination #分页</span><br><span class="line">per_page: 10 #每页文章数，设置成 0 禁用分页</span><br><span class="line">pagination_dir: page</span><br><span class="line"># Disqus #Disqus评论，替换为多说</span><br><span class="line">disqus_shortname:</span><br><span class="line"># Extensions #拓展插件</span><br><span class="line">theme: landscape-plus #主题</span><br><span class="line">exclude_generator:</span><br><span class="line">plugins: #插件，例如生成 RSS 和站点地图的</span><br><span class="line">- hexo-generator-feed</span><br><span class="line">- hexo-generator-sitemap</span><br><span class="line"># Deployment #部署，将 lmintlcx 改成用户名</span><br><span class="line">deploy:</span><br><span class="line">  type: git</span><br><span class="line">  repo: git@github.com:yourgithub/yourgithub.github.io.git</span><br><span class="line">  branch: master</span><br></pre></td></tr></table></figure>
 
-<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#116;&#64;&#103;&#x69;&#116;&#104;&#117;&#98;&#46;&#x63;&#x6f;&#109;">&#x67;&#105;&#116;&#64;&#103;&#x69;&#116;&#104;&#117;&#98;&#46;&#x63;&#x6f;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
+<p>编辑 <strong>config.yml</strong> 文件将 repo: <a href="mailto:&#x67;&#105;&#x74;&#64;&#103;&#105;&#116;&#x68;&#x75;&#x62;&#46;&#99;&#111;&#109;">&#x67;&#105;&#x74;&#64;&#103;&#105;&#116;&#x68;&#x75;&#x62;&#46;&#99;&#111;&#109;</a>:yourgithub&#x2F;yourgithub.github.io.git 替换为你刚建的 GitHub 仓库的地址。</p>
 <p>注意：<br>每一行配置文件的冒号 “:” 后面有一个空格！<br>repo 的这种形式的是配置了SSH Key之后的，如果没有配置则使用 https 形式的地址。</p>
 <p>然后执行如下命令即可完成生成静态网页 &amp; 部署：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
@@ -44009,6 +44059,27 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>51单片机矩阵键盘C程序</title>
+    <url>/2017/09/24/201709242348/</url>
+    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
+]]></content>
+      <categories>
+        <category>嵌入式</category>
+      </categories>
+      <tags>
+        <tag>51单片机</tag>
+        <tag>C语言</tag>
+        <tag>矩阵键盘</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>程序猿如何理财</title>
     <url>/2017/09/24/201709242347/</url>
     <content><![CDATA[<blockquote>
@@ -44052,27 +44123,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>开源项目</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>51单片机矩阵键盘C程序</title>
-    <url>/2017/09/24/201709242348/</url>
-    <content><![CDATA[<h2 id="主程序1："><a href="#主程序1：" class="headerlink" title="主程序1："></a>主程序1：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">   uchar i,j,k</span><br><span class="line">   i=0;</span><br><span class="line">   j=0;</span><br><span class="line">   while(1)</span><br><span class="line">   &#123;</span><br><span class="line">      i=key();//键盘循环扫描，其值赋给变量数组table</span><br><span class="line">      if(i!=0)//键盘子程序返回值非0，即有按键按下</span><br><span class="line">      &#123;</span><br><span class="line">          table[j]=i;//将值存在变量数组中</span><br><span class="line"></span><br><span class="line">j++;                                                          </span><br><span class="line">      &#125;</span><br><span class="line">      if(j==6)</span><br><span class="line">      &#123;</span><br><span class="line">         j=0;</span><br><span class="line">         for(k=0;k&lt;6;k++)//当数组存满6位时核对</span><br><span class="line">         &#123;</span><br><span class="line">             P3=table[k];//P3接有一排指示灯</span><br><span class="line">             delay (1000);//延时1S    </span><br><span class="line">         &#125;</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序2："><a href="#主程序2：" class="headerlink" title="主程序2："></a>主程序2：</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">main()&#123;</span><br><span class="line">int i,j,a[2][5]=&#123;10,15,25,15,75,15,45,65,85,95&#125;;</span><br><span class="line">for(i=0;i&lt;2;i++)</span><br><span class="line">for(j=0;j&lt;5;j++)&#123;</span><br><span class="line">printf(&quot;%d &quot;,a[i][j]);</span><br><span class="line">&#125;</span><br><span class="line">printf(&quot;\n&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="主程序3："><a href="#主程序3：" class="headerlink" title="主程序3："></a>主程序3：</h2><p>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出<br>由键盘输入一个3×4矩阵a，选出各列最小的元素组成一个一维数组b并输出</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">	#include &quot;stdio.h&quot;</span><br><span class="line">	#include &quot;conio.h&quot;</span><br><span class="line">void main()</span><br><span class="line">&#123;</span><br><span class="line">int i,j,a[3][4],b[4],min;</span><br><span class="line">for(i=0;i&lt;3;i++)</span><br><span class="line">for(j=0;j&lt;4;j++)</span><br><span class="line">scanf(&quot;%d&quot;,&amp;a[i][j]);</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">b[i]=a[0][i];</span><br><span class="line">for (i=0;i&lt;4;i++)</span><br><span class="line">for(j=1;j&lt;2;j++)</span><br><span class="line">if(a[i][j]&lt;b[i]) b[i]=a[i][j];</span><br><span class="line">for(i=0;i&lt;4;i++)</span><br><span class="line">printf(&quot;%d&quot;,b[i]);</span><br><span class="line">    getch();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>梦里求她千百度，蓦然回首，那人却在灯火阑珊处。。。</p>
-]]></content>
-      <categories>
-        <category>嵌入式</category>
-      </categories>
-      <tags>
-        <tag>51单片机</tag>
-        <tag>C语言</tag>
-        <tag>矩阵键盘</tag>
       </tags>
   </entry>
   <entry>
@@ -44623,6 +44673,42 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android Studio 曲折更新之路</title>
+    <url>/2017/09/24/201709242402/</url>
+    <content><![CDATA[<blockquote>
+<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
+</blockquote>
+<p>##1.开始更新</p>
+<p>打开AS 点击Help –&gt; Check for Updates…</p>
+<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
+<p>###1.1找到最新的版本号对应的串号</p>
+<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
+<p>如下图所示：</p>
+<p>###1.2下载你对应版本的到最新版本的补丁包</p>
+<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
+<p>然后拼接出一个下载补丁包的url:如下</p>
+<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
+<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
+<p>###1.3手动安装AS补丁包</p>
+<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
+<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
+<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
+<p>稍等一会更新包就安装完成了</p>
+<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
+<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
+<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
+<p>另外，感谢下面博主的博客：</p>
+<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android Studio</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>用起来贼爽的 Android Studio 插件推荐</title>
     <url>/2017/09/24/201709242401/</url>
     <content><![CDATA[<blockquote>
@@ -44683,42 +44769,6 @@ feat(auth): 添加 JWT Token 认证功能
       </categories>
       <tags>
         <tag>Plugin</tag>
-        <tag>GitHub</tag>
-        <tag>Android Studio</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Studio 曲折更新之路</title>
-    <url>/2017/09/24/201709242402/</url>
-    <content><![CDATA[<blockquote>
-<p>Android studio 3.0 版本出来也好长时间了，自己的电脑每次有更新我就立马回更新成最新的，公司的电脑自从装上AS就没有更新过，主要是工作比较忙没有时间去更新，这不周末把电脑带回来想着更新成最新的版本…</p>
-</blockquote>
-<p>##1.开始更新</p>
-<p>打开AS 点击Help –&gt; Check for Updates…</p>
-<p>等了一小会后弹出的是<strong>Download</strong>而不是<strong>Update and Restart</strong>安装更新并重启的按钮，点击<strong>Download</strong>按钮之后，跳转到浏览器，让下载新版本，纳尼？这是什么鬼？我自己的电脑每次更新都是自己下载安装完补丁之后自动安装并重启的，下载完再安装也是可以的，就是比较麻烦而已，而我不想使用这种方式去安装，最后搜了一下大概的意思就是Android Studio的版本太低了不支持使用更新补丁的方式升级到最新的版本，我现在的版本是2.2.3想升级到最新的3.0.1版本，而Google不提供补丁包，可能是版本跨度太大了吧，我想着肯定是有办法的，最后在CSDN上找到一篇博客，和我的情况一样，使用手动更新Android Studio到最新版本，按照他的办法步骤如下：</p>
-<p>###1.1找到最新的版本号对应的串号</p>
-<p><a href="https://dl.google.com/Android/studio/patches/updates.xml">https://dl.google.com/Android/studio/patches/updates.xml</a></p>
-<p>如下图所示：</p>
-<p>###1.2下载你对应版本的到最新版本的补丁包</p>
-<p>点开AS的Setting-&gt;在点开Update就可以看到当前版本的串号，如下图：</p>
-<p>然后拼接出一个下载补丁包的url:如下</p>
-<p><code>https://dl.google.com/android/studio/patches/AI-145.3537739-162.4069837-patch-win.jar</code></p>
-<p>这样就可以下载对应的版本的补丁包，我第一次拼接时，没有自动下载，然后响应超时了，估计是版本太旧的缘故，刚才在<a href="https://dl.google.com/Android/studio/patches/updates.xml%E7%BD%91%E9%A1%B5%E4%B8%AD%E7%9C%8B%E5%88%B0%E4%BA%86%E8%AE%B8%E5%A4%9A%E7%89%88%E6%9C%AC%E6%9B%B4%E6%96%B0%E5%88%B0%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E5%8C%85%EF%BC%8C%E4%BB%94%E7%BB%86%E7%9C%8B%E4%BA%86%E7%9C%8B%EF%BC%8C%E7%A1%AE%E5%AE%9E%E6%B2%A1%E6%9C%89%E6%88%91%E8%BF%99%E4%B8%AA%E7%89%88%E6%9C%AC%E7%9A%84%E6%9B%B4%E6%96%B0%E8%A1%A5%E4%B8%81%E5%8C%85%EF%BC%8C%E6%89%BE%E5%88%B0%E6%9C%80%E4%BD%8E%E7%9A%84%E7%89%88%E6%9C%AC%E7%9A%84%E8%A1%A5%E4%B8%81%E5%8C%85%E6%98%AF2.3.3%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF2.3.3%E8%82%AF%E5%AE%9A%E6%98%AF%E5%8F%AF%E4%BB%A5%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%E7%9A%84%EF%BC%8C%E6%89%80%E6%9C%89%E6%9C%89%E4%B8%AA%E6%8A%98%E4%B8%AD%E7%9A%84%E5%8A%9E%E6%B3%95%E6%98%AF%E5%85%88%E6%9B%B4%E6%96%B0%E5%88%B02.3.3%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E5%88%B03.0.1%EF%BC%8C%E4%BA%8E%E6%98%AF%E4%BB%8E%E4%B8%8A%E9%9D%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%AD%E6%89%BE%E5%88%B02.3.3%E5%AF%B9%E5%BA%94%E7%9A%84%E7%89%88%E6%9C%AC%E4%B8%B2%E5%8F%A3%EF%BC%8C%E6%8B%BC%E6%8E%A5%E5%87%BA%E4%B8%80%E4%B8%AA%E4%B8%8B%E8%BD%BD%E7%9A%84url,%E5%A4%8D%E5%88%B6%E5%88%B0%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%EF%BC%8C%E7%82%B9%E5%87%BB%E5%9B%9E%E8%BD%A6">https://dl.google.com/Android/studio/patches/updates.xml网页中看到了许多版本更新到最新版本的更新包，仔细看了看，确实没有我这个版本的更新补丁包，找到最低的版本的补丁包是2.3.3，也就是2.3.3肯定是可以更新到3.0.1的，所有有个折中的办法是先更新到2.3.3，再更新到3.0.1，于是从上面的网页中找到2.3.3对应的版本串口，拼接出一个下载的url,复制到浏览器中，点击回车</a>… WC！！！FUCK!居然可以下载了，太爽了，马上就下载完成了。</p>
-<p>###1.3手动安装AS补丁包</p>
-<p>打开CMD，切换到AS安装的更目录，输入一下命令后回车：</p>
-<p><code>java -classpath E:\AI-145.3537739-162.4069837-patch-win.jar com.intellij.updater.Runner install .</code></p>
-<p>命令格式格式：java -classpath + 更新包的路径 + com.intellij.updater.Runner install .</p>
-<p>稍等一会更新包就安装完成了</p>
-<p>然后打开AS，会提示AS已经更新，提示你是否导入之前版本的设置，说明AS已经更新，进去之后再查看版本已经更新到2.3.3了，至此更新的第一步已经完成，接下来就简单了，点击Check for Updates…弹出窗口中终于出现了<strong>Update and Restart</strong>按钮，点击该按钮即可自动下载并更新…</p>
-<p>最后附上2.2.3-2.3.3的更新包，需要的可自行下载。</p>
-<p><a href="http://download.csdn.net/download/xinpengfei521/10133487">http://download.csdn.net/download/xinpengfei521/10133487</a></p>
-<p>另外，感谢下面博主的博客：</p>
-<p><a href="http://blog.csdn.net/u010798604/article/details/52838030">http://blog.csdn.net/u010798604/article/details/52838030</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
         <tag>GitHub</tag>
         <tag>Android Studio</tag>
       </tags>
@@ -44803,30 +44853,27 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
-    <title>Android 打开系统拍照和相册获取头像</title>
-    <url>/2017/09/24/201709242407/</url>
-    <content><![CDATA[<p>现在许多应用都有上传头像的功能，再次奉上代开系统相册或打开系统相机拍照的实现，有的同学在测试小米手机上打开选择相册有奔溃，此代码已完美解决此问题…</p>
-<p>楼主，做的头像需要经过裁剪之后和圆形处理…</p>
-<h2 id="1-设置点击打开相机-打开系统图库"><a href="#1-设置点击打开相机-打开系统图库" class="headerlink" title="1.设置点击打开相机&amp;打开系统图库"></a>1.设置点击打开相机&amp;打开系统图库</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">            public void onClick(View v) &#123;</span><br><span class="line">                // 打开系统拍照程</span><br><span class="line">                Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);</span><br><span class="line">                startActivityForResult(camera, CAMERA);</span><br><span class="line">            &#125;</span><br><span class="line">        </span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public void onClick(View v) &#123;</span><br><span class="line">                // 打开系统图库选择图片</span><br><span class="line">                Intent picture = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);</span><br><span class="line">                startActivityForResult(picture, PICTURE);</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+    <title>Android Studio 打 JAR 包</title>
+    <url>/2017/09/24/201709242405/</url>
+    <content><![CDATA[<p>Android Studio 新增了依赖<strong>library</strong>的方式，有时候我们需要将一个 library 打成 jar 包供其他人使用下面就是具体打成的方法：</p>
+<p>##1.在library的buildgradle中添加如下代码</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">task makeJar(type: Copy) &#123;</span><br><span class="line">    delete &#x27;build/libs/myjar.jar&#x27;</span><br><span class="line">    from(&#x27;build/intermediates/bundles/release/&#x27;)</span><br><span class="line">    into(&#x27;build/libs/&#x27;)</span><br><span class="line">    include(&#x27;classes.jar&#x27;)</span><br><span class="line">    rename(&#x27;classes.jar&#x27;, &#x27;myjar.jar&#x27;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="2-重写带结果启动的回调onActivityResult"><a href="#2-重写带结果启动的回调onActivityResult" class="headerlink" title="2.重写带结果启动的回调onActivityResult"></a>2.重写带结果启动的回调onActivityResult</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    protected void onActivityResult(int requestCode, int resultCode, Intent data) &#123;</span><br><span class="line">        super.onActivityResult(requestCode, resultCode, data);</span><br><span class="line"></span><br><span class="line">        if (requestCode == CAMERA &amp;&amp; resultCode == RESULT_OK &amp;&amp; data != null) &#123;</span><br><span class="line"></span><br><span class="line">            // 拍照</span><br><span class="line">            Bundle bundle = data.getExtras();</span><br><span class="line">            // 获取相机返回的数据，并转换为图片格式</span><br><span class="line">            Bitmap bitmap = (Bitmap) bundle.get(&quot;data&quot;);</span><br><span class="line">            // bitmap圆形裁剪</span><br><span class="line">//            bitmap = BitmapUtils.zoom(bitmap, DensityUtil.dp2px(this, 62), DensityUtil.dp2px(this, 62));</span><br><span class="line">            bitmap = BitmapUtils.zoom(bitmap, DensityUtil.dp2px(this, 20), DensityUtil.dp2px(this, 20));</span><br><span class="line">            Bitmap circleBitmap = BitmapUtils.circleBitmap(bitmap);</span><br><span class="line"></span><br><span class="line">            //TODO 将图片上传到服务器</span><br><span class="line">//            ivIcon.setImageBitmap(circleBitmap);</span><br><span class="line">            uploadHeadpic(bitmap);</span><br><span class="line">            // 将图片保存在本地</span><br><span class="line">            try &#123;</span><br><span class="line">                saveImage(circleBitmap);</span><br><span class="line">            &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (requestCode == PICTURE &amp;&amp; resultCode == RESULT_OK &amp;&amp; data != null) &#123;</span><br><span class="line">            //图库</span><br><span class="line"></span><br><span class="line">            String pathResult = null;  // 获取图片路径的方法调用</span><br><span class="line">            try &#123;</span><br><span class="line">                Uri uri = data.getData();</span><br><span class="line">                pathResult = getPath(uri);</span><br><span class="line">                Log.e(&quot;TAG&quot;, &quot;图片路径===&quot; + pathResult);</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            //这里返回的uri情况就有点多了</span><br><span class="line">            //**:在4.4.2之前返回的uri是:content://media/external/images/media/3951或者file://....在4.4.2返回的是content://com.android.providers.media.documents/document/image:3951或者</span><br><span class="line">            //总结：uri的组成，eg:content://com.example.project:200/folder/subfolder/etc</span><br><span class="line">            //content:---&gt;&quot;scheme&quot;</span><br><span class="line">            //com.example.project:200--&gt;&quot;host&quot;:&quot;port&quot;---&gt;&quot;authority&quot;[主机地址+端口(省略) =authority]</span><br><span class="line">            //folder/subfolder/etc--&gt;&quot;path&quot; 路径部分</span><br><span class="line">            //android各个不同的系统版本,对于获取外部存储上的资源，返回的Uri对象都可能各不一样,所以要保证无论是哪个系统版本都能正确获取到图片资源的话</span><br><span class="line">            //就需要针对各种情况进行一个处理了</span><br><span class="line"></span><br><span class="line">            Bitmap decodeFile = BitmapFactory.decodeFile(pathResult);</span><br><span class="line">            Bitmap zoomBitmap = BitmapUtils.zoom(decodeFile, DensityUtil.dp2px(this, 20), DensityUtil.dp2px(this, 20));</span><br><span class="line">            // bitmap圆形裁剪p</span><br><span class="line">            Bitmap circleImage = BitmapUtils.circleBitmap(zoomBitmap);</span><br><span class="line">            // 真实项目当中，是需要上传到服务器的..这步我们就不做了。</span><br><span class="line">            uploadHeadpic(zoomBitmap);</span><br><span class="line">            try &#123;</span><br><span class="line">                // 保存图片到本地</span><br><span class="line">                saveImage(circleImage);</span><br><span class="line">            &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>其实，当你编译完整个工程后，所有library库都已经生成了对应的包含class的classes.jar包，复制出这个jar包，修改名字后也可以使用了，默认生成的路径为：build&#x2F;intermediates&#x2F;bundles&#x2F;release下面就可以看到生成的<strong>classes.jar</strong>文件了。</p>
+<p>##2.如果你不想使用如上编译时生成的Jar包，你可以再Android Studio自带的Terminal中输入如下命令生成jar包<br>在终端执行生成JAR包<br><code>./gradlew build</code></p>
+<p>或者在buildgradle中再添加如下两行代码即可    </p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">makeJar.dependsOn(build)   </span><br><span class="line">//build.finalizedBy makeJar</span><br></pre></td></tr></table></figure>
 
-<h2 id="3-获取图片路径"><a href="#3-获取图片路径" class="headerlink" title="3.获取图片路径"></a>3.获取图片路径</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 根据系统相册选择的文件获取路径</span><br><span class="line">    @SuppressLint(&quot;NewApi&quot;)</span><br><span class="line">    private String getPath(Uri uri) &#123;</span><br><span class="line">//        int sdkVersion = Build.VERSION.SDK_INT;</span><br><span class="line">        final boolean isKitKat = Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.KITKAT;</span><br><span class="line">        // 高于4.4.2的版本</span><br><span class="line">//        if (sdkVersion &gt;= 19) &#123;</span><br><span class="line">        if (isKitKat &amp;&amp; DocumentsContract.isDocumentUri(mContext, uri)) &#123;</span><br><span class="line">            Log.e(&quot;TAG&quot;, &quot;uri auth: &quot; + uri.getAuthority());</span><br><span class="line">            if (isExternalStorageDocument(uri)) &#123;</span><br><span class="line">                String docId = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                String[] split = docId.split(&quot;:&quot;);</span><br><span class="line">                String type = split[0];</span><br><span class="line">                if (&quot;primary&quot;.equalsIgnoreCase(type)) &#123;</span><br><span class="line">                    return Environment.getExternalStorageDirectory() + &quot;/&quot; + split[1];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else if (isDownloadsDocument(uri)) &#123;</span><br><span class="line">                final String id = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                final Uri contentUri = ContentUris.withAppendedId(Uri.parse(&quot;content://downloads/public_downloads&quot;),</span><br><span class="line">                        Long.valueOf(id));</span><br><span class="line">                return getDataColumn(this, contentUri, null, null);</span><br><span class="line">            &#125; else if (isMediaDocument(uri)) &#123;</span><br><span class="line">                final String docId = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                final String[] split = docId.split(&quot;:&quot;);</span><br><span class="line">                final String type = split[0];</span><br><span class="line"></span><br><span class="line">                Uri contentUri = null;</span><br><span class="line">                if (&quot;image&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125; else if (&quot;video&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125; else if (&quot;audio&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125;</span><br><span class="line">                final String selection = &quot;_id=?&quot;;</span><br><span class="line">                final String[] selectionArgs = new String[]&#123;split[1]&#125;;</span><br><span class="line">                return getDataColumn(this, contentUri, selection, selectionArgs);</span><br><span class="line">            &#125; else if (isMedia(uri)) &#123;</span><br><span class="line">                String[] proj = &#123;MediaStore.Images.Media.DATA&#125;;</span><br><span class="line">                Cursor actualimagecursor = this.managedQuery(uri, proj, null, null, null);</span><br><span class="line">                int actual_image_column_index = actualimagecursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);</span><br><span class="line">                actualimagecursor.moveToFirst();</span><br><span class="line">                return actualimagecursor.getString(actual_image_column_index);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (&quot;content&quot;.equalsIgnoreCase(uri.getScheme())) &#123;</span><br><span class="line">            // Return the remote address</span><br><span class="line">            if (isGooglePhotosUri(uri))</span><br><span class="line">                return uri.getLastPathSegment();</span><br><span class="line">            return getDataColumn(this, uri, null, null);</span><br><span class="line"></span><br><span class="line">        &#125; else if (&quot;file&quot;.equalsIgnoreCase(uri.getScheme())) &#123; // File</span><br><span class="line">            return uri.getPath();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">private String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) &#123;</span><br><span class="line">        Cursor cursor = null;</span><br><span class="line">        final String column = &quot;_data&quot;;</span><br><span class="line">        final String[] projection = &#123;column&#125;;</span><br><span class="line">        try &#123;</span><br><span class="line">            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);</span><br><span class="line">            if (cursor != null &amp;&amp; cursor.moveToFirst()) &#123;</span><br><span class="line">                final int index = cursor.getColumnIndexOrThrow(column);</span><br><span class="line">                return cursor.getString(index);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (cursor != null)</span><br><span class="line">                cursor.close();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private boolean isExternalStorageDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.externalstorage.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isDownloadsDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.providers.downloads.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isMediaDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.providers.media.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isMedia(Uri uri) &#123;</span><br><span class="line">        return &quot;media&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @param uri The Uri to check.</span><br><span class="line">     * @return Whether the Uri authority is Google Photos.</span><br><span class="line">     */</span><br><span class="line">    public static boolean isGooglePhotosUri(Uri uri) &#123;</span><br><span class="line">        return &quot;com.google.android.apps.photos.content&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<p>以上就是比较完整的代码了…</p>
-<p>最后附上2篇参考文章：</p>
-<p><a href="http://blog.csdn.net/iamwutianbao/article/details/52459509">http://blog.csdn.net/iamwutianbao/article/details/52459509</a></p>
-<p><a href="http://blog.csdn.net/coderinchina/article/details/50799501">http://blog.csdn.net/coderinchina/article/details/50799501</a></p>
-<p>Thanks all.</p>
+<p>Android Studio新增了@arr的依赖方式，它的好处是可以将资源文件也可以打进去，所以，我更推荐大家使用这种依赖方式。</p>
+<p>最后他特别感谢如下博主的文章：</p>
+<p>参考：blog:<a href="http://blog.csdn.net/ta893115871/article/details/46955791">http://blog.csdn.net/ta893115871/article/details/46955791</a></p>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
-        <tag>GitHub</tag>
-        <tag>相机</tag>
-        <tag>相册</tag>
-        <tag>拍照</tag>
+        <tag>Android Studio</tag>
+        <tag>JAR</tag>
       </tags>
   </entry>
   <entry>
@@ -44864,6 +44911,33 @@ feat(auth): 添加 JWT Token 认证功能
       </tags>
   </entry>
   <entry>
+    <title>Android 打开系统拍照和相册获取头像</title>
+    <url>/2017/09/24/201709242407/</url>
+    <content><![CDATA[<p>现在许多应用都有上传头像的功能，再次奉上代开系统相册或打开系统相机拍照的实现，有的同学在测试小米手机上打开选择相册有奔溃，此代码已完美解决此问题…</p>
+<p>楼主，做的头像需要经过裁剪之后和圆形处理…</p>
+<h2 id="1-设置点击打开相机-打开系统图库"><a href="#1-设置点击打开相机-打开系统图库" class="headerlink" title="1.设置点击打开相机&amp;打开系统图库"></a>1.设置点击打开相机&amp;打开系统图库</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">            public void onClick(View v) &#123;</span><br><span class="line">                // 打开系统拍照程</span><br><span class="line">                Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);</span><br><span class="line">                startActivityForResult(camera, CAMERA);</span><br><span class="line">            &#125;</span><br><span class="line">        </span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public void onClick(View v) &#123;</span><br><span class="line">                // 打开系统图库选择图片</span><br><span class="line">                Intent picture = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);</span><br><span class="line">                startActivityForResult(picture, PICTURE);</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-重写带结果启动的回调onActivityResult"><a href="#2-重写带结果启动的回调onActivityResult" class="headerlink" title="2.重写带结果启动的回调onActivityResult"></a>2.重写带结果启动的回调onActivityResult</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@Override</span><br><span class="line">    protected void onActivityResult(int requestCode, int resultCode, Intent data) &#123;</span><br><span class="line">        super.onActivityResult(requestCode, resultCode, data);</span><br><span class="line"></span><br><span class="line">        if (requestCode == CAMERA &amp;&amp; resultCode == RESULT_OK &amp;&amp; data != null) &#123;</span><br><span class="line"></span><br><span class="line">            // 拍照</span><br><span class="line">            Bundle bundle = data.getExtras();</span><br><span class="line">            // 获取相机返回的数据，并转换为图片格式</span><br><span class="line">            Bitmap bitmap = (Bitmap) bundle.get(&quot;data&quot;);</span><br><span class="line">            // bitmap圆形裁剪</span><br><span class="line">//            bitmap = BitmapUtils.zoom(bitmap, DensityUtil.dp2px(this, 62), DensityUtil.dp2px(this, 62));</span><br><span class="line">            bitmap = BitmapUtils.zoom(bitmap, DensityUtil.dp2px(this, 20), DensityUtil.dp2px(this, 20));</span><br><span class="line">            Bitmap circleBitmap = BitmapUtils.circleBitmap(bitmap);</span><br><span class="line"></span><br><span class="line">            //TODO 将图片上传到服务器</span><br><span class="line">//            ivIcon.setImageBitmap(circleBitmap);</span><br><span class="line">            uploadHeadpic(bitmap);</span><br><span class="line">            // 将图片保存在本地</span><br><span class="line">            try &#123;</span><br><span class="line">                saveImage(circleBitmap);</span><br><span class="line">            &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (requestCode == PICTURE &amp;&amp; resultCode == RESULT_OK &amp;&amp; data != null) &#123;</span><br><span class="line">            //图库</span><br><span class="line"></span><br><span class="line">            String pathResult = null;  // 获取图片路径的方法调用</span><br><span class="line">            try &#123;</span><br><span class="line">                Uri uri = data.getData();</span><br><span class="line">                pathResult = getPath(uri);</span><br><span class="line">                Log.e(&quot;TAG&quot;, &quot;图片路径===&quot; + pathResult);</span><br><span class="line">            &#125; catch (Exception e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            //这里返回的uri情况就有点多了</span><br><span class="line">            //**:在4.4.2之前返回的uri是:content://media/external/images/media/3951或者file://....在4.4.2返回的是content://com.android.providers.media.documents/document/image:3951或者</span><br><span class="line">            //总结：uri的组成，eg:content://com.example.project:200/folder/subfolder/etc</span><br><span class="line">            //content:---&gt;&quot;scheme&quot;</span><br><span class="line">            //com.example.project:200--&gt;&quot;host&quot;:&quot;port&quot;---&gt;&quot;authority&quot;[主机地址+端口(省略) =authority]</span><br><span class="line">            //folder/subfolder/etc--&gt;&quot;path&quot; 路径部分</span><br><span class="line">            //android各个不同的系统版本,对于获取外部存储上的资源，返回的Uri对象都可能各不一样,所以要保证无论是哪个系统版本都能正确获取到图片资源的话</span><br><span class="line">            //就需要针对各种情况进行一个处理了</span><br><span class="line"></span><br><span class="line">            Bitmap decodeFile = BitmapFactory.decodeFile(pathResult);</span><br><span class="line">            Bitmap zoomBitmap = BitmapUtils.zoom(decodeFile, DensityUtil.dp2px(this, 20), DensityUtil.dp2px(this, 20));</span><br><span class="line">            // bitmap圆形裁剪p</span><br><span class="line">            Bitmap circleImage = BitmapUtils.circleBitmap(zoomBitmap);</span><br><span class="line">            // 真实项目当中，是需要上传到服务器的..这步我们就不做了。</span><br><span class="line">            uploadHeadpic(zoomBitmap);</span><br><span class="line">            try &#123;</span><br><span class="line">                // 保存图片到本地</span><br><span class="line">                saveImage(circleImage);</span><br><span class="line">            &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-获取图片路径"><a href="#3-获取图片路径" class="headerlink" title="3.获取图片路径"></a>3.获取图片路径</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 根据系统相册选择的文件获取路径</span><br><span class="line">    @SuppressLint(&quot;NewApi&quot;)</span><br><span class="line">    private String getPath(Uri uri) &#123;</span><br><span class="line">//        int sdkVersion = Build.VERSION.SDK_INT;</span><br><span class="line">        final boolean isKitKat = Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.KITKAT;</span><br><span class="line">        // 高于4.4.2的版本</span><br><span class="line">//        if (sdkVersion &gt;= 19) &#123;</span><br><span class="line">        if (isKitKat &amp;&amp; DocumentsContract.isDocumentUri(mContext, uri)) &#123;</span><br><span class="line">            Log.e(&quot;TAG&quot;, &quot;uri auth: &quot; + uri.getAuthority());</span><br><span class="line">            if (isExternalStorageDocument(uri)) &#123;</span><br><span class="line">                String docId = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                String[] split = docId.split(&quot;:&quot;);</span><br><span class="line">                String type = split[0];</span><br><span class="line">                if (&quot;primary&quot;.equalsIgnoreCase(type)) &#123;</span><br><span class="line">                    return Environment.getExternalStorageDirectory() + &quot;/&quot; + split[1];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; else if (isDownloadsDocument(uri)) &#123;</span><br><span class="line">                final String id = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                final Uri contentUri = ContentUris.withAppendedId(Uri.parse(&quot;content://downloads/public_downloads&quot;),</span><br><span class="line">                        Long.valueOf(id));</span><br><span class="line">                return getDataColumn(this, contentUri, null, null);</span><br><span class="line">            &#125; else if (isMediaDocument(uri)) &#123;</span><br><span class="line">                final String docId = DocumentsContract.getDocumentId(uri);</span><br><span class="line">                final String[] split = docId.split(&quot;:&quot;);</span><br><span class="line">                final String type = split[0];</span><br><span class="line"></span><br><span class="line">                Uri contentUri = null;</span><br><span class="line">                if (&quot;image&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125; else if (&quot;video&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125; else if (&quot;audio&quot;.equals(type)) &#123;</span><br><span class="line">                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;</span><br><span class="line">                &#125;</span><br><span class="line">                final String selection = &quot;_id=?&quot;;</span><br><span class="line">                final String[] selectionArgs = new String[]&#123;split[1]&#125;;</span><br><span class="line">                return getDataColumn(this, contentUri, selection, selectionArgs);</span><br><span class="line">            &#125; else if (isMedia(uri)) &#123;</span><br><span class="line">                String[] proj = &#123;MediaStore.Images.Media.DATA&#125;;</span><br><span class="line">                Cursor actualimagecursor = this.managedQuery(uri, proj, null, null, null);</span><br><span class="line">                int actual_image_column_index = actualimagecursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);</span><br><span class="line">                actualimagecursor.moveToFirst();</span><br><span class="line">                return actualimagecursor.getString(actual_image_column_index);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else if (&quot;content&quot;.equalsIgnoreCase(uri.getScheme())) &#123;</span><br><span class="line">            // Return the remote address</span><br><span class="line">            if (isGooglePhotosUri(uri))</span><br><span class="line">                return uri.getLastPathSegment();</span><br><span class="line">            return getDataColumn(this, uri, null, null);</span><br><span class="line"></span><br><span class="line">        &#125; else if (&quot;file&quot;.equalsIgnoreCase(uri.getScheme())) &#123; // File</span><br><span class="line">            return uri.getPath();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">private String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) &#123;</span><br><span class="line">        Cursor cursor = null;</span><br><span class="line">        final String column = &quot;_data&quot;;</span><br><span class="line">        final String[] projection = &#123;column&#125;;</span><br><span class="line">        try &#123;</span><br><span class="line">            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);</span><br><span class="line">            if (cursor != null &amp;&amp; cursor.moveToFirst()) &#123;</span><br><span class="line">                final int index = cursor.getColumnIndexOrThrow(column);</span><br><span class="line">                return cursor.getString(index);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; finally &#123;</span><br><span class="line">            if (cursor != null)</span><br><span class="line">                cursor.close();</span><br><span class="line">        &#125;</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    private boolean isExternalStorageDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.externalstorage.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isDownloadsDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.providers.downloads.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isMediaDocument(Uri uri) &#123;</span><br><span class="line">        return &quot;com.android.providers.media.documents&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public static boolean isMedia(Uri uri) &#123;</span><br><span class="line">        return &quot;media&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * @param uri The Uri to check.</span><br><span class="line">     * @return Whether the Uri authority is Google Photos.</span><br><span class="line">     */</span><br><span class="line">    public static boolean isGooglePhotosUri(Uri uri) &#123;</span><br><span class="line">        return &quot;com.google.android.apps.photos.content&quot;.equals(uri.getAuthority());</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上就是比较完整的代码了…</p>
+<p>最后附上2篇参考文章：</p>
+<p><a href="http://blog.csdn.net/iamwutianbao/article/details/52459509">http://blog.csdn.net/iamwutianbao/article/details/52459509</a></p>
+<p><a href="http://blog.csdn.net/coderinchina/article/details/50799501">http://blog.csdn.net/coderinchina/article/details/50799501</a></p>
+<p>Thanks all.</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>相机</tag>
+        <tag>相册</tag>
+        <tag>拍照</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 点亮屏幕并解锁</title>
     <url>/2017/09/24/201709242408/</url>
     <content><![CDATA[<blockquote>
@@ -44887,30 +44961,6 @@ feat(auth): 添加 JWT Token 认证功能
       <tags>
         <tag>GitHub</tag>
         <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Studio 打 JAR 包</title>
-    <url>/2017/09/24/201709242405/</url>
-    <content><![CDATA[<p>Android Studio 新增了依赖<strong>library</strong>的方式，有时候我们需要将一个 library 打成 jar 包供其他人使用下面就是具体打成的方法：</p>
-<p>##1.在library的buildgradle中添加如下代码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">task makeJar(type: Copy) &#123;</span><br><span class="line">    delete &#x27;build/libs/myjar.jar&#x27;</span><br><span class="line">    from(&#x27;build/intermediates/bundles/release/&#x27;)</span><br><span class="line">    into(&#x27;build/libs/&#x27;)</span><br><span class="line">    include(&#x27;classes.jar&#x27;)</span><br><span class="line">    rename(&#x27;classes.jar&#x27;, &#x27;myjar.jar&#x27;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>其实，当你编译完整个工程后，所有library库都已经生成了对应的包含class的classes.jar包，复制出这个jar包，修改名字后也可以使用了，默认生成的路径为：build&#x2F;intermediates&#x2F;bundles&#x2F;release下面就可以看到生成的<strong>classes.jar</strong>文件了。</p>
-<p>##2.如果你不想使用如上编译时生成的Jar包，你可以再Android Studio自带的Terminal中输入如下命令生成jar包<br>在终端执行生成JAR包<br><code>./gradlew build</code></p>
-<p>或者在buildgradle中再添加如下两行代码即可    </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">makeJar.dependsOn(build)   </span><br><span class="line">//build.finalizedBy makeJar</span><br></pre></td></tr></table></figure>
-
-<p>Android Studio新增了@arr的依赖方式，它的好处是可以将资源文件也可以打进去，所以，我更推荐大家使用这种依赖方式。</p>
-<p>最后他特别感谢如下博主的文章：</p>
-<p>参考：blog:<a href="http://blog.csdn.net/ta893115871/article/details/46955791">http://blog.csdn.net/ta893115871/article/details/46955791</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android Studio</tag>
-        <tag>JAR</tag>
       </tags>
   </entry>
   <entry>
@@ -45213,6 +45263,39 @@ public static boolean isChinaPhoneLegal(String str)
       </tags>
   </entry>
   <entry>
+    <title>Android 删除指定路径下指定前缀或后缀的文件</title>
+    <url>/2017/09/24/201709242417/</url>
+    <content><![CDATA[<blockquote>
+<p>微信公众号：CodingAndroid<br>CSDN：<a href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由 CodingAndroid 原创，未经授权，不可随意转载！</p>
+</blockquote>
+<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><pre><code>我们在开发中都会遇到这样的一个需求：删除指定目录下指定的前缀或者后缀文件名的文件。
+</code></pre>
+<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><pre><code>对外暴露三个参数，参数一：要删除的文件目录的路径，参数二：区分是前缀还是后缀，参数三：具体前缀或者后缀字符规则。
+
+先枚举出路径目录下的所有文件，枚举的同时实现一个FilenameFilter接口的类，可以自定义规则，比说前缀、后缀或者其他规则，枚举的同时将我们的过滤器作为参数，这样我们就可以匹配到指定条件的文件，然后删除即可。
+</code></pre>
+<h2 id="实现一个删除逻辑的Runnable"><a href="#实现一个删除逻辑的Runnable" class="headerlink" title="实现一个删除逻辑的Runnable"></a>实现一个删除逻辑的Runnable</h2><p>代码实现的逻辑也比较简单，大家都能看得懂，下面我就直接贴代码了</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.deletedemo;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import android.support.annotation.NonNull;</span><br><span class="line">import android.text.TextUtils;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FilenameFilter;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:删除指定规则的文件</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteRunnable implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    private String mRegEx;</span><br><span class="line">    private String dirPath;</span><br><span class="line">    private boolean isPrefix;</span><br><span class="line">    private static final String TAG = DeleteRunnable.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Constructor</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath  要删除文件所在的目录路径</span><br><span class="line">     * @param isPrefix true为前缀 false为后缀</span><br><span class="line">     * @param mRegEx   规则</span><br><span class="line">     */</span><br><span class="line">    public DeleteRunnable(String dirPath, boolean isPrefix, String mRegEx) &#123;</span><br><span class="line">        this.mRegEx = mRegEx;</span><br><span class="line">        this.dirPath = dirPath;</span><br><span class="line">        this.isPrefix = isPrefix;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        enumAllFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 枚举并删除所有符合条件(前缀)的文件</span><br><span class="line">     */</span><br><span class="line">    private void enumAllFileList() &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(dirPath)) &#123;</span><br><span class="line">            File adDir = new File(dirPath);</span><br><span class="line">            if (adDir.exists() &amp;&amp; adDir.isDirectory()) &#123;</span><br><span class="line">                if (!TextUtils.isEmpty(mRegEx)) &#123;</span><br><span class="line">                    DeleteFileFilter filter = new DeleteFileFilter(isPrefix, mRegEx);</span><br><span class="line">                    // 2.匹配是否是需要删除的文件</span><br><span class="line">                    File[] fileList = adDir.listFiles(filter);</span><br><span class="line">                    if (fileList != null &amp;&amp; fileList.length &gt; 0) &#123;</span><br><span class="line">                        for (File file : fileList) &#123;</span><br><span class="line">                            if (file.isFile() &amp;&amp; file.exists()) &#123;</span><br><span class="line">                                boolean delete = file.delete();</span><br><span class="line">                                Log.i(TAG, &quot;删除符合条件前缀的旧广告素材&quot; + (delete ? &quot;成功~&quot; : &quot;失败！&quot;));</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Created by Feifei on 2017/12/25 :)</span><br><span class="line">     * Function:以xxx开头或后缀的文件名的过滤器</span><br><span class="line">     */</span><br><span class="line">    class DeleteFileFilter implements FilenameFilter &#123;</span><br><span class="line"></span><br><span class="line">        private boolean isPrefix;</span><br><span class="line">        private String mRegEx;// 前缀或后缀规则</span><br><span class="line"></span><br><span class="line">        public DeleteFileFilter(boolean isPrefix, @NonNull String regEx) &#123;</span><br><span class="line">            this.isPrefix = isPrefix;</span><br><span class="line">            this.mRegEx = regEx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean accept(File file, String s) &#123;</span><br><span class="line">            return isPrefix ? s.startsWith(mRegEx) : s.endsWith(mRegEx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="定义文件删除的异常操作工具类"><a href="#定义文件删除的异常操作工具类" class="headerlink" title="定义文件删除的异常操作工具类"></a>定义文件删除的异常操作工具类</h2><p>因为操作文件属于耗时操作，我们使用 <strong>SingleThreadExecutor</strong> 线程池实现如下一个工具类</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final ExecutorService executor = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 删除指定目录指定前后缀的文件</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath</span><br><span class="line">     * @param isPrefix</span><br><span class="line">     * @param regEx</span><br><span class="line">     */</span><br><span class="line">    public static void delete(String dirPath, boolean isPrefix, String regEx) &#123;</span><br><span class="line">        executor.execute(new DeleteRunnable(dirPath, isPrefix, regEx));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>例如我们要删除要删除SD卡下的Download目录下的所有以.png后缀结尾的文件，只需要这样写：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DeleteUtil.delete(&quot;/sdcard/Download/&quot;, false, &quot;.png&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>是不是感觉很方便，0.0~ 可以收藏了，以后当工具类来使用。</p>
+<p>如果有不懂的地方或者不对的地方，欢迎评论交流，谢谢！</p>
+<p>最后附上下载Demo的地址:<a href="http://download.csdn.net/download/xinpengfei521/10172262">http://download.csdn.net/download/xinpengfei521/10172262</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>GitHub</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Android 冷启动白屏问题</title>
     <url>/2017/09/24/201709242418/</url>
     <content><![CDATA[<center>点击上面蓝色字体关注<span style="color:#0000ff;">“IT大飞说”</span></center>
@@ -45250,39 +45333,6 @@ public static boolean isChinaPhoneLegal(String str)
 <p><strong>猜你喜欢：</strong><br><a href="https://mp.weixin.qq.com/s/jxBEg7dpFfTNLXNFdvJjrw">深入浅出Retrofit2.x(一)</a><br><a href="https://mp.weixin.qq.com/s/c8mdMqjrLvHTgc8oxONiCw">深入浅出Retrofit2.x(二)</a><br><a href="https://mp.weixin.qq.com/s/hVhhDdr3Bo4qLIdOkHsM_Q">Android 最全 Intent 传递数据姿势</a> </p>
 <p><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061530029.jpeg"></p>
 <center><span style="color:#bdbdbd;">欢迎扫码关注我的公众号</span></center>]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>GitHub</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android 删除指定路径下指定前缀或后缀的文件</title>
-    <url>/2017/09/24/201709242417/</url>
-    <content><![CDATA[<blockquote>
-<p>微信公众号：CodingAndroid<br>CSDN：<a href="https://blog.csdn.net/xinpengfei521">https://blog.csdn.net/xinpengfei521</a><br>声明：本文由 CodingAndroid 原创，未经授权，不可随意转载！</p>
-</blockquote>
-<h2 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h2><pre><code>我们在开发中都会遇到这样的一个需求：删除指定目录下指定的前缀或者后缀文件名的文件。
-</code></pre>
-<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><pre><code>对外暴露三个参数，参数一：要删除的文件目录的路径，参数二：区分是前缀还是后缀，参数三：具体前缀或者后缀字符规则。
-
-先枚举出路径目录下的所有文件，枚举的同时实现一个FilenameFilter接口的类，可以自定义规则，比说前缀、后缀或者其他规则，枚举的同时将我们的过滤器作为参数，这样我们就可以匹配到指定条件的文件，然后删除即可。
-</code></pre>
-<h2 id="实现一个删除逻辑的Runnable"><a href="#实现一个删除逻辑的Runnable" class="headerlink" title="实现一个删除逻辑的Runnable"></a>实现一个删除逻辑的Runnable</h2><p>代码实现的逻辑也比较简单，大家都能看得懂，下面我就直接贴代码了</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">package com.xpf.deletedemo;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">import android.support.annotation.NonNull;</span><br><span class="line">import android.text.TextUtils;</span><br><span class="line">import android.util.Log;</span><br><span class="line"></span><br><span class="line">import java.io.File;</span><br><span class="line">import java.io.FilenameFilter;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:删除指定规则的文件</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteRunnable implements Runnable &#123;</span><br><span class="line"></span><br><span class="line">    private String mRegEx;</span><br><span class="line">    private String dirPath;</span><br><span class="line">    private boolean isPrefix;</span><br><span class="line">    private static final String TAG = DeleteRunnable.class.getSimpleName();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Constructor</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath  要删除文件所在的目录路径</span><br><span class="line">     * @param isPrefix true为前缀 false为后缀</span><br><span class="line">     * @param mRegEx   规则</span><br><span class="line">     */</span><br><span class="line">    public DeleteRunnable(String dirPath, boolean isPrefix, String mRegEx) &#123;</span><br><span class="line">        this.mRegEx = mRegEx;</span><br><span class="line">        this.dirPath = dirPath;</span><br><span class="line">        this.isPrefix = isPrefix;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void run() &#123;</span><br><span class="line">        enumAllFileList();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 枚举并删除所有符合条件(前缀)的文件</span><br><span class="line">     */</span><br><span class="line">    private void enumAllFileList() &#123;</span><br><span class="line">        if (!TextUtils.isEmpty(dirPath)) &#123;</span><br><span class="line">            File adDir = new File(dirPath);</span><br><span class="line">            if (adDir.exists() &amp;&amp; adDir.isDirectory()) &#123;</span><br><span class="line">                if (!TextUtils.isEmpty(mRegEx)) &#123;</span><br><span class="line">                    DeleteFileFilter filter = new DeleteFileFilter(isPrefix, mRegEx);</span><br><span class="line">                    // 2.匹配是否是需要删除的文件</span><br><span class="line">                    File[] fileList = adDir.listFiles(filter);</span><br><span class="line">                    if (fileList != null &amp;&amp; fileList.length &gt; 0) &#123;</span><br><span class="line">                        for (File file : fileList) &#123;</span><br><span class="line">                            if (file.isFile() &amp;&amp; file.exists()) &#123;</span><br><span class="line">                                boolean delete = file.delete();</span><br><span class="line">                                Log.i(TAG, &quot;删除符合条件前缀的旧广告素材&quot; + (delete ? &quot;成功~&quot; : &quot;失败！&quot;));</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * Created by Feifei on 2017/12/25 :)</span><br><span class="line">     * Function:以xxx开头或后缀的文件名的过滤器</span><br><span class="line">     */</span><br><span class="line">    class DeleteFileFilter implements FilenameFilter &#123;</span><br><span class="line"></span><br><span class="line">        private boolean isPrefix;</span><br><span class="line">        private String mRegEx;// 前缀或后缀规则</span><br><span class="line"></span><br><span class="line">        public DeleteFileFilter(boolean isPrefix, @NonNull String regEx) &#123;</span><br><span class="line">            this.isPrefix = isPrefix;</span><br><span class="line">            this.mRegEx = regEx;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        @Override</span><br><span class="line">        public boolean accept(File file, String s) &#123;</span><br><span class="line">            return isPrefix ? s.startsWith(mRegEx) : s.endsWith(mRegEx);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="定义文件删除的异常操作工具类"><a href="#定义文件删除的异常操作工具类" class="headerlink" title="定义文件删除的异常操作工具类"></a>定义文件删除的异常操作工具类</h2><p>因为操作文件属于耗时操作，我们使用 <strong>SingleThreadExecutor</strong> 线程池实现如下一个工具类</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Created by Feifei on 2017/12/25 :)</span><br><span class="line"> * Function:</span><br><span class="line"> */</span><br><span class="line"></span><br><span class="line">public class DeleteUtil &#123;</span><br><span class="line"></span><br><span class="line">    private static final ExecutorService executor = Executors.newSingleThreadExecutor();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 删除指定目录指定前后缀的文件</span><br><span class="line">     *</span><br><span class="line">     * @param dirPath</span><br><span class="line">     * @param isPrefix</span><br><span class="line">     * @param regEx</span><br><span class="line">     */</span><br><span class="line">    public static void delete(String dirPath, boolean isPrefix, String regEx) &#123;</span><br><span class="line">        executor.execute(new DeleteRunnable(dirPath, isPrefix, regEx));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p>例如我们要删除要删除SD卡下的Download目录下的所有以.png后缀结尾的文件，只需要这样写：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">DeleteUtil.delete(&quot;/sdcard/Download/&quot;, false, &quot;.png&quot;);</span><br></pre></td></tr></table></figure>
-
-<p>是不是感觉很方便，0.0~ 可以收藏了，以后当工具类来使用。</p>
-<p>如果有不懂的地方或者不对的地方，欢迎评论交流，谢谢！</p>
-<p>最后附上下载Demo的地址:<a href="http://download.csdn.net/download/xinpengfei521/10172262">http://download.csdn.net/download/xinpengfei521/10172262</a></p>
-]]></content>
       <categories>
         <category>Android</category>
       </categories>
@@ -45944,6 +45994,48 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>CentOS7 安装 MySQL 8.0)</title>
+    <url>/2017/09/24/201709242432/</url>
+    <content><![CDATA[<p>个人服务器搭建一个 MySQL 数据库，来读写一些简单的接口数据处理。</p>
+<p>废话不多说，直接撸起。</p>
+<p>1.切换到用户目录</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd ~</span><br></pre></td></tr></table></figure>
+
+<p>2.下载 rpm 包</p>
+<p>在官网找到对应的 MySQL 的源，我们选择 <strong>mysql80-community-release-el7-1.noarch.rpm</strong> 社区免费正式发布版8.0</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
+
+<p>3.安装 rpm 包</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rpm -ivh mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
+
+<p>4.修改 MySQL 的repo源，使MySQL8.0可用</p>
+<p>使用 vim 编辑</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vi /etc/yum.repos.d/mysql-community.repo</span><br></pre></td></tr></table></figure>
+
+<p>找到 [mysql80-community] 确保 enabled&#x3D;1</p>
+<p>修改，保存并退出。</p>
+<p>5.安装 mysql-server</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install mysql-server</span><br></pre></td></tr></table></figure>
+
+<p>开始下载并安装 MySQL，中间会有几次询问你，一路 yes 即可，等待直到完成。</p>
+<p>6.修改 MySQL 的访问权限</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chown -R root:root /var/lib/mysql </span><br></pre></td></tr></table></figure>
+
+<p>7.重启 MySQL 服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service mysqld restart</span><br></pre></td></tr></table></figure>
+
+<p>至此 MySQL8.0 的安装就算完成了。</p>
+<p>安装完成后，我们要登录使用 MySQL，但是我们需要访问的密码，安装的时候已经为我们生成了一个随机密码，我们必须重置密码才能使用，因为 MySQL8.0 的密码重还比较麻烦，下一篇我来讲解如何重置密码。</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
+        <tag>CentOS</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Elinker dataapp...-1libarmlibserial_port.so has tex</title>
     <url>/2017/09/24/201709242433/</url>
     <content><![CDATA[<p>如题，今天开发Android串口时的使用<em><strong>android-serialport-api</strong></em>开源库，集成到项目中，然后就崩了，出现了下面的错误：</p>
@@ -45991,48 +46083,6 @@ Thanks all.
       <tags>
         <tag>Android</tag>
         <tag>SDK</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>CentOS7 安装 MySQL 8.0)</title>
-    <url>/2017/09/24/201709242432/</url>
-    <content><![CDATA[<p>个人服务器搭建一个 MySQL 数据库，来读写一些简单的接口数据处理。</p>
-<p>废话不多说，直接撸起。</p>
-<p>1.切换到用户目录</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cd ~</span><br></pre></td></tr></table></figure>
-
-<p>2.下载 rpm 包</p>
-<p>在官网找到对应的 MySQL 的源，我们选择 <strong>mysql80-community-release-el7-1.noarch.rpm</strong> 社区免费正式发布版8.0</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
-
-<p>3.安装 rpm 包</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rpm -ivh mysql80-community-release-el7-1.noarch.rpm</span><br></pre></td></tr></table></figure>
-
-<p>4.修改 MySQL 的repo源，使MySQL8.0可用</p>
-<p>使用 vim 编辑</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vi /etc/yum.repos.d/mysql-community.repo</span><br></pre></td></tr></table></figure>
-
-<p>找到 [mysql80-community] 确保 enabled&#x3D;1</p>
-<p>修改，保存并退出。</p>
-<p>5.安装 mysql-server</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install mysql-server</span><br></pre></td></tr></table></figure>
-
-<p>开始下载并安装 MySQL，中间会有几次询问你，一路 yes 即可，等待直到完成。</p>
-<p>6.修改 MySQL 的访问权限</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">chown -R root:root /var/lib/mysql </span><br></pre></td></tr></table></figure>
-
-<p>7.重启 MySQL 服务</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service mysqld restart</span><br></pre></td></tr></table></figure>
-
-<p>至此 MySQL8.0 的安装就算完成了。</p>
-<p>安装完成后，我们要登录使用 MySQL，但是我们需要访问的密码，安装的时候已经为我们生成了一个随机密码，我们必须重置密码才能使用，因为 MySQL8.0 的密码重还比较麻烦，下一篇我来讲解如何重置密码。</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>MySQL</tag>
-        <tag>CentOS</tag>
       </tags>
   </entry>
   <entry>
@@ -46806,6 +46856,35 @@ Thanks all.
       </tags>
   </entry>
   <entry>
+    <title>Multiple dex files define Lokhttp3/internal/wsWebSocketProtocol</title>
+    <url>/2017/09/24/201709242444/</url>
+    <content><![CDATA[<h2 id="老套路，先晒图"><a href="#老套路，先晒图" class="headerlink" title="老套路，先晒图"></a>老套路，先晒图</h2><p>图一：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536778.png" alt="这里写图片描述"><br>如题，在编译打包时遇到了如上错误，很明显这是一个依赖库冲突的问题，我的app下依赖一个 <strong>ad</strong> library,而 <strong>ad</strong> library有依赖了一个 <strong>http</strong> library,这是一个我用okhttp封装的网络请求库，而 <strong>ad</strong> library 又依赖了 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 这依赖关系确实有点混乱，那这时候有人说了，你的 <strong>ad</strong> library为什么不用 <strong>http</strong> library里面的okhttp呢？自从AS3.0 gradle4.0开始依赖使用 <strong>implementation</strong> 代替了 <strong>compile</strong> 关键字，因此 <strong>compile</strong> 就被过期了，<strong>http</strong> 虽然依赖了 <strong>okhttp</strong> ，但是 <strong>ad</strong> library要想使用 <strong>okhttp</strong> 是不可以的，因为使用<strong>implementation</strong> 对于<strong>ad</strong> library 是不可见的，所以<strong>ad</strong> library又依赖了一次 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 因为 <strong>ad</strong> library需要单独的进行定制化的网络请求配置，所以 <strong>ad</strong> library中的网络请求是没有封装进<strong>http</strong> library中的，所以导致了重复依赖的问题，使用  <strong>implementation</strong> 关键字虽然可以屏蔽<strong>ad</strong> library访问 <strong>http</strong> library中 <strong>okhttp</strong> 的api,但是依赖冲突的问题确实还是存在的…</p>
+<p>于是乎，网上搜了一篇帖子：</p>
+<p><a href="https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp">https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp</a></p>
+<p>看来一下和我的情况一毛一样，报的错误也一样，直接戳到Answer处，解决方式如下</p>
+<p>图二：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536096.png" alt="这里写图片描述"></p>
+<p>然后直接去除掉重复的依赖，修改如下后，再rebuild</p>
+<p>图三：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537896.png" alt="这里写图片描述"></p>
+<p>心里想着，这个问题终于解决了，喝了口水，长呼了一口气。。。</p>
+<p>我擦，竟然又爆红了，我勒个去，什么情况？这不科学啊，什么鬼？心里很郁闷，这是为什么呢？</p>
+<p>不行啊，看来我必须要放大招了，心里开始仔细揣摩了，认真想想，绝逼哪里肯定是有问题的，start thinking…</p>
+<p>认真起来的男人是最帅的 0.0~</p>
+<p>仔细看了看<strong>http</strong> library中的 <strong>okhttp</strong> 是3.3.1,而 <strong>ad</strong> library中的 <strong>okhttp</strong> 3.9.1,忽然想起来之前遇到过同时依赖两个不同版本的库也会出现这样的问题，于是，灵光一现，立马把版本号改一样试试，修改后如下:</p>
+<p>图四：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537328.png" alt="这里写图片描述"></p>
+<p>然后再rebuild…</p>
+<p>oh yeah ~ 搞定，就是这么6… 怎一个爽快了得？</p>
+<p>好了，今天就分享这么多吧，一来呢总结一下自己遇到的一些问题及解决办法，如果你也遇到，希望能帮助到你们，二来呢，希望大家如果真的帮助到你们了，麻烦你们给我点个赞或者在文章底部给我评论，或者你有什么意见或者意见都可以相互交流，谢谢你们！</p>
+<p>一个逗比的码农和一个逗比的故事，如果想看到更多的文章，请点左侧头像下面的关注！</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Excepiton</tag>
+        <tag>okhttp3</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>ListView 设置分割线</title>
     <url>/2017/09/24/201709242443/</url>
     <content><![CDATA[<p>##1.设置分割的颜色和高度</p>
@@ -46833,35 +46912,6 @@ Thanks all.
       <tags>
         <tag>ListView</tag>
         <tag>widget</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Multiple dex files define Lokhttp3/internal/wsWebSocketProtocol</title>
-    <url>/2017/09/24/201709242444/</url>
-    <content><![CDATA[<h2 id="老套路，先晒图"><a href="#老套路，先晒图" class="headerlink" title="老套路，先晒图"></a>老套路，先晒图</h2><p>图一：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536778.png" alt="这里写图片描述"><br>如题，在编译打包时遇到了如上错误，很明显这是一个依赖库冲突的问题，我的app下依赖一个 <strong>ad</strong> library,而 <strong>ad</strong> library有依赖了一个 <strong>http</strong> library,这是一个我用okhttp封装的网络请求库，而 <strong>ad</strong> library 又依赖了 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 这依赖关系确实有点混乱，那这时候有人说了，你的 <strong>ad</strong> library为什么不用 <strong>http</strong> library里面的okhttp呢？自从AS3.0 gradle4.0开始依赖使用 <strong>implementation</strong> 代替了 <strong>compile</strong> 关键字，因此 <strong>compile</strong> 就被过期了，<strong>http</strong> 虽然依赖了 <strong>okhttp</strong> ，但是 <strong>ad</strong> library要想使用 <strong>okhttp</strong> 是不可以的，因为使用<strong>implementation</strong> 对于<strong>ad</strong> library 是不可见的，所以<strong>ad</strong> library又依赖了一次 <strong>compile ‘com.squareup.okhttp3:okhttp:3.9.1’</strong> 因为 <strong>ad</strong> library需要单独的进行定制化的网络请求配置，所以 <strong>ad</strong> library中的网络请求是没有封装进<strong>http</strong> library中的，所以导致了重复依赖的问题，使用  <strong>implementation</strong> 关键字虽然可以屏蔽<strong>ad</strong> library访问 <strong>http</strong> library中 <strong>okhttp</strong> 的api,但是依赖冲突的问题确实还是存在的…</p>
-<p>于是乎，网上搜了一篇帖子：</p>
-<p><a href="https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp">https://stackoverflow.com/questions/45111497/android-gradle-failed-multiple-dex-files-define-okhttp</a></p>
-<p>看来一下和我的情况一毛一样，报的错误也一样，直接戳到Answer处，解决方式如下</p>
-<p>图二：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061536096.png" alt="这里写图片描述"></p>
-<p>然后直接去除掉重复的依赖，修改如下后，再rebuild</p>
-<p>图三：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537896.png" alt="这里写图片描述"></p>
-<p>心里想着，这个问题终于解决了，喝了口水，长呼了一口气。。。</p>
-<p>我擦，竟然又爆红了，我勒个去，什么情况？这不科学啊，什么鬼？心里很郁闷，这是为什么呢？</p>
-<p>不行啊，看来我必须要放大招了，心里开始仔细揣摩了，认真想想，绝逼哪里肯定是有问题的，start thinking…</p>
-<p>认真起来的男人是最帅的 0.0~</p>
-<p>仔细看了看<strong>http</strong> library中的 <strong>okhttp</strong> 是3.3.1,而 <strong>ad</strong> library中的 <strong>okhttp</strong> 3.9.1,忽然想起来之前遇到过同时依赖两个不同版本的库也会出现这样的问题，于是，灵光一现，立马把版本号改一样试试，修改后如下:</p>
-<p>图四：<br><img src="https://cdn.jsdelivr.net/gh/xinpengfei520/my-cloud-picture@master/IMG_2022/202210061537328.png" alt="这里写图片描述"></p>
-<p>然后再rebuild…</p>
-<p>oh yeah ~ 搞定，就是这么6… 怎一个爽快了得？</p>
-<p>好了，今天就分享这么多吧，一来呢总结一下自己遇到的一些问题及解决办法，如果你也遇到，希望能帮助到你们，二来呢，希望大家如果真的帮助到你们了，麻烦你们给我点个赞或者在文章底部给我评论，或者你有什么意见或者意见都可以相互交流，谢谢你们！</p>
-<p>一个逗比的码农和一个逗比的故事，如果想看到更多的文章，请点左侧头像下面的关注！</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Excepiton</tag>
-        <tag>okhttp3</tag>
       </tags>
   </entry>
   <entry>

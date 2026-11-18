@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Gemini API 正式支持直传 Word、Excel 和 PPT，并支持多模态切片。可按 Sheet、单元格和页码按需提取，非选中区域零计费。文章算清从强塞 18 万 Token 到精确提取 30 行数据的降本账本。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="别再把整份 Excel 裸喂给大模型了：Gemini API 原生切片直接省下大半账单">
+<meta property="og:url" content="https://www.vance.xin/2026/11/18/202611182045/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Gemini API 正式支持直传 Word、Excel 和 PPT，并支持多模态切片。可按 Sheet、单元格和页码按需提取，非选中区域零计费。文章算清从强塞 18 万 Token 到精确提取 30 行数据的降本账本。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261118-202611182045-gemini-api-office-slicing.webp">
+<meta property="article:published_time" content="2026-11-18T20:45:00.000Z">
+<meta property="article:modified_time" content="2026-11-18T13:50:35.234Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="RAG">
+<meta property="article:tag" content="Gemini API">
+<meta property="article:tag" content="Token成本">
+<meta property="article:tag" content="Office">
+<meta property="article:tag" content="多模态切片">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261118-202611182045-gemini-api-office-slicing.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/18/202611182045/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/18/202611182045/","path":"2026/11/18/202611182045/","title":"别再把整份 Excel 裸喂给大模型了：Gemini API 原生切片直接省下大半账单"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>别再把整份 Excel 裸喂给大模型了：Gemini API 原生切片直接省下大半账单 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "别再把整份 Excel 裸喂给大模型了：Gemini API 原生切片直接省下大半账单",
+  "url": "https://www.vance.xin/2026/11/18/202611182045/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/18/202611182045/",
+  "datePublished": "2026-11-18T20:45:00.000Z",
+  "dateModified": "2026-11-18T13:50:35.234Z",
+  "description": "Gemini API 正式支持直传 Word、Excel 和 PPT，并支持多模态切片。可按 Sheet、单元格和页码按需提取，非选中区域零计费。文章算清从强塞 18 万 Token 到精确提取 30 行数据的降本账本。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E5%8E%BB%E9%82%A3%E4%B8%A4%E9%81%93%E8%AE%A9%E4%BA%BA%E5%A4%B4%E7%96%BC%E7%9A%84%E7%AA%84%E9%97%A8"><span class="nav-text">过去那两道让人头疼的窄门</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%94%9F%E5%88%87%E7%89%87%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E5%88%87%E7%9A%84"><span class="nav-text">原生切片到底是怎么切的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E7%AC%94%E8%B4%A6%E7%BB%99%E5%B7%A5%E7%A8%8B%E7%95%99%E4%B8%8B%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">这笔账给工程留下了什么</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">624</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1019</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/18/202611182045/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="别再把整份 Excel 裸喂给大模型了：Gemini API 原生切片直接省下大半账单 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Gemini API 正式支持直传 Word、Excel 和 PPT，并支持多模态切片。可按 Sheet、单元格和页码按需提取，非选中区域零计费。文章算清从强塞 18 万 Token 到精确提取 30 行数据的降本账本。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          别再把整份 Excel 裸喂给大模型了：Gemini API 原生切片直接省下大半账单
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-18 20:45:00 / 修改时间：13:50:35" itemprop="dateCreated datePublished" datetime="2026-11-18T20:45:00+00:00">2026-11-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Gemini API 正式支持直传 Word、Excel 和 PPT，并支持多模态切片。可按 Sheet、单元格和页码按需提取，非选中区域零计费。文章算清从强塞 18 万 Token 到精确提取 30 行数据的降本账本。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261118-202611182045-gemini-api-office-slicing.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>你平时让大模型分析数据或者提炼文档，是不是也干过这种事：手里有一份五十页的技术方案，或者一张包含几十个标签页、几万行数据的财务汇总表，为了图省事，直接打包全量丢进对话框或者 API 请求里？</p>
+<p>大部分人觉得，现在的模型动不动就标配上百万的上下文窗口，几万字倒进去不过是九牛一毛。但只要你在月底点开云平台的账单，或者看看终端里的调用耗时，你大概率会倒吸一口凉气。</p>
+<p>就在今天，Google 对 Gemini API 的文档处理模块做了一次非常低调但刀刀见肉的更新：正式支持直接传入 Microsoft Office 格式的文件，包括 Word、Excel 和 PowerPoint，并掏出了一个叫多模态内容切片的全新能力。</p>
+<p>如果你认真算过大模型调用的真实开销，就会明白这件事的分量：它针对的正是大模型落地中最隐蔽、也最费钱的那笔糊涂账。</p>
+<h2 id="过去那两道让人头疼的窄门"><a href="#过去那两道让人头疼的窄门" class="headerlink" title="过去那两道让人头疼的窄门"></a>过去那两道让人头疼的窄门</h2><p>在大模型里处理这些常见的办公文件，开发者过去通常只有两条路可以走，而且两条路都挺折磨人。</p>
+<p>一条路叫整包硬塞。</p>
+<p>拿一张几十兆的复杂 Excel 来说，大模型底座本身是不认二进制表格文件的。以往你要么在上传前先把它转成巨型的 CSV 字符串，要么用工具强行转成成千上万行的 Markdown 表格。</p>
+<p>我见过不少团队踩过这个闷坑：一份包含 12 个 Sheet、体积约 8MB 的年度销售流水表，转成纯文本后直接膨胀出 18 万行字符。只要点一次执行，单次请求就吃掉整整 6 万个输入 Token，不仅当场冲破平台的每分钟 Token 速率限制（TPM 报错），光是给模型预热一次就得烧掉近 0.15 美元。</p>
+<p>这一塞不仅费钱，更要命的是注意力衰减。在业内的大海捞针基准测试里，当输入上下文超过 10 万 Token 时，夹在文档中段 40% 到 60% 深度位置的细小数字，模型的检索命中率往往会出现 15% 到 30% 的断崖式下跌。真正关键的那两行净利润被淹没在海量空单元格和重复表头里，模型张冠李戴的概率直线上升。</p>
+<p>另一条路叫自己写清洗脚本。</p>
+<p>不想花冤枉钱的人，只能在本地或自己的服务器上搭一套复杂的解析中间件。写上一大堆 Python 脚本，用第三方库把表格或者文稿拆开，先提取文本，再按段落切块，最后用向量检索做 RAG 召回。</p>
+<p>这条路看着精细，踩过的坑却一个都不少。遇到带合并单元格的复杂财务报表，或者图文交错的排版，本地脚本经常解析错位；稍有一页格式不对，整个自动化流水线当场抛异常退出。为了把数据整整齐齐喂进大模型，工程师在外部线束上花的时间，往往比核心业务逻辑还要多。</p>
+<p>说白了，开发者被逼着在这两头做妥协：要么忍受高昂的账单和糟糕的召回率，要么自己去背沉重的中间层维护成本。</p>
+<h2 id="原生切片到底是怎么切的"><a href="#原生切片到底是怎么切的" class="headerlink" title="原生切片到底是怎么切的"></a>原生切片到底是怎么切的</h2><p>这次 Gemini API 的做法，本质上是把原本需要开发者在外部折腾的脏活，直接收编进了底层协议。</p>
+<p>首先是格式上的直通。</p>
+<p>它原生支持 Word、Excel、PowerPoint 以及开放文档格式。你不需要再把表格另存为文本，也不需要先把演示文稿转成单页图片，直接把原始文件往 API 里送就行。</p>
+<p>但真正值钱的是后面的内容切片机制。</p>
+<p>以往我们调接口，文件上传之后是一个整体，模型必须从头读到尾。而在新的切片规则下，你可以在提示词或者函数调用的参数里，像切蛋糕一样精准圈出你想要的那一块。</p>
+<p>对于表格文件，你可以直接指定只读取具体的工作表，甚至精准到单元格区域，比如直接声明只截取财务明细表里的第二行到第五十行；对于文稿和演示文档，你可以明确告诉它只处理第十页到第十五页，或者特定几页的幻灯片；就连音视频文件，也能按时间戳区间进行裁剪。</p>
+<p>在调用代码里，这种控制非常直观。以往你得先在本地启动庞大的文档解析器，把切出来的文本拼进字符串；现在只需要在请求里挂上文件对象，并在切片参数中写明标签页名和区域。整个解析、定位、过滤的苦力活，全被下沉到了云端推理的前置网关里。</p>
+<p>更狠的一点在内容层。如果一份文档里既有密密麻麻的文字，又有复杂的背景渲染图，你可以按需选择：只要纯文本就只提文字，要看整体版面就切出页面渲染图。</p>
+<p>这一切设计的落脚点，全在计费规则上的那句关键声明：开发者只需要为切片后真正提取出来的那部分内容支付 Token 费用。</p>
+<p>这意味着即便你上传了一份两百页、包含海量历史废话的合同样本，只要你在调用时指定只看最后五页的违约金条款，你的账单里就只有那五页纸的 Token 消耗。剩下的九成无关内容，在计费层面上直接被归零。</p>
+<h2 id="这笔账给工程留下了什么"><a href="#这笔账给工程留下了什么" class="headerlink" title="这笔账给工程留下了什么"></a>这笔账给工程留下了什么</h2><p>这笔账到底能省多少？我拿自己日常跑自动化流水线的经验给你做个对照。</p>
+<p>前阵子我复盘过一次工具调用的账本：同样是查一个版本的缺陷列表，走命令行只需要一千多个 Token，而挂一个默认工具协议，由于整页结果和完整说明书被反复强灌进上下文，消耗暴涨了四十多倍。</p>
+<p>很多时候我们付给云平台的钱，并不是因为模型有多聪明，而是我们在把大量无用的外围材料当成贡品反复供奉给显存。</p>
+<p>把切片能力做进 API 协议层之后，很多原本沉重的工程架构瞬间变轻了。</p>
+<p>在很多需要长文档分析的轻量级场景里，你其实不再需要单独搭建一套包含向量数据库、文本拆块器和重排序模型的完整 RAG 架构。过去为了从几十页财报里捞出特定数据，必须大费周章做文本向量化；现在你只需要让上游的智能体先做一次轻量定位，随后直接通过切片参数精准调取那一页或者那几个单元格。</p>
+<p>调用链路少了一层，中间可能出 bug 的环节少了一半，每次推理的响应延迟也从几十秒直接缩短到了两三秒以内。</p>
+<p>模型的上下文窗口越做越大，从早期的三万到现在的两百万，很多团队因此养成了大手大脚的习惯，觉得反正装得下，一股脑塞进去最省事。</p>
+<p>但这恰恰是最大的误区。上下文是你的工作台，不是你的垃圾桶。把桌面堆得越满，模型找起剪刀来就越费劲，你付出的时钟周期和真金白银也越多。</p>
+<p>这次 API 的改动给所有开发者提了个醒：大模型的工程化竞争，已经从单纯比拼谁的胃口更大，转向了谁能用更克制、更精准的方式去切分问题。</p>
+<p>要是你手头也有在跑文档问答或者报表分析的任务，不妨去翻一翻自己的调用日志：看看那些动辄几万 Token 的长请求里，到底有多少是在为根本没人看的数据买单？欢迎在评论区聊聊你打算怎么给自己的请求瘦身。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/RAG/" rel="tag"># RAG</a>
+              <a href="/tags/Gemini-API/" rel="tag"># Gemini API</a>
+              <a href="/tags/Token%E6%88%90%E6%9C%AC/" rel="tag"># Token成本</a>
+              <a href="/tags/Office/" rel="tag"># Office</a>
+              <a href="/tags/%E5%A4%9A%E6%A8%A1%E6%80%81%E5%88%87%E7%89%87/" rel="tag"># 多模态切片</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/18/202611181800/" rel="prev" title="半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了">
+                  <i class="fa fa-angle-left"></i> 半个月前我说它还不算开源，今天腾讯把 224B 权重交出来了
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">30:26</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

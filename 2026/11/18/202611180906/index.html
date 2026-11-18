@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Claude Code 实验性 Code Mode 让模型写一段 JavaScript 连续调工具，把多次往返压成一次编排。工具调用的瓶颈从模型转向编排，代价是审查颗粒度变粗，v2.1.323 起还要过一长串环境门槛。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude 不再一个个调工具：一段脚本替掉一串来回">
+<meta property="og:url" content="https://www.vance.xin/2026/11/18/202611180906/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Claude Code 实验性 Code Mode 让模型写一段 JavaScript 连续调工具，把多次往返压成一次编排。工具调用的瓶颈从模型转向编排，代价是审查颗粒度变粗，v2.1.323 起还要过一长串环境门槛。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261118-20261118-claude-code-mode.webp">
+<meta property="article:published_time" content="2026-11-18T09:06:00.000Z">
+<meta property="article:modified_time" content="2026-11-18T06:40:21.844Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="AI 编程">
+<meta property="article:tag" content="工具调用">
+<meta property="article:tag" content="Code Mode">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261118-20261118-claude-code-mode.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/18/202611180906/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/18/202611180906/","path":"2026/11/18/202611180906/","title":"Claude 不再一个个调工具：一段脚本替掉一串来回"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Claude 不再一个个调工具：一段脚本替掉一串来回 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Claude 不再一个个调工具：一段脚本替掉一串来回",
+  "url": "https://www.vance.xin/2026/11/18/202611180906/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/18/202611180906/",
+  "datePublished": "2026-11-18T09:06:00.000Z",
+  "dateModified": "2026-11-18T06:40:21.844Z",
+  "description": "Claude Code 实验性 Code Mode 让模型写一段 JavaScript 连续调工具，把多次往返压成一次编排。工具调用的瓶颈从模型转向编排，代价是审查颗粒度变粗，v2.1.323 起还要过一长串环境门槛。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E6%AC%A1%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8%E8%A6%81%E5%87%A0%E4%B8%AA%E6%9D%A5%E5%9B%9E"><span class="nav-text">一次工具调用要几个来回</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%83%E6%94%B9%E6%88%90%E5%85%88%E5%86%99%E4%B8%80%E6%AE%B5%E8%84%9A%E6%9C%AC"><span class="nav-text">它改成先写一段脚本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%81%E4%B8%8B%E7%9A%84%E6%98%AF%E7%AD%89%E5%92%8C%E6%90%AC%E8%BF%90"><span class="nav-text">省下的是等和搬运</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%A1%E6%9F%A5%E7%9A%84%E9%82%A3%E5%8F%8C%E7%9C%BC%E5%8F%98%E7%B2%97%E4%BA%86"><span class="nav-text">审查的那双眼变粗了</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%A8%E6%A7%9B%E6%AF%94%E6%83%B3%E8%B1%A1%E7%9A%84%E9%95%BF"><span class="nav-text">门槛比想象的长</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%88%91%E7%9A%84%E6%B5%81%E6%B0%B4%E7%BA%BF%E6%9C%80%E7%BC%BA%E8%BF%99%E4%B8%AA"><span class="nav-text">我的流水线最缺这个</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%80%BC%E5%BE%97%E5%BC%80"><span class="nav-text">什么时候值得开</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">622</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1016</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/18/202611180906/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Claude 不再一个个调工具：一段脚本替掉一串来回 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Claude Code 实验性 Code Mode 让模型写一段 JavaScript 连续调工具，把多次往返压成一次编排。工具调用的瓶颈从模型转向编排，代价是审查颗粒度变粗，v2.1.323 起还要过一长串环境门槛。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Claude 不再一个个调工具：一段脚本替掉一串来回
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-18 09:06:00 / 修改时间：06:40:21" itemprop="dateCreated datePublished" datetime="2026-11-18T09:06:00+00:00">2026-11-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Claude Code 实验性 Code Mode 让模型写一段 JavaScript 连续调工具，把多次往返压成一次编排。工具调用的瓶颈从模型转向编排，代价是审查颗粒度变粗，v2.1.323 起还要过一长串环境门槛。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261118-20261118-claude-code-mode.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你用 Claude Code 跑过多步任务，下面这个场面应该很熟：让它查个东西、改个文件、再跑一遍测试，工具调用一条接一条往上滚，每一条后面都跟着一次等待。你盯着它滚，它盯着结果，中间隔着一来一回。</p>
+<p>Claude Devs 昨天发了条推文，Code Mode 上线，实验性的。它要砍的就是这个「一来一回」。我还没开过它，这里讲的是官方文档里的机制。</p>
+<h2 id="一次工具调用要几个来回"><a href="#一次工具调用要几个来回" class="headerlink" title="一次工具调用要几个来回"></a>一次工具调用要几个来回</h2><p>没有 Code Mode 的时候，Claude 要读一个文件，就发起一次 Read。结果回来，它看完，再决定下一步是改还是继续读。要跑命令，就发起 Bash，等命令结束，拿到输出，再想下一步。</p>
+<p>每一步都要走一个完整的回合：模型先说要调什么，工具执行，结果回到模型，模型再决定。官方文档写得很直白，模型会「直接请求 Bash、Read、Edit 这样的工具调用，并且在决定下一步之前读每一个结果」。</p>
+<p>你让它改一个变量，它得先搜、再读、再改、再跑测试。四次举手，四次等回话。四步加起来，能听见风扇响。</p>
+<p>还有一笔成本容易被忽略。工具吐出来的东西，不管有用没用，通常都要先进上下文。一次目录列表几百行，一次测试输出几千行，模型为了判断下一步，得先把它们读一遍。真正需要的可能只是其中一行。</p>
+<p>回合本身也占时间。模型每次决定下一步，都要带着前面的全部记录重新想一遍。工具调用越密，这种重复读的量越大。你以为慢在模型想得不够快，其实慢在它一遍遍把同一堆东西重新看。</p>
+<h2 id="它改成先写一段脚本"><a href="#它改成先写一段脚本" class="headerlink" title="它改成先写一段脚本"></a>它改成先写一段脚本</h2><p>Code Mode 换了做法。</p>
+<p>Claude 不再一次要一个工具，它写一段 JavaScript，由 Claude Code 在你的会话里执行。这段代码可以并行跑几条命令，可以把上一步的结果直接喂给下一步，也可以只把模型真正要看的那一小段返回。</p>
+<p>官方给了一个例子。让它把某个重试次数从 3 改成 5，它写的代码是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> files = <span class="keyword">await</span> $<span class="string">`rg -l &quot;function retryPolicy&quot; src`</span>.<span class="title function_">text</span>();</span><br><span class="line"><span class="keyword">const</span> target = files.<span class="title function_">trim</span>().<span class="title function_">split</span>(<span class="string">&quot;\n&quot;</span>)[<span class="number">0</span>];</span><br><span class="line"><span class="keyword">await</span> <span class="title function_">edit</span>(target, <span class="string">&quot;maxAttempts: 3&quot;</span>, <span class="string">&quot;maxAttempts: 5&quot;</span>);</span><br><span class="line">(&#123; <span class="attr">edited</span>: target, <span class="attr">tests</span>: $<span class="string">`npm test -- retryPolicy`</span>.<span class="title function_">nothrow</span>() &#125;);</span><br></pre></td></tr></table></figure>
+
+<p>先搜文件，从结果里取排在最前的那条路径，改掉那一行，再跑测试。搜索和测试不用分两次问模型，路径也不用模型自己从一屏输出里挑。</p>
+<p>跑代码的是一个新的工具，叫 REPL。你在对话里看到的还是工具调用，比如那次改动产生的 diff，代码本身是折叠起来的。按 Ctrl+O 打开记录，才能看到每一段 JavaScript。</p>
+<p>这跟写一个 skill 不是一回事。skill 是写给模型看的手册，模型照着做，每一步还是要回到模型那里确认。Code Mode 里的脚本是写给机器执行的，模型只在写完和跑完之后各看一次。中间的判断被搬进了代码。</p>
+<h2 id="省下的是等和搬运"><a href="#省下的是等和搬运" class="headerlink" title="省下的是等和搬运"></a>省下的是等和搬运</h2><p>原来的循环里，模型大部分时间干两件事：等工具回话，把结果搬进上下文。</p>
+<p>写脚本把这两件事挪进了代码。循环次数少了，搬进上下文的中间结果也少了。模型只在脚本跑完后看一次它真正需要的东西。</p>
+<p>工具名没变，Bash 还是 Bash，Read 还是 Read。挪位的是决定权：先调哪个、结果怎么接，从模型手里进了代码。</p>
+<p>我前几天写过一篇讲 Claude Code 的 exit 2，说质检脚本能替人喊停。这次官方动的是另一头：把一串调用压成一次编排。</p>
+<p>这两件事其实是一套思路的两面。检查靠脚本，调用也靠脚本，模型负责的部分越来越像「写清楚要什么」和「看跑完的结果」。</p>
+<h2 id="审查的那双眼变粗了"><a href="#审查的那双眼变粗了" class="headerlink" title="审查的那双眼变粗了"></a>审查的那双眼变粗了</h2><p>省下来的东西有代价，而且这个代价不小。</p>
+<p>Code Mode 里，代码里的每一次工具调用，照样要过你的拒绝规则、询问规则和 PreToolUse hook，用的还是 Bash、Read 这些原来的工具名。说人话就是，动手前先过的那道检查脚本，这一层没变。</p>
+<p>变的是自动模式。原来的自动模式是逐个工具调用让分类器审，现在变成审这一整段代码。文档里特意提醒了一句：分类器看不到运行时才算出来的值，比如从搜索结果里取出来的那个路径。你写的规则如果只按命令文字匹配，脚本完全可能拼出一条规则没覆盖到的命令。</p>
+<p>还有个更具体的坑。文档说，在 Code Mode 里，<code>cd &#39;app&#39; &amp;&amp; git push</code> 这种复合命令，可能以整条的形式送到你的 hook 面前。以前你按 <code>git push</code> 写规则，现在得考虑前面挂着 <code>cd</code> 的情况。</p>
+<p>想审代码本身，得写一个匹配 REPL 的 PreToolUse hook，从 <code>tool_input.code</code> 里把那段 JavaScript 读出来。也就是说，审查的颗粒度从「每一次动作」变成了「一段程序」，要管得更细，得自己补工具。</p>
+<p>这么设计也不算没道理。逐条审调用，你能准确知道它碰了什么。审一段代码，你拿到的是意图，细节藏在代码怎么跑上。换我设计，大概也会先用这种方式把功能放出来。</p>
+<p>它值得写，但不该一上来就开。它能省的是等待，放大的是「你以为规则管住了，其实管住的是另一层」这种错觉。放权的口子换了个形状，守门的人也得多学一种看法。</p>
+<h2 id="门槛比想象的长"><a href="#门槛比想象的长" class="headerlink" title="门槛比想象的长"></a>门槛比想象的长</h2><p>我把文档里的要求从头看到尾，感觉这张清单比一个开关难跨多了。</p>
+<p>版本要到 v2.1.323 以上。账号得是 Claude 订阅或者 Console。走网关、Amazon Bedrock、Google Cloud、Microsoft Foundry 这些渠道的都不行。官方排查表里还点名了自定义 <code>ANTHROPIC_BASE_URL</code> 的接法。模型得是 Opus 5.5、Sonnet 5.5、Haiku 5.5 或 Fable 5.2。</p>
+<p>形态也有限制。只能在终端里开交互会话，<code>-p</code>、Agent SDK、VS Code 面板、桌面端、云端会话都不支持。安装得用原生版本。组织开了 HIPAA 或者零数据保留的，也用不了。</p>
+<p>开起来之后还有一串：会话只能在开着 Code Mode 的情况下恢复；不能转到桌面端，也不能转成后台会话；Remote Control、Claude in Chrome、computer use 这几个功能在 Code Mode 里不可用。代码如果在等，默认最多等十分钟；想让它后台跑，得从自动模式或者 bypassPermissions 模式启动，最长两小时。</p>
+<p>这串限制里，最影响日常的是账号和形态。很多人的 Claude Code 接在中转或者云厂商上，按文档这条最先过不去。能在终端里开的，还得接受「这个会话以后只能带着开关恢复」这件事。</p>
+<h2 id="我的流水线最缺这个"><a href="#我的流水线最缺这个" class="headerlink" title="我的流水线最缺这个"></a>我的流水线最缺这个</h2><p>我那条写公众号的流水线更夸张。一串环节接力：调研、写稿、润色、评阅、配图、分发，前面还有一个 director 负责编排。每一次交接，模型都要带着前面的全部材料再想一遍，等上一个工具把结果吐完。</p>
+<p>所以我看到 Code Mode 的第一反应，是它能少几次交接。token 省多少，反倒排在后面。我早就把能写成脚本的判断挪进去了：字数够不够、description 超没超、H2 有没有括号，现在都是脚本在查，不让模型肉眼数。Code Mode 让我看到的，是同一件事再往前一步：检查可以脚本化，调用也可以。</p>
+<p>上线第二天，我这个会话也不在它支持的环境里。等我把手头这条流水线挪到一个能开的环境里，跑一遍同样的活，再来补一篇带数字的。</p>
+<h2 id="什么时候值得开"><a href="#什么时候值得开" class="headerlink" title="什么时候值得开"></a>什么时候值得开</h2><p>记一条就够：工具调用密集、彼此有关联的任务，值得试。</p>
+<p>官方点了三种场景：一个改动要在很多文件里重复；一次搜索的结果要先过滤再给模型看；几条互不依赖的命令可以同时跑。</p>
+<p>反过来，一次性的单步操作，开它没多少收益，还多背一层环境限制。</p>
+<p>真要试，我建议先从只读任务开始。比如让它扫一遍某个目录，把结果筛完再回来。这类活不碰写权限，脚本写错了，损失也就是一次白跑。等你对「它会把什么塞进脚本」有感觉了，再往改文件、跑测试这种会留下痕迹的活上放。</p>
+<p>还有个细节别忽略：代码跑起来的时候，权限提示可能夹在中间。默认等待模式会把停在提示上的时间也算进那十分钟。跑长任务前，先想清楚自己是要盯着，还是让它后台跑。</p>
+<p>以前我们看 agent 干活，看的是它一条条地要工具，像一个人不停举手问「下一步呢」。Code Mode 想做的，是让它先把这一串问题自己在纸上算完，只把那张纸递给你。</p>
+<p>省下来的回合是真的，审查变粗也是真的。这两件事同时成立，才是这个实验功能现在的样子。</p>
+<p>你手上那条 agent 任务，一天里有多少时间是在等上一个工具回话？评论区说说，我看看是不是只有我这么盯着屏幕。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/AI-%E7%BC%96%E7%A8%8B/" rel="tag"># AI 编程</a>
+              <a href="/tags/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" rel="tag"># 工具调用</a>
+              <a href="/tags/Code-Mode/" rel="tag"># Code Mode</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/17/202611171445/" rel="prev" title="2G 内存小机器卡死：一次服务器事故排查的四个反转">
+                  <i class="fa fa-angle-left"></i> 2G 内存小机器卡死：一次服务器事故排查的四个反转
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/18/202611180910/" rel="next" title="给 Agent 一个不可能的任务，40 个智能体开始自己破门">
+                  给 Agent 一个不可能的任务，40 个智能体开始自己破门 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">30:22</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

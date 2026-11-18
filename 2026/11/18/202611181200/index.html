@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="上线前两周，Anthropic 用 Claude Code 并发调度 30 个智能体全天候狂轰系统，在 20 亿次请求中仅出现 60 次服务器错误。深度拆解官方这套零回滚的混沌测试闭环。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="20 亿次请求仅 60 次错误：Anthropic 怎么用 AI 把系统砸碎再修好的">
+<meta property="og:url" content="https://www.vance.xin/2026/11/18/202611181200/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="上线前两周，Anthropic 用 Claude Code 并发调度 30 个智能体全天候狂轰系统，在 20 亿次请求中仅出现 60 次服务器错误。深度拆解官方这套零回滚的混沌测试闭环。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261118-202611181200.webp">
+<meta property="article:published_time" content="2026-11-18T12:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-18T06:40:21.844Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="自动化">
+<meta property="article:tag" content="Anthropic">
+<meta property="article:tag" content="架构设计">
+<meta property="article:tag" content="混沌工程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261118-202611181200.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/18/202611181200/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/18/202611181200/","path":"2026/11/18/202611181200/","title":"20 亿次请求仅 60 次错误：Anthropic 怎么用 AI 把系统砸碎再修好的"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>20 亿次请求仅 60 次错误：Anthropic 怎么用 AI 把系统砸碎再修好的 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "20 亿次请求仅 60 次错误：Anthropic 怎么用 AI 把系统砸碎再修好的",
+  "url": "https://www.vance.xin/2026/11/18/202611181200/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/18/202611181200/",
+  "datePublished": "2026-11-18T12:00:00.000Z",
+  "dateModified": "2026-11-18T06:40:21.844Z",
+  "description": "上线前两周，Anthropic 用 Claude Code 并发调度 30 个智能体全天候狂轰系统，在 20 亿次请求中仅出现 60 次服务器错误。深度拆解官方这套零回滚的混沌测试闭环。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%95%E6%9C%BA%E5%88%B0%E6%B5%B7%E9%87%8F%E7%9A%84%E4%B8%A4%E5%91%A8%E7%BB%9D%E6%9D%80"><span class="nav-text">单机到海量的两周绝杀</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B4%BE%E4%B8%89%E5%8D%81%E4%B8%AA%E6%99%BA%E8%83%BD%E4%BD%93%E5%8E%BB%E7%A0%B8%E7%B3%BB%E7%BB%9F"><span class="nav-text">派三十个智能体去砸系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%B9%E4%BB%A3%E7%A0%81%E5%89%8D%E5%85%88%E7%9C%8B%E5%8F%AF%E4%B8%8D%E5%8F%AF%E9%80%86"><span class="nav-text">改代码前先看可不可逆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BA%86%E8%AE%A9%E7%AE%97%E6%B3%95%E8%AF%BB%E6%87%82%E8%80%8C%E9%80%89%E5%9E%8B"><span class="nav-text">为了让算法读懂而选型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%BA%8C%E4%B8%87%E5%88%80%E7%9C%81%E4%B8%8B%E5%8D%8A%E5%B9%B4%E5%B7%A5%E6%9C%9F"><span class="nav-text">十二万刀省下半年工期</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A9%E7%A0%B4%E5%9D%8F%E8%80%85%E6%88%90%E4%B8%BA%E6%8A%A4%E5%9F%8E%E6%B2%B3"><span class="nav-text">让破坏者成为护城河</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">622</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1016</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/18/202611181200/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="20 亿次请求仅 60 次错误：Anthropic 怎么用 AI 把系统砸碎再修好的 | 飞飞的AI实验室">
+      <meta itemprop="description" content="上线前两周，Anthropic 用 Claude Code 并发调度 30 个智能体全天候狂轰系统，在 20 亿次请求中仅出现 60 次服务器错误。深度拆解官方这套零回滚的混沌测试闭环。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          20 亿次请求仅 60 次错误：Anthropic 怎么用 AI 把系统砸碎再修好的
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-18 12:00:00 / 修改时间：06:40:21" itemprop="dateCreated datePublished" datetime="2026-11-18T12:00:00+00:00">2026-11-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">上线前两周，Anthropic 用 Claude Code 并发调度 30 个智能体全天候狂轰系统，在 20 亿次请求中仅出现 60 次服务器错误。深度拆解官方这套零回滚的混沌测试闭环。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261118-202611181200.webp" alt="cover"></p>
+<p>很多每天在终端里使唤 Claude Code 的工程师，日常最习惯的用法，无非是遇到报错随手甩一段日志，或者让它手搓一个组件。</p>
+<p>大家普遍把智能体当成手脚麻利的初级程序员：我指哪，它打哪，代码写完我顺手合入主干。</p>
+<p>但就在昨天，Anthropic 官方技术博客发了一篇长文复盘，把整个工程圈子看得瞠目结舌。</p>
+<p>写文章的工程师 Vivek Nair，负责的是九月中旬正式发布的协作编辑器 Claude Docs。</p>
+<p>在官方战报里，最扎眼的是一组颠覆常识的稳定性数据：上线首周生成了 460 万篇文档，承受了超过 20 亿次请求，整个服务在九月累计完成 629 次生产发布，而全链路产生的服务器 500 错误，仅仅只有 60 次，版本回滚次数更是直接挂零。</p>
+<p>很多架构师的第一反应，大概都会觉得背后有一支庞大的顶尖运维团队在通宵轮流看守。</p>
+<p>然而现实恰恰相反：在正式上线前两周，这项服务还只是跑在单机上的原型玩具；真正帮他们接住 20 亿次请求的，是一个被放出去全天候故意搞破坏的智能体集群。</p>
+<h2 id="单机到海量的两周绝杀"><a href="#单机到海量的两周绝杀" class="headerlink" title="单机到海量的两周绝杀"></a>单机到海量的两周绝杀</h2><p>把时间倒拨到九月初，Claude Docs 面临的处境可以说是典型的工程噩梦。</p>
+<p>这项功能此前在内部小规模跑了几个星期，几千名员工在单台机器上修修补补，跑得挺欢。</p>
+<p>但内部玩具和公网上线完全是两个世界。</p>
+<p>按照当时测算，一旦面向全球开放，前几天就会涌入数百万量级的文档创建需求。</p>
+<p>在传统工程体系里，把单机原型重构成能抗住高并发的分布式后端，哪怕抽调骨干小队，少说也得折腾五六个月。</p>
+<p>但摆在工程师面前的倒计时，只剩下两周。</p>
+<p>如果按部就班写压测脚本，人工能覆盖的边界少得可怜。人的思维天然带着盲区，写用例时总会默认网络连接稳定、内存回收正常。</p>
+<p>但真实的生产环境是一座永远充斥着意外的泥潭。</p>
+<p>于是他们做出了极其大胆的决定：既然人脑算不尽所有死法，那就把刚发布的新版大模型放出来，让它去预演成百上千种最偏执的灾难现场。</p>
+<h2 id="派三十个智能体去砸系统"><a href="#派三十个智能体去砸系统" class="headerlink" title="派三十个智能体去砸系统"></a>派三十个智能体去砸系统</h2><p>九月四号那天，工程师在内网拉起了一套与生产完全镜像的预发集群，开启了一场长达两周的混沌循环。</p>
+<p>调度中枢是一个常驻运行的 Claude Code 协调会话。</p>
+<p>它自己不编写业务代码，而是在后台像工头一样，并发管理着峰值多达三十个子智能体。</p>
+<p>演练场景苛刻得有些神经质：单日塞进千万篇新文档；两万两千个连接在一秒内同时断开又重连；在数百人在线编辑超长文档时，突然拔掉节点电源，顺带人为制造数据库假死卡顿。</p>
+<p>每一轮演练的逻辑极其咬合。</p>
+<p>压测套件把系统接口推向过载饱和；随后智能体通过遥测接口抓取底层指标。它能直接看到每条 SQL 扫描了几万行数据、吐出几行，内存是以每秒多少兆的速度在飙升。</p>
+<p>看到指标异常后，智能体自己给出诊断与优化建议。协调员甚至连接了内部沟通通道，主动向其他负责过类似大规模基础设施的资深智能体请教，提前把别人踩穿的地雷全部记在账上。</p>
+<h2 id="改代码前先看可不可逆"><a href="#改代码前先看可不可逆" class="headerlink" title="改代码前先看可不可逆"></a>改代码前先看可不可逆</h2><p>看到这里，很多运维同学心里大概会猛地抽搐一下：让几十个智能体在预发环境一边高压施压、一边改代码上线，真不会把集群改上西天吗？</p>
+<p>Anthropic 能把危险动作变成生产级常态的关键，在于极其清醒的硬防线：以改动的可逆性为界划分权限。</p>
+<p>测试循环里的所有动作被明确切成两半。</p>
+<p>一类是低风险的可逆操作。改写低效 SQL、加一层本地缓存、微调并发限流参数。这类修改即使改砸，只要回滚补丁或拨回开关，系统瞬间复原。智能体拥有最高行动权：改代码、部署预发、重新施压验证，人类全流程不用多看一眼。</p>
+<p>另一类是高风险的不可逆改动。修改底层表结构、重构键值命名、调整快照落盘的持久化逻辑。</p>
+<p>这类修改牵一发而动全身，一旦在老数据上执行迁移，就没有后悔药可吃。</p>
+<p>只要撞上这类操作，智能体会立刻踩死刹车，打印前因后果与备选方案，等待工程师手动确认。</p>
+<p>这种用法根本不是拿大模型当代写代码的替身，而是让它成为测试基础设施极限的试金石。人把控底层架构命门，机器在沙盒里穷尽所有微观排列。</p>
+<h2 id="为了让算法读懂而选型"><a href="#为了让算法读懂而选型" class="headerlink" title="为了让算法读懂而选型"></a>为了让算法读懂而选型</h2><p>复盘长文里最值得深思的细节，是他们为了让 AI 顺畅协作，反过来重构了技术选型。</p>
+<p>以往选语言框架，考量的是语法顺手、招人方便、生态轮子多。</p>
+<p>但在 Docs 底层架构里，主导选型的核心标准，变成了系统对算法的透明可读性。</p>
+<p>为了让大模型在排查故障时看清细微脉动，工程师果断放弃带有垃圾回收机制的语言，底层全面拥抱 Rust，对引入第三方库极其克制。</p>
+<p>背后的逻辑残酷而现实：如果运行时在底层偷偷搞垃圾回收，内存何时上涨、CPU 为何偶尔卡顿几百毫秒，连人类都解释不清，智能体更不可能精准推导出根因。</p>
+<p>系统里的每兆内存、每个算力尖峰，必须能原汁原味回溯到团队写的代码里。</p>
+<p>测试初期，曾有一篇超大文档把单个容器内存吃到了三吉字节。</p>
+<p>智能体最初也尝试缩小本地缓存。但下一次压测跑完，监控立刻揭穿真相：内存在别处依然暴涨，真正吞噬资源的，是一个第三方依赖内部偷偷维护的隐藏缓存表。</p>
+<p>指标足够透明，智能体果断丢弃无效修改，重写了底层调用。</p>
+<p>当智能体发现指标无法解释异常时，它甚至会自己跳进源码，在关键路线上手动补上打点探针，再跑一遍，直到把真相逼出来。</p>
+<h2 id="十二万刀省下半年工期"><a href="#十二万刀省下半年工期" class="headerlink" title="十二万刀省下半年工期"></a>十二万刀省下半年工期</h2><p>文章末尾，作者十分坦诚地把项目的开销账本亮了出来。</p>
+<p>从八月底搭建环境到九月中旬上线，两周多的高强度演练，累计消耗了价值十二万五千美元的推理额度。</p>
+<p>单看十二万美元，对于刚起步的团队确实不算小钱。</p>
+<p>但放进大型服务发布的坐标系里，这笔账划算到了极点。</p>
+<p>一个抗住二十亿次请求、六百多次发布零回滚的系统，过去需要三四名资深架构师耗费半年工时，还得在上线当晚通宵盯防。</p>
+<p>十二万美元算力，把半年的风险排查硬生生压缩到了两周之内。</p>
+<p>更关键的是作者为普通团队做的换算。</p>
+<p>Anthropic 烧掉十二万，很大程度是面对全球级编辑器的超高并发，且消耗了大量摸索流程本身的试验算力。</p>
+<p>对于日常跑在两三个节点、挂着普通数据库的中小业务而言，类似的压测根本不需要庞大阵仗。</p>
+<p>按作者测算的极简方案，单个工程师带上 Claude Code，结合现成监控接口跑一套小规模混沌循环，预计只需三千到一万美元额度，就能把新系统彻底洗礼一遍。</p>
+<p>这不再是大厂特权，它正在变成每个认真做产品的团队都能触碰的工程武器。</p>
+<h2 id="让破坏者成为护城河"><a href="#让破坏者成为护城河" class="headerlink" title="让破坏者成为护城河"></a>让破坏者成为护城河</h2><p>看着官方这份战报，我忍不住反思很多团队日常调教大模型时的保守姿态。</p>
+<p>过去这一年，太多人争论 AI 会不会抢走饭碗。很多团队小心翼翼把智能体圈在单测与补全的角落里，生怕它搞乱规矩。</p>
+<p>但 Claude Docs 的大捷揭示了截然相反的现实：</p>
+<p>智能体真正的上限，在于拥有永不疲倦的破坏欲和对海量故障排列组合的推演速度，而不仅是模仿人类敲出温顺的代码。</p>
+<p>它可以在人类进入梦乡的深夜，把架构扔进几万种极端恶劣环境里摩擦；它可以在几小时内把未来几个月可能暴雷的冷门死锁，提前在沙盒里诱导出来。</p>
+<p>我们不需要一个小心翼翼、生怕犯错的初级学徒。</p>
+<p>我们需要的是一个在上线前敢于把系统砸得粉碎、在天亮前又把它修补得固若金汤的数字先锋。</p>
+<p>当越来越多的人还在把 AI 当成打字机的时候，真正老练的团队，早已把这个不知疲倦的破坏者，焊成了自己架构上最坚不可摧的护城河。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Claude-Code/" rel="tag"># Claude Code</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+              <a href="/tags/Anthropic/" rel="tag"># Anthropic</a>
+              <a href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" rel="tag"># 架构设计</a>
+              <a href="/tags/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B/" rel="tag"># 混沌工程</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/18/202611181020/" rel="prev" title="实测 GPT-6.2：省掉 70% 输出后，它连人话都不会说了？">
+                  <i class="fa fa-angle-left"></i> 实测 GPT-6.2：省掉 70% 输出后，它连人话都不会说了？
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/18/202611181425/" rel="next" title="一句 Prompt 直出 Android 应用：Google 这次越过 IDE 把刀架了过来">
+                  一句 Prompt 直出 Android 应用：Google 这次越过 IDE 把刀架了过来 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">30:22</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

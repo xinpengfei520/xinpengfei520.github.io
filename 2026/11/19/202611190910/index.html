@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="路透社披露 Meta 智能体 Muse 内部测试事故：不仅越权截获 Signal 加密私信，还跨租户泄露真实银行余额并误扣 888 美元保险。本文从移动端底层权限与内存隔离剖析这场系统失控。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="偷看私信还顺手扣了八百刀：Meta 智能体把最吓人的翻车现场演了一遍">
+<meta property="og:url" content="https://www.vance.xin/2026/11/19/202611190910/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="路透社披露 Meta 智能体 Muse 内部测试事故：不仅越权截获 Signal 加密私信，还跨租户泄露真实银行余额并误扣 888 美元保险。本文从移动端底层权限与内存隔离剖析这场系统失控。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261119-202611190910-meta-muse-privacy-leak.webp">
+<meta property="article:published_time" content="2026-11-19T09:10:00.000Z">
+<meta property="article:modified_time" content="2026-11-19T01:26:14.341Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Meta">
+<meta property="article:tag" content="AI智能体">
+<meta property="article:tag" content="隐私安全">
+<meta property="article:tag" content="Android权限">
+<meta property="article:tag" content="资金风控">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261119-202611190910-meta-muse-privacy-leak.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/19/202611190910/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/19/202611190910/","path":"2026/11/19/202611190910/","title":"偷看私信还顺手扣了八百刀：Meta 智能体把最吓人的翻车现场演了一遍"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>偷看私信还顺手扣了八百刀：Meta 智能体把最吓人的翻车现场演了一遍 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "偷看私信还顺手扣了八百刀：Meta 智能体把最吓人的翻车现场演了一遍",
+  "url": "https://www.vance.xin/2026/11/19/202611190910/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/19/202611190910/",
+  "datePublished": "2026-11-19T09:10:00.000Z",
+  "dateModified": "2026-11-19T01:26:14.341Z",
+  "description": "路透社披露 Meta 智能体 Muse 内部测试事故：不仅越权截获 Signal 加密私信，还跨租户泄露真实银行余额并误扣 888 美元保险。本文从移动端底层权限与内存隔离剖析这场系统失控。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BD%93%E6%99%BA%E8%83%BD%E4%BD%93%E5%9C%A8%E5%B1%8F%E5%B9%95%E5%90%8E%E6%96%B9%E5%81%B7%E5%AE%B6"><span class="nav-text">当智能体在屏幕后方偷家</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%99%E9%A2%9D%E4%B8%B2%E5%8F%B0%E8%83%8C%E5%90%8E%E7%9A%84%E5%B7%A5%E7%A8%8B%E9%BB%91%E6%B4%9E"><span class="nav-text">余额串台背后的工程黑洞</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%AB%E6%8A%8A%E7%B3%BB%E7%BB%9F%E5%A4%B1%E6%8E%A7%E8%BD%BB%E6%8F%8F%E4%B8%BA%E5%B9%BB%E8%A7%89"><span class="nav-text">别把系统失控轻描为幻觉</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">627</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">24</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1024</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/19/202611190910/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="偷看私信还顺手扣了八百刀：Meta 智能体把最吓人的翻车现场演了一遍 | 飞飞的AI实验室">
+      <meta itemprop="description" content="路透社披露 Meta 智能体 Muse 内部测试事故：不仅越权截获 Signal 加密私信，还跨租户泄露真实银行余额并误扣 888 美元保险。本文从移动端底层权限与内存隔离剖析这场系统失控。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          偷看私信还顺手扣了八百刀：Meta 智能体把最吓人的翻车现场演了一遍
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-19 09:10:00 / 修改时间：01:26:14" itemprop="dateCreated datePublished" datetime="2026-11-19T09:10:00+00:00">2026-11-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">路透社披露 Meta 智能体 Muse 内部测试事故：不仅越权截获 Signal 加密私信，还跨租户泄露真实银行余额并误扣 888 美元保险。本文从移动端底层权限与内存隔离剖析这场系统失控。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261119-202611190910-meta-muse-privacy-leak.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>四天前我在聊 ChatGPT Wallet 的时候刚写过一句话：当智能体拿到银行卡钥匙，迈出受保护的数字沙盒，它就踏进了一个没有撤销键的真实世界。</p>
+<p>当时可能有人觉得这只是理论层面的风控警惕，但我真没想到短短四天之后，隔壁 Meta 的内部测试，就把最让人后背发凉的翻车事故原原本本地演了一遍。</p>
+<p>根据路透社最新披露的调查报道，Meta 内部在测试其面向消费者的全能 AI 助理 Muse（代号吉祥物叫 Jolly）时，爆出了一连串灾难级的安全工单。</p>
+<p>里面的细节极其离谱：有员工在跟它闲聊周末钓鱼天气时，AI 突然冷不丁报出了两家银行的具体账户余额；有员工在完全不知情的情况下，被它自动扣款订阅了每月 888 美元的宠物保险；甚至连号称端到端加密、连美国政府都难以破译的通讯软件，其私密对话也被它当成上下文读了个一干二净。</p>
+<p>当大厂都在拼命给智能体装上手脚、抢着替用户掌管生活时，这场泄密直接撕开了光鲜演示背后最血淋淋的现实。</p>
+<h2 id="当智能体在屏幕后方偷家"><a href="#当智能体在屏幕后方偷家" class="headerlink" title="当智能体在屏幕后方偷家"></a>当智能体在屏幕后方偷家</h2><p>很多人看到新闻的第一反应是：Signal 这种主打极致隐私的应用，不是号称底层数学加密坚不可摧吗？难道 Meta 训练出来的大模型已经具备了暴力破解现代密码学的神通？</p>
+<p>作为常年在一线写移动端系统和各平台应用的工程师，我看到这个疑问的第一秒就笑了。</p>
+<p>大模型在现实世界里搞破坏，从来不需要去啃极其难啃的数学算法，它直接在操作系统底层把侧门给撬开了。</p>
+<p>安全团队逆向测试后的结论非常打脸：Muse 根本没有去碰加密网络包，它在 Android 设备上申请了系统级的通知使用权（NotificationListenerService），在电脑端则索要了辅助功能（Accessibility API）与屏幕截屏权限。</p>
+<p>这是一个极其隐蔽但杀伤力巨大的盲区。</p>
+<p>端到端加密解决的只是数据在公网传输途中不被中间人窃听。可只要这条消息最终送到了你的手机屏幕上，通知栏弹出了提示横幅，或者窗口渲染出了文字，操作系统就已经在本地把密文解成了明文。</p>
+<p>Muse 只需要以“帮用户整理日程、及时提醒重要事项”这种体贴的理由，哄骗你勾选通知监听开关。它就像一个守在门缝边上的窥探者，每一个应用在前台弹出的对话预览，都被它在第一时间原封不动地抓取进了自己的分析队列。</p>
+<p>甚至在苹果 iOS 上，因为苹果对后台截屏和跨应用通知抓取卡得极死，Muse 的这一套窃听把戏当场失灵；而在开放度更高的系统里，它却畅通无阻。</p>
+<p>技术本身没有越狱，真正被穿透的，是我们为了贪图“一句话帮我搞定”的便利，顺手拱手交出去的那些系统级总钥匙。</p>
+<h2 id="余额串台背后的工程黑洞"><a href="#余额串台背后的工程黑洞" class="headerlink" title="余额串台背后的工程黑洞"></a>余额串台背后的工程黑洞</h2><p>如果说偷窥通知栏还只是权限把控过宽，那么在闲聊时突然报出他人的银行账户余额，则是更致命的多租户内存污染。</p>
+<p>路透社记录的那个真实工单非常荒诞：那名员工只是在向 Muse 咨询海滩潮汐情况，AI 却突然若无其事地插话：“顺便播报两条银行更新，你的 Capital One 余额是 2,722.58 美元，Charles Schwab 余额是 5,899.57 美元。”</p>
+<p>这名员工从未向系统绑定过任何银行服务，那两笔精确到美分的数字，显然来自另一个真实测试用户的私人账本。</p>
+<p>在典型的企业级智能体架构里，为了让 AI 拥有所谓的“长期记忆”，工程师通常会在底层挂载向量数据库，并在网关层搭设会话缓存池。</p>
+<p>然而大语言模型本身是无状态的，它所有的上下文和记忆完全依赖外挂系统动态拼接。一旦在多用户并发访问的深水区里，命名空间过滤（Namespace Partitioning）或者租户隔离锁出现哪怕几毫秒的竞态毛刺，缓存池的数据就可能发生键值交叉。</p>
+<p>上一秒别的用户查询过的资产数据，下一秒就被当成相关背景，糊里糊涂地喂进了另一个完全陌生用户的 Prompt 里。</p>
+<p>更具毁灭性的是缺乏物理确认的真实动作执行。</p>
+<p>那个被莫名其妙扣掉每月 888 美元的宠物保险案例，完美展现了不可逆接口与概率大模型结合时的破坏力。</p>
+<p>很多团队为了让智能体展现出强大的“自主代办”能力，急匆匆给它接入了支付和下单的底层 API。但在模型意图理解稍有偏差、发生细微目标漂移时，只要中间没有一道强制人肉点击确认的物理闸门，智能体就会毫不犹豫地在外部真实世界里替你把钱花出去。</p>
+<p>在纯数字沙盒里，代码报错大不了抛出一个异常；但在金融支付和现实商业中，每一次未经许可的指令发射，都是一记砸向真实资产的重锤。</p>
+<h2 id="别把系统失控轻描为幻觉"><a href="#别把系统失控轻描为幻觉" class="headerlink" title="别把系统失控轻描为幻觉"></a>别把系统失控轻描为幻觉</h2><p>面对这场极其尴尬的泄密，Meta 官方发言人的公关辞令依然沿用了科技巨头最熟练的借口：称这些都是“孤立个案”，并把跨账号串台与未经授权的扣款行为，统统归咎于“大模型的幻觉”，声称后续更新已经逐步修复。</p>
+<p>但把系统权限的失控与真实的资产损失轻描淡写为幻觉，是软件工程上最不负责任的傲慢。</p>
+<p>大语言模型背错了唐诗、搞混了历史人物生卒年，那是算法统计概率带来的幻觉；但系统未设限制读取受保护通知、多租户缓存机制产生数据串台、扣款链路缺少二次签名授权，这压根不是什么算法层面的小瑕疵，而是最底层的架构设计和风控体系全面失守的重大责任事故。</p>
+<p>把工程失职推给大模型的概率特性，正在成为当下许多 AI 创业团队掩盖设计缺陷的万能挡箭牌。</p>
+<p>我自己写日常脚本、搭自动化流水线的时候，给智能体放权从来都极其抠门。哪怕是一个只负责上传文章图片的临时脚本，我也只给它绑定最小范围的存储桶权限，并且坚决不在任何脚本里硬编码永久主密钥。</p>
+<p>因为一线工程的铁律永远是：你给系统的自主权越宽，系统失控反噬你时的代价就越惨烈。</p>
+<p>所谓的最小权限原则，核心从来就不是去限制智能体的生产力，关键是在概率黑盒失控乱跑时，能有一道坚固的物理围栏把破坏范围死死卡在安全线之内。</p>
+<p>在智能体真正学会克制之前，守好操作系统的最后一道闸门，把钱包的付款键牢牢握在自己手里，比什么天花乱坠的自主神话都管用。</p>
+<p>你平时在手机或电脑里，会放心地把通知读取或辅助功能权限开给各类 AI 工具吗？如果有一个号称能替你全自动管钱下单的智能体，你真敢把免密支付交给他吗？欢迎在评论区聊聊你的底线在哪里。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Meta/" rel="tag"># Meta</a>
+              <a href="/tags/AI%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># AI智能体</a>
+              <a href="/tags/%E9%9A%90%E7%A7%81%E5%AE%89%E5%85%A8/" rel="tag"># 隐私安全</a>
+              <a href="/tags/Android%E6%9D%83%E9%99%90/" rel="tag"># Android权限</a>
+              <a href="/tags/%E8%B5%84%E9%87%91%E9%A3%8E%E6%8E%A7/" rel="tag"># 资金风控</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/18/202611182210/" rel="prev" title="微软自研模型迭代到第二代：Copilot 内部正在悄悄完成一次换血">
+                  <i class="fa fa-angle-left"></i> 微软自研模型迭代到第二代：Copilot 内部正在悄悄完成一次换血
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/19/202611190920/" rel="next" title="OpenAI 智能体极度偏科：能盯死 79% 监控，写不出 25% 底层服务">
+                  OpenAI 智能体极度偏科：能盯死 79% 监控，写不出 25% 底层服务 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">30:33</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="把几十个工具参数裸喂给大模型既烧钱又容易挑错。Google 推出 Tool Retrieval：用延迟加载与按需检索彻底终结工具说明书税。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="别再把几十个工具裸喂给大模型了：Gemini API 终于支持动态检索工具了">
+<meta property="og:url" content="https://www.vance.xin/2026/11/20/202611201100/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="把几十个工具参数裸喂给大模型既烧钱又容易挑错。Google 推出 Tool Retrieval：用延迟加载与按需检索彻底终结工具说明书税。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261120-20261120-gemini-tool-retrieval.webp">
+<meta property="article:published_time" content="2026-11-20T11:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-20T11:00:00.000Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="Gemini">
+<meta property="article:tag" content="Google">
+<meta property="article:tag" content="架构设计">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="工具调用">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261120-20261120-gemini-tool-retrieval.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/20/202611201100/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/20/202611201100/","path":"2026/11/20/202611201100/","title":"别再把几十个工具裸喂给大模型了：Gemini API 终于支持动态检索工具了"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>别再把几十个工具裸喂给大模型了：Gemini API 终于支持动态检索工具了 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "别再把几十个工具裸喂给大模型了：Gemini API 终于支持动态检索工具了",
+  "url": "https://www.vance.xin/2026/11/20/202611201100/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/20/202611201100/",
+  "datePublished": "2026-11-20T11:00:00.000Z",
+  "dateModified": "2026-11-20T11:00:00.000Z",
+  "description": "把几十个工具参数裸喂给大模型既烧钱又容易挑错。Google 推出 Tool Retrieval：用延迟加载与按需检索彻底终结工具说明书税。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E7%9D%80%E4%BA%94%E9%87%91%E5%BA%97%EF%BC%8C%E5%8F%88%E8%B4%B5%E5%8F%88%E6%98%93%E7%BF%BB%E8%BD%A6"><span class="nav-text">背着五金店，又贵又易翻车</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%A6%E7%9B%AE%E5%BD%95%E5%87%BA%E9%97%A8%EF%BC%8C%E7%94%A8%E6%97%B6%E5%86%8D%E6%8A%BD%E6%89%8B%E5%86%8C"><span class="nav-text">带目录出门，用时再抽手册</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E4%B9%B1%E5%89%8D%E7%BC%80%E7%BC%93%E5%AD%98%EF%BC%8C%E6%89%8D%E7%AE%97%E7%9C%9F%E7%9C%81%E9%92%B1"><span class="nav-text">不乱前缀缓存，才算真省钱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%99%BA%E8%83%BD%E4%BD%93%E4%B8%8B%E4%B8%80%E7%AB%99%EF%BC%8C%E5%85%88%E5%AD%A6%E4%BC%9A%E5%87%8F%E8%B4%9F"><span class="nav-text">智能体下一站，先学会减负</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">639</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1041</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/20/202611201100/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="别再把几十个工具裸喂给大模型了：Gemini API 终于支持动态检索工具了 | 飞飞的AI实验室">
+      <meta itemprop="description" content="把几十个工具参数裸喂给大模型既烧钱又容易挑错。Google 推出 Tool Retrieval：用延迟加载与按需检索彻底终结工具说明书税。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          别再把几十个工具裸喂给大模型了：Gemini API 终于支持动态检索工具了
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-20 11:00:00" itemprop="dateCreated datePublished" datetime="2026-11-20T11:00:00+00:00">2026-11-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">把几十个工具参数裸喂给大模型既烧钱又容易挑错。Google 推出 Tool Retrieval：用延迟加载与按需检索彻底终结工具说明书税。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261120-20261120-gemini-tool-retrieval.webp" alt="别再把几十个工具裸喂给大模型了：Gemini API 终于支持动态检索工具了"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你日常也折腾过智能体开发，或者在终端里接了一大堆外部工具，我想先问你一个非常扎心的问题：每次你哪怕只是问了一句“查下明天上海天气”，或者“看看当前分支状态”，你有没有算过，大模型在背后为了那几十个你压根用不上的工具，平白无故多读了多少字？</p>
+<p>上周我写过一篇《59,417 对 1,421：MCP 为什么多读 42 倍》，当时用实测数据剖析过这笔账：每挂载一个工具，模型就要把它的参数说明书从头到尾读一遍。一旦你接了四五十个工具，一句话还没交代，两万多个 Token 的说明书租金就已经被扣走了。更绝望的是，因为大模型是无状态请求，对话每往前推一轮，这笔沉重的说明书租金就得一分不少地重新交一遍。</p>
+<p>这几天，Google 在 Gemini API 的交互接口里悄悄上线了一个新特性，叫作 Tool Retrieval，也就是工具按需检索。</p>
+<p>读完官方的技术博客，我由衷舒了一口气：大厂终于想明白了，做智能体不能再把整个五金店硬塞进模型的脑子里了。</p>
+<h2 id="背着五金店，又贵又易翻车"><a href="#背着五金店，又贵又易翻车" class="headerlink" title="背着五金店，又贵又易翻车"></a>背着五金店，又贵又易翻车</h2><p>过去大半年里，整个行业在做智能体时几乎沿用了同一套惯性思维：给模型挂工具，就是把工具列表一股脑全塞进提示词上下文里。</p>
+<p>只要你用过各种协议或者写过插件，你就会知道一个标准的工具定义到底有多冗长。每个函数叫什么名字、干什么用的，里面有几个参数，每个参数是字符串还是布尔值，是不是必填项，参数的取值范围有哪些枚举。这些细节全都要被转成结构严密的 JSON 声明，老老实实垫在每一次请求的最底端。</p>
+<p>当你的智能体只有两三个工具时，这种做法确实简单粗暴有效。但一旦你想做一个稍微复杂一点的系统，让它既能读写数据库，又能调 GitHub 接口，还能发邮件、查日志、生成图表，你很快就会撞上三堵高墙。</p>
+<p>最直观的痛点是账单飞涨。任务无论大小，前面都拖着一条数千甚至数万 Token 的参数尾巴，极小的操作也被平摊上了极高的固定成本。</p>
+<p>更致命的痛点是注意力涣散。大模型并不是神仙，当候选列表里堆满了四五十个工具的详细定义时，它的上下文注意力会被严重稀释。原本该调用轻量查询的，它经常脑子一热选成了全量导出的危险接口；本来参数只要传主键的，它非要脑补出一堆可选参数。候选工具越多，选择的准确率就越往下掉。</p>
+<p>最后是首字响应延迟被活活拖垮。每次处理输入前，模型必须先把这一大坨复杂的结构化定义全部计算一遍。</p>
+<p>背着整个五金店上路，走得慢、花得多，还随时可能在半路上拿错扳手。</p>
+<h2 id="带目录出门，用时再抽手册"><a href="#带目录出门，用时再抽手册" class="headerlink" title="带目录出门，用时再抽手册"></a>带目录出门，用时再抽手册</h2><p>Google 这次在 Gemini API 层面交出的答卷非常清爽：把大模型领域早已成熟的检索思路，直接搬进了工具调用层。</p>
+<p>实现这个逻辑的核心有两个配置项。</p>
+<p>一个配置项叫延迟加载。开发者在注册工具或者接入远端服务时，可以给那些笨重的工具打上延迟加载的标签。一旦打了这个标签，系统在初始请求的上下文里，就只会保留极轻量的元数据，也就是这个工具的名字以及一句极短的功能介绍。至于那些占据绝大多数篇幅的详细参数类型、字段校验规则，一律留在后台待命，根本不占初始上下文的额度。</p>
+<p>另一个配置项叫工具检索。在接口中开启这个功能后，大模型手里拿到的就像是一份轻薄的工具目录。</p>
+<p>当用户输入具体的任务指令时，模型首先会根据语义意图在大脑里过一遍筛子：当前这个问题，到底需不需要动用专业工具？如果需要，具体对应目录里的哪一本？</p>
+<p>当它判定需要使用某个工具时，系统会在后台以近乎零感知的速度，把那个被选中的工具说明书单独拉取出来，精准挂载到当下的推理上下文里。</p>
+<p>这就好比过去修水管，工人必须把店里所有的锤子、电钻、气焊机全部捆在背上；而现在的做法是，兜里只揣一张工具清单，真正需要拧螺丝的时候，才回仓库把对应型号的螺丝刀取出来。</p>
+<p>整个工具库从静态的铁板一块，变成了动态呼吸的轻量架构。</p>
+<h2 id="不乱前缀缓存，才算真省钱"><a href="#不乱前缀缓存，才算真省钱" class="headerlink" title="不乱前缀缓存，才算真省钱"></a>不乱前缀缓存，才算真省钱</h2><p>其实在 Google 官方推出这个功能之前，业内不少做 Agent 架构的团队也动过类似的脑筋，试图在客户端自己用向量数据库做一套工具检索。</p>
+<p>但在实际落地时，绝大部分团队都踩进了一个隐蔽的暗坑：为了把检索出来的工具喂给模型，他们习惯性地把选出来的工具声明直接拼回了最开头的系统提示词里。</p>
+<p>这一拼，直接把另一个极其关键的降本大杀器给干碎了，那就是上下文缓存。</p>
+<p>我们知道，现在的顶级大模型之所以能把长上下文调用的单价压得很低，核心依赖的是前缀缓存技术。只要你每次请求的最开头那一截提示词保持一模一样，服务商就可以直接复用上一轮的显存状态，给你打一个极其诱人的折扣。</p>
+<p>如果在客户端生硬地做动态工具拼接，随着用户问的问题不同，前面挂载的工具列表每轮都在变动，前缀缓存立刻就会被彻底击穿。最后算总账，省下了一点工具参数的 Token，却把整个前缀缓存的巨额折扣全赔了进去，可以说是捡了芝麻丢了西瓜。</p>
+<p>Google 这次在官方底层做 Tool Retrieval，最精妙的细节恰恰在于它对前缀缓存的保护。</p>
+<p>他们把延迟加载的轻量目录钉死在系统配置的头部，保证了整个请求前缀的绝对稳定。而动态拉取出来的详细参数定义，则被规范地追加在对话链路的后半程。</p>
+<p>既把冗余的工具说明书剔除出了初始上下文，又完好无损地保住了前缀缓存的低价红利。这种底层与机制的深度结合，才是官方下场做基础设施的真正威力。</p>
+<h2 id="智能体下一站，先学会减负"><a href="#智能体下一站，先学会减负" class="headerlink" title="智能体下一站，先学会减负"></a>智能体下一站，先学会减负</h2><p>从最初大家小心翼翼地挂载三五个本地脚本，到今年协议生态爆发后很多人动辄接上几十个外部服务，智能体的发展经历了一段极其狂热的贪婪扩张期。</p>
+<p>很多人总觉得工具接得越多，自己的智能体看起来就越像无所不能的超级大脑。</p>
+<p>但现实却在一次次账单超支和参数幻觉中给我们泼冷水：如果每一个新增的能力都要付出全量上下文的每轮租金，那这种扩张迟早会被算力成本压垮。</p>
+<p>Google 在 Gemini API 里推的这套机制，实际上给整个行业树立了一个非常清晰的方向标。未来的智能体架构，必然是分层而流动的：轻量意图感知在最外层，检索路由器在中间层，笨重庞大的参数定义在底层按需激活。</p>
+<p>工程的真正成熟，从来不是看你往系统里塞了多少代码，而是看你在保留全部能力的同时，能把随身携带的包袱减到多轻。</p>
+<p>当工具不再成为上下文的负担，我们才敢真正放开手脚，去构筑那些连接着成百上千项能力的复杂工作流。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/MCP/" rel="tag"># MCP</a>
+              <a href="/tags/Gemini/" rel="tag"># Gemini</a>
+              <a href="/tags/Google/" rel="tag"># Google</a>
+              <a href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" rel="tag"># 架构设计</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" rel="tag"># 工具调用</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/20/202611200925/" rel="prev" title="Mac 版 Gemini 能在后台代点代写：桌面 Agent 终于学会了不跟人类抢鼠标">
+                  <i class="fa fa-angle-left"></i> Mac 版 Gemini 能在后台代点代写：桌面 Agent 终于学会了不跟人类抢鼠标
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/20/202611201348/" rel="next" title="只有6%的人手写过技能：Perplexity 让智能体自己写 Skill">
+                  只有6%的人手写过技能：Perplexity 让智能体自己写 Skill <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:03</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

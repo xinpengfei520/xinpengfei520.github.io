@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="终端命令确认十次有八次是闭眼回车。OpenAI 披露 Codex 本地沙箱架构：用 macOS Seatbelt 与 Linux bwrap 把防线焊死在系统内核。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="给智能体放权，别赌它的人品：OpenAI 怎么用操作系统把 Agent 关在笼子里">
+<meta property="og:url" content="https://www.vance.xin/2026/11/19/202611191645/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="终端命令确认十次有八次是闭眼回车。OpenAI 披露 Codex 本地沙箱架构：用 macOS Seatbelt 与 Linux bwrap 把防线焊死在系统内核。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261119-codex-sandbox-security.webp">
+<meta property="article:published_time" content="2026-11-19T16:45:00.000Z">
+<meta property="article:modified_time" content="2026-11-19T16:45:00.000Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="OpenAI">
+<meta property="article:tag" content="Codex">
+<meta property="article:tag" content="开发者工具">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="沙箱">
+<meta property="article:tag" content="系统安全">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261119-codex-sandbox-security.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/19/202611191645/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/19/202611191645/","path":"2026/11/19/202611191645/","title":"给智能体放权，别赌它的人品：OpenAI 怎么用操作系统把 Agent 关在笼子里"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>给智能体放权，别赌它的人品：OpenAI 怎么用操作系统把 Agent 关在笼子里 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "给智能体放权，别赌它的人品：OpenAI 怎么用操作系统把 Agent 关在笼子里",
+  "url": "https://www.vance.xin/2026/11/19/202611191645/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/19/202611191645/",
+  "datePublished": "2026-11-19T16:45:00.000Z",
+  "dateModified": "2026-11-19T16:45:00.000Z",
+  "description": "终端命令确认十次有八次是闭眼回车。OpenAI 披露 Codex 本地沙箱架构：用 macOS Seatbelt 与 Linux bwrap 把防线焊死在系统内核。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%A4%AA%E9%87%8D%EF%BC%8C%E7%BA%AF%E9%9D%A0%E8%87%AA%E8%A7%89%E5%A4%AA%E9%99%A9"><span class="nav-text">虚拟机太重，纯靠自觉太险</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E5%A4%A7%E7%B3%BB%E7%BB%9F%E7%BB%99%E8%BF%9B%E7%A8%8B%E7%B3%BB%E4%B8%8A%E5%AE%89%E5%85%A8%E5%B8%A6"><span class="nav-text">三大系统给进程系上安全带</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AA%E9%94%81%E7%A3%81%E7%9B%98%EF%BC%8C%E7%BD%91%E7%BB%9C%E5%87%BA%E7%AB%99%E6%9B%B4%E9%99%A9"><span class="nav-text">只锁磁盘，网络出站更险</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A%E5%88%B9%E8%BD%A6%E8%B8%A9%E5%9C%A8%E5%86%85%E6%A0%B8%EF%BC%8C%E4%B8%8D%E8%B5%8C%E8%87%AA%E8%A7%89"><span class="nav-text">把刹车踩在内核，不赌自觉</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">639</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1041</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/19/202611191645/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="给智能体放权，别赌它的人品：OpenAI 怎么用操作系统把 Agent 关在笼子里 | 飞飞的AI实验室">
+      <meta itemprop="description" content="终端命令确认十次有八次是闭眼回车。OpenAI 披露 Codex 本地沙箱架构：用 macOS Seatbelt 与 Linux bwrap 把防线焊死在系统内核。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          给智能体放权，别赌它的人品：OpenAI 怎么用操作系统把 Agent 关在笼子里
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-19 16:45:00" itemprop="dateCreated datePublished" datetime="2026-11-19T16:45:00+00:00">2026-11-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">终端命令确认十次有八次是闭眼回车。OpenAI 披露 Codex 本地沙箱架构：用 macOS Seatbelt 与 Linux bwrap 把防线焊死在系统内核。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261119-codex-sandbox-security.webp" alt="给智能体放权，别赌它的人品：OpenAI 怎么用操作系统把 Agent 关在笼子里"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你日常也开着命令行 Agent 写代码，我想先问你一个极度真实的问题：每次终端弹出一行执行命令的黄色警告时，你真的会逐字看清那串参数再敲回车吗？</p>
+<p>老实交代我自己的底细。十次里面有八次，我其实只是抬眼扫一下命令的大致形状，只要没看见直接的格式化或者删除主目录指令，手指就下意识敲了回车。开着自动化流水线跑长任务时，这种审查疲劳尤其明显。遇到报错让它看着修，它一口气执行几十条命令，真要逐行核对它临时拉回来的脚本和系统调用，绝大多数人都没有这份定力。也正是这份没有定力的偷懒，把那道本该由人来守的闸口，悄无声息地让了出去。</p>
+<p>自动化最昂贵的代价，往往就藏在没有人盯着的时刻。</p>
+<p>这几天 OpenAI 发布了一篇很长、甚至有点枯燥的工程博客，标题叫《Inside the Codex sandbox》。作者是技术主管 Michael Bolin。全篇没有任何玄乎的模型新能力演示，翻来覆去只讲了一件事：当他们把 Codex 放到用户的本地终端直接跑命令时，他们到底是怎么用操作系统的底层机制，把这个手里握着真实系统调用权限的智能体，稳稳关在笼子里的。</p>
+<p>读完这篇长文，我心里最大的感触是：业界终于开始从靠人品防翻车，转向靠操作系统内核焊死防线了。</p>
+<h2 id="虚拟机太重，纯靠自觉太险"><a href="#虚拟机太重，纯靠自觉太险" class="headerlink" title="虚拟机太重，纯靠自觉太险"></a>虚拟机太重，纯靠自觉太险</h2><p>面对智能体越界的风险，过去的工程圈通常只有两条极端路线。</p>
+<p>一条路线叫信任防线。它指望靠系统提示词的约束、大模型的对齐，或者在终端给用户加一个必须按回车的弹窗。但天天用 Agent 的工程师都知道，这道防线脆弱得像一张湿透的卫生纸。模型会用一种特别合理的语气干出极其离谱的事情。遇到 prompt 注入、带毒的开源仓库，或者长任务上下文压缩带来的目标漂移，Agent 会极其笃定地觉得把代码抄送出去、改动全局配置是当下最高效的解法。至于人工弹窗，只要频次超过承受阈值，人眼审核就退化成了无意识的回车放行。</p>
+<p>另一条路线叫彻底绝缘。既然本地危险，那就把 Agent 关进完全干净的 Docker 容器或者远端临时虚拟机，干完直接销毁。听起来很安全，可在真实的工程世界里，这条路能把开发者逼疯。</p>
+<p>你在本地写移动端项目，需要用到本地模拟器；你在调系统驱动或硬件通信，需要真实的串口；或者项目依赖了复杂的本地编译链与私有凭证。一旦把 Agent 扔进干净的远端容器，你手头大半任务立刻因为环境缺失而瘫痪。为了安全，直接把工具最值钱的上下文和生产力丢掉了。</p>
+<p>这就是为什么 OpenAI 的工程师在文章里明确立下了一个原则：留在宿主机上，但系紧安全带。</p>
+<p>他们既不想为了安全把开发者赶出熟悉的本地开发机，也绝不肯把整台机器的生杀大权托付给 AI 的推理自觉。唯一的出路，就是把安全防线从应用层彻底往下沉，下沉到操作系统内核的强制访问控制。</p>
+<h2 id="三大系统给进程系上安全带"><a href="#三大系统给进程系上安全带" class="headerlink" title="三大系统给进程系上安全带"></a>三大系统给进程系上安全带</h2><p>很多人以为做沙箱就是简单给命令加黑名单，比如拦截某个特定的危险指令。但在真实的 Shell 环境里，绕过字符串黑名单的技巧有上千种。</p>
+<p>OpenAI 在 Codex 里的做法非常克制。它没有重复造一套虚拟化的大轮子，而是把当前三大主流操作系统的原生隔离能力挖到了极致。</p>
+<p>在苹果 macOS 系统上，Codex 直接启用了底层的 Seatbelt 框架。熟悉苹果系统的开发者对这个名字不会陌生，它正是系统工具所依赖的 Mandatory Access Control 强制访问控制基石。通过声明式的规则配置，Codex 可以在子进程启动的瞬间，向内核注入一套不容妥协的写操作白名单。</p>
+<p>无论 Agent 生成的脚本写得多花哨，无论它用哪种冷僻的系统调用试图摸一下敏感路径，只要目标不在当前工程的工作区目录内，操作系统内核就会直接抛出拒绝访问的硬错误。你的系统主目录、钥匙串、敏感凭证目录，在内核眼里对这个进程是彻底不可写的。</p>
+<p>到了 Linux 和 WSL 环境下，OpenAI 采取了组合拳：Bubblewrap、seccomp 以及 Landlock。</p>
+<p>在 Linux 里最麻烦的问题是，普通开发者跑命令不会随时带着 root 特权，而传统的很多隔离手段往往需要系统级守护进程。Codex 借助 Bubblewrap，在非特权用户空间下利用 Linux 命名空间机制，为子进程捏出一个只有必要文件系统挂载的虚拟视图。紧接着，利用动态编译的 BPF 过滤程序挂载到内核层，拦截未授权的底层系统调用；再配合现代 Linux 内核提供的 Landlock 模块，把文件系统的读写路径牢牢钉在当前项目的目录树上。</p>
+<p>至于在 Windows 平台，他们则使用了受限令牌与专门生成的合成安全标识符。通过在进程令牌里剥离管理员权限和特权组，给每一个运行实例分配独一无二的受限身份，并结合文件系统的访问控制列表，确保生成的执行进程即便被恶意脚本操纵，也绝没有可能越过当前分配的工作目录半步。</p>
+<p>防线的裁判不再是那个有时候会犯迷糊的大模型，也不是那个随时想按回车跳过的程序员，而是冷冰冰、没有情绪波动的系统内核。</p>
+<h2 id="只锁磁盘，网络出站更险"><a href="#只锁磁盘，网络出站更险" class="headerlink" title="只锁磁盘，网络出站更险"></a>只锁磁盘，网络出站更险</h2><p>把文件系统的写入权限锁进当前目录，一个本地 Agent 就算真正安全了吗？</p>
+<p>答案依然是否定的。只要网络通道是完全敞开的，危险的隐患就只被堵住了一半。</p>
+<p>设想这样一个场景：你让 Agent 分析一个刚拉下来的开源项目，项目里暗藏了一个带毒的第三方依赖。Agent 在本地分析代码、安装环境时，该依赖在后台偷偷读取了你的环境变量，并且用一条极其普通的网络请求，把刚才拿到的敏感信息打包发送到了攻击者的公网服务器上。在这个过程中，磁盘上的敏感系统文件没有被修改，但你的隐私和凭证已经顺着网络出站口流了个精光。</p>
+<p>OpenAI 这次在长文里特意强调了网络沙箱与出站代理的设计。</p>
+<p>在 Linux 上，他们通过网络命名空间切断了子进程直连外部网络的可能；在其他平台上，则结合了系统的网络规则与统一的出站代理服务。</p>
+<p>这个出站代理就像守在门外的海关检查站。默认状态下，Agent 发起的任何外网请求都会被无差别阻断。只有当任务明确需要拉取依赖时，系统才会按照预设的白名单规则，放行被认可的官方依赖源与特定服务地址。非白名单的任意网络尝试，不论是常规的端口连接，还是伪装成 DNS 查询的隧道通信，都会在代理层被立刻掐断并记录警报。</p>
+<p>把磁盘写权限限制在工程目录，把网络出站卡死在白名单内。两道枷锁合拢在一起，才算把一个在宿主机上自主跑命令的智能体，真正变成了关在透明防弹玻璃后面的机械臂。</p>
+<h2 id="把刹车踩在内核，不赌自觉"><a href="#把刹车踩在内核，不赌自觉" class="headerlink" title="把刹车踩在内核，不赌自觉"></a>把刹车踩在内核，不赌自觉</h2><p>我之前在写自己给 Agent 收紧钥匙的复盘时，曾经总结过一句话：默认放心让模型去想，但谨慎放行让模型去做。想是免费的，做是有后果的。</p>
+<p>当我们在日常工作流里越来越依赖 Agent，当流水线里的工具调用从一两步扩展到几十步，人去肉眼盯梢的成本就会呈几何级数上升。在这个时候，任何基于自觉的假设，最后都会被人类自身的惰性击穿。</p>
+<p>OpenAI 披露 Codex 沙箱架构的价值，不在于展示他们用了多么炫酷的前沿科技。恰恰相反，他们用的全是操作系统里躺了多年的原生工具：macOS 上的安全规则、Linux 里的命名空间和过滤机制、Windows 的访问控制。</p>
+<p>这给所有正在搭建自己的 Agent 系统、正在把命令行执行权交给 AI 的开发者提了个醒：我们不能一边享受着全自动化的快感，一边在心里默念它不要出错。</p>
+<p>给智能体最好的放权，从来不是毫无保留的信任，而是用确定性的系统规则，替它把悬崖边缘的护栏修得足够坚固。当护栏在内核层焊死的那一刻，我们才敢真正放开手脚，让它在工作区里尽情奔跑。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+              <a href="/tags/Codex/" rel="tag"># Codex</a>
+              <a href="/tags/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7/" rel="tag"># 开发者工具</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E6%B2%99%E7%AE%B1/" rel="tag"># 沙箱</a>
+              <a href="/tags/%E7%B3%BB%E7%BB%9F%E5%AE%89%E5%85%A8/" rel="tag"># 系统安全</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/19/202611191055/" rel="prev" title="纳德拉放话人人管理智能体：微软六万人买断背后的残酷账本">
+                  <i class="fa fa-angle-left"></i> 纳德拉放话人人管理智能体：微软六万人买断背后的残酷账本
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/19/202611192305/" rel="next" title="代码 ANT 今晚敲钟：我给它交了两年 Token 费，终于等到了这份万亿账本的终局">
+                  代码 ANT 今晚敲钟：我给它交了两年 Token 费，终于等到了这份万亿账本的终局 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:03</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

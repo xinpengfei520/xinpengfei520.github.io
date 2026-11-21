@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="OpenAI 披露内部性能工程体系：三个月内用 Codex 自动完成 1700 次调查、定位 600 个根因，用全天候流水线取代人肉值班排障。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="告警响了别呼叫人类：OpenAI 怎么让 Codex 自己排障提 PR">
+<meta property="og:url" content="https://www.vance.xin/2026/11/20/202611201425/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="OpenAI 披露内部性能工程体系：三个月内用 Codex 自动完成 1700 次调查、定位 600 个根因，用全天候流水线取代人肉值班排障。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261120-20261120-openai-performance-factory.webp">
+<meta property="article:published_time" content="2026-11-20T14:25:00.000Z">
+<meta property="article:modified_time" content="2026-11-21T05:19:35.167Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="OpenAI">
+<meta property="article:tag" content="Codex">
+<meta property="article:tag" content="运维与架构">
+<meta property="article:tag" content="性能优化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261120-20261120-openai-performance-factory.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/20/202611201425/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/20/202611201425/","path":"2026/11/20/202611201425/","title":"告警响了别呼叫人类：OpenAI 怎么让 Codex 自己排障提 PR"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>告警响了别呼叫人类：OpenAI 怎么让 Codex 自己排障提 PR | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "告警响了别呼叫人类：OpenAI 怎么让 Codex 自己排障提 PR",
+  "url": "https://www.vance.xin/2026/11/20/202611201425/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/20/202611201425/",
+  "datePublished": "2026-11-20T14:25:00.000Z",
+  "dateModified": "2026-11-21T05:19:35.167Z",
+  "description": "OpenAI 披露内部性能工程体系：三个月内用 Codex 自动完成 1700 次调查、定位 600 个根因，用全天候流水线取代人肉值班排障。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%8A%E5%A4%9C%E8%A2%AB%E5%8F%AB%E9%86%92%E6%98%AF%E6%AF%8F%E4%B8%AA%E4%BA%BA%E7%9A%84%E5%99%A9%E6%A2%A6"><span class="nav-text">半夜被叫醒是每个人的噩梦</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E5%9C%BA%E5%8B%98%E6%9F%A5%E4%BA%A4%E7%BB%99%E5%8C%96%E9%AA%8C%E5%AE%A4%E8%B7%91%E8%85%BF"><span class="nav-text">现场勘查交给化验室跑腿</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%BE%E7%AC%AC%E4%BA%8C%E4%B8%AA%E6%A8%A1%E5%9E%8B%E6%8C%91%E5%88%BA%E5%BD%93%E8%BE%A9%E5%8F%8B"><span class="nav-text">找第二个模型挑刺当辩友</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%93%E6%B8%A9%E8%AE%A1%E9%99%8D%E4%BA%86%E6%89%8D%E5%87%86%E7%AD%BE%E5%AD%97%E5%85%B3%E5%8D%95"><span class="nav-text">体温计降了才准签字关单</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">639</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1041</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/20/202611201425/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="告警响了别呼叫人类：OpenAI 怎么让 Codex 自己排障提 PR | 飞飞的AI实验室">
+      <meta itemprop="description" content="OpenAI 披露内部性能工程体系：三个月内用 Codex 自动完成 1700 次调查、定位 600 个根因，用全天候流水线取代人肉值班排障。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          告警响了别呼叫人类：OpenAI 怎么让 Codex 自己排障提 PR
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-20 14:25:00" itemprop="dateCreated datePublished" datetime="2026-11-20T14:25:00+00:00">2026-11-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-11-21 05:19:35" itemprop="dateModified" datetime="2026-11-21T05:19:35+00:00">2026-11-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">OpenAI 披露内部性能工程体系：三个月内用 Codex 自动完成 1700 次调查、定位 600 个根因，用全天候流水线取代人肉值班排障。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261120-20261120-openai-performance-factory.webp" alt="告警响了别呼叫人类：OpenAI 怎么让 Codex 自己排障提 PR"></p>
+<p>Hello，我是飞飞。</p>
+<p>不知道你有没有经历过这种被支配的恐惧：大半夜两点钟，手机突然像催命一样疯狂震动，报警群里弹出一条延迟暴涨十倍的报警信息。</p>
+<p>你只能揉着眼睛爬起来打开电脑，深吸一口气点开监控大盘。接着就是长达两小时的痛苦折磨：一边在微服务里翻链路追踪，一边在几百条提交里排查，试图揪出到底哪行代码导致了内存泄漏或死锁。</p>
+<p>这种事经历一次，就能让人少活一年。但在软件工程被 AI 深刻重塑的今天，折磨正在呈指数级加剧。以前团队一周合几十个 PR 就算高产，现在有了编程智能体加持，代码迭代速度翻了十倍不止。当写代码的速度坐上了火箭，负责兜底找性能问题的工程师却还在靠人肉看日志，崩溃只是时间问题。</p>
+<p>昨天 OpenAI 罕见地复盘了他们内部的一套秘密武器，名字叫 Performance Factory。他们没有把更多的排障责任压在人类值班工程师身上，而是把 Codex 放进了全天候流水线。三个月下来，这个系统自动完成了 1700 多次故障排查，精准定位了 600 多个根因，甚至还直接写好提交了几十个修复代码。</p>
+<h2 id="半夜被叫醒是每个人的噩梦"><a href="#半夜被叫醒是每个人的噩梦" class="headerlink" title="半夜被叫醒是每个人的噩梦"></a>半夜被叫醒是每个人的噩梦</h2><p>搞微服务或者高并发系统的人都清楚，线上真正昂贵的从不是监控探针，高级工程师的精力和睡眠才是最顶级的消耗品。</p>
+<p>现代系统的监控体系已经非常敏锐了。从端到端耗时、错误率到垃圾回收的停顿时间，任何微小的抖动都能在毫秒级被探针捕捉到。可问题恰恰出在这里：监控系统只负责吹哨，它从来不负责破案。</p>
+<p>当一条警报在工作群里炸开时，留给人类的只有冰冷的一行指标异动。到底是刚刚发布的新接口把下游连接池打满了，还是某位同事漏写了索引，亦或是上游依赖在超时重试？要搞清楚这些，工程师必须在几十万行日志里捞蛛丝马迹，像法医勘查现场一样一点点拼凑线索。</p>
+<p>更让人头疼的是性能回归。它不像直接抛出异常崩溃那么直观，系统可能还在正常跑，但处理单次请求的耗时悄悄从 200 毫秒涨到了 400 毫秒。这种慢性失血的问题排查难度极大，往往需要拉齐三四个业务模块的同学一起对账。</p>
+<p>OpenAI 在这篇复盘里说得很直白：当智能体让整个团队的开发吞吐量暴涨时，传统依赖人类轮流值班查日志的模式，已经彻底沦为了生产力瓶颈。</p>
+<p>既然代码是智能体辅助写出来的，那排查性能问题的苦活累活，也必须由智能体来接盘。</p>
+<h2 id="现场勘查交给化验室跑腿"><a href="#现场勘查交给化验室跑腿" class="headerlink" title="现场勘查交给化验室跑腿"></a>现场勘查交给化验室跑腿</h2><p>OpenAI 设计这套被称为 Regression Workflow 的流水线时，最精明的一点在于他们完全重构了报警的响应链条。</p>
+<p>在传统的体系里，告警的第一站是人类。值班工程师收到通知，打开电脑开始当肉肉搬运工。但在 OpenAI 的这套体系里，告警响了之后，现场被直接封锁并移交给云端的 Codex 智能体。</p>
+<p>这就好比医院急诊科。病人被推来的时候，主任医师不需要亲自去给病人抽血、拍片子、化验各项指标。门口有一个全天候运转的自动化化验室，在警报拉响的第一秒，化验室就已经自动去提取病人的各项生化指标，把打印好的诊断依据和异常切片整整齐齐地订在病历夹上。</p>
+<p>Codex 扮演的正是这个急诊化验室的角色。</p>
+<p>一旦线上监控探针发现 ChatGPT 的某项延迟指标偏离了正常轨道，系统会自动在内部追踪平台生成一张工单。与这张工单绑定的云端 Codex 实例瞬间启动。</p>
+<p>它首先会读取触发告警的遥测数据，沿着分布式调用链路把上下游相关的日志包全部抓取下来。紧接着，它会对比该时间段内所有服务的部署变更历史，一条条翻看最近的 Git 提交记录。甚至在权限允许的沙盒环境里，Codex 还会尝试用当时的请求特征去复现那次慢查询。</p>
+<p>这一套动作做完，通常只需要几分钟。此时人类工程师还没来得及倒上一杯咖啡，工单里就已经附上了 Codex 整理好的现场勘查备忘录：具体是哪一次代码变更、涉及哪个函数、在什么特定参数组合下会引发性能瓶颈。</p>
+<h2 id="找第二个模型挑刺当辩友"><a href="#找第二个模型挑刺当辩友" class="headerlink" title="找第二个模型挑刺当辩友"></a>找第二个模型挑刺当辩友</h2><p>让 AI 去看日志找根因，很多人的第一反应是：这玩意会不会胡思乱想？</p>
+<p>搞过大模型排障的同行都有过惨痛教训。模型在面对海量混乱的日志时，很容易把两个偶然同时发生的事件生搬硬套在一起。比如刚好有个网络抖动，又刚好有位工程师合了一段前端重构，单智能体很可能会一口咬定是前端重构把后端数据库拖垮了。</p>
+<p>修代码最忌讳的就是病急乱投医。如果让一个带着偏见或者幻觉的 AI 去提修复方案，后果可能比原本的性能回退还要严重。</p>
+<p>OpenAI 在这里加入了一道极其硬核的工序：对抗性审查。</p>
+<p>当负责调查的 Codex 给出一份看似天衣无缝的根因分析报告后，系统并不会直接采纳，而是立刻拉起第二个独立的对抗性智能体，充当它的反方辩友。</p>
+<p>这个反方智能体的唯一任务，就是专门挑刺。它会拿着第一位 Codex 的诊断结论，去反查原始的遥测指标和调用堆栈，寻找逻辑漏洞。它会严苛地质问：你说是这段循环导致了 CPU 飙升，但为什么同时段另一台没有这个更新的机器也发生了类似抖动？你说是锁竞争，那相关的线程等待堆栈在哪里？</p>
+<p>如果在这种背靠背的交叉审讯中，初版诊断露出了破绽，整张工单就会被无情打回，要求 Codex 补充证据重新调查。</p>
+<p>只有当证据链足够扎实、完全经得起反方辩友的盘问时，Codex 才会获准进入下一步，针对瓶颈代码生成对应的修复代码并提一个 Pull Request。</p>
+<p>这种把两个模型放在对立面相互制衡的思路，直接把排障归因的虚假率压到了极低水平。</p>
+<h2 id="体温计降了才准签字关单"><a href="#体温计降了才准签字关单" class="headerlink" title="体温计降了才准签字关单"></a>体温计降了才准签字关单</h2><p>有了精准的根因分析，也有了生成的修复代码，是不是就意味着系统可以高枕无忧了？</p>
+<p>并没有。在 OpenAI 的工程底线里，任何没有经过线上客观指标验证的修复，都只能算作未决的草案。</p>
+<p>这就引出了流水线的最后一道把手：人类审核与闭环验证。</p>
+<p>Codex 生成的所有修复 PR，永远不会被允许自动合入主分支。它会被推送到负责该业务模块的人类工程师面前。工程师此时拿到的是一份极度精简的成果物：一边是经过对抗审查验证的现场证据，另一边是改动范围极小的修复补丁。人类只需要把精力聚焦在最后十秒钟的业务判断上，确认逻辑无误后点击合并。</p>
+<p>但合并上线并不意味着结案。</p>
+<p>这就像医生开完药给病人吃下去，绝不能在药刚吞下去的那一秒就宣布痊愈。必须拿出体温计，盯着水银柱真的从 39 度退回到了 36 度半，病人才准办出院手续。</p>
+<p>在补丁部署到生产集群后，流水线会派出第三个验证智能体。它在后台紧盯着实时的大盘数据，持续观察半小时到一小时。它要亲眼看到那条原本翘尾巴的延迟曲线重新落回健康水位，并且没有诱发新的错误码，才会在工单上盖上通过印章，正式结案关单。</p>
+<p>这套把人类从繁琐排查中彻底解脱出来的系统，在运行的头三个月里交出了惊人的战报：日均处理 17 次复杂调查，成功定位 600 多个隐蔽故障，推进了 400 多起针对性修复。</p>
+<p>过去很多团队都在争论，AI 时代到底还需要不需要 SRE，代码智能体到底能不能碰生产环境。OpenAI 这次用一套严丝合缝的闭环工程给出了示范。</p>
+<p>智能体最迷人的地方，从不在于让它脱缰狂奔。关键在于用代码和规则把它框进最繁琐、最枯燥的流程里，让它当一个不眠不休的现场法医，在人类签下名字之前，把所有证据链都钉得死死的。</p>
+<p>你平时在线上遇到性能回归或者排查故障时，最耗费时间的是哪一步？如果让 AI 智能体帮你排障甚至提交代码修复，你最担心的又是什么？欢迎在评论区聊聊你的实战体验。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+              <a href="/tags/Codex/" rel="tag"># Codex</a>
+              <a href="/tags/%E8%BF%90%E7%BB%B4%E4%B8%8E%E6%9E%B6%E6%9E%84/" rel="tag"># 运维与架构</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="tag"># 性能优化</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/20/202611201348/" rel="prev" title="只有6%的人手写过技能：Perplexity 让智能体自己写 Skill">
+                  <i class="fa fa-angle-left"></i> 只有6%的人手写过技能：Perplexity 让智能体自己写 Skill
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/20/202611201725/" rel="next" title="Conductor 带着本地 Agent 投奔 Meta：终端智能体终于学会了自己做页面">
+                  Conductor 带着本地 Agent 投奔 Meta：终端智能体终于学会了自己做页面 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:03</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

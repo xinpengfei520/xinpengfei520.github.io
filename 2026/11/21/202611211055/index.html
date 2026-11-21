@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="开源网页智能体顶流 browser-use 迎来 1.0 重构：砍掉近九成历史代码，删光 24 个离散动作工具，用 Python REPL 与原生 CDP 终结往返地狱。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="把24个浏览器动作全删了：browser-use 1.0 为什么改用 Python 代码控制网页？">
+<meta property="og:url" content="https://www.vance.xin/2026/11/21/202611211055/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="开源网页智能体顶流 browser-use 迎来 1.0 重构：砍掉近九成历史代码，删光 24 个离散动作工具，用 Python REPL 与原生 CDP 终结往返地狱。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261121-202611211055.webp">
+<meta property="article:published_time" content="2026-11-21T10:55:00.000Z">
+<meta property="article:modified_time" content="2026-11-21T10:55:00.000Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="架构设计">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="智能体">
+<meta property="article:tag" content="browser-use">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261121-202611211055.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/21/202611211055/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/21/202611211055/","path":"2026/11/21/202611211055/","title":"把24个浏览器动作全删了：browser-use 1.0 为什么改用 Python 代码控制网页？"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>把24个浏览器动作全删了：browser-use 1.0 为什么改用 Python 代码控制网页？ | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "把24个浏览器动作全删了：browser-use 1.0 为什么改用 Python 代码控制网页？",
+  "url": "https://www.vance.xin/2026/11/21/202611211055/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/21/202611211055/",
+  "datePublished": "2026-11-21T10:55:00.000Z",
+  "dateModified": "2026-11-21T10:55:00.000Z",
+  "description": "开源网页智能体顶流 browser-use 迎来 1.0 重构：砍掉近九成历史代码，删光 24 个离散动作工具，用 Python REPL 与原生 CDP 终结往返地狱。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#24%E4%B8%AA%E5%8A%A8%E4%BD%9C%E4%B8%8E%E5%BE%80%E8%BF%94%E5%9C%B0%E7%8B%B1"><span class="nav-text">24个动作与往返地狱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E5%8D%B3%E5%8A%A8%E4%BD%9C%E7%9A%84%E9%99%8D%E7%BB%B4%E6%89%93%E5%87%BB"><span class="nav-text">代码即动作的降维打击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A0%E6%8E%89%E4%B9%9D%E6%88%90%E4%BB%A3%E7%A0%81%E7%9A%84%E5%B7%A5%E7%A8%8B%E6%B8%85%E9%86%92"><span class="nav-text">删掉九成代码的工程清醒</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%99%BA%E8%83%BD%E4%BD%93%E5%B7%A5%E5%85%B7%E9%93%BE%E7%9A%84%E7%BB%88%E5%B1%80%E5%8F%8D%E6%80%9D"><span class="nav-text">智能体工具链的终局反思</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">639</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1041</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/21/202611211055/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="把24个浏览器动作全删了：browser-use 1.0 为什么改用 Python 代码控制网页？ | 飞飞的AI实验室">
+      <meta itemprop="description" content="开源网页智能体顶流 browser-use 迎来 1.0 重构：砍掉近九成历史代码，删光 24 个离散动作工具，用 Python REPL 与原生 CDP 终结往返地狱。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          把24个浏览器动作全删了：browser-use 1.0 为什么改用 Python 代码控制网页？
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-21 10:55:00" itemprop="dateCreated datePublished" datetime="2026-11-21T10:55:00+00:00">2026-11-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">开源网页智能体顶流 browser-use 迎来 1.0 重构：砍掉近九成历史代码，删光 24 个离散动作工具，用 Python REPL 与原生 CDP 终结往返地狱。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261121-202611211055.webp" alt="把24个浏览器动作全删了：browser-use 1.0 为什么改用 Python 代码控制网页？"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你最近也尝试用大模型搭过网页自动化助手，或者写过帮自己抢票、比价、抓取数据的浏览器 Agent，我想先问你一个非常扎心的体验问题：当大模型在网页里跑起来的时候，你在屏幕前看着它的操作，到底捏过多少把冷汗？</p>
+<p>在过去一年的主流设计里，让大模型操控浏览器的逻辑听起来极其直观：既然人类是用鼠标点击、用滚轮翻页的，那就给模型也配齐一套对应的动作。</p>
+<p>于是框架作者们辛苦给模型包了一大堆工具：点击某个编号的按钮、往输入框填字、页面向下滚动半屏、切换标签页、拖拽元素。</p>
+<p>但只要真拿它去跑复杂业务，整套系统就会迅速陷入一种让人抓狂的笨拙感。</p>
+<p>你想让它从电商页面里抓取前二十款商品的名字和价格。模型先看一眼整张网页密密麻麻的节点树，调用一次点击展开；等页面刷新，模型再看一遍节点树，调用一次滚动；接着找到第一个商品，再调一次读取。</p>
+<p>每一次极其微小的动作，都要在云端模型和本地浏览器之间完整往返一次。抓完这二十行数据，模型在背后通信了几十轮，烧掉几十万个 Token。只要中间网络稍有抖动，或者页面弹出了一个优惠券，整条漫长的链路当场就会卡死崩塌。</p>
+<p>就在昨天，GitHub 上最受欢迎的开源网页智能体框架 browser-use，正式发布了 1.0 重构大版本。</p>
+<p>让整个开源社区大跌眼镜的是，作者团队既没有增加更多视觉模型，也没有堆砌更多细致的点击工具。相反，他们做了一个极其激进的减法：</p>
+<p>直接把项目里近九成的历史胶水代码全删了，把 0.x 时代封装的 24 个浏览器动作工具全部砍掉，转而只给大模型留了一个核心工具：一个持久化的 Python 交互式运行环境。</p>
+<p>核心团队用最硬核的工程重构证明了一件事：让大模型一个动作一个动作地模拟人类点鼠标，从一开始可能就走歪了。</p>
+<h2 id="24个动作与往返地狱"><a href="#24个动作与往返地狱" class="headerlink" title="24个动作与往返地狱"></a>24个动作与往返地狱</h2><p>要看清这次 1.0 重构的威力，得先复盘 0.x 时代的网页 Agent 到底被什么拖垮了。</p>
+<p>在旧架构里，浏览器智能体的工作方式本质上是一个沉重的单步轮询循环。</p>
+<p>每推进一步，框架都要把整个网页的 DOM 树扒下来，过滤后转成结构化文本，给屏幕上的每个可点击元素标上数字编号。接着，框架把这几万字的页面快照，加上预先定义的 24 个动作工具的 JSON 说明书，一股脑倒进模型的输入框里。</p>
+<p>模型在这个漫长的提示词里苦苦搜寻，输出一个标准结构：“我要调用 <code>click(element_index=42)</code>”。本地框架收到指令，通过自动化接口把鼠标移到那个按钮上点一下，等待页面重新加载。加载完成后，再次重复扒下新的网页树，送回模型做下一步决断。</p>
+<p>这种机械的设计直接带来了三重致命代价。</p>
+<p>其一是昂贵的说明书税。每个工具参数的字段描述与类型定义，都是真金白银的 Token 开销。24 个动作的说明书不管本轮用不用得上，对话每前进一步都要全量读一遍，大部分预算全浪费在反复交租上了。</p>
+<p>其二是网络往返地狱。大模型每次只能挑一个原子工具，任何涉及循环的任务都被拉扯成数十次通信。翻页三次抓五条记录，单步循环必须经历十五次全量握手，耗时拉长数倍，任何偶发超时都会让流程付诸东流。</p>
+<p>其三是脆弱的容错能力。某个元素点击瞬间被浮窗遮挡，大模型只能收到报错，重新发起请求思考自救。为了伺候好这 24 个离散动作，团队写了数万行胶水代码做状态同步，系统越写越重，可靠性却始终上不去。</p>
+<h2 id="代码即动作的降维打击"><a href="#代码即动作的降维打击" class="headerlink" title="代码即动作的降维打击"></a>代码即动作的降维打击</h2><p>browser-use 1.0 拿出的解法，简单粗暴得让人拍案叫绝。</p>
+<p>他们不再把模型当成手握遥控器按钮的提线木偶，而是把它当成一个真正的程序员。</p>
+<p>在 1.0 新架构里，那份长达 24 项的动作工具清单被彻底清理。取而代之的，是一个底层进程守护的 Python 持久交互环境（REPL），配合直接连通浏览器的 Chrome 开发者工具协议（CDP）。</p>
+<p>现在的交互变成了一种全新的范式：代码即动作。</p>
+<p>大模型面对网页时，不再去选该点哪个按钮，而是直接写出一小段原生的 Python 代码块。在底层工程机制上，这形成了降维打击般的体验提升。</p>
+<p>最显著的变化在于本地控制流的彻底释放。</p>
+<p>当模型需要抓取列表里的二十条数据时，在 1.0 里只需要写一个极其朴素的 <code>for</code> 循环。循环在本地 Python 进程里以毫秒级速度跑完，根本不需要每读一条数据就跑去云端跟大模型打一声招呼。</p>
+<p>过去需要往返二十次的拉扯，在 1.0 里被压缩成了一次生成、本地极速跑通。执行效率提升了十倍，中间的网络脆弱面被缩减到了极致。</p>
+<p>更迷人的是变量与状态的原生持久化。</p>
+<p>过去数据传递完全依赖上下文拼接，前一步的订单号必须回传对话历史再重新解析。而在持久 Python 环境里，上一行赋值的变量下一个代码块可以直接调取，临时数据直接留在本地内存里，不再耗费下行 Token。</p>
+<p>再加上 Python 原生支持的 <code>try...except</code> 异常捕获机制，瞬时抖动、元素短暂找不到的情况，脚本自己加两行异常重试就顺畅抹平了，完全不需要大惊小怪地退回去让模型重新推理一遍。</p>
+<p>大模型负责给出策略和写出脚本，本地执行环境负责高效跑完并消化细节，这才是合理的人机分工。</p>
+<h2 id="删掉九成代码的工程清醒"><a href="#删掉九成代码的工程清醒" class="headerlink" title="删掉九成代码的工程清醒"></a>删掉九成代码的工程清醒</h2><p>在整个 1.0 重构过程中，最让我感到震撼的，是作者团队对待历史包袱的果决态度。</p>
+<p>翻看老版本仓库，团队为了维护这 24 个动作写了海量辅助函数与剪枝算法，本质上全是在为一个先天有缺陷的架构打补丁。很多开源项目走到这个阶段时，往往舍不得沉没成本，选择在老架构上继续堆叠补丁，最终在复杂的死锁里把自己耗死。</p>
+<p>browser-use 团队在 1.0 里展现出了一种罕见的工程清醒：既然发现了代码即动作的优越性，就坚决砍掉近九成的冗余胶水层，把底座整体切换到成熟的 Pydantic AI 框架上。</p>
+<p>借助 Pydantic AI 提供的严密类型安全与生命周期管理，核心执行器变得极其轻量透明。执行脚本的子进程被严格隔离在独立的进程组内，带超时监控与安全过滤，跑飞了直接精准熔断重启，既保证了本地环境安全，又把执行延迟压到了极限。</p>
+<p>这一刀切下去，不仅仓库从臃肿的巨石系统瘦身成了轻巧的执行引擎，连带着让下游使用者的心智负担也轻了一大截。只要会写基础自动化脚本，就能顺畅调度整个框架。</p>
+<h2 id="智能体工具链的终局反思"><a href="#智能体工具链的终局反思" class="headerlink" title="智能体工具链的终局反思"></a>智能体工具链的终局反思</h2><p>把 browser-use 1.0 的这次蜕变，放进整个智能体开发生态的坐标系里看，会发现一条极其清晰的技术演进轨迹。</p>
+<p>前几天 Google 在 Gemini API 里上线 Tool Retrieval，大家都在感叹，智能体不能再把几十个工具说明书死死塞进输入框了。</p>
+<p>而 browser-use 1.0 则用更决绝的方式给出了另一种答案：如果一个工具的通用性足够强，你甚至根本不需要准备几十个工具。</p>
+<p>过去一年里，几乎所有 Agent 框架都在跟风做加法。大家把各个平台的 API 包装成看似规范的 MCP 工具，越塞越满，误以为工具越多能力边界就越宽。</p>
+<p>但生产实践正在击碎这套逻辑。工具越多，模型的选择成本越高，出错概率呈指数级上升。</p>
+<p>最好的通用工具，往往是一整套能按需组装、具备完整逻辑控制能力的通用机床。</p>
+<p>让大模型直接写代码去驱动现实系统，而不是靠人工设计的 JSON 工具去猜意图，正在成为下一代高阶智能体的共识底色。从这个角度来看，browser-use 1.0 删掉的那 24 个动作，反而是这个赛道走向成熟时极其重要的一次成人礼。</p>
+<p>如果你平时也在折腾智能体调用或者浏览器自动化，不妨也回过头审视一下自己的工具箱：你现在塞给大模型的那一堆细分动作里，到底有多少是在给它添乱？把这些脏活换成一段直截了当的代码，你的系统又能轻快多少？欢迎在评论区聊聊你的重构心得。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" rel="tag"># 架构设计</a>
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># 智能体</a>
+              <a href="/tags/browser-use/" rel="tag"># browser-use</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/20/202611201725/" rel="prev" title="Conductor 带着本地 Agent 投奔 Meta：终端智能体终于学会了自己做页面">
+                  <i class="fa fa-angle-left"></i> Conductor 带着本地 Agent 投奔 Meta：终端智能体终于学会了自己做页面
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/21/202611211118/" rel="next" title="攻克黎曼猜想不发论文发 1737 万行代码：大模型在形式化验证里到底算不算数">
+                  攻克黎曼猜想不发论文发 1737 万行代码：大模型在形式化验证里到底算不算数 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:03</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="麻省理工与哥伦比亚大学发布重磅论文，Claude 独立发现突破 3SUM 与 APSP 复杂度上限的新算法，终结 30 年猜想。本文拆解其背后的稀疏图矩阵机制与工程现实。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude 独立打破 30 年算法上限：3SUM 与最短路径到底被推翻了什么？">
+<meta property="og:url" content="https://www.vance.xin/2026/11/23/202611231451/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="麻省理工与哥伦比亚大学发布重磅论文，Claude 独立发现突破 3SUM 与 APSP 复杂度上限的新算法，终结 30 年猜想。本文拆解其背后的稀疏图矩阵机制与工程现实。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261123-202611231451-claude-3sum-cover.webp">
+<meta property="article:published_time" content="2026-11-23T14:51:00.000Z">
+<meta property="article:modified_time" content="2026-11-24T03:05:30.770Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="计算机科学">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261123-202611231451-claude-3sum-cover.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/23/202611231451/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/23/202611231451/","path":"2026/11/23/202611231451/","title":"Claude 独立打破 30 年算法上限：3SUM 与最短路径到底被推翻了什么？"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Claude 独立打破 30 年算法上限：3SUM 与最短路径到底被推翻了什么？ | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Claude 独立打破 30 年算法上限：3SUM 与最短路径到底被推翻了什么？",
+  "url": "https://www.vance.xin/2026/11/23/202611231451/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/23/202611231451/",
+  "datePublished": "2026-11-23T14:51:00.000Z",
+  "dateModified": "2026-11-24T03:05:30.770Z",
+  "description": "麻省理工与哥伦比亚大学发布重磅论文，Claude 独立发现突破 3SUM 与 APSP 复杂度上限的新算法，终结 30 年猜想。本文拆解其背后的稀疏图矩阵机制与工程现实。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%97%E6%B3%95%E8%AF%BE%E4%B8%8A%E7%9A%84%E4%B8%A4%E5%BA%A7%E5%A4%A7%E5%B1%B1"><span class="nav-text">算法课上的两座大山</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%BA%E5%99%A8%E5%88%B0%E5%BA%95%E5%8F%91%E7%8E%B0%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-text">机器到底发现了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9B%B6%E7%82%B9%E9%9B%B6%E9%9B%B6%E9%9B%B6%E5%85%AB%E7%9A%84%E9%9C%87%E6%92%BC"><span class="nav-text">零点零零零八的震撼</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%AB%E6%80%A5%E7%9D%80%E9%87%8D%E5%86%99%E4%BD%A0%E7%9A%84%E4%BB%A3%E7%A0%81"><span class="nav-text">别急着重写你的代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%99%BA%E8%83%BD%E4%BD%93%E6%AD%A3%E5%9C%A8%E6%94%B9%E5%8F%98%E4%BB%80%E4%B9%88"><span class="nav-text">智能体正在改变什么</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">644</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1047</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/23/202611231451/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Claude 独立打破 30 年算法上限：3SUM 与最短路径到底被推翻了什么？ | 飞飞的AI实验室">
+      <meta itemprop="description" content="麻省理工与哥伦比亚大学发布重磅论文，Claude 独立发现突破 3SUM 与 APSP 复杂度上限的新算法，终结 30 年猜想。本文拆解其背后的稀疏图矩阵机制与工程现实。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Claude 独立打破 30 年算法上限：3SUM 与最短路径到底被推翻了什么？
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-23 14:51:00" itemprop="dateCreated datePublished" datetime="2026-11-23T14:51:00+00:00">2026-11-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-11-24 03:05:30" itemprop="dateModified" datetime="2026-11-24T03:05:30+00:00">2026-11-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF%E6%8E%A2%E7%B4%A2/" itemprop="url" rel="index"><span itemprop="name">技术探索</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">麻省理工与哥伦比亚大学发布重磅论文，Claude 独立发现突破 3SUM 与 APSP 复杂度上限的新算法，终结 30 年猜想。本文拆解其背后的稀疏图矩阵机制与工程现实。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261123-202611231451-claude-3sum-cover.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>只要你读过计算机相关专业，或者刷过算法题，大概率都在教科书里见过这样两条铁律。</p>
+<p>第一条叫三数之和，也就是 3SUM。在一堆整数里找三个加起来等于零的数，暴力穷举要跑三次方，先排序再用双指针扫描，复杂度可以压到二次方。从大一算法课开始，老师和教材就会反复告诫你：二次方已经是极限，别妄想能跨进真正的亚二次区间。</p>
+<p>第二条叫全对最短路径，也就是著名的弗洛伊德算法。在带权图里求出任意两点之间的最短距离，经典的动态规划是三次方复杂度。三十年来，它同样被当成一道不可逾越的高墙。</p>
+<p>但就在这个月，麻省理工学院与哥伦比亚大学联手在预印本平台上放出一篇重磅论文，把这两堵坚守了三十年的高墙同时轰出了缺口。</p>
+<p>论文给出的数学证明显示：3SUM 算法的确定性时间复杂度，被推进到了 $O(n^{1.9992})$；而全对最短路径的复杂度，被直接推进到了 $O(n^{2.9995})$。</p>
+<p>更让整个理论计算机学界和开发者圈子感到震动的，是论文方法论里的一句交代：这两项打破历史极限的底层算法核心构造，是由 Anthropic 内部的大模型 Claude 独立发现的。</p>
+<p>很多同行刚看到这个消息时以为是愚人节玩笑，但看到论文署名作者是当今矩阵乘法领域的顶级学者阿尔曼和威廉姆斯后，所有人都严肃了起来。</p>
+<p>从写前端胶水代码，到改写算法教科书，这件事的震荡到底有多大？</p>
+<h2 id="算法课上的两座大山"><a href="#算法课上的两座大山" class="headerlink" title="算法课上的两座大山"></a>算法课上的两座大山</h2><p>要理解这项突破的分量，我们得先回到理论计算机学的真实坐标系里。</p>
+<p>在理论界，最著名的难题是判断 P 是否等于 NP。因为这个问题太难，几十年来数学家们连第一步都迈不出去。</p>
+<p>为了在现世解决具体问题，学者们另辟蹊径，建立了一门叫作细粒度复杂度理论的学科。它的核心逻辑很务实：既然证明不了大问题，那就假设几个经典基石问题的时间复杂度下界不可突破，再以此为地基，去推导成百上千个衍生算法的最优界限。</p>
+<p>而这套宏大理论体系底下，立着三根撑起大厦的承重柱。</p>
+<p>其中两根承重柱，正是 3SUM 假设与全对最短路径假设。</p>
+<p>三十年来，学术界发表的几百篇涉及字符串编辑距离、动态图连通性、计算几何与生物基因序列比对的论文，推导结论时无一例外都带着同一句前提：在 3SUM 或最短路径猜想成立的情况下，某某算法不可能做到更快。</p>
+<p>换句话说，无数代学者早已默认这两道算力高墙永远立在那里。</p>
+<p>而这次的新论文，一举把三根承重柱里的两根连根拔起。理论大厦的地基被推翻，意味着过去建立在猜想上的几百篇经典推论，必须全部推倒重写。</p>
+<h2 id="机器到底发现了什么"><a href="#机器到底发现了什么" class="headerlink" title="机器到底发现了什么"></a>机器到底发现了什么</h2><p>很多人好奇，大模型平时连复杂的业务状态机都偶尔写漏，怎么可能独立发明出顶尖学者找了三十年都没找到的算法？</p>
+<p>翻开论文的推演过程，你会发现 Claude 找到的破局点极为刁钻。</p>
+<p>以往学者们试图降低 3SUM 复杂度时，大多习惯顺着代数变换或者哈希分桶的直觉去死磕。但这篇论文把核心问题转化成了稀疏不平衡图中的特定三角形检测，本质上是在做瘦长矩阵的乘法优化。</p>
+<p>传统的矩阵乘法算法，比如经典的施特拉森算法或考珀史密斯算法，往往是为了计算整个矩阵的全部乘积。</p>
+<p>但求最短路径和三数之和时，我们并不需要完整的结果矩阵，往往只需要计算其中极少数特定的条目。</p>
+<p>如果把计算全量矩阵的算法硬套过来，中途会产生海量毫无意义的冗余计算。Claude 找到的正是这套递归计算方案中的精巧剪枝结构：它在庞大的代数张量空间里，摸索出了一种利用特定乘法恒等式的组合技巧，只精准计算目标单元，跳过了绝大多数无效推导。</p>
+<p>Anthropic 团队在内部发现这个反直觉的算法模型后，意识到它的理论价值已经远远超出了内部研发范畴。他们主动联系了全球最顶尖的算法理论学者。</p>
+<p>人类理论家把机器给出的离散数学萌芽进行了严格化推演与泛化拓展，最终完成了严丝合缝的数学证明。在此期间，Claude 还充当了定理证明助手的助手，协助完成了部分形式化验证。</p>
+<h2 id="零点零零零八的震撼"><a href="#零点零零零八的震撼" class="headerlink" title="零点零零零八的震撼"></a>零点零零零八的震撼</h2><p>在论文公布的数字里，很多人第一眼看到指数上的 $1.9992$ 时，可能会忍不住哑然失笑。</p>
+<p>从二次方的 $2.0$ 降到 $1.9992$，两者的差距仅仅只有微乎其微的 $0.0008$。在普通人眼里，这点差距连误差都算不上。</p>
+<p>但在理论物理和理论计算机的世界里，这 $0.0008$ 的意义无异于把光速的屏障打破了一条缝。</p>
+<p>就像物理学里证明某种粒子能够超光速运动一样，只要速度比光速多出哪怕一厘米，原本建立在光速上限上的相对论时空大厦就必须重新审视。</p>
+<p>同样，在渐进复杂度体系里，哪怕指数只削掉了万分之八，它在数学上也是货真价实的真亚二次与真亚三次算法。</p>
+<p>它用无可辩驳的事实验证了一个颠覆性的结论：三十年来阻挡人类算法演进的那堵墙并不是客观存在的物理定律，只是人类过去的思维盲区没能绕过它。</p>
+<h2 id="别急着重写你的代码"><a href="#别急着重写你的代码" class="headerlink" title="别急着重写你的代码"></a>别急着重写你的代码</h2><p>讲完理论上的震荡，作为一个每天还要坐在电脑前写实际工程的开发者，我也必须给各位泼一盆清醒的冷水。</p>
+<p>明天上班之后，你千万别试图在公司的代码库里用这个新算法去替换原来的双指针。</p>
+<p>在渐进复杂度的数学大 O 记号背后，隐藏着一个工业界绕不过去的死穴：常数项。</p>
+<p>新算法为了削掉那万分之八的指数，在底层引入了极其繁琐的矩阵张量分解与多层递归剪枝。这些数学推演在极限无穷大时确实比平方项跑得快，但推演过程中附带的常数因子，庞大到了一个天文数字。</p>
+<p>在现实世界的数据规模下，哪怕你输入几百亿条数据，由这个庞大常数项带来的计算开销，也会远远压倒指数微调带来的红利。在可以预见的几十年里，教科书上几行代码就能写完的双指针，依然是生产环境里唯一理智的选择。</p>
+<p>科学研究从来不是今天出论文、明天改业务的速效药。把理论上的里程碑和工程上的落地界限分清楚，是每一个技术人应有的素养。</p>
+<h2 id="智能体正在改变什么"><a href="#智能体正在改变什么" class="headerlink" title="智能体正在改变什么"></a>智能体正在改变什么</h2><p>既然业务代码暂时用不上，我们为什么还要为这次突破感到心潮澎湃？</p>
+<p>因为这件事从根本上打破了很多人对大模型能力边界的思维定式。</p>
+<p>过去两年里，技术圈流行一种悲观论调：大模型本质上只是一个高阶的概率接话机器，只能在人类写过的公开代码仓库里做模仿和拼凑。它能当个合格的打字员，帮工程师补全模板代码，但它绝不可能具备真正的科学创造力。</p>
+<p>可这次的实践恰恰向我们证明：大模型在大规模离散数学、张量结构与算法空间的探索能力，已经开始超越人类肉眼的直觉盲区。</p>
+<p>它不需要拥有所谓的自我意识，也不需要理解数学之美。只要给它设定清晰的形式化目标与搜索空间，它就能在一个对人类大脑而言过于辽阔、过于晦涩的高维参数迷宫里，翻出那枚人类找了三十年都没看到的钥匙。</p>
+<p>未来科学探索的全新范式，正是在这种配合中渐渐成型：大模型在后台充当永不知疲倦的猜想生成器与边界突围者，而人类顶尖学者则坐在驾驶位上，把散落的灵感火花淬炼成严谨的人类知识。</p>
+<p>计算机系的教案终究会被改写。而更让人期待的是，当智能体开始学会寻找更优算法本身，这场技术的飞轮才刚刚进入它的加速期。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 大模型</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6/" rel="tag"># 计算机科学</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/21/202611211508/" rel="prev" title="AI 批准的代码回滚率低了五倍：Runway 怎么给智能体装上安全兜底？">
+                  <i class="fa fa-angle-left"></i> AI 批准的代码回滚率低了五倍：Runway 怎么给智能体装上安全兜底？
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/23/202611231736/" rel="next" title="ChatGPT 侧边栏全面改版：Space 为什么要把文档与幻灯片塞进工作台？">
+                  ChatGPT 侧边栏全面改版：Space 为什么要把文档与幻灯片塞进工作台？ <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:15</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

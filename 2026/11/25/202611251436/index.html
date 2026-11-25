@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="深度评测专为 Coding Agent 打造的终端运行时 Herdr。实测并发调度 9 个智能体任务，解析 Rust 后台常驻机制与 OSC 7501 状态协议，彻底告别多智能体并发下的合盖焦虑与人肉巡逻。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="同时放牧9个智能体：Herdr 终端神器深度实测">
+<meta property="og:url" content="https://www.vance.xin/2026/11/25/202611251436/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="深度评测专为 Coding Agent 打造的终端运行时 Herdr。实测并发调度 9 个智能体任务，解析 Rust 后台常驻机制与 OSC 7501 状态协议，彻底告别多智能体并发下的合盖焦虑与人肉巡逻。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261125-202611251436-herdr-cover.webp">
+<meta property="og:image" content="https://image.vance.xin/images/20261125-202611251435-herdr-screenshot.webp">
+<meta property="article:published_time" content="2026-11-25T14:36:00.000Z">
+<meta property="article:modified_time" content="2026-11-25T07:21:56.140Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="开发者工具">
+<meta property="article:tag" content="终端">
+<meta property="article:tag" content="软件工程">
+<meta property="article:tag" content="AI智能体">
+<meta property="article:tag" content="Herdr">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261125-202611251436-herdr-cover.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/25/202611251436/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/25/202611251436/","path":"2026/11/25/202611251436/","title":"同时放牧9个智能体：Herdr 终端神器深度实测"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>同时放牧9个智能体：Herdr 终端神器深度实测 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "同时放牧9个智能体：Herdr 终端神器深度实测",
+  "url": "https://www.vance.xin/2026/11/25/202611251436/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/25/202611251436/",
+  "datePublished": "2026-11-25T14:36:00.000Z",
+  "dateModified": "2026-11-25T07:21:56.140Z",
+  "description": "深度评测专为 Coding Agent 打造的终端运行时 Herdr。实测并发调度 9 个智能体任务，解析 Rust 后台常驻机制与 OSC 7501 状态协议，彻底告别多智能体并发下的合盖焦虑与人肉巡逻。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%88%E4%BA%8E%E6%9C%89%E4%BA%BA%E6%8A%8A%E7%BB%88%E7%AB%AF%E5%BD%93%E7%BE%8A%E5%9C%88%E5%81%9A"><span class="nav-text">终于有人把终端当羊圈做</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E5%8F%B0%E5%B8%B8%E9%A9%BB%E8%A7%A3%E6%95%91%E4%BA%86%E5%90%88%E7%9B%96%E7%84%A6%E8%99%91"><span class="nav-text">后台常驻解救了合盖焦虑</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E6%94%B6%E4%BB%B6%E7%AE%B1%E5%91%8A%E5%88%AB%E4%BA%BA%E8%82%89%E5%B7%A1%E9%80%BB"><span class="nav-text">状态收件箱告别人肉巡逻</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B7%A8%E6%9C%BA%E5%99%A8%E6%94%BE%E7%89%A7%E4%B8%8E%E5%8F%AF%E8%BF%9B%E5%8C%96%E7%9A%84%E5%A3%B3"><span class="nav-text">跨机器放牧与可进化的壳</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">656</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1064</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/25/202611251436/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="同时放牧9个智能体：Herdr 终端神器深度实测 | 飞飞的AI实验室">
+      <meta itemprop="description" content="深度评测专为 Coding Agent 打造的终端运行时 Herdr。实测并发调度 9 个智能体任务，解析 Rust 后台常驻机制与 OSC 7501 状态协议，彻底告别多智能体并发下的合盖焦虑与人肉巡逻。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          同时放牧9个智能体：Herdr 终端神器深度实测
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-25 14:36:00 / 修改时间：07:21:56" itemprop="dateCreated datePublished" datetime="2026-11-25T14:36:00+00:00">2026-11-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI%E6%8E%A2%E7%B4%A2/" itemprop="url" rel="index"><span itemprop="name">AI探索</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI%E6%8E%A2%E7%B4%A2/%E6%95%88%E7%8E%87%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">效率工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">深度评测专为 Coding Agent 打造的终端运行时 Herdr。实测并发调度 9 个智能体任务，解析 Rust 后台常驻机制与 OSC 7501 状态协议，彻底告别多智能体并发下的合盖焦虑与人肉巡逻。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261125-202611251436-herdr-cover.webp" alt="同时放牧9个智能体：Herdr 终端神器深度实测"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你平时对各种 AI 编码工具探索得足够深，最近一定正在经历一段痛并快乐着的心智蜕变。</p>
+<p>刚开始接触代码助手的时候，大家往往习惯单兵作战。打开一个终端窗口，叫起一个助手，敲完回车坐在屏幕前盯上两分钟，看到它把代码改利索了，心里确实觉得挺爽。</p>
+<p>但当这种甜头尝多了，一个极其自然的冲动就会在脑海里冒出来：既然一个能干活，为什么我不能同时叫五个、叫八个一起来干？</p>
+<p>很快，你的工作台就变成了一场令人窒息的多线杂技。</p>
+<p>左边终端跑着写界面的助手，右边分屏挂着重构后台服务的工具，中间开着大模型翻阅最新文档，后台还挂着自动化的数据同步脚本。</p>
+<p>原本旨在提效的智能体，瞬间把你变成了一个手忙脚乱的流水线传菜员。</p>
+<p>你根本数不清自己开了多少个终端标签页，更不知道哪个任务已经悄悄干完了，哪个正因为缺少权限确认而卡在原地等着你敲回车，哪个半路上撞了报错直接挂死。</p>
+<p>为了不让进度脱节，你只能隔上三五分钟，挨个标签页点过去人肉翻滚轮。</p>
+<p>更要命的则是合盖与断网焦虑。</p>
+<p>敲代码敲到一半，你合上笔记本赶去会议室，或者换了个工位网络抖动了一下，那些跑了半小时的长链思考、刚拉到一半的镜像和上下文，往往随着终端窗口的关闭直接灰飞烟灭。</p>
+<p>直到最近我把主力终端彻底换成了专为智能体打造的 Herdr，这场每天都在上演的多任务折磨，才算真正被按下了终止键。</p>
+<h2 id="终于有人把终端当羊圈做"><a href="#终于有人把终端当羊圈做" class="headerlink" title="终于有人把终端当羊圈做"></a>终于有人把终端当羊圈做</h2><p>在计算机世界里，我们过去几十年所熟悉的那些终端复用工具，归根结底都是为人敲键盘设计的。</p>
+<p>它们的设计假设都是屏幕前坐着一个有且仅有一个焦点的真人，一次只专注于读写当前可见的这几行字符。</p>
+<p>可当敲键盘的动作被一群不知疲倦的智能体接管之后，旧工具的骨架就彻底撑不住了。</p>
+<p>Herdr 从立项第一天起，瞄准的就不是单人敲命令，而是如何从容地放牧一群正在并发干活的数字员工。</p>
+<p>口说无凭，先来看一眼我自己在 MacBook Pro 上每天真实面对的工作台界面。</p>
+<p><img src="https://image.vance.xin/images/20261125-202611251435-herdr-screenshot.webp" alt="我用 Herdr 同时放牧 9 个智能体的真实工作台"></p>
+<p>仔细看左侧的整体布局，它被极具针对性地切分成了两块核心区域。</p>
+<p>上半部分是工作空间 Spaces。我的博客生成流水线、几个自研的自动化运维项目、多智能体中台以及底层容器编排，全被条理分明地收纳在各自独立的空间里，彼此互不干扰。</p>
+<p>真正让我拍案叫绝的，是紧接着的下半部分：智能体统一收件箱。</p>
+<p>在截图的这套真实状态里，我正并发挂载着 9 个智能体任务。每一个任务的名字、当前归属的项目、所处的即时状态，全都在侧边栏里一览无余地摊开。</p>
+<p>谁在两分钟前刚刚完成了工作进入空闲等待，谁在二十多个小时前结束了某段长任务，甚至具体卡在解读哪一段逻辑，根本不需要我手动点进窗口排查，余光扫一眼侧边栏就能了然于胸。</p>
+<h2 id="后台常驻解救了合盖焦虑"><a href="#后台常驻解救了合盖焦虑" class="headerlink" title="后台常驻解救了合盖焦虑"></a>后台常驻解救了合盖焦虑</h2><p>能够支撑起这套多任务面板的底层根基，来自它架构里最硬核的一块底座：基于 Rust 开发的后台守护核心。</p>
+<p>用过传统终端的人都知道，只要你不小心关闭了客户端窗口，或者因为网络波动导致远程会话中断，系统内核就会毫不留情地向当前进程抛出终止信号。</p>
+<p>哪怕你费尽心思去敲后台挂起命令，不仅语法别扭，事后重新捡起标准输出的体验也极其痛苦。</p>
+<p>Herdr 的设计逻辑彻底颠覆了这种脆弱的关联。</p>
+<p>在你眼前所能看见的图形应用或者字符终端，本质上都仅仅是一块轻量级的交互显示层。</p>
+<p>真正承载智能体执行、管理终端虚拟会话、吞吐日志的实体，是常驻在操作系统底层的核心守护进程。</p>
+<p>我平时在本地跑着复杂的容器拉取与数据库迁移，或者让智能体执行长达数十分钟的深度跨仓库重构。</p>
+<p>到了该下班或者需要换地方的时候，我完全不需要等待它把这串繁重的长链路跑完。</p>
+<p>直接合上笔记本电脑塞进背包，拔掉电源扬长而去。</p>
+<p>在这期间，无论是图形界面退出还是网络断开，后台核心依然在系统深处稳稳坚守阵地。</p>
+<p>等我回到家泡上一杯茶，重新掀开屏幕，所有的终端状态、未刷完的输出流、智能体正在等待输入的交互行，原封不动地在眼前瞬间满血复活。</p>
+<p>它让智能体真正脱离了对肉眼盯梢的生理依附，具备了全天候自主奔跑的工业级韧性。</p>
+<h2 id="状态收件箱告别人肉巡逻"><a href="#状态收件箱告别人肉巡逻" class="headerlink" title="状态收件箱告别人肉巡逻"></a>状态收件箱告别人肉巡逻</h2><p>如果说后台常驻解决了物理层面的连接稳定性，那么 Herdr 最具革命性的另一项杀手锏，则是彻底铲除了多任务并行的心智负担。</p>
+<p>在过去，很多尝试做多 Agent 监控的工具，往往采用极其粗暴的做法：用脚本去反复轮询抓取终端界面的字符变化。这种屏幕文本匹配极其脆弱，输出格式稍微一变，监控立刻瘫痪。</p>
+<p>Herdr 在底层推行了一套完全开放的终端协议标准，名为 OSC 7501 程序状态协议。</p>
+<p>它把状态的主动权彻底还给了智能体本身。</p>
+<p>现代先进的智能体在执行过程中，不再需要外部探针去费力猜测它在干嘛。</p>
+<p>当智能体开始执行长思考或调用工具时，它会主动通过底层的终端转义通道，向运行时发出一枚微小的状态信标，告诉系统我正在全速运转。</p>
+<p>而当它执行到关键节点，需要人类确认某项写操作、或者等待补充参数时，它会立刻广播一条阻塞等待的信号。</p>
+<p>反映到我的工作台侧边栏上，这个任务就会瞬间挂上醒目的待处理小徽标。</p>
+<p>这就把原本痛苦万分的被动盯梢，彻底变成了优雅从容的按铃响应。</p>
+<p>我该敲业务代码就敲业务代码，该写设计方案就写方案，完全不需要心惊肉跳地频繁切换窗口去猜它干完了没有。</p>
+<p>只有当侧边栏弹出等待确认的提示时，顺手轻点一下直达问题核心，敲下一个回车放行，接着让它继续自主推进。</p>
+<p>那种一人统领多支智能体小队、有条不紊推进不同工程的掌控感，在这一刻才算真正落到了实处。</p>
+<h2 id="跨机器放牧与可进化的壳"><a href="#跨机器放牧与可进化的壳" class="headerlink" title="跨机器放牧与可进化的壳"></a>跨机器放牧与可进化的壳</h2><p>除了单机环境下的体验质变，Herdr 在多设备协同上的考量同样击中了一线开发者的痛点。</p>
+<p>很多人的实际开发环境往往不止一台电脑。主力轻薄本负责日常编写，办公桌下的高配工作站负责跑重型编译，云端的高性能服务器负责挂载大模型推理。</p>
+<p>在传统的模式下，你需要在不同的 SSH 客户端之间来回倒腾，密钥和会话割裂成一个个信息孤岛。</p>
+<p>而在 Herdr 的界面左下角，有一个极其低调却威力巨大的入口：添加机器。</p>
+<p>通过底层的安全加密通道，它可以把你分布在不同物理位置的多台服务器，毫无缝隙地缝合进同一张侧边栏视图中。</p>
+<p>无论是本机正在执行的前端热更新，还是机房服务器里正在跑的大模型训练，全都平铺在统一的收件箱里。</p>
+<p>甚至连 Herdr 本身这套界面，都被做成了可以由智能体自己动手修改的可进化架构。</p>
+<p>如果你希望定制侧边栏或增加监控面板，完全可以让智能体直接读写本地配置脚本，把工具界面捏成最贴合个人习惯的形状。</p>
+<p>从最早把大模型当成搜索框式的聊天对话，到后来把它塞进编辑器侧边栏当补全插件，再到今天一人放牧多支自主 Agent，我们使用 AI 的姿态正在经历一场不可逆转的重塑。</p>
+<p>真正的生产力爆发，从来不只是底层模型多了几千亿参数。</p>
+<p>它更需要像 Herdr 这样踏踏实实踩在泥土里、把每一个工程断点都细心接上的趁手家伙。</p>
+<p>当你也能在一台电脑前从容不迫地调度起属于自己的数字工兵小队时，你会发现，未来的工作流，早就已经提前照进现实了。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7/" rel="tag"># 开发者工具</a>
+              <a href="/tags/%E7%BB%88%E7%AB%AF/" rel="tag"># 终端</a>
+              <a href="/tags/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/" rel="tag"># 软件工程</a>
+              <a href="/tags/AI%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># AI智能体</a>
+              <a href="/tags/Herdr/" rel="tag"># Herdr</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/25/202611251358/" rel="prev" title="只给一句拿Shell：AI 智能体 11 分钟打穿 0-day">
+                  <i class="fa fa-angle-left"></i> 只给一句拿Shell：AI 智能体 11 分钟打穿 0-day
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:45</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

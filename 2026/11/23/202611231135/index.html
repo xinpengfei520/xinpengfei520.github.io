@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="拆解卡兹克御三家调度流水线：Claude居中指挥兼顾审美与验收，Gemini当军师与交互顾问，GPT啃算法硬骨头与上线代码审查。结合飞飞本地自动化实践，提炼多模型协作的3条工程落地法则。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="卡兹克把 Claude、GPT、Gemini 编成三人小队：别再迷信单模型神话，多模型协同调度怎么在本地落地">
+<meta property="og:url" content="https://www.vance.xin/2026/11/23/202611231135/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="拆解卡兹克御三家调度流水线：Claude居中指挥兼顾审美与验收，Gemini当军师与交互顾问，GPT啃算法硬骨头与上线代码审查。结合飞飞本地自动化实践，提炼多模型协作的3条工程落地法则。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261124-202611231135-multi-model-pipeline.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/20261124-202611231135-multi-agent-diagram.webp">
+<meta property="article:published_time" content="2026-11-23T11:35:00.000Z">
+<meta property="article:modified_time" content="2026-11-23T11:35:00.000Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="智能体">
+<meta property="article:tag" content="架构">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261124-202611231135-multi-model-pipeline.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/23/202611231135/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/23/202611231135/","path":"2026/11/23/202611231135/","title":"卡兹克把 Claude、GPT、Gemini 编成三人小队：别再迷信单模型神话，多模型协同调度怎么在本地落地"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>卡兹克把 Claude、GPT、Gemini 编成三人小队：别再迷信单模型神话，多模型协同调度怎么在本地落地 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "卡兹克把 Claude、GPT、Gemini 编成三人小队：别再迷信单模型神话，多模型协同调度怎么在本地落地",
+  "url": "https://www.vance.xin/2026/11/23/202611231135/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/23/202611231135/",
+  "datePublished": "2026-11-23T11:35:00.000Z",
+  "dateModified": "2026-11-23T11:35:00.000Z",
+  "description": "拆解卡兹克御三家调度流水线：Claude居中指挥兼顾审美与验收，Gemini当军师与交互顾问，GPT啃算法硬骨头与上线代码审查。结合飞飞本地自动化实践，提炼多模型协作的3条工程落地法则。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%B7%E4%BF%A1%E5%8D%95%E4%B8%80%E6%A8%A1%E5%9E%8B%E7%9A%84%E4%BB%A3%E4%BB%B7"><span class="nav-text">迷信单一模型的代价</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%B8%E9%80%8F%E4%B8%89%E5%AE%B6%E6%A8%A1%E5%9E%8B%E7%9A%84%E8%84%BE%E6%B0%94"><span class="nav-text">摸透三家模型的脾气</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A9%E8%B0%81%E7%AB%99%E4%B8%AD%E9%97%B4%E8%B4%9F%E8%B4%A3%E7%BB%9F%E7%AD%B9"><span class="nav-text">让谁站中间负责统筹</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%9B%E5%B8%88%E4%B8%8E%E6%8A%80%E6%9C%AF%E7%89%B9%E5%B7%A5%E5%88%86%E5%B7%A5"><span class="nav-text">军师与技术特工分工</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E7%BA%BF%E5%89%8D%E8%AE%BE%E8%87%AA%E5%8A%A8%E5%8C%96%E9%97%B8%E9%97%A8"><span class="nav-text">上线前设自动化闸门</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A%E8%B8%A9%E5%9D%91%E6%B2%89%E6%B7%80%E8%BF%9B%E4%BB%A3%E7%A0%81%E5%BA%93"><span class="nav-text">把踩坑沉淀进代码库</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">656</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1064</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/23/202611231135/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="卡兹克把 Claude、GPT、Gemini 编成三人小队：别再迷信单模型神话，多模型协同调度怎么在本地落地 | 飞飞的AI实验室">
+      <meta itemprop="description" content="拆解卡兹克御三家调度流水线：Claude居中指挥兼顾审美与验收，Gemini当军师与交互顾问，GPT啃算法硬骨头与上线代码审查。结合飞飞本地自动化实践，提炼多模型协作的3条工程落地法则。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          卡兹克把 Claude、GPT、Gemini 编成三人小队：别再迷信单模型神话，多模型协同调度怎么在本地落地
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-23 11:35:00" itemprop="dateCreated datePublished" datetime="2026-11-23T11:35:00+00:00">2026-11-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">拆解卡兹克御三家调度流水线：Claude居中指挥兼顾审美与验收，Gemini当军师与交互顾问，GPT啃算法硬骨头与上线代码审查。结合飞飞本地自动化实践，提炼多模型协作的3条工程落地法则。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261124-202611231135-multi-model-pipeline.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>每当行业里有新模型发布，社交媒体上总会掀起一阵“版本答案”的热潮。有人说某某模型一出，之前的全部被淘汰；也有人觉得只要把最顶级的模型接入系统，所有的代码和业务就能自动跑通。</p>
+<p>但只要你真在本地搭过自动化流水线，或者让智能体处理过超过半小时的真实工程任务，就会发现这种“单模型神话”在现实里碎得极快。</p>
+<p>前几天卡兹克公开分享了他自己调度 Claude、GPT 和 Gemini 御三家的实操经验。文章发出来后很多人深有共鸣。因为大家在日常实践里都碰到了同一堵墙：根本不存在全知全能的完美模型。单一模型不仅会有能力短板，还会陷入自我论证的盲区。</p>
+<p>本质上，如何让几个顶级模型协作分工，早已超出了单纯的技术评测，本质是一门组织管理学。</p>
+<h2 id="迷信单一模型的代价"><a href="#迷信单一模型的代价" class="headerlink" title="迷信单一模型的代价"></a>迷信单一模型的代价</h2><p>在软件工程里，最危险的设计就是单点依赖。在大模型时代，单模型依赖同样会带来惨痛的代价。</p>
+<p>我们在日常写代码或者排查线上问题时，经常会遇到一种情况：把一段逻辑有漏洞的代码扔给同一个模型让它自查，它往往能洋洋洒洒列出一大堆赞美或者微调建议，却对核心的边界条件视而不见。这就是典型的“自洽盲区”。模型生成了代码，上下文里就带有了它自己的推导倾向，后续的自审几乎就是顺着原来的思路滑下去。</p>
+<p>不仅是自审会瞎，不同厂商的模型性格与底层设计也截然不同。</p>
+<p>如果你把整个复杂的工程项目完全绑在一个模型上，要么会为它的严谨度付出沟通成本，要么会为它的灵动付出隐形 Bug 的代价。当任务复杂度上升到多模块协同、界面交互设计以及底层数据库设计时，单一模型的局限就会被成倍放大。</p>
+<h2 id="摸透三家模型的脾气"><a href="#摸透三家模型的脾气" class="headerlink" title="摸透三家模型的脾气"></a>摸透三家模型的脾气</h2><p>要管好一个多模型团队，底线是先摸清楚每个成员的特长与脾气。</p>
+<p>卡兹克把当前的御三家模型特质总结得很精准，这与我们在日常自动化流水线里的体会几乎完全吻合。</p>
+<p>Gemini 4 Neon 最大的优势在于极佳的可沟通性与情绪价值。它说话让人读起来极其顺畅，脑子极活，擅长发散思维做头脑风暴，产品文案和灵感策划很强。但它的致命弱点是粗心，幻觉概率在三家里相对偏高，稍不留神就会像一个顺从的下属一样给你自信满满地编造结论。</p>
+<p>Claude 则是综合能力最均衡的业务主管。它的视觉审美在当下处于第一梯队，前端代码、动效设计能做到开箱即用。配合 Claude Code 这套命令行工具链，调用外部能力与文件操作极度丝滑。但它的短板是偶尔不够严谨，容易漏掉个别边界改动，且常常伴随严格的限额风控。</p>
+<p>GPT 尤其是最新的 6.2 系列，则是一位典型的“硬核技术极客”。它的情商极低，吐出来的汇报信息密度极大但可读性极差，几乎没有任何审美追求，你给它一个错的假设它也会照单全收。但只要目标明确、接口锁死，它在写复杂算法、排查深层 Bug、做安全审计以及操控浏览器时，执行力与细致程度无可挑剔。</p>
+<p>一个点子最多但粗心，一个审美最好且统筹能力强，一个最沉闷但啃硬骨头最稳。这恰恰就是一个互补的工程协作小组。</p>
+<p><img src="https://image.vance.xin/aigc/20261124-202611231135-multi-agent-diagram.webp" alt="流程图:三模型协同调度流水线"></p>
+<h2 id="让谁站中间负责统筹"><a href="#让谁站中间负责统筹" class="headerlink" title="让谁站中间负责统筹"></a>让谁站中间负责统筹</h2><p>既然要把三个模型串联起来，最核心的决策是：谁来当这个总调度中心？</p>
+<p>很多人第一反应是选沟通最舒服的 Gemini，但这在工程实践里往往会翻车。站中间的总指挥不仅要陪人类聊天，更要负责去查代码、跑测试、拆解任务以及验收其他模型提交的产物。中间人必须具备强大的工程控制力与相对靠谱的判断力。如果让粗心的模型当主控，整个项目就会在执行层面漏洞百出。</p>
+<p>选 GPT 站中间，人类跟它的沟通成本又会高到令人抓狂。</p>
+<p>因此，综合审美、工具调用能力和执行严谨度，让 Claude 居中统筹是目前最稳的方案。人类只需要对齐 Claude，表达原始诉求并负责关键节点的拍板。</p>
+<p>遇到复杂的大架构或系统级重构时，主控 Claude 不会单方面下结论，而是先用后台脚本派发给 Gemini，让 Gemini 在完全不知道 Claude 倾向的前提下，独立出一份架构案。两份方案并行产出，再由 Claude 对照吸收，往往能挖掘出很多单模型根本想不到的盲区。</p>
+<h2 id="军师与技术特工分工"><a href="#军师与技术特工分工" class="headerlink" title="军师与技术特工分工"></a>军师与技术特工分工</h2><p>方案敲定进入执行环节后，协同流水线的精细分工开始显现。</p>
+<p>前端界面和交互视觉，自然由 Claude 亲自操刀。但程序员出身的模型写文案容易犯两个毛病：要么满纸技术术语不讲人话，要么堆砌过多的解释性长句。这时候，Gemini 会被接入充当“体验顾问”，专门优化文案和交互提示，把生硬的系统说明改成符合直觉的操作引导。</p>
+<p>到了后端逻辑、算法处理以及独立的数据模块，分工则立刻转向 GPT。</p>
+<p>这中间有一个极为关键的工程原则：只把接口已经定死、与界面解耦的独立模块交给 GPT。给它明确的输入输出规格、测试验收标准，让它在后台默默啃硬骨头。写完之后，代码交回给 Claude 做集成与测试。</p>
+<p>这样一来，需要审美的部分由 Claude 负责，需要灵性文案的部分由 Gemini 润色，需要极致严谨与复杂逻辑的部分由 GPT 交付。每个人都在自己最擅长的舒适区里干活。</p>
+<h2 id="上线前设自动化闸门"><a href="#上线前设自动化闸门" class="headerlink" title="上线前设自动化闸门"></a>上线前设自动化闸门</h2><p>光有分工还不够，多模型协同流水线必须配备独立的代码审查环节。</p>
+<p>在所有改动合并并进入构建上线之前，卡兹克将 GPT-6.2 Sol 设为最后一道守门员。因为不管是 Claude 还是 Gemini，在面对大段代码时都有可能疏忽漏判，必须由最挑剔、最严谨的 GPT 进行交叉检查。</p>
+<p>但这里的工程教训也非常深刻：审查规则不能无限度严苛。如果放任模型进行无节制的深度审查，可能会出现连续几轮退回、甚至在微小偶发异常上死磕的情况。</p>
+<p>针对这种问题，成熟的工程做法是对审查分级：<br>只有可能导致算错账、丢数据、越权访问、对外发错消息或引发严重发布故障的硬伤，才触发阻断。其余的微小风格和优化项，仅作为建议记录下来。同时设置审查轮数上限，一旦达到上限仍有分歧，立即把决定权交回人类拍板。</p>
+<p>这样既能防范重大安全事故，又避免了自动化流水线陷入无限扯皮的死循环。</p>
+<h2 id="把踩坑沉淀进代码库"><a href="#把踩坑沉淀进代码库" class="headerlink" title="把踩坑沉淀进代码库"></a>把踩坑沉淀进代码库</h2><p>整套多模型协同机制里，还有一个极关键的闭环习惯：把模型的错误直接翻译成测试代码。</p>
+<p>很多人在指导大模型干活时，习惯在提示词文件里疯狂堆砌文字规则。今天犯了一个错，就加一句“务必注意不能怎样”；明天犯了另一个错，又加一句“切记如何如何”。久而久之，系统提示词变得臃肿不堪，模型读起来负担极重，后面更是该漏的还是漏。</p>
+<p>真正的工程化思路是：只要审查退回了一条问题，或者人类纠正了一次错误，第一反应别停在改提示词上，先看能不能写一个类型检查、单测或者静态扫描脚本。</p>
+<p>只要能用脚本和测试硬拦住的，就直接做成拦截逻辑。如果能通过修改目录结构或接口定义让错误写法根本写不出来，就去重构接口。只有那些实在无法机械判断的问题，才写成精简的文字规则。一旦后面补上了对应的自动化检查，再把冗余的文字规则从规则库里彻底清掉。</p>
+<p>别再迷信单一模型的全知全能了。摸清每个模型的长处和脾气，用严格的接口把它们编进流水线，再用硬核的测试脚本守住底线。这才是大模型真正在生产环境落地的现实路径。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" rel="tag"># 大模型</a>
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># 智能体</a>
+              <a href="/tags/%E6%9E%B6%E6%9E%84/" rel="tag"># 架构</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/22/202611222115/" rel="prev" title="Together AI通报提示词泄露：编码Agent提交凭证惹大祸">
+                  <i class="fa fa-angle-left"></i> Together AI通报提示词泄露：编码Agent提交凭证惹大祸
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/23/202611231451/" rel="next" title="Claude 独立打破 30 年算法上限：3SUM 与最短路径到底被推翻了什么？">
+                  Claude 独立打破 30 年算法上限：3SUM 与最短路径到底被推翻了什么？ <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:45</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

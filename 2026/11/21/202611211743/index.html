@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Inkling 2 Mini用26.4B总参约20GB体积跑进32GB内存的Mac，靠原生4bit与循环层把24层权重跑出48层计算，存储买深度时间付账；官方自认中文输出生硬、agent可能不确认就删文件，本地分界线暂不动。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="26B跑进32GB的Mac，靠的是同一批层跑三遍">
+<meta property="og:url" content="https://www.vance.xin/2026/11/21/202611211743/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Inkling 2 Mini用26.4B总参约20GB体积跑进32GB内存的Mac，靠原生4bit与循环层把24层权重跑出48层计算，存储买深度时间付账；官方自认中文输出生硬、agent可能不确认就删文件，本地分界线暂不动。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261124-202611211743.webp">
+<meta property="og:image" content="https://image.vance.xin/aigc/20261124-202611211743-diagram.webp">
+<meta property="article:published_time" content="2026-11-21T17:43:00.000Z">
+<meta property="article:modified_time" content="2026-11-25T07:21:56.138Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Ollama">
+<meta property="article:tag" content="本地模型">
+<meta property="article:tag" content="MoE">
+<meta property="article:tag" content="Inkling">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261124-202611211743.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/21/202611211743/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/21/202611211743/","path":"2026/11/21/202611211743/","title":"26B跑进32GB的Mac，靠的是同一批层跑三遍"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>26B跑进32GB的Mac，靠的是同一批层跑三遍 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "26B跑进32GB的Mac，靠的是同一批层跑三遍",
+  "url": "https://www.vance.xin/2026/11/21/202611211743/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/21/202611211743/",
+  "datePublished": "2026-11-21T17:43:00.000Z",
+  "dateModified": "2026-11-25T07:21:56.138Z",
+  "description": "Inkling 2 Mini用26.4B总参约20GB体积跑进32GB内存的Mac，靠原生4bit与循环层把24层权重跑出48层计算，存储买深度时间付账；官方自认中文输出生硬、agent可能不确认就删文件，本地分界线暂不动。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E6%9C%88%E6%88%91%E8%B7%91%E4%B8%8D%E5%8A%A826B"><span class="nav-text">四月我跑不动26B</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#26B%E6%80%8E%E4%B9%88%E5%A1%9E%E8%BF%9B20GB"><span class="nav-text">26B怎么塞进20GB</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E8%87%AA%E5%B7%B1%E8%AE%A4%E7%9A%84%E7%9F%AD%E6%9D%BF"><span class="nav-text">官方自己认的短板</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%B6%E9%97%B4%E8%BF%99%E4%BB%BD%E8%B4%A6%E6%80%8E%E4%B9%88%E7%AE%97"><span class="nav-text">时间这份账怎么算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E7%95%8C%E7%BA%BF%E6%9A%82%E6%97%B6%E4%B8%8D%E5%8A%A8"><span class="nav-text">分界线暂时不动</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">656</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1064</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/21/202611211743/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="26B跑进32GB的Mac，靠的是同一批层跑三遍 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Inkling 2 Mini用26.4B总参约20GB体积跑进32GB内存的Mac，靠原生4bit与循环层把24层权重跑出48层计算，存储买深度时间付账；官方自认中文输出生硬、agent可能不确认就删文件，本地分界线暂不动。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          26B跑进32GB的Mac，靠的是同一批层跑三遍
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-21 17:43:00" itemprop="dateCreated datePublished" datetime="2026-11-21T17:43:00+00:00">2026-11-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-11-25 07:21:56" itemprop="dateModified" datetime="2026-11-25T07:21:56+00:00">2026-11-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Inkling 2 Mini用26.4B总参约20GB体积跑进32GB内存的Mac，靠原生4bit与循环层把24层权重跑出48层计算，存储买深度时间付账；官方自认中文输出生硬、agent可能不确认就删文件，本地分界线暂不动。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261124-202611211743.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>9 月 20 日我写过<a href="https://www.vance.xin/2026/09/20/202609202254/">阶跃那个 600B 的开源模型</a>，结尾留了一句话：看看这堵墙有没有松动的迹象。到时候成不成，我另写一篇交代。今天来交代：墙没松动，600B 级依旧搬不动。松动的是墙这边能买到的能力。</p>
+<p>你要是也用 Mac，也动过在本地跑大模型的念头，这条新闻就跟你有关。Thinking Machines 发布了 Inkling 2 Mini。26.4B 总参数，权重文件约 20GB，官方说 32GB 内存的 Mac 用 Ollama 就能跑。</p>
+<p>Apache 2.0 协议，1M 上下文，一次能吞百万 token 的料，一个中型代码仓库整个塞进去都装得下，还能读图。</p>
+<h2 id="四月我跑不动26B"><a href="#四月我跑不动26B" class="headerlink" title="四月我跑不动26B"></a>四月我跑不动26B</h2><p>4 月我想在我那台 MacBook Pro 上跑 gemma4 的 26B 版本，撑不住，退到 e4b，有效参数 4.5B。Ollama 接上 Claude Code，每秒 20 到 40 个 token。</p>
+<p>印象最深的坑是兜圈子。写输入校验那段，它突然停住。我等了 40 秒，它从头再输出一遍，全是已经写过的函数。上下文一长，小模型就容易找不到方向。我把上下文配到 32768，温度降到 0.8，它老实多了，但除不了根。后来把任务拆小，每次只让它做一件事，它稳定下来，写出一个约 60 行的计算器。</p>
+<p>还有一次在高铁上，我想用 Claude Code 处理点东西，没信号，直接废掉。我才意识到自己对云端有多依赖：它断了，工作也断了。本地模型的一个真实价值也就在这：它不会在你最需要的时候突然断网。速度上它确实吃亏，复杂任务容易卡壳，调试也麻烦，出了问题你分不清是模型能力不够，还是参数没配对。</p>
+<p>那篇结尾我画了条分界线：实验、学习、小任务给本地；需要真正写好代码的复杂任务，切云端。</p>
+<p>这次动笔前，我让 AI 查了下这台机器：M1 Pro，32GB 内存，恰好踩在 Inkling 官方最低门槛上。说清楚，我没跑过 Inkling。</p>
+<p>磁盘只剩 50GB，20GB 的权重文件一放，四成剩余空间就没了。Ollama 客户端偏旧，循环模型的本地运行时支持又刚出来，升级折腾一圈时间成本不低。这篇只谈官方和第三方口径。</p>
+<p>同样 26B 级，这次凭什么塞得进去？</p>
+<h2 id="26B怎么塞进20GB"><a href="#26B怎么塞进20GB" class="headerlink" title="26B怎么塞进20GB"></a>26B怎么塞进20GB</h2><p>能塞进去，是三层机制叠出来的。</p>
+<p><img src="https://image.vance.xin/aigc/20261124-202611211743-diagram.webp" alt="流程图:三层机制把26B塞进20GB"></p>
+<p><strong>MoE</strong> 是 9 月的旧话。26.4B 总参数，每个 token 只激活 3.4B。MoE 说人话就是模型里养着一堆专家，每次计算只叫醒几个。但稀疏省的是计算，存储一分不省。26.4B 是图书馆的全部馆藏，3.4B 是你一次借阅的量，借得少，书架照样得把整个馆藏放下。</p>
+<p><strong>原生 4bit</strong> 把存储压下来。常见权重用 16 位浮点数存，NVFP4 格式用 4 位存一个，体积直接缩到四分之一。关键是它打训练起就用 4bit，部署也是 4bit，没有训练完再压缩那道工序，也就没有事后压缩带来的精度损失。24 层里 20 层用 NVFP4，末 4 层用精度稍高的 MXFP8。约 20GB 的体积，是这一层挣来的。</p>
+<p><strong>循环 Transformer</strong> 是最有意思的一层。它只存 24 层权重，但首尾 12 层各跑一遍，中间 12 层每个 token 要跑 3 遍，加起来 48 次层计算。每 token 有效激活 5.4B，比规格表上那个 3.4B 高出一截。</p>
+<p>循环发生在推理的时候。接着图书馆的比方说：馆藏没变，同一批书被反复借阅，每本书翻三遍，读出来的理解就比翻一遍深。深度是跑出来的。</p>
+<p>存储买深度，时间付账。</p>
+<p>这招值不值？官方做过对比：一个不循环的模型，要追平它自主干活（agentic）的表现，得多花 140% 的推理算力。复用层是真能折价买到能力的。官方给的编码基准 SWE-bench Verified 成绩是 79.2%，编码这块确实进了第一梯队。</p>
+<p>循环这个想法本身也不新，2018 年就有 Universal Transformers 这篇论文，新的是把它训到能用的工程。</p>
+<h2 id="官方自己认的短板"><a href="#官方自己认的短板" class="headerlink" title="官方自己认的短板"></a>官方自己认的短板</h2><p>模型卡里把局限逐条列了出来，有两条，中文开发者首当其冲。</p>
+<p>中文输出措辞生硬，还会混杂语言。对天天用中文干活的人，这不算小瑕疵：输出要进文档、进注释、进给同事看的说明，每段都得人工再过一遍，省下的 API 钱又变成了校对时间。</p>
+<p>agent 场景里，它可能不经确认就删除或覆写文件，也可能陷入重复推理循环。官方自己给的建议是限 token、限轮数，再加沙箱。沙箱说白了就是一个隔离环境，它碰不到外面真实的文件。</p>
+<p>重复推理循环的危害也很实际：模型卡死在循环里的时候，token 在烧，轮数在涨，任务一步没动，没人盯着的话，可能空转很久才被发现。</p>
+<p>看到这条我想起 4 月 gemma4 兜圈子。不同的模型，不同的成因，症状却一样：你以为它在干活，它其实在原地打转。我那套拆任务的土办法，跟官方限轮数的建议算是撞上了。</p>
+<p>知识边界也认了。循环加的是推理，加不了知识。一项叫非幻觉率的测试，分越高越少胡说：它 63.4%，Qwen3.8-27B 71.4%。幻觉就是一本正经地胡说，官方承认它比大模型更爱自信地说错。给的补法是搜索和工具：知识不够，就让它在干活时现查，别指望权重里背下了所有答案。</p>
+<p>推理还关不掉。effort（思考力度）开到最低，它也要先想一遍。每个 token 烧的算力，比你看着 3.4B 激活参数猜的要高。</p>
+<h2 id="时间这份账怎么算"><a href="#时间这份账怎么算" class="headerlink" title="时间这份账怎么算"></a>时间这份账怎么算</h2><p>第三方评测机构 Artificial Analysis 给了一组 API 口径的数字。</p>
+<p>智能指数上 Inkling 2 Mini 平了 Qwen3.8-27B，但同分之下，它输出的 token 多 38%。</p>
+<p>每任务它 0.59 美元、9 分钟就干完，Qwen3.8-27B 要花 3.53 美元、38.2 分钟。别读成它更慢，钱和时间它都花得更少。</p>
+<p>时间换的是深度：同样的能力，不循环的架构要多付算力，前面那 140% 就是标价。</p>
+<p>这份账在云端是钱，到了你的本地机器上就变成等待。agent 任务一跑几十轮，每轮多吐一截 token，屏幕上光标闪的时间就拉长一截。官方那张速度图给的是理论上限，没给实测。最低门槛的机器上到底跑多快，眼下没人说得准，我也没法替它打包票。</p>
+<h2 id="分界线暂时不动"><a href="#分界线暂时不动" class="headerlink" title="分界线暂时不动"></a>分界线暂时不动</h2><p>先把它跟闭源的摆一起：GPT-6 Luna 在同一指数上拿 28 分，每任务 0.15 美元，更聪明也更便宜。Inkling 的赢面在开放权重、离线可用、能拿自己的数据接着训。这份自由，闭源 API 给不了。</p>
+<p>中文输出和 agent 可靠性这两条官方短板，都正对着我天天用中文指挥 AI 干活的日常。让它进仓库干活，不经确认删文件这个风险，我眼下不敢接。所以 4 月那条分界线，这次的判断是暂时不动。</p>
+<p>但墙的性质变了。4 月那堵墙叫跑不动，硬件直接关门；现在这堵墙叫知道代价，门开着，进不进是你自己算账。</p>
+<p>想试的人，我的建议是沙箱装好，轮数限住，中文输出自己验一遍再信。好在它的思考过程压缩过也读得懂，它怎么想的，你能盯着看。</p>
+<p>分界线什么时候会动？我在等两个信号：中文输出的口碑起来，agent 可靠性被第三方反复验过。这两条松一条，这条分界线就该重新算了。</p>
+<p>官方演示里，一台 M5 Pro 48GB 的 MacBook 开着飞行模式，离线搭出了一个飞行模拟器。飞机上没网也能干活，这件事从演示视频变成了可以下载到自己机器上的东西。</p>
+<p>9 月的伏笔今天兑现一半：600B 依旧搬不动，26B 级却把自主干活的编码能力带到了笔记本上。本地模型的下一步是复用层，不是砍参数。</p>
+<p>你的 Mac 内存多大？要是给这个 26B 一次机会，你打算让它在沙箱里先干哪件活？评论区聊聊。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/Ollama/" rel="tag"># Ollama</a>
+              <a href="/tags/%E6%9C%AC%E5%9C%B0%E6%A8%A1%E5%9E%8B/" rel="tag"># 本地模型</a>
+              <a href="/tags/MoE/" rel="tag"># MoE</a>
+              <a href="/tags/Inkling/" rel="tag"># Inkling</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/21/202611211508/" rel="prev" title="AI 批准的代码回滚率低了五倍：Runway 怎么给智能体装上安全兜底？">
+                  <i class="fa fa-angle-left"></i> AI 批准的代码回滚率低了五倍：Runway 怎么给智能体装上安全兜底？
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/22/202611222115/" rel="next" title="Together AI通报提示词泄露：编码Agent提交凭证惹大祸">
+                  Together AI通报提示词泄露：编码Agent提交凭证惹大祸 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:45</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

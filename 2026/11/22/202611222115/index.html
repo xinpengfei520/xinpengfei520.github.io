@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Together AI官方通报6至7月提示词泄露事件，根因是编码Agent在开源仓库误提交凭证代码。攻击者检索Prompt中密码时触发5个金丝雀令牌，供应链黑盒浮出水面。拆解越权机制与防泄密四道工程防线。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Together AI通报提示词泄露：编码Agent提交凭证惹大祸">
+<meta property="og:url" content="https://www.vance.xin/2026/11/22/202611222115/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Together AI官方通报6至7月提示词泄露事件，根因是编码Agent在开源仓库误提交凭证代码。攻击者检索Prompt中密码时触发5个金丝雀令牌，供应链黑盒浮出水面。拆解越权机制与防泄密四道工程防线。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261124-202611222115.webp">
+<meta property="article:published_time" content="2026-11-22T21:15:00.000Z">
+<meta property="article:modified_time" content="2026-11-25T07:21:56.138Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="Git">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Together AI">
+<meta property="article:tag" content="编码Agent">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261124-202611222115.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/22/202611222115/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/22/202611222115/","path":"2026/11/22/202611222115/","title":"Together AI通报提示词泄露：编码Agent提交凭证惹大祸"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Together AI通报提示词泄露：编码Agent提交凭证惹大祸 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Together AI通报提示词泄露：编码Agent提交凭证惹大祸",
+  "url": "https://www.vance.xin/2026/11/22/202611222115/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/22/202611222115/",
+  "datePublished": "2026-11-22T21:15:00.000Z",
+  "dateModified": "2026-11-25T07:21:56.138Z",
+  "description": "Together AI官方通报6至7月提示词泄露事件，根因是编码Agent在开源仓库误提交凭证代码。攻击者检索Prompt中密码时触发5个金丝雀令牌，供应链黑盒浮出水面。拆解越权机制与防泄密四道工程防线。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E6%AC%A1%E7%A6%BB%E8%B0%B1%E7%9A%84%E4%BB%A3%E7%A0%81%E6%8F%90%E4%BA%A4"><span class="nav-text">一次离谱的代码提交</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%91%E4%B8%9D%E9%9B%80%E8%B8%A9%E4%B8%AD%E4%BE%9B%E5%BA%94%E9%93%BE%E9%BB%91%E7%9B%92"><span class="nav-text">金丝雀踩中供应链黑盒</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%AB%E8%AE%A9Agent%E7%9B%B4%E8%BF%9EGit"><span class="nav-text">别让Agent直连Git</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E9%81%93%E9%98%B2%E7%BA%BF%E7%AE%A1%E4%BD%8FAgent"><span class="nav-text">四道防线管住Agent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B7%91%E5%BE%97%E5%BF%AB%E6%9B%B4%E8%A6%81%E5%81%9C%E5%BE%97%E4%BD%8F"><span class="nav-text">跑得快更要停得住</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">656</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1064</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/22/202611222115/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Together AI通报提示词泄露：编码Agent提交凭证惹大祸 | 飞飞的AI实验室">
+      <meta itemprop="description" content="Together AI官方通报6至7月提示词泄露事件，根因是编码Agent在开源仓库误提交凭证代码。攻击者检索Prompt中密码时触发5个金丝雀令牌，供应链黑盒浮出水面。拆解越权机制与防泄密四道工程防线。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Together AI通报提示词泄露：编码Agent提交凭证惹大祸
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-22 21:15:00" itemprop="dateCreated datePublished" datetime="2026-11-22T21:15:00+00:00">2026-11-22</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-11-25 07:21:56" itemprop="dateModified" datetime="2026-11-25T07:21:56+00:00">2026-11-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">Together AI官方通报6至7月提示词泄露事件，根因是编码Agent在开源仓库误提交凭证代码。攻击者检索Prompt中密码时触发5个金丝雀令牌，供应链黑盒浮出水面。拆解越权机制与防泄密四道工程防线。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261124-202611222115.webp" alt="cover"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你日常在用 AI 写代码，或者工作流里挂着编码智能体，昨天这条官方通报值得看一眼。</p>
+<p>大模型服务商 Together AI 发布通报：今年 6 月和 7 月，部分无服务器推理平台上的用户 Prompt 样本发生了外泄。</p>
+<p>这起泄密源头没有黑客攻破机房，也没有内鬼倒卖数据，是一个辅助开发的 AI 编码智能体在提交代码时犯了致命错误。</p>
+<p>它在往公开开源仓库提交代码时，顺手把包含私有访问权限的凭证密钥直接推了上去。</p>
+<h2 id="一次离谱的代码提交"><a href="#一次离谱的代码提交" class="headerlink" title="一次离谱的代码提交"></a>一次离谱的代码提交</h2><p>这件事的来龙去脉并不复杂，却透着自动化时代的黑色幽默。</p>
+<p>Together AI 官方维护着一个叫作 xorl 的开源项目。当时有工程师使用 AI 编码助手协助开发。在处理一段测试逻辑时，编码助手生成了修改，在缺乏有效隔离的情况下执行了代码提交与推送。</p>
+<p>不幸的是，这次提交的代码里硬编码了一个私有的 Hugging Face 访问令牌。</p>
+<p>更要命的是这个令牌背后的权限。这个私有仓库不是普通代码库，里面恰好存放了一批用于软件测试与验证的线上用户 Prompt 采样归档。</p>
+<p>虽然 Together AI 内部部署了自动化的敏感信息扫描工具，系统在短时间内捕获了这笔异常提交，安全团队也立刻回滚了代码并吊销令牌，但在公网环境下，不到 5 分钟的暴露窗口就已经足够致命。</p>
+<p>在这短短的窗口期里，外部扫描者顺着公开提交历史抓下了令牌，赶在失效前把私有仓库里保存的提示词归档打包下载到了本地。</p>
+<p>官方通报显示，这次泄露波及了平台调用合作方模型的用户请求，涉及 3 款具体模型：MiniMax M3、GLM-5.2 以及 Kimi K2.6，请求时间高度集中在 6 月 24 日、7 月 4 日、7 月 8 日和 7 月 14 日这 4 个特定日期。</p>
+<p>写代码的工具惹了祸，最终买单的却是调用 API 的普通用户。</p>
+<h2 id="金丝雀踩中供应链黑盒"><a href="#金丝雀踩中供应链黑盒" class="headerlink" title="金丝雀踩中供应链黑盒"></a>金丝雀踩中供应链黑盒</h2><p>黑客拿到一批别人发给大模型的提示词，到底图什么？</p>
+<p>在黑客眼里，Prompt 已经成了当代互联网含金量极高的新型暗网金矿。</p>
+<p>现在的开发者在调用大模型时，太喜欢把敏感信息往上下文里塞了。从数据库连接串、第三方服务密钥，到公司内部架构与未公开代码，大家习惯了把大模型当成全能同事，想到什么就发什么。</p>
+<p>下载了归档的攻击者深谙此道。拿到数据后，对方编写脚本在这批提示词里疯狂检索 API 密钥与账号密码，逐一发起联网测试，验证哪些还能用。</p>
+<p>戏剧性的一幕发生了。</p>
+<p>攻击者测试的凭证里，有 5 个关键访问密钥突然触发了安全警报。这 5 个密钥并不属于普通用户，它们是网络安全研究团队 Dragos 此前为了测试大模型供应链安全，故意埋设在测试请求里的金丝雀令牌。</p>
+<p>只要有人试图拿金丝雀令牌去认证，安全系统就会立刻收到警报，并精确记录下是谁、在什么时间、从哪个 IP 发起了请求。</p>
+<p>Dragos 埋下的这 5 只金丝雀被接连触发，彻底把这次隐秘的数据泄露拉到了聚光灯下。它不仅坐实了推理服务商端的提示词存储已经被外部窃取，更揭开了一个长期被忽视的供应链黑盒。</p>
+<p>你在前端调用大模型时，即便服务商在协议里承诺会保护隐私，但在模型调用链、中间件路由和系统测试的各个角落，你的提示词很可能正以明文形式，躺在某一台服务器的测试日志里。</p>
+<h2 id="别让Agent直连Git"><a href="#别让Agent直连Git" class="headerlink" title="别让Agent直连Git"></a>别让Agent直连Git</h2><p>聊完事故本身，我想聊聊一线开发者天天要面对的现实：为什么绝对不能放任 AI Agent 自由操作你的 Git？</p>
+<p>我自己天天用 Claude Code 与自研脚本流水线，太清楚这类工具干起活来有多爽，也太清楚它们在关键时刻有多瞎。</p>
+<p>很多工程师以为，在系统提示词里写上一句“请注意不要提交密码和密钥”，Agent 就会乖乖遵守。</p>
+<p>这完全是一厢情愿的错觉。</p>
+<p>大模型本质上是一个概率预测引擎，根本没有物理世界的安全边界意识。在它的世界里，一段 API Key、一个私钥字符串，和一段测试变量名没有任何区别，都是由高熵字符组成的 token 序列。</p>
+<p>当你在任务里要求它“跑通测试并提交代码”时，它的首要目标是完成指令。为了跑通测试，它会寻找最直接的路径。如果它在本地翻到了一个能用的测试凭证，就会毫不犹豫地写进代码里，直接推送到远端。</p>
+<p>这就是为什么在我的本地工作流规范里，有一条铁律：未经人工明确确认，Agent 绝对不允许擅自创建分支、擅自提交代码，更绝对不允许擅自执行推送。</p>
+<p>你可以让 Agent 帮你分析逻辑、重构函数、编写单测，但只要涉及到代码版本的最终写入与对外同步，必须有一道物理隔离网。</p>
+<p>把 Git 写入权限毫无保留地开放给 Agent，就等于把家里的防盗门钥匙交给了扫地机器人，你永远不知道它在清理垃圾时，会不会顺手把房产证推到门外的大街上。</p>
+<h2 id="四道防线管住Agent"><a href="#四道防线管住Agent" class="headerlink" title="四道防线管住Agent"></a>四道防线管住Agent</h2><p>既然 AI 编码的大趋势不可逆转，我们到底该怎么在享受效率的同时，保住工程底线？</p>
+<p>结合这起事故的教训和我平时的工程实践，我总结了四道必须在本地落地的防御网。</p>
+<p>第一道防线，是本地 Git 钩子的物理阻断。</p>
+<p>不要相信人的细心，更不要相信 AI 的自觉，只相信本地机器上的确定性脚本。在项目的 <code>.git/hooks/pre-commit</code> 阶段，必须挂上密钥扫描工具，比如 gitleaks 或者 secretlint。</p>
+<p>这些工具会在每次执行 <code>git commit</code> 的瞬间扫描暂存区。一旦发现高熵字符串、云厂商密钥或各种 Token，钩子脚本直接以非零状态码退出，当场打断提交。不管 Agent 下了多么坚决的指令，在本地物理钩子面前，它一步也推不出去。</p>
+<p>第二道防线，是凭证权限的最小化与短期化。</p>
+<p>很多团队为了省事，给开发环境配的都是拥有完全读写权限的管理员令牌，一用就是大半年不换。</p>
+<p>在 Agent 时代，这种习惯就是定时炸弹。提供给自动化工作流使用的凭证，必须遵循最小权限原则。需要只读的绝不给写入，需要拉取特定仓库的绝不开放组织级权限。尽量使用有时效限制的短期令牌，哪怕测试凭证走漏，攻击者拿到的也只是一张几小时后就会作废的废纸。</p>
+<p>第三道防线，是工作区与环境配置的硬隔离。</p>
+<p>任何涉及敏感凭证的文件，比如 <code>.env</code>、密钥证书以及本地配置文件，第一天建仓库就必须写进 <code>.gitignore</code>。</p>
+<p>不仅如此，引导 Agent 工作时应该尽量使用沙箱工作区或专用的变量模拟注入，不要把宿主机里的全局环境变量一股脑透传给 Agent 进程。当 Agent 看不见你的主密钥时，自然没有机会把它当作代码补丁推向公开网络。</p>
+<p>第四道防线，是服务商端的数据留存策略。</p>
+<p>回到这次事故的根源，如果服务商一开始就没有长期保留用户的测试提示词，后面的所有多米诺骨牌根本就不会倒下。</p>
+<p>这次通报之后，Together AI 宣布把零数据保留（Zero Data Retention）作为新账号的默认设置。我们在使用任何大模型 API 时，都要去后台控制台仔细翻一翻隐私与数据留存选项。能关掉日志记录的立刻关掉，能申请免留存通道的尽早申请。</p>
+<p>不把未脱敏的数据留在云端，才是斩断风险的最彻底方案。</p>
+<h2 id="跑得快更要停得住"><a href="#跑得快更要停得住" class="headerlink" title="跑得快更要停得住"></a>跑得快更要停得住</h2><p>AI 确实在以惊人的速度重塑软件工程的生产方式。以前要写三天的脚手架，现在 Agent 十几分钟就能搭出来；以前要排查很久的复杂逻辑，现在丢进对话框就能得到清晰的修改建议。</p>
+<p>可生产力的飞跃，往往伴随着破坏力的放大。</p>
+<p>在人工编码时代，一个疏忽写进代码里的密码，至少还要经过开发者的双眼看一遍提交记录。而在 Agent 全自动接管的今天，从发现代码到生成补丁再推送到公网，往往只需要短短几秒钟。</p>
+<p>越是拥有强大行动能力的工具，越需要确定性的刹车片。</p>
+<p>这次 Together AI 的事故，可以说是给整个行业打的一剂预防针。它清楚地告诉我们：在智能体大步流星向前走的路上，安全从来不是靠提示词堆出来的道德约束，而是靠一行行扎扎实实的拦截脚本、一道道严格把关的权限白名单拼出来的工程纪律。</p>
+<p>给你的 Agent 戴上安全带，今天就把它配好。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Git/" rel="tag"># Git</a>
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/%E5%AE%89%E5%85%A8/" rel="tag"># 安全</a>
+              <a href="/tags/Together-AI/" rel="tag"># Together AI</a>
+              <a href="/tags/%E7%BC%96%E7%A0%81Agent/" rel="tag"># 编码Agent</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/21/202611211743/" rel="prev" title="26B跑进32GB的Mac，靠的是同一批层跑三遍">
+                  <i class="fa fa-angle-left"></i> 26B跑进32GB的Mac，靠的是同一批层跑三遍
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/23/202611231135/" rel="next" title="卡兹克把 Claude、GPT、Gemini 编成三人小队：别再迷信单模型神话，多模型协同调度怎么在本地落地">
+                  卡兹克把 Claude、GPT、Gemini 编成三人小队：别再迷信单模型神话，多模型协同调度怎么在本地落地 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:45</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

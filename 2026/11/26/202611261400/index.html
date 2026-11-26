@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="面对 AI 智能体 11 分钟自主攻破 0-day 的现实，OpenAI 与思科联合开源 Linux 运行时 Shirudo。借助 eBPF 动态挂载防御盾牌，实现生产服务零停机热阻断。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI打穿0-day！OpenAI联手思科开源Shirudo热防">
+<meta property="og:url" content="https://www.vance.xin/2026/11/26/202611261400/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="面对 AI 智能体 11 分钟自主攻破 0-day 的现实，OpenAI 与思科联合开源 Linux 运行时 Shirudo。借助 eBPF 动态挂载防御盾牌，实现生产服务零停机热阻断。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261126-202611261400-shirudo-ebpf-cover.webp">
+<meta property="article:published_time" content="2026-11-26T14:00:00.000Z">
+<meta property="article:modified_time" content="2026-11-26T06:47:20.075Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="OpenAI">
+<meta property="article:tag" content="系统安全">
+<meta property="article:tag" content="智能体">
+<meta property="article:tag" content="Cisco">
+<meta property="article:tag" content="eBPF">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261126-202611261400-shirudo-ebpf-cover.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/26/202611261400/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/26/202611261400/","path":"2026/11/26/202611261400/","title":"AI打穿0-day！OpenAI联手思科开源Shirudo热防"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>AI打穿0-day！OpenAI联手思科开源Shirudo热防 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "AI打穿0-day！OpenAI联手思科开源Shirudo热防",
+  "url": "https://www.vance.xin/2026/11/26/202611261400/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/26/202611261400/",
+  "datePublished": "2026-11-26T14:00:00.000Z",
+  "dateModified": "2026-11-26T06:47:20.075Z",
+  "description": "面对 AI 智能体 11 分钟自主攻破 0-day 的现实，OpenAI 与思科联合开源 Linux 运行时 Shirudo。借助 eBPF 动态挂载防御盾牌，实现生产服务零停机热阻断。",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%99%BA%E8%83%BD%E4%BD%93%E8%BF%9B%E6%94%BB%E5%80%92%E9%80%BC%E9%98%B2%E5%AE%88%E9%9D%A9%E5%91%BD"><span class="nav-text">智能体进攻倒逼防守革命</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%B4%E5%91%BD%E4%B8%94%E6%BC%AB%E9%95%BF%E7%9A%84%E8%A1%A5%E4%B8%81%E7%9C%9F%E7%A9%BA%E6%9C%9F"><span class="nav-text">致命且漫长的补丁真空期</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A9%E5%86%85%E6%A0%B8%E7%94%9F%E9%95%BF%E5%87%BA%E5%8F%AF%E7%BC%96%E7%A8%8B%E6%8A%A4%E7%9B%BE"><span class="nav-text">让内核生长出可编程护盾</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%99%BA%E8%83%BD%E4%BD%93%E7%8E%B0%E5%9C%BA%E6%89%8B%E6%90%93%E5%BE%AE%E5%9E%8B%E8%BF%87%E6%BB%A4"><span class="nav-text">智能体现场手搓微型过滤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%BA%E5%99%A8%E5%AF%B9%E6%9C%BA%E5%99%A8%E7%9A%84%E6%94%BB%E9%98%B2%E7%BB%88%E5%B1%80"><span class="nav-text">机器对机器的攻防终局</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">661</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1068</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/26/202611261400/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="AI打穿0-day！OpenAI联手思科开源Shirudo热防 | 飞飞的AI实验室">
+      <meta itemprop="description" content="面对 AI 智能体 11 分钟自主攻破 0-day 的现实，OpenAI 与思科联合开源 Linux 运行时 Shirudo。借助 eBPF 动态挂载防御盾牌，实现生产服务零停机热阻断。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AI打穿0-day！OpenAI联手思科开源Shirudo热防
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2026-11-26 14:00:00 / 修改时间：06:47:20" itemprop="dateCreated datePublished" datetime="2026-11-26T14:00:00+00:00">2026-11-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF%E6%8E%A2%E7%B4%A2/" itemprop="url" rel="index"><span itemprop="name">技术探索</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+            <div class="post-description">面对 AI 智能体 11 分钟自主攻破 0-day 的现实，OpenAI 与思科联合开源 Linux 运行时 Shirudo。借助 eBPF 动态挂载防御盾牌，实现生产服务零停机热阻断。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261126-202611261400-shirudo-ebpf-cover.webp" alt="AI打穿0-day！OpenAI联手思科开源Shirudo热防"></p>
+<p>Hello，我是飞飞。</p>
+<p>昨天技术圈被一条消息狠狠震动了：亚马逊公开报告称，有黑客利用开源的多智能体框架，在短短十一分钟之内，全自主发现并打穿了一枚未知的零日漏洞。</p>
+<p>从端点探测、漏洞模式匹配、现场编写攻击载荷到提权拿到最高控制权，整个过程完全由一群 AI 智能体协同推平。</p>
+<p>很多做安全和运维的工程师看完报告后倒吸了一口凉气。</p>
+<p>如果你还以为网络攻防是双方技术专家坐在电脑前通宵博弈的围棋比赛，现实已经把规则撕了个粉碎。当进攻方的执行速度被 AI 压缩到了分钟级，留给防守方的旧防线已经彻底失效。</p>
+<p>但戏剧性的是，防守方的反击来得比想象中更快。</p>
+<p>就在今天，OpenAI 宣布与全球网络巨头思科联合开源了一套名为 Shirudo 的 Linux 安全运行时平台。这个名字取自日文里“盾牌”的发音。</p>
+<p>这套系统的核心使命只有一句话：既然 AI 可以在十一分钟内自主攻破系统，防守方就让 AI 智能体在内核里现场编写防御规则，在生产服务不重启、业务不中断的前提下，动态挂上抵御漏洞的微型护盾。</p>
+<p>这场发生在操作系统底层的攻防风暴，正在重塑我们对系统安全的所有常识。</p>
+<h2 id="智能体进攻倒逼防守革命"><a href="#智能体进攻倒逼防守革命" class="headerlink" title="智能体进攻倒逼防守革命"></a>智能体进攻倒逼防守革命</h2><p>要看懂 Shirudo 的分量，得先看清传统安全防御体系是怎么被智能体逼入绝境的。</p>
+<p>在过去很长一段时间里，安全界虽然天天喊着防守艰难，但大家潜意识里还默认一个规律：高价值的未知漏洞极其稀缺，挖掘漏洞往往需要顶尖白帽黑客花费数周乃至数月的人肉逆向分析。哪怕掌握了漏洞，写出稳定绕过内存防护的武器化代码也需要漫长周期。</p>
+<p>这套基于人类肉身极限的时间差，给了防守方足够的喘息空间。</p>
+<p>但多智能体流水线的出现，把这个时间差彻底打烂了。智能体不知疲倦，它可以把扫描器、模式库、逆向分析引擎和代码生成器串联成一条全自动输送带。遇到报错瞬间重试，遇到拦截毫秒级变换混淆参数。</p>
+<p>十一分钟，对于一家大中型企业的运维团队来说，可能连内部报警工单都还没流转到值班专员的手机上。等人类安全团队收到告警、调出日志、召集各部门开会排查的时候，智能体早就带着最高权限扬长而去。</p>
+<p>如果防御方继续依赖传统的排查、提工单、走灰度、打补丁的流程，在智能体的极速突防面前，无异于拿着大刀长矛去迎击超音速导弹。</p>
+<p>防守方的所有节奏，必须被彻底重构。</p>
+<h2 id="致命且漫长的补丁真空期"><a href="#致命且漫长的补丁真空期" class="headerlink" title="致命且漫长的补丁真空期"></a>致命且漫长的补丁真空期</h2><p>即便在第一时间确认了漏洞细节，真正的修复依然快不起来。在工业界，这道时间沟壑被称为补丁真空期。</p>
+<p>从一个严重安全漏洞被公开披露，到真正的官方修复代码在所有生产机器上完全跑稳，中间横亘着漫长而痛苦的工程阻碍。</p>
+<p>软件团队需要定位老代码的缺陷逻辑，写出不会破坏上层业务的补丁代码，紧接着必须把代码扔进自动化测试集里跑全量回归。对于成千上万台承载核心交易的服务器来说，整套流程动辄耗费数天甚至数周。</p>
+<p>更棘手的是业务连续性的硬约束。处于关键链条的支付系统、在线零售和高频通信服务，根本无法承受随意重启带来的业务中断。一旦为了紧急修补底层库而贸然重启网关进程，瞬时的流量跌落和状态重置，可能造成数以百万计的直接损失。</p>
+<p>一边是外部黑客智能体几分钟内就能完成的无差别渗透，另一边是内部业务对高可用、零中断的绝对诉求。传统的打补丁方案，在这一刻成了两头不讨好的死胡同。</p>
+<p>而 Shirudo 的诞生，正是为了在这道看似不可逾越的鸿沟上，强行架起一座能够承受极速冲击的安全桥梁。</p>
+<h2 id="让内核生长出可编程护盾"><a href="#让内核生长出可编程护盾" class="headerlink" title="让内核生长出可编程护盾"></a>让内核生长出可编程护盾</h2><p>面对庞大的既有业务代码，OpenAI 与思科把视线沉降到了 Linux 操作系统的最底层。</p>
+<p>Shirudo 的技术基石，来自于思科旗下的核心项目 Tetragon，以及现代 Linux 系统最强大的黑科技 eBPF。它允许开发者在不修改内核源码、不重新编译模块的前提下，向正在运行的操作系统内核中动态注入安全高效的沙盒字节码。</p>
+<p>Shirudo 正是把这套能力挖到了极致。</p>
+<p>它将一段段轻量级的微型过滤程序称为盾牌。当生产系统面临某种特定漏洞的威胁时，运维团队可以直接将对应的盾牌动态挂载到内核的系统调用链或网络传输路径上。无论是可疑的目录遍历尝试、格式异常的特殊数据包，还是试图调用敏感权限的子进程指令，当流量在内核层流动时，挂载在那里的盾牌就会以微秒级的硬件速度完成特征比对与精准截断。</p>
+<p>整个注入与生效过程完全是热插拔的。</p>
+<p>上层运行的业务进程完全不知道内核里多了这么一层防线，容器不需要重启，宿主机不需要关机，已建立的数十万个长连接不会发生丝毫抖动。它就像一位技术精湛的外科医生，在病人心脏照常跳动的同时，精准地给破损的血管套上了一枚微型支架。</p>
+<h2 id="智能体现场手搓微型过滤"><a href="#智能体现场手搓微型过滤" class="headerlink" title="智能体现场手搓微型过滤"></a>智能体现场手搓微型过滤</h2><p>但这里出现了一个全新的工程瓶颈：传统的 eBPF 程序写起来极其反人类。</p>
+<p>由于运行在内核空间，哪怕是一个极其细微的数组越界或逻辑疏漏，都可能直接触发内核崩溃，导致整台机器蓝屏宕机。面对每天瞬息万变的新型漏洞，人类专家的产出速度根本赶不上漏洞爆发的频次。</p>
+<p>这也正是 OpenAI 深度介入该项目的核心契机。</p>
+<p>在 Shirudo 的设计里，智能体被赋予了现场分析漏洞并动态生成内核盾牌的任务。</p>
+<p>当外部爆出一枚高危漏洞并给出利用特征时，防御方的智能体会迅速消化漏洞细节，直接以 C 语言形式编写出专属于该漏洞的微型 eBPF 过滤代码。</p>
+<p>智能体写完之后，并不会盲目推向生产。系统会在隔离沙箱里展开全方位的攻防对抗模拟：一方面用已知的利用载荷去攻击沙箱，验证这面盾牌能不能百分之百锁死攻击；另一方面把海量的正常业务流量灌进去，严格测试它会不会意外误拦截合法用户的请求。</p>
+<p>通过双向验证的盾牌，会被打上加密数字签名，呈递给人类安全工程师做最终的一键审批确认。系统在主板硬件级的可信平台模块中沉淀审计日志，任何盾牌的加载与卸载全被硬件永久固化。</p>
+<p>AI 生成微型代码，沙箱验证攻防效果，人类把守签署钥匙，硬件锁定行为审计。这套严丝合缝的协同机制，把原本需要数天乃至数周的防御响应周期，生生拽回到了分钟级的水平线。</p>
+<h2 id="机器对机器的攻防终局"><a href="#机器对机器的攻防终局" class="headerlink" title="机器对机器的攻防终局"></a>机器对机器的攻防终局</h2><p>站在今天这个时间节点回顾这场安全演进，一个无比清晰的趋势已经扑面而来：网络安全的战场，正在不可逆转地滑向机器对机器的全面自主对抗。</p>
+<p>过去我们总把 AI 当作效率外挂，双方依然由人类操作员占据绝对主导。</p>
+<p>但从 Cairn 自主打穿 0-day，到 Shirudo 借助智能体在内核里动态编织热防，这场博弈的底层规则变了。当智能体能够自主寻找漏洞并组装利用链时，任何包含人肉审批、多层流转、离线排查的防御机制，在时间维度上全成了单向透明的靶子。</p>
+<p>防守方唯一的生路，是用同样具备实时推理与代码生成能力的防守智能体，在系统最坚固的物理边界处构筑动态护栏。</p>
+<p>未来的系统安全脱离了静态防线与未知风险的零和博弈，转而全面考验双方智能体在端侧的推演速度、在沙箱里的差分验证精度，以及在操作系统底层动态缝合脆弱点的执行效率。</p>
+<p>对于每一位正在构建软件与维护系统的工程师来说，理解并接纳这种动态防御体系，将是我们在智能体时代必须跨越的关键一步。让系统学会以机器的速度自我愈合，才是抵御未知风暴最坚实的基石。</p>
+<hr>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://openai.com/index/introducing-shirudo">Introducing Shirudo: Runtime Security for the Agentic Era - OpenAI</a></li>
+<li><a target="_blank" rel="noopener" href="https://isovalent.com/blog/">Cisco Isovalent &amp; Tetragon eBPF Architecture - Isovalent Blog</a></li>
+<li><a target="_blank" rel="noopener" href="https://arstechnica.com/security/2026/11/amazon-says-hackers-ai-agents-found-and-exploited-0-day-with-little-human-input/">Automated 0-day Exploitation by AI Agents - Amazon Security</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+              <a href="/tags/%E7%B3%BB%E7%BB%9F%E5%AE%89%E5%85%A8/" rel="tag"># 系统安全</a>
+              <a href="/tags/%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># 智能体</a>
+              <a href="/tags/Cisco/" rel="tag"># Cisco</a>
+              <a href="/tags/eBPF/" rel="tag"># eBPF</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/26/202611261340/" rel="prev" title="Anthropic核心API迁至Rust：1800倍流量零停机">
+                  <i class="fa fa-angle-left"></i> Anthropic核心API迁至Rust：1800倍流量零停机
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/26/202611261420/" rel="next" title="造Claude的人怎么写代码？Anthropic平台总监揭秘">
+                  造Claude的人怎么写代码？Anthropic平台总监揭秘 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">31:58</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>

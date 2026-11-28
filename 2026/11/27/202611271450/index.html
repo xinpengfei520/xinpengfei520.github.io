@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.ico">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="baidu-site-verification" content="codeva-IO3kRW0gcA">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.vance.xin","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.27.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":null,"show_result":false},"fold":{"enable":false,"height":500},"language":false,"highlight_theme":"normal"},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Hello，我是飞飞。 如果你平时天天用 AI 帮自己写代码，你心里大概都有过一种深刻的无力感：哪怕大模型宣传得再神乎其神，只要项目的复杂度稍微上一上台阶，代码文件超过十几个，总代码量突破一千行，整个智能体就开始频频失忆、答非所问，甚至把前面刚刚调试通过的核心业务逻辑给直接改崩。 很多人因此得出一个消极的结论：现在的 AI 编码工具，撑死了也就是写写单文件脚本、改几个界面样式的辅助玩具，根本扛不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Karpathy用Claude写出文明地图：7小时4.5万行">
+<meta property="og:url" content="https://www.vance.xin/2026/11/27/202611271450/index.html">
+<meta property="og:site_name" content="飞飞的AI实验室">
+<meta property="og:description" content="Hello，我是飞飞。 如果你平时天天用 AI 帮自己写代码，你心里大概都有过一种深刻的无力感：哪怕大模型宣传得再神乎其神，只要项目的复杂度稍微上一上台阶，代码文件超过十几个，总代码量突破一千行，整个智能体就开始频频失忆、答非所问，甚至把前面刚刚调试通过的核心业务逻辑给直接改崩。 很多人因此得出一个消极的结论：现在的 AI 编码工具，撑死了也就是写写单文件脚本、改几个界面样式的辅助玩具，根本扛不">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://image.vance.xin/blog-cover/20261127-202611271450-karpathy-civ-map.webp">
+<meta property="article:published_time" content="2026-11-27T14:50:00.000Z">
+<meta property="article:modified_time" content="2026-11-28T12:16:13.986Z">
+<meta property="article:author" content="飞飞的AI实验室">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="软件工程">
+<meta property="article:tag" content="Claude">
+<meta property="article:tag" content="Karpathy">
+<meta property="article:tag" content="智能体">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://image.vance.xin/blog-cover/20261127-202611271450-karpathy-civ-map.webp">
+
+
+<link rel="canonical" href="https://www.vance.xin/2026/11/27/202611271450/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.vance.xin/2026/11/27/202611271450/","path":"2026/11/27/202611271450/","title":"Karpathy用Claude写出文明地图：7小时4.5万行"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Karpathy用Claude写出文明地图：7小时4.5万行 | 飞飞的AI实验室</title>
+  
+
+
+
+
+  <script>
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x598g93a33");
+</script>
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Karpathy用Claude写出文明地图：7小时4.5万行",
+  "url": "https://www.vance.xin/2026/11/27/202611271450/",
+  "mainEntityOfPage": "https://www.vance.xin/2026/11/27/202611271450/",
+  "datePublished": "2026-11-27T14:50:00.000Z",
+  "dateModified": "2026-11-28T12:16:13.986Z",
+  "inLanguage": "zh-CN",
+  "author": {
+    "@type": "Person",
+    "name": "Feifei",
+    "alternateName": "飞飞",
+    "url": "https://www.vance.xin/about/",
+    "sameAs": ["https://github.com/xinpengfei520"]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "飞飞的AI实验室",
+    "url": "https://www.vance.xin"
+  }
+}
+</script>
+
+
+<script>
+(function() {
+  try {
+    var stored = localStorage.getItem("cf_theme") || localStorage.getItem("theme");
+    var isDark = stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (isDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  } catch (e) {}
+})();
+</script>
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="飞飞的AI实验室" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">飞飞的AI实验室</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">用AI放大灵感，把想法变成作品。</p>
+      <img class="custom-logo-image" src="/images/app-logo.png" alt="飞飞的AI实验室">
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">飞飞的AI实验室</p>
+  <div class="site-description" itemprop="description">AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">668</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">1076</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xinpengfei520" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xinpengfei520" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:542270559@qq.com" title="E-Mail → mailto:542270559@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/xinpengfei521" title="CSDN → https:&#x2F;&#x2F;blog.csdn.net&#x2F;xinpengfei521" rel="noopener me" target="_blank"><i class="fa fa-heartbeat fa-fw"></i>CSDN</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://juejin.im/user/57c82d0779bc440063eac0f8/posts" title="掘金 → https:&#x2F;&#x2F;juejin.im&#x2F;user&#x2F;57c82d0779bc440063eac0f8&#x2F;posts" rel="noopener me" target="_blank"><i class="fa fa-crosshairs fa-fw"></i>掘金</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://open.weixin.qq.com/qr/code?username=VanceBigFly" title="公众号 → https:&#x2F;&#x2F;open.weixin.qq.com&#x2F;qr&#x2F;code?username&#x3D;VanceBigFly" rel="noopener me" target="_blank"><i class="fab fa-weixin fa-fw"></i>公众号</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/xin-peng-fei-9/activities" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;xin-peng-fei-9&#x2F;activities" rel="noopener me" target="_blank"><i class="fa fa-tablet fa-fw"></i>知乎</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/p/1005051783451275/home?from=page_100505&mod=TAB&is_all=1#place" title="微博 → https:&#x2F;&#x2F;weibo.com&#x2F;p&#x2F;1005051783451275&#x2F;home?from&#x3D;page_100505&amp;mod&#x3D;TAB&amp;is_all&#x3D;1#place" rel="noopener me" target="_blank"><i class="fab fa-weibo fa-fw"></i>微博</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/268aa8e1a12f" title="简书 → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;268aa8e1a12f" rel="noopener me" target="_blank"><i class="fa fa-desktop fa-fw"></i>简书</a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.vance.xin/2026/11/27/202611271450/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="飞飞的AI实验室">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="飞飞的AI实验室">
+      <meta itemprop="description" content="AI探索者｜程序员，在这里做AI实验，做项目、写故事、记录成长。">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Karpathy用Claude写出文明地图：7小时4.5万行 | 飞飞的AI实验室">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Karpathy用Claude写出文明地图：7小时4.5万行
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-11-27 14:50:00" itemprop="dateCreated datePublished" datetime="2026-11-27T14:50:00+00:00">2026-11-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2026-11-28 12:16:13" itemprop="dateModified" datetime="2026-11-28T12:16:13+00:00">2026-11-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI%E6%8E%A2%E7%B4%A2/" itemprop="url" rel="index"><span itemprop="name">AI探索</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI%E6%8E%A2%E7%B4%A2/%E5%B7%A5%E7%A8%8B%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">工程实践</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p><img src="https://image.vance.xin/blog-cover/20261127-202611271450-karpathy-civ-map.webp" alt="Karpathy用Claude写出文明地图：7小时4.5万行"></p>
+<p>Hello，我是飞飞。</p>
+<p>如果你平时天天用 AI 帮自己写代码，你心里大概都有过一种深刻的无力感：哪怕大模型宣传得再神乎其神，只要项目的复杂度稍微上一上台阶，代码文件超过十几个，总代码量突破一千行，整个智能体就开始频频失忆、答非所问，甚至把前面刚刚调试通过的核心业务逻辑给直接改崩。</p>
+<p>很多人因此得出一个消极的结论：现在的 AI 编码工具，撑死了也就是写写单文件脚本、改几个界面样式的辅助玩具，根本扛不起真正严肃且复杂的全栈大型工程。</p>
+<p>但就在刚刚过去的一天，前特斯拉 AI 总监、OpenAI 联合创始人 Andrej Karpathy 在社交平台上丢出了一个让全球技术圈目瞪口呆的硬核作品。</p>
+<p>他仅仅用了大约 7 个小时，在桌面上借助 Claude Code 桌面端和背后的 Opus 5.5 旗舰模型，从零搭出了一整套完全可交互的策略游戏地图系统：usaciv。</p>
+<p>整个项目的最终代码规模，整整达到了 45,000 行。</p>
+<p>更可怕的不是这四万多行代码的堆叠速度，而是这套系统底层吞吐的数据体量与规则复杂度。</p>
+<p>Karpathy 让智能体一口气下载、清洗并对齐了来自美国人口普查局、经济分析局、劳工统计局、国家海洋气象局以及地质调查局等 31 个截然不同、格式千奇百怪的官方公开数据源。</p>
+<p>大模型把全美几千个县的庞杂信息全部解析出来，并极其巧妙地统一映射到了一个均匀分布的 25 公里六边形地理网格之中。</p>
+<p>每一个六边形地块，都被赋予了经典 4X 策略游戏《文明》的底层运转机制。</p>
+<p>各地区的真实 GDP 产出，被自动折算成了地块的金币收益；人口普查中的劳动力职业分布，被精准转化为了城市居民的工种构成，比如硅谷圣何塞的地块上，挤满了密密麻麻的程序员与科研人员；而不同城市的优势产业，则直接生成了专属的功能特区，底特律变成了汽车重工区，西雅图与湾区则拔地而起一座座科技园区。</p>
+<p>甚至连游戏里的世界奇观，都是靠算法根据真实数据自动判定的：年度游客量排名前列的黄石与大峡谷变成了自然奇观，全美研发经费开销最大的斯坦福与麻省理工则被封为了学术奇观。</p>
+<p>系统甚至还配套开发了 19 个可自由切换的数据透视镜头、覆盖 500 多个大都市的精细化视图，以及联动全美 3100 多个县级行政区的散点分析图和策略顾问面板。</p>
+<p>整个页面现在已经直接部署上线，任何人在浏览器里打开，都能丝滑地在三维网格上指点江山。</p>
+<p>看到这里，每一个写过几年代码的程序员，恐怕都会倒吸一口凉气。</p>
+<p>在传统的软件开发模式里，这样一套涵盖 31 个异构数据源抓取清洗、空间地理计算转换、游戏状态机映射以及复杂前端三维交互的大型可视化系统，哪怕交给一个配置齐全的十人工程小团队，从需求评审、接口对齐到架构联调，少说也得扎扎实实折腾两三个月。</p>
+<p>为什么到了 Karpathy 手里，一个下午的功夫就被一个人搞定了？</p>
+<p>我们平时用智能体写代码，往往写到五百行就开始上下文漂移、到处报错，Karpathy 到底施了什么魔法，才能让 Claude Code 连轴转了整整 7 个小时，精准交付了 4.5 万行毫无逻辑硬伤的代码？</p>
+<p>如果你深入去拆解他的工程实现，就会发现这场奇迹背后最值钱的，从来不是模型本身的算力，而是人类架构师对于复杂现实的工程抽象能力。</p>
+<p>很多开发者在指挥 AI 编程时，最常犯的错误就是把一团毫无结构、乱如麻绳的现实业务，直接一股脑倒进对话框里，寄希望于大模型能凭借玄学般的灵光一现替自己把架构理顺。</p>
+<p>但 Karpathy 极具大师风范地做了一件最核心的事：他在工程最初期，就给整个混乱的世界立起了一堵无比清晰的承重墙。</p>
+<p>那堵承重墙，就是那个空间分辨率恒定为 25 公里的六边形网格。</p>
+<p>真实世界是极其混沌而离散的：人口普查是按行政县划分的，经济数据是按大都市圈统计的，气象灾害是按经纬度多边形覆盖的，交通航线则是按点对点网络延伸的。如果让 AI 试图在一个连续的地理坐标系下去做无边界的几何融合，没有任何模型能抗住那种天文数字级别的计算开销与上下文膨胀。</p>
+<p>但只要把全美强行切成一块块 25 公里的六边形砖头，所有的异构数据立刻就有了统一的落脚点。</p>
+<p>人口塞进砖头，GDP 分摊进砖头，气象数据打在砖头上。</p>
+<p>人类用极高的系统品味定义出了最简洁的离散化规则与数据骨架，而把剩下那 99% 最枯燥、最耗时、最反人类的各部门格式清洗、接口字段转换与界面渲染胶水，完完全全放权给了智能体。</p>
+<p>不仅如此，Karpathy 在使用 Claude Code 时展现出的工具驾驭模式，也彻底颠覆了传统的行内补全思路。</p>
+<p>过去我们习惯在 IDE 里依赖补全插件，人眼盯着屏幕逐行敲击回车，每写几行就要停下来肉眼校对一次。但在 4.5 万行代码的体量面前，人工逐行阅读不仅毫无效率，更会成为生产力的最大瓶颈。</p>
+<p>在 Karpathy 的开发流里，智能体实际上是在一个具备自愈能力的终端环境中自主闭环：抓取数据失败时自动重试，解析格式异常时动态降级，类型检查报错时自动修改 AST 抽象语法树。</p>
+<p>人类工程师不再扮演校对员，而是变成了定义验收标准与运行护栏的裁判。</p>
+<p>这就是真正的超级个体在当下的工作姿态。</p>
+<p>过去我们总觉得，工程师的护城河在于掌握了某种晦涩的语法，在于能手写出多么精妙的双指针算法，或者在于记住了多少套复杂的框架配置。</p>
+<p>可当一个顶级模型能够在 7 小时内毫无怨言地吞下 31 个部门的格式文档，并在几分钟内吐出上千行完美对齐的代码时，那些靠死记硬背建立起来的技能壁垒，瞬间被冲刷得一干二净。</p>
+<p>未来真正拉开人与人之间鸿沟的，不再是你敲键盘的手速，而是你的系统建模直觉。</p>
+<p>你能不能像 Karpathy 那样，一眼看穿纷繁复杂的数据迷雾，用一个看似简单的数学网格，把一个庞大混沌的现实问题切割成可以被智能体并行求解的标准状态机？</p>
+<p>工具的狂飙已经彻底打破了人力规模的旧神话，那个由极少数兼具深厚业务理解与极简抽象能力的架构师，统领成千上万个智能体在几个小时内再造软件工业的时代，已经在我们眼前拉开了大幕。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/qrcode_wechat_public_account.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/AI%E7%BC%96%E7%A8%8B/" rel="tag"># AI编程</a>
+              <a href="/tags/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/" rel="tag"># 软件工程</a>
+              <a href="/tags/Claude/" rel="tag"># Claude</a>
+              <a href="/tags/Karpathy/" rel="tag"># Karpathy</a>
+              <a href="/tags/%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># 智能体</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2026/11/27/202611271340/" rel="prev" title="实测支付宝SkillPay：买断还是沙盒订阅？">
+                  <i class="fa fa-angle-left"></i> 实测支付宝SkillPay：买断还是沙盒订阅？
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/11/27/202611271500/" rel="next" title="Skills与CLI横行，DeepMind负责人为何力挺MCP？">
+                  Skills与CLI横行，DeepMind负责人为何力挺MCP？ <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">沪ICP备2022014461号-1 </a>
+      <img src="/images/beian.png" alt=""><a href="https://beian.mps.gov.cn/#/query/webSearch?code=61032202000124" rel="noopener" target="_blank">陕公网安备 61032202000124号 </a>
+  </div>
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">飞飞的AI实验室</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:14</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+<script>
+(function() {
+  // 1. 深浅色切换逻辑与 Live2D 小狗交互
+  function initLive2DTheme() {
+    function getTheme() {
+      var current = document.documentElement.getAttribute('data-theme');
+      if (current) return current;
+      var stored = localStorage.getItem('theme');
+      if (stored) return stored;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('theme', theme);
+        localStorage.setItem('cf_theme', theme);
+      } catch (e) {}
+    }
+
+    function showThemeToast(msg) {
+      // 移除已有的 toast 避免重叠
+      var oldToast = document.querySelector('.live2d-theme-toast');
+      if (oldToast) oldToast.remove();
+
+      var toast = document.createElement('div');
+      toast.className = 'live2d-theme-toast';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+
+      setTimeout(function() {
+        if (toast && toast.parentNode) {
+          toast.remove();
+        }
+      }, 1600);
+    }
+
+    function bindLive2DClick() {
+      var widget = document.getElementById('live2d-widget');
+      var canvas = document.getElementById('live2dcanvas');
+      var target = widget || canvas;
+
+      if (!target || target._themeBound) return false;
+
+      target._themeBound = true;
+      target.style.cursor = 'pointer';
+      target.title = '点击我切换深色/浅色模式';
+
+      target.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var current = getTheme();
+        var nextTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+
+        // 飘字提示
+        var tip = nextTheme === 'dark' ? '天黑了～' : '天亮了～';
+        showThemeToast(tip);
+
+        // 小狗轻微弹跳反馈动效
+        target.classList.add('live2d-bouncing');
+        setTimeout(function() {
+          target.classList.remove('live2d-bouncing');
+        }, 300);
+      });
+
+      return true;
+    }
+
+    // Live2D 可能是异步加载出来的，尝试多次绑定
+    var attempts = 0;
+    var timer = setInterval(function() {
+      attempts++;
+      if (bindLive2DClick() || attempts > 30) {
+        clearInterval(timer);
+      }
+    }, 400);
+
+    // 监听系统偏好变化
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored = localStorage.getItem('theme');
+      if (!stored) {
+        setTheme(e.matches ? 'dark' : 'light');
+      }
+    });
+  }
+
+  // 2. 首页文章整卡点击跳转优化
+  function initPostCardClick() {
+    var cards = document.querySelectorAll('.posts-expand .post-block');
+    cards.forEach(function(card) {
+      var titleLink = card.querySelector('.post-title-link');
+      if (!titleLink) return;
+
+      // 只有包含 post-button 的才是列表卡片
+      if (!card.querySelector('.post-button')) return;
+
+      card.classList.add('post-card-clickable');
+      card.addEventListener('click', function(e) {
+        // 如果点击的是卡片内部的具体子链接（如标签、分类），允许正常跳转该分类，不拦截
+        var clickedLink = e.target.closest('a');
+        if (clickedLink && clickedLink !== titleLink && !clickedLink.classList.contains('btn')) {
+          return;
+        }
+        window.location.href = titleLink.href;
+      });
+    });
+  }
+
+  function init() {
+    initLive2DTheme();
+    initPostCardClick();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/wanko.model.json"},"display":{"position":"right","width":110,"height":180},"mobile":{"show":false},"log":false,"tagMode":false});</script></body>
+</html>
